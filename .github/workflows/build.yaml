@@ -370,7 +370,7 @@ jobs:
         run: bash examples/test_job_config.sh
   buildWeb:
     environment: Build
-    needs: [ checkJava, buildJava, testJava, validateExamples, testRemoteStep, testOutputFormatCSV, testOutputFormatNetCDF, testOutputFormatGeoTIFF, testGuideExamples, testConfiguration, testAdditionalFeatures, testPreprocessing ]
+    needs: [ checkJava, buildJava, testJava, validateExamples, testRemote, testOutputFormatCSV, testOutputFormatNetCDF, testOutputFormatGeoTIFF, testGuideExamples, testConfiguration, testAdditionalFeatures, testPreprocessing ]
     if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/dev'
     runs-on: ubuntu-latest
     name: Build for Browser
