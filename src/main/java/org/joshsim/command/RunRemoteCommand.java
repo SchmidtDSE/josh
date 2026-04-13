@@ -294,10 +294,8 @@ public class RunRemoteCommand implements Callable<Integer> {
     // Read Josh simulation code
     String joshCode = Files.readString(file.toPath(), StandardCharsets.UTF_8);
 
-    // Select execution strategy (same for all job combinations)
+    // Select execution strategy and compatibility layer
     RunRemoteStrategy strategy = selectExecutionStrategy();
-
-    // Set up JVM compatibility layer for multi-threaded CSV writes
     CompatibilityLayerKeeper.set(new JvmCompatibilityLayer());
 
     // Execute remote simulation for each job combination

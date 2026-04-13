@@ -399,10 +399,8 @@ public class RemoteResponseHandlerTest {
 
   @Test
   public void testDatumResponseMissingStepThrows() {
-    // Arrange - DATUM line with no "step" key in the payload
     String datumLine = "[0] TestEntity:x=1\ty=2";
 
-    // Act & Assert
     RuntimeException exception = assertThrows(RuntimeException.class, () -> {
       handler.processResponseLine(datumLine, 0, null);
     });

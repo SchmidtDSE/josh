@@ -142,7 +142,7 @@ jobs:
         run: mkdir -p build/libs; mv joshsim-fat.jar build/libs/joshsim-fat.jar
       - name: Validate examples
         run: bash examples/validate.sh
-  testRemoteStep:
+  testRemote:
     needs: [buildJava]
     environment: Build
     runs-on: ubuntu-latest

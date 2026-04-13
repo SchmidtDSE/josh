@@ -212,7 +212,6 @@ public class RemoteResponseHandler {
       }
     }
 
-    // Read step from datum payload
     long step = parseStep(namedMap);
     exportFacade.write(namedMap, step, replicateNumber);
   }
@@ -227,19 +226,19 @@ public class RemoteResponseHandler {
    * @return The parsed step value as a long
    * @throws IllegalStateException if the "step" key is absent or not a valid long
    */
+  private static final String MISSING_STEP_MSG =
+      "DATUM payload is missing required 'step' field. Worker may be running an older version."
+      + " Raw payload: %s";
+
   private static long parseStep(NamedMap namedMap) {
     String stepValue = namedMap.getTarget().get("step");
     if (stepValue == null) {
-      throw new IllegalStateException(
-          "DATUM payload is missing required 'step' field. Worker may be running an older"
-          + " version. Raw payload: " + namedMap);
+      throw new IllegalStateException(String.format(MISSING_STEP_MSG, namedMap));
     }
     try {
       return Long.parseLong(stepValue);
     } catch (NumberFormatException e) {
-      throw new IllegalStateException(
-          "DATUM payload is missing required 'step' field. Worker may be running an older"
-          + " version. Raw payload: " + namedMap, e);
+      throw new IllegalStateException(String.format(MISSING_STEP_MSG, namedMap), e);
     }
   }
 
