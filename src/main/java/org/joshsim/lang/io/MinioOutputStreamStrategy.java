@@ -28,7 +28,7 @@ import java.util.concurrent.Executors;
  *
  * <p>The BlockingQueue approach provides proper async coordination: the writer thread enqueues
  * data chunks as they're written, and the upload thread consumes them. This eliminates timing
- * issues and supports retry logic since the queue can be read multiple times if needed.
+ * issues present in the previous PipedInputStream/PipedOutputStream implementation.
  * </p>
  *
  * <p>The upload happens asynchronously in a dedicated thread pool to prevent thread exhaustion
@@ -37,7 +37,6 @@ import java.util.concurrent.Executors;
  */
 public class MinioOutputStreamStrategy implements OutputStreamStrategy {
 
-  private static final int[] RETRY_DELAYS_MS = {1000, 2000, 4000, 8000, 16000};
   private static final int CHUNK_SIZE = 256 * 1024; // 256KB chunks
   private static final int QUEUE_CAPACITY = 8; // 8 chunks = 2MB buffer
 
@@ -88,7 +87,7 @@ public class MinioOutputStreamStrategy implements OutputStreamStrategy {
     // This prevents thread starvation when MinIO's internal async operations
     // compete for ForkJoinPool.commonPool threads
     CompletableFuture<Void> uploadFuture = CompletableFuture.runAsync(() -> {
-      uploadWithRetry(inputStream);
+      upload(inputStream);
     }, UPLOAD_EXECUTOR);
 
     // Return a wrapper that blocks on close() to ensure upload completes
@@ -121,56 +120,32 @@ public class MinioOutputStreamStrategy implements OutputStreamStrategy {
   }
 
   /**
-   * Uploads data from the BlockingQueue input stream with exponential backoff retry logic.
+   * Uploads data from the BlockingQueue input stream to MinIO.
    *
-   * <p>The BlockingQueue approach supports proper retry logic since the stream can be
-   * consumed multiple times if needed. The writer thread enqueues data chunks, and the
-   * upload thread reads them asynchronously without timing dependencies.</p>
+   * <p>Streaming uploads backed by a BlockingQueue cannot be retried at this level because
+   * the queue is destructive: data consumed during a failed attempt is gone. Retry logic
+   * for streaming uploads belongs at a higher level (e.g., re-running the simulation).</p>
    *
    * <p>NOTE: The input stream is NOT closed in this method. The BlockingQueueOutputStream
    * manages stream lifecycle by signaling EOF when closed, which allows the upload to
    * complete naturally.</p>
    *
    * @param inputStream The BlockingQueue input stream containing data to upload
-   * @throws RuntimeException if all retry attempts fail
+   * @throws RuntimeException if the upload fails
    */
-  private void uploadWithRetry(BlockingQueueInputStream inputStream) {
-    Exception lastException = null;
-    for (int attempt = 0; attempt < RETRY_DELAYS_MS.length; attempt++) {
-      try {
-        // Attempt upload
-        minioClient.putObject(
-            PutObjectArgs.builder()
-                .bucket(bucketName)
-                .object(objectPath)
-                .stream(inputStream, -1, 10485760) // -1 = unknown size, 10MB part size
-                .build()
-        );
-
-        // Success - upload completed
-        return;
-
-      } catch (Exception e) {
-        lastException = e;
-
-        // If not the last attempt, wait before retrying
-        if (attempt < RETRY_DELAYS_MS.length - 1) {
-          try {
-            Thread.sleep(RETRY_DELAYS_MS[attempt]);
-          } catch (InterruptedException ie) {
-            Thread.currentThread().interrupt();
-            throw new RuntimeException("Upload interrupted during retry backoff", ie);
-          }
-        }
-      }
+  private void upload(BlockingQueueInputStream inputStream) {
+    try {
+      minioClient.putObject(
+          PutObjectArgs.builder()
+              .bucket(bucketName)
+              .object(objectPath)
+              .stream(inputStream, -1, 10485760) // -1 = unknown size, 10MB part size
+              .build()
+      );
+    } catch (Exception e) {
+      throw new RuntimeException(
+          "Failed to upload to MinIO: " + bucketName + "/" + objectPath, e);
     }
-
-    // All retries exhausted - propagate error
-    throw new RuntimeException(
-        "Failed to upload to MinIO after " + RETRY_DELAYS_MS.length + " attempts: "
-            + bucketName + "/" + objectPath,
-        lastException
-    );
   }
 
   /**

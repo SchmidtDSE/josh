@@ -29,7 +29,7 @@ import org.mockito.MockitoAnnotations;
 
 /**
  * Unit tests for MinioOutputStreamStrategy, verifying streaming behavior,
- * retry logic, and bucket management.
+ * error propagation, and bucket management.
  */
 class MinioOutputStreamStrategyTest {
 
@@ -122,39 +122,13 @@ class MinioOutputStreamStrategyTest {
   }
 
   @Test
-  void testRetryLogic_failsOnce_thenSucceeds() throws Exception {
+  void testUploadFailure_propagatesException() throws Exception {
     // Arrange
     when(minioClient.bucketExists(any(BucketExistsArgs.class))).thenReturn(true);
 
-    // First call fails, second succeeds
+    // Upload fails
     when(minioClient.putObject(any(PutObjectArgs.class)))
-        .thenThrow(new RuntimeException("Temporary network error"))
-        .thenReturn(null);
-
-    MinioOutputStreamStrategy strategy = new MinioOutputStreamStrategy(
-        minioClient, TEST_BUCKET, TEST_OBJECT
-    );
-
-    // Act
-    try (OutputStream out = strategy.open()) {
-      out.write("test".getBytes(StandardCharsets.UTF_8));
-    }
-
-    // Give async upload time to retry
-    Thread.sleep(2000);
-
-    // Assert - verify putObject was called twice (1 fail + 1 retry success)
-    verify(minioClient, times(2)).putObject(any(PutObjectArgs.class));
-  }
-
-  @Test
-  void testRetryLogic_exhaustsAllRetries_throwsException() throws Exception {
-    // Arrange
-    when(minioClient.bucketExists(any(BucketExistsArgs.class))).thenReturn(true);
-
-    // All calls fail
-    when(minioClient.putObject(any(PutObjectArgs.class)))
-        .thenThrow(new RuntimeException("Persistent network error"));
+        .thenThrow(new RuntimeException("Network error"));
 
     MinioOutputStreamStrategy strategy = new MinioOutputStreamStrategy(
         minioClient, TEST_BUCKET, TEST_OBJECT
@@ -164,10 +138,13 @@ class MinioOutputStreamStrategyTest {
     OutputStream out = strategy.open();
     out.write("test".getBytes(StandardCharsets.UTF_8));
 
-    // close() should propagate the error after retries exhausted
+    // close() should propagate the error immediately (no retry)
     IOException exception = assertThrows(IOException.class, () -> out.close());
     assertTrue(exception.getMessage().contains("Upload failed"));
     assertTrue(exception.getCause().getMessage().contains("Failed to upload to MinIO"));
+
+    // Verify putObject was called exactly once (no retry)
+    verify(minioClient, times(1)).putObject(any(PutObjectArgs.class));
   }
 
   @Test
