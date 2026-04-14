@@ -146,6 +146,49 @@ class JvmQueueServiceTest {
     });
   }
 
+  @Test
+  void testJoinPropagatesOnEndException() {
+    ThrowingCallback callback = new ThrowingCallback(ThrowingCallback.Phase.ON_END);
+    JvmQueueService jvmQueueService = new JvmQueueService(callback);
+
+    jvmQueueService.start();
+
+    RuntimeException thrown = assertThrows(RuntimeException.class, () -> {
+      jvmQueueService.join();
+    });
+    assertTrue(thrown.getMessage().contains("Worker thread failed"));
+    assertTrue(thrown.getCause().getMessage().contains("onEnd exploded"));
+  }
+
+  @Test
+  void testJoinPropagatesOnStartException() {
+    ThrowingCallback callback = new ThrowingCallback(ThrowingCallback.Phase.ON_START);
+    JvmQueueService jvmQueueService = new JvmQueueService(callback);
+
+    jvmQueueService.start();
+
+    RuntimeException thrown = assertThrows(RuntimeException.class, () -> {
+      jvmQueueService.join();
+    });
+    assertTrue(thrown.getMessage().contains("Worker thread failed"));
+    assertTrue(thrown.getCause().getMessage().contains("onStart exploded"));
+  }
+
+  @Test
+  void testJoinPropagatesOnTaskException() {
+    ThrowingCallback callback = new ThrowingCallback(ThrowingCallback.Phase.ON_TASK);
+    JvmQueueService jvmQueueService = new JvmQueueService(callback);
+
+    jvmQueueService.start();
+    jvmQueueService.add("Task1");
+
+    RuntimeException thrown = assertThrows(RuntimeException.class, () -> {
+      jvmQueueService.join();
+    });
+    assertTrue(thrown.getMessage().contains("Worker thread failed"));
+    assertTrue(thrown.getCause().getMessage().contains("onTask exploded"));
+  }
+
   private class TestCallback implements QueueServiceCallback {
 
     private int startCalls;
@@ -209,6 +252,38 @@ class JvmQueueServiceTest {
 
     public int getProcessedTaskCount() {
       return processedCount.get();
+    }
+  }
+
+  private class ThrowingCallback implements QueueServiceCallback {
+
+    enum Phase { ON_START, ON_TASK, ON_END }
+
+    private final Phase throwOn;
+
+    ThrowingCallback(Phase throwOn) {
+      this.throwOn = throwOn;
+    }
+
+    @Override
+    public void onStart() {
+      if (throwOn == Phase.ON_START) {
+        throw new RuntimeException("onStart exploded");
+      }
+    }
+
+    @Override
+    public void onTask(Optional<Object> task) {
+      if (throwOn == Phase.ON_TASK && task.isPresent()) {
+        throw new RuntimeException("onTask exploded");
+      }
+    }
+
+    @Override
+    public void onEnd() {
+      if (throwOn == Phase.ON_END) {
+        throw new RuntimeException("onEnd exploded");
+      }
     }
   }
 

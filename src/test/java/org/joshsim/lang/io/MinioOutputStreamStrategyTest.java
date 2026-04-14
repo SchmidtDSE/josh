@@ -30,7 +30,7 @@ import org.mockito.MockitoAnnotations;
 
 /**
  * Unit tests for MinioOutputStreamStrategy, verifying streaming behavior,
- * retry logic, and bucket management.
+ * error propagation, and bucket management.
  */
 class MinioOutputStreamStrategyTest {
 
@@ -123,10 +123,11 @@ class MinioOutputStreamStrategyTest {
   }
 
   @Test
-  void testUploadFailure_propagatesAsIoException() throws Exception {
+  void testUploadFailure_propagatesException() throws Exception {
     // Arrange
     when(minioClient.bucketExists(any(BucketExistsArgs.class))).thenReturn(true);
 
+    // Upload fails
     when(minioClient.putObject(any(PutObjectArgs.class)))
         .thenThrow(new RuntimeException("Network error"));
 
@@ -138,10 +139,13 @@ class MinioOutputStreamStrategyTest {
     OutputStream out = strategy.open();
     out.write("test".getBytes(StandardCharsets.UTF_8));
 
-    // close() should propagate the upload failure
+    // close() should propagate the error immediately (no retry)
     IOException exception = assertThrows(IOException.class, () -> out.close());
     assertTrue(exception.getMessage().contains("Upload failed"));
     assertTrue(exception.getCause().getMessage().contains("Failed to upload to MinIO"));
+
+    // Verify putObject was called exactly once (no retry)
+    verify(minioClient, times(1)).putObject(any(PutObjectArgs.class));
   }
 
   @Test

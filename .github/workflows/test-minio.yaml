@@ -200,6 +200,36 @@ jobs:
 
           echo "✓ Queue backpressure test passed"
 
+      - name: Test large payload upload (multipart)
+        run: |
+          echo "Testing large payload upload to exercise multipart upload path..."
+
+          # Run simulation that generates >10MB of entity-level CSV data
+          # 1500 organisms * 100 steps * 3 fields = ~15MB CSV
+          java -Xmx2g -jar build/libs/joshsim-fat.jar run \
+            --replicates=1 \
+            examples/test/minio/large_payload.josh \
+            LargePayloadTest \
+            --minio-endpoint=http://localhost:9000 \
+            --minio-access-key=minioadmin \
+            --minio-secret-key=minioadmin \
+            --export-queue-size=10000 \
+            --output-steps=100
+
+          # Verify file was uploaded
+          ./mc stat testminio/josh-test-bucket/results/large_payload_0.csv
+
+          # Verify file size exceeds 10MB multipart threshold
+          SIZE_BYTES=$(./mc stat testminio/josh-test-bucket/results/large_payload_0.csv --json | grep -o '"size":[0-9]*' | cut -d':' -f2)
+          echo "  Large payload size: $SIZE_BYTES bytes"
+
+          if [ "$SIZE_BYTES" -gt 10485760 ]; then
+            echo "✓ Large payload test passed (${SIZE_BYTES} bytes > 10MB multipart threshold)"
+          else
+            echo "✗ Large payload test failed: expected >10MB but got ${SIZE_BYTES} bytes"
+            exit 7
+          fi
+
       - name: Test error handling - missing credentials
         run: |
           echo "Testing error handling with missing credentials..."
@@ -341,6 +371,7 @@ jobs:
           echo "✓ File upload verification"
           echo "✓ Large CSV export (>10MB multipart upload)"
           echo "✓ Queue backpressure handling"
+          echo "✓ Large payload multipart upload"
           echo "✓ Error handling validation"
           echo "✓ MinioPollingStrategy integration"
           echo "✓ batchRemote end-to-end (server + MinIO)"
