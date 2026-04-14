@@ -184,10 +184,7 @@ class KubernetesPollingStrategyTest {
 
     assertEquals(JobStatus.State.ERROR, status.getState());
     assertTrue(
-        status.getMessage().get().contains("timeout")
-    );
-    assertTrue(
-        status.getMessage().get().contains("3600")
+        status.getMessage().get().contains("DeadlineExceeded")
     );
   }
 
@@ -211,7 +208,8 @@ class KubernetesPollingStrategyTest {
 
     assertEquals(JobStatus.State.ERROR, status.getState());
     assertTrue(
-        status.getMessage().get().contains("retry limit")
+        status.getMessage().get()
+            .contains("BackoffLimitExceeded")
     );
   }
 
@@ -348,9 +346,6 @@ class KubernetesPollingStrategyTest {
     JobStatus status = strategy.poll(JOB_ID);
 
     assertEquals(JobStatus.State.ERROR, status.getState());
-    assertTrue(
-        status.getMessage().get().contains("Scheduling failed")
-    );
     assertTrue(
         status.getMessage().get().contains("insufficient memory")
     );

@@ -94,11 +94,27 @@ public class BatchRemoteCommand implements Callable<Integer> {
       TargetProfileLoader loader = new TargetProfileLoader();
       TargetProfile profile = loader.load(targetName);
 
-      RemoteBatchTarget target = buildTarget(profile);
       MinioHandler minioHandler = profile.buildMinioHandler(output);
-      BatchPollingStrategy poller = buildPoller(
-          profile, target, minioHandler
-      );
+
+      RemoteBatchTarget target;
+      BatchPollingStrategy poller;
+      String type = profile.getType();
+
+      if ("kubernetes".equals(type)) {
+        KubernetesTarget k8sTarget = buildKubernetesTarget(
+            profile
+        );
+        target = k8sTarget;
+        poller = buildPoller(k8sTarget);
+      } else if ("http".equals(type)) {
+        target = buildHttpTarget(profile);
+        poller = buildPoller(minioHandler);
+      } else {
+        throw new IllegalArgumentException(
+            "Unsupported target type: " + type
+            + ". Supported types: http, kubernetes"
+        );
+      }
 
       BatchJobStrategy strategy = new BatchJobStrategy(
           target, poller, minioHandler, output,
@@ -131,38 +147,34 @@ public class BatchRemoteCommand implements Callable<Integer> {
     }
   }
 
+  private HttpBatchTarget buildHttpTarget(TargetProfile profile) {
+    return new HttpBatchTarget(profile.getHttpConfig());
+  }
+
+  private KubernetesTarget buildKubernetesTarget(
+      TargetProfile profile
+  ) {
+    return new KubernetesTarget(
+        profile.getKubernetesConfig(),
+        profile.getMinioEndpoint(),
+        profile.getMinioAccessKey(),
+        profile.getMinioSecretKey(),
+        profile.getMinioBucket()
+    );
+  }
+
   private BatchPollingStrategy buildPoller(
-      TargetProfile profile,
-      RemoteBatchTarget target,
       MinioHandler minioHandler
   ) {
-    if ("kubernetes".equals(profile.getType())
-        && target instanceof KubernetesTarget k8sTarget) {
-      return new KubernetesPollingStrategy(
-          k8sTarget.getClient(),
-          k8sTarget.getConfig().getNamespace()
-      );
-    }
     return new MinioPollingStrategy(minioHandler);
   }
 
-  private RemoteBatchTarget buildTarget(TargetProfile profile) {
-    String type = profile.getType();
-    if ("http".equals(type)) {
-      return new HttpBatchTarget(profile.getHttpConfig());
-    }
-    if ("kubernetes".equals(type)) {
-      return new KubernetesTarget(
-          profile.getKubernetesConfig(),
-          profile.getMinioEndpoint(),
-          profile.getMinioAccessKey(),
-          profile.getMinioSecretKey(),
-          profile.getMinioBucket()
-      );
-    }
-    throw new IllegalArgumentException(
-        "Unsupported target type: " + type
-        + ". Supported types: http, kubernetes"
+  private BatchPollingStrategy buildPoller(
+      KubernetesTarget k8sTarget
+  ) {
+    return new KubernetesPollingStrategy(
+        k8sTarget.getClient(),
+        k8sTarget.getConfig().getNamespace()
     );
   }
 

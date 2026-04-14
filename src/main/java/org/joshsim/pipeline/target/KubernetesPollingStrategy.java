@@ -114,31 +114,20 @@ public class KubernetesPollingStrategy implements BatchPollingStrategy {
       Job job,
       JobCondition failed
   ) {
-    String reason = failed.getReason();
-
-    if ("DeadlineExceeded".equals(reason)) {
-      return "Job exceeded timeout ("
-          + job.getSpec().getActiveDeadlineSeconds() + "s)";
-    }
-
-    if ("BackoffLimitExceeded".equals(reason)) {
-      String podDetail = getPodFailureDetail(job);
-      if (podDetail != null) {
-        return "Job exceeded retry limit: " + podDetail;
-      }
-      return "Job exceeded retry limit";
-    }
-
     String podDetail = getPodFailureDetail(job);
     if (podDetail != null) {
       return podDetail;
+    }
+
+    if (failed.getReason() != null) {
+      return failed.getReason();
     }
 
     if (failed.getMessage() != null) {
       return failed.getMessage();
     }
 
-    return "Job failed" + (reason != null ? ": " + reason : "");
+    return "Job failed";
   }
 
   private String getPodFailureDetail(Job job) {
@@ -193,9 +182,8 @@ public class KubernetesPollingStrategy implements BatchPollingStrategy {
     for (PodCondition cond : conditions) {
       if ("PodScheduled".equals(cond.getType())
           && "False".equals(cond.getStatus())) {
-        String msg = cond.getMessage();
-        return "Scheduling failed"
-            + (msg != null ? ": " + msg : "");
+        return cond.getMessage() != null
+            ? cond.getMessage() : cond.getReason();
       }
     }
     return null;
@@ -208,27 +196,13 @@ public class KubernetesPollingStrategy implements BatchPollingStrategy {
     }
 
     ContainerStateTerminated terminated = state.getTerminated();
-    if (terminated != null) {
-      String reason = terminated.getReason();
-      if ("OOMKilled".equals(reason)) {
-        return "OOMKilled: container ran out of memory";
-      }
-      if (reason != null && terminated.getExitCode() != null
-          && terminated.getExitCode() != 0) {
-        return "Container exited with " + reason
-            + " (exit code " + terminated.getExitCode() + ")";
-      }
+    if (terminated != null && terminated.getReason() != null) {
+      return terminated.getReason();
     }
 
     ContainerStateWaiting waiting = state.getWaiting();
-    if (waiting != null) {
-      String reason = waiting.getReason();
-      if ("ImagePullBackOff".equals(reason)
-          || "ErrImagePull".equals(reason)) {
-        String msg = waiting.getMessage();
-        return "Image pull failed: " + reason
-            + (msg != null ? " - " + msg : "");
-      }
+    if (waiting != null && waiting.getReason() != null) {
+      return waiting.getReason();
     }
     return null;
   }

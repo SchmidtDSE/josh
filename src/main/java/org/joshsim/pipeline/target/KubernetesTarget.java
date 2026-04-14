@@ -8,13 +8,18 @@ package org.joshsim.pipeline.target;
 
 import io.fabric8.kubernetes.api.model.EnvVar;
 import io.fabric8.kubernetes.api.model.EnvVarBuilder;
+import io.fabric8.kubernetes.api.model.EnvVarSourceBuilder;
 import io.fabric8.kubernetes.api.model.Quantity;
+import io.fabric8.kubernetes.api.model.ResourceRequirements;
+import io.fabric8.kubernetes.api.model.Secret;
+import io.fabric8.kubernetes.api.model.SecretBuilder;
 import io.fabric8.kubernetes.api.model.batch.v1.Job;
 import io.fabric8.kubernetes.api.model.batch.v1.JobBuilder;
 import io.fabric8.kubernetes.client.Config;
 import io.fabric8.kubernetes.client.KubernetesClient;
 import io.fabric8.kubernetes.client.KubernetesClientBuilder;
 import java.util.ArrayList;
+import java.util.Base64;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -25,13 +30,15 @@ import java.util.Map;
  *
  * <p>Each call to {@link #dispatch} creates a K8s Job with
  * {@code completionMode: Indexed} where each pod runs one replicate.
- * MinIO credentials are passed as environment variables so the container
- * can stage inputs and write results without CLI flags.</p>
+ * MinIO credentials are stored in a K8s Secret and referenced via
+ * {@code secretKeyRef} so they don't appear in the Job spec.</p>
  */
 public class KubernetesTarget implements RemoteBatchTarget {
 
   private static final String JOB_NAME_PREFIX = "josh-";
+  private static final String SECRET_NAME_PREFIX = "josh-creds-";
   private static final int BACKOFF_LIMIT = 3;
+  private static final String ENTRYPOINT = "/app/entrypoint.sh";
 
   private final KubernetesTargetConfig config;
   private final KubernetesClient client;
@@ -61,13 +68,14 @@ public class KubernetesTarget implements RemoteBatchTarget {
       String minioBucket
   ) {
     this(
-        config, minioEndpoint, minioAccessKey, minioSecretKey, minioBucket,
+        config, minioEndpoint, minioAccessKey,
+        minioSecretKey, minioBucket,
         buildClient(config.getContext())
     );
   }
 
   /**
-   * Constructs a KubernetesTarget with an injected client (for testing).
+   * Constructs a KubernetesTarget with an injected client (testing).
    *
    * @param config The Kubernetes target configuration.
    * @param minioEndpoint MinIO endpoint URL for pod env vars.
@@ -99,6 +107,10 @@ public class KubernetesTarget implements RemoteBatchTarget {
       String simulation,
       int replicates
   ) throws Exception {
+    String secretName = SECRET_NAME_PREFIX + jobId;
+
+    createSecret(secretName);
+
     Job job = new JobBuilder()
         .withNewMetadata()
             .withName(JOB_NAME_PREFIX + jobId)
@@ -122,12 +134,17 @@ public class KubernetesTarget implements RemoteBatchTarget {
                     .addNewContainer()
                         .withName("joshsim")
                         .withImage(config.getImage())
-                        .withResources(buildResourceRequirements())
+                        .withResources(
+                            buildResourceRequirements()
+                        )
                         .withEnv(buildEnvVars(
-                            jobId, minioPrefix, simulation
+                            secretName, jobId,
+                            minioPrefix, simulation
                         ))
-                        .withCommand("/bin/sh", "-c")
-                        .withArgs(buildContainerCommand())
+                        .withCommand(
+                            ENTRYPOINT,
+                            config.getJarPath()
+                        )
                     .endContainer()
                 .endSpec()
             .endTemplate()
@@ -161,32 +178,85 @@ public class KubernetesTarget implements RemoteBatchTarget {
     return config;
   }
 
+  private void createSecret(String secretName) {
+    Map<String, String> data = new HashMap<>();
+    data.put("MINIO_ENDPOINT", encode(minioEndpoint));
+    data.put("MINIO_ACCESS_KEY", encode(minioAccessKey));
+    data.put("MINIO_SECRET_KEY", encode(minioSecretKey));
+    data.put("MINIO_BUCKET", encode(minioBucket));
+
+    Secret secret = new SecretBuilder()
+        .withNewMetadata()
+            .withName(secretName)
+            .withNamespace(config.getNamespace())
+        .endMetadata()
+        .withType("Opaque")
+        .withData(data)
+        .build();
+
+    client.secrets()
+        .inNamespace(config.getNamespace())
+        .resource(secret)
+        .create();
+  }
+
+  private static String encode(String value) {
+    return Base64.getEncoder().encodeToString(
+        value.getBytes(java.nio.charset.StandardCharsets.UTF_8)
+    );
+  }
+
   private List<EnvVar> buildEnvVars(
+      String secretName,
       String jobId,
       String minioPrefix,
       String simulation
   ) {
     List<EnvVar> envVars = new ArrayList<>();
-    envVars.add(envVar("MINIO_ENDPOINT", minioEndpoint));
-    envVars.add(envVar("MINIO_ACCESS_KEY", minioAccessKey));
-    envVars.add(envVar("MINIO_SECRET_KEY", minioSecretKey));
-    envVars.add(envVar("MINIO_BUCKET", minioBucket));
-    envVars.add(envVar("JOSH_JOB_ID", jobId));
-    envVars.add(envVar("JOSH_MINIO_PREFIX", minioPrefix));
-    envVars.add(envVar("JOSH_SIMULATION", simulation));
+    envVars.add(secretEnvVar(
+        "MINIO_ENDPOINT", secretName, "MINIO_ENDPOINT"
+    ));
+    envVars.add(secretEnvVar(
+        "MINIO_ACCESS_KEY", secretName, "MINIO_ACCESS_KEY"
+    ));
+    envVars.add(secretEnvVar(
+        "MINIO_SECRET_KEY", secretName, "MINIO_SECRET_KEY"
+    ));
+    envVars.add(secretEnvVar(
+        "MINIO_BUCKET", secretName, "MINIO_BUCKET"
+    ));
+    envVars.add(plainEnvVar("JOSH_JOB_ID", jobId));
+    envVars.add(plainEnvVar("JOSH_MINIO_PREFIX", minioPrefix));
+    envVars.add(plainEnvVar("JOSH_SIMULATION", simulation));
     return envVars;
   }
 
-  private static EnvVar envVar(String name, String value) {
+  private static EnvVar secretEnvVar(
+      String envName,
+      String secretName,
+      String secretKey
+  ) {
+    return new EnvVarBuilder()
+        .withName(envName)
+        .withValueFrom(new EnvVarSourceBuilder()
+            .withNewSecretKeyRef()
+                .withName(secretName)
+                .withKey(secretKey)
+            .endSecretKeyRef()
+            .build())
+        .build();
+  }
+
+  private static EnvVar plainEnvVar(String name, String value) {
     return new EnvVarBuilder()
         .withName(name)
         .withValue(value)
         .build();
   }
 
-  private io.fabric8.kubernetes.api.model.ResourceRequirements
-      buildResourceRequirements() {
-    Map<String, Map<String, String>> resources = config.getResources();
+  private ResourceRequirements buildResourceRequirements() {
+    Map<String, Map<String, String>> resources =
+        config.getResources();
     if (resources == null) {
       return null;
     }
@@ -196,16 +266,19 @@ public class KubernetesTarget implements RemoteBatchTarget {
 
     Map<String, String> requestMap = resources.get("requests");
     if (requestMap != null) {
-      requestMap.forEach((k, v) -> requests.put(k, new Quantity(v)));
+      requestMap.forEach(
+          (k, v) -> requests.put(k, new Quantity(v))
+      );
     }
 
     Map<String, String> limitMap = resources.get("limits");
     if (limitMap != null) {
-      limitMap.forEach((k, v) -> limits.put(k, new Quantity(v)));
+      limitMap.forEach(
+          (k, v) -> limits.put(k, new Quantity(v))
+      );
     }
 
-    io.fabric8.kubernetes.api.model.ResourceRequirements reqs =
-        new io.fabric8.kubernetes.api.model.ResourceRequirements();
+    ResourceRequirements reqs = new ResourceRequirements();
     if (!requests.isEmpty()) {
       reqs.setRequests(requests);
     }
@@ -213,18 +286,6 @@ public class KubernetesTarget implements RemoteBatchTarget {
       reqs.setLimits(limits);
     }
     return reqs;
-  }
-
-  private String buildContainerCommand() {
-    String jar = config.getJarPath();
-    return "java -jar " + jar + " stageFromMinio"
-        + " --prefix=$JOSH_MINIO_PREFIX"
-        + " --output-dir=/tmp/work"
-        + " && SCRIPT=$(find /tmp/work -name '*.josh'"
-        + " -type f | head -1)"
-        + " && java -jar " + jar
-        + " run \"$SCRIPT\" $JOSH_SIMULATION"
-        + " --replicates=1";
   }
 
   private static KubernetesClient buildClient(String context) {

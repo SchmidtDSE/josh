@@ -19,10 +19,12 @@ import io.fabric8.kubernetes.api.model.Container;
 import io.fabric8.kubernetes.api.model.EnvVar;
 import io.fabric8.kubernetes.api.model.Quantity;
 import io.fabric8.kubernetes.api.model.ResourceRequirements;
+import io.fabric8.kubernetes.api.model.Secret;
 import io.fabric8.kubernetes.api.model.batch.v1.Job;
 import io.fabric8.kubernetes.client.KubernetesClient;
 import io.fabric8.kubernetes.client.dsl.BatchAPIGroupDSL;
 import io.fabric8.kubernetes.client.dsl.MixedOperation;
+import io.fabric8.kubernetes.client.dsl.NamespaceableResource;
 import io.fabric8.kubernetes.client.dsl.ScalableResource;
 import io.fabric8.kubernetes.client.dsl.V1BatchAPIGroupDSL;
 import java.util.HashMap;
@@ -51,21 +53,24 @@ class KubernetesTargetTest {
   private static final String SIMULATION = "Main";
 
   private KubernetesClient mockClient;
-  private MixedOperation mockJobs;
-  private ScalableResource mockResource;
+  private ScalableResource mockJobResource;
+  private NamespaceableResource mockSecretResource;
   private KubernetesTargetConfig config;
   private ArgumentCaptor<Job> jobCaptor;
+  private ArgumentCaptor<Secret> secretCaptor;
 
   @BeforeEach
   void setUp() {
     mockClient = mock(KubernetesClient.class);
+
+    // Wire batch().v1().jobs() chain
     final BatchAPIGroupDSL mockBatch =
         mock(BatchAPIGroupDSL.class);
     final V1BatchAPIGroupDSL mockV1 =
         mock(V1BatchAPIGroupDSL.class);
-    mockJobs = mock(MixedOperation.class);
+    final MixedOperation mockJobs = mock(MixedOperation.class);
     final MixedOperation mockNsJobs = mock(MixedOperation.class);
-    mockResource = mock(ScalableResource.class);
+    mockJobResource = mock(ScalableResource.class);
 
     when(mockClient.batch()).thenReturn(mockBatch);
     when(mockBatch.v1()).thenReturn(mockV1);
@@ -74,8 +79,24 @@ class KubernetesTargetTest {
 
     jobCaptor = ArgumentCaptor.forClass(Job.class);
     when(mockNsJobs.resource(jobCaptor.capture()))
-        .thenReturn(mockResource);
-    when(mockResource.create()).thenReturn(null);
+        .thenReturn(mockJobResource);
+    when(mockJobResource.create()).thenReturn(null);
+
+    // Wire secrets() chain
+    final MixedOperation mockSecrets =
+        mock(MixedOperation.class);
+    final MixedOperation mockNsSecrets =
+        mock(MixedOperation.class);
+    mockSecretResource = mock(NamespaceableResource.class);
+
+    when(mockClient.secrets()).thenReturn(mockSecrets);
+    when(mockSecrets.inNamespace(NAMESPACE))
+        .thenReturn(mockNsSecrets);
+
+    secretCaptor = ArgumentCaptor.forClass(Secret.class);
+    when(mockNsSecrets.resource(secretCaptor.capture()))
+        .thenReturn(mockSecretResource);
+    when(mockSecretResource.create()).thenReturn(null);
 
     config = buildConfig(10, 3600, null);
   }
@@ -110,25 +131,66 @@ class KubernetesTargetTest {
   }
 
   @Test
-  void dispatchSetsMinioAndJobEnvVars() throws Exception {
+  void dispatchCreatesSecretWithMinioCreds() throws Exception {
+    KubernetesTarget target = buildTarget(config);
+
+    target.dispatch(JOB_ID, PREFIX, SIMULATION, 1);
+
+    Secret secret = secretCaptor.getValue();
+    assertNotNull(secret);
+    assertEquals(
+        "josh-creds-" + JOB_ID,
+        secret.getMetadata().getName()
+    );
+    Map<String, String> data = secret.getData();
+    assertNotNull(data.get("MINIO_ENDPOINT"));
+    assertNotNull(data.get("MINIO_ACCESS_KEY"));
+    assertNotNull(data.get("MINIO_SECRET_KEY"));
+    assertNotNull(data.get("MINIO_BUCKET"));
+  }
+
+  @Test
+  void dispatchSetsSecretRefEnvVars() throws Exception {
     KubernetesTarget target = buildTarget(config);
 
     target.dispatch(JOB_ID, PREFIX, SIMULATION, 1);
 
     Job job = jobCaptor.getValue();
     List<EnvVar> envVars = getContainer(job).getEnv();
-    assertEnvVar(envVars, "MINIO_ENDPOINT", "https://minio.test");
-    assertEnvVar(envVars, "MINIO_ACCESS_KEY", "access");
-    assertEnvVar(envVars, "MINIO_SECRET_KEY", "secret");
-    assertEnvVar(envVars, "MINIO_BUCKET", "test-bucket");
-    assertEnvVar(envVars, "JOSH_JOB_ID", JOB_ID);
-    assertEnvVar(envVars, "JOSH_MINIO_PREFIX", PREFIX);
-    assertEnvVar(envVars, "JOSH_SIMULATION", SIMULATION);
+    String secretName = "josh-creds-" + JOB_ID;
+
+    assertSecretEnvVar(
+        envVars, "MINIO_ENDPOINT", secretName
+    );
+    assertSecretEnvVar(
+        envVars, "MINIO_ACCESS_KEY", secretName
+    );
+    assertSecretEnvVar(
+        envVars, "MINIO_SECRET_KEY", secretName
+    );
+    assertSecretEnvVar(
+        envVars, "MINIO_BUCKET", secretName
+    );
   }
 
   @Test
-  void dispatchSetsResourceRequestsAndLimits() throws Exception {
-    Map<String, Map<String, String>> resources = new HashMap<>();
+  void dispatchSetsPlainJobEnvVars() throws Exception {
+    KubernetesTarget target = buildTarget(config);
+
+    target.dispatch(JOB_ID, PREFIX, SIMULATION, 1);
+
+    Job job = jobCaptor.getValue();
+    List<EnvVar> envVars = getContainer(job).getEnv();
+    assertPlainEnvVar(envVars, "JOSH_JOB_ID", JOB_ID);
+    assertPlainEnvVar(envVars, "JOSH_MINIO_PREFIX", PREFIX);
+    assertPlainEnvVar(envVars, "JOSH_SIMULATION", SIMULATION);
+  }
+
+  @Test
+  void dispatchSetsResourceRequestsAndLimits()
+      throws Exception {
+    Map<String, Map<String, String>> resources =
+        new HashMap<>();
     resources.put(
         "requests", Map.of("cpu", "2", "memory", "4Gi")
     );
@@ -139,7 +201,8 @@ class KubernetesTargetTest {
     target.dispatch(JOB_ID, PREFIX, SIMULATION, 1);
 
     Job job = jobCaptor.getValue();
-    ResourceRequirements reqs = getContainer(job).getResources();
+    ResourceRequirements reqs =
+        getContainer(job).getResources();
     assertNotNull(reqs);
     assertEquals(
         new Quantity("2"), reqs.getRequests().get("cpu")
@@ -160,7 +223,8 @@ class KubernetesTargetTest {
     target.dispatch(JOB_ID, PREFIX, SIMULATION, 1);
 
     Job job = jobCaptor.getValue();
-    ResourceRequirements reqs = getContainer(job).getResources();
+    ResourceRequirements reqs =
+        getContainer(job).getResources();
     assertNull(reqs);
   }
 
@@ -198,20 +262,16 @@ class KubernetesTargetTest {
   }
 
   @Test
-  void dispatchSetsContainerCommand() throws Exception {
+  void dispatchUsesEntrypointScript() throws Exception {
     KubernetesTarget target = buildTarget(config);
 
     target.dispatch(JOB_ID, PREFIX, SIMULATION, 1);
 
     Job job = jobCaptor.getValue();
     Container container = getContainer(job);
-    assertEquals(
-        List.of("/bin/sh", "-c"), container.getCommand()
-    );
-    String args = container.getArgs().get(0);
-    assertTrue(args.contains("stageFromMinio"));
-    assertTrue(args.contains("/app/joshsim-fat.jar"));
-    assertTrue(args.contains("--replicates=1"));
+    List<String> command = container.getCommand();
+    assertEquals("/app/entrypoint.sh", command.get(0));
+    assertEquals("/app/joshsim-fat.jar", command.get(1));
   }
 
   private KubernetesTarget buildTarget(
@@ -260,7 +320,27 @@ class KubernetesTargetTest {
         .getContainers().get(0);
   }
 
-  private void assertEnvVar(
+  private void assertSecretEnvVar(
+      List<EnvVar> envVars,
+      String envName,
+      String secretName
+  ) {
+    EnvVar found = envVars.stream()
+        .filter(e -> envName.equals(e.getName()))
+        .findFirst()
+        .orElse(null);
+    assertNotNull(found, "Missing env var: " + envName);
+    assertNotNull(
+        found.getValueFrom(),
+        envName + " should use valueFrom"
+    );
+    assertEquals(
+        secretName,
+        found.getValueFrom().getSecretKeyRef().getName()
+    );
+  }
+
+  private void assertPlainEnvVar(
       List<EnvVar> envVars, String name, String value
   ) {
     EnvVar found = envVars.stream()
