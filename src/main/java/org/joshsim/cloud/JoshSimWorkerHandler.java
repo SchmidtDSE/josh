@@ -153,9 +153,7 @@ public class JoshSimWorkerHandler implements HttpHandler {
     boolean favorBigDecimal = Boolean.parseBoolean(
         formData.getFirst("favorBigDecimal").getValue()
     );
-    String outputStepsStr = formData.contains("outputSteps")
-        ? formData.getFirst("outputSteps").getValue() : "";
-    final Optional<Set<Integer>> outputSteps = parseOutputSteps(outputStepsStr);
+    final Optional<Set<Integer>> outputSteps = getOutputSteps(formData);
 
     boolean useProfiler = this.enableProfiler || getProfilerEnabled(formData);
 
@@ -214,15 +212,18 @@ public class JoshSimWorkerHandler implements HttpHandler {
   }
 
   /**
-   * Parses the output-steps parameter using the OutputStepsParser utility.
+   * Parse the output-steps form field from the request.
    *
-   * @param outputSteps Comma-separated string of step numbers to export
-   * @return Optional containing the set of steps to export, or empty if all steps
-   *     should be exported
-   * @throws RuntimeException if the output-steps format is invalid
+   * @param formData The form data submitted with the request.
+   * @return Optional set of step numbers to export, or empty if all steps should be exported.
    */
-  private static Optional<Set<Integer>> parseOutputSteps(String outputSteps) {
-    return OutputStepsParser.parseForWasmOrRemote(outputSteps);
+  private Optional<Set<Integer>> getOutputSteps(FormData formData) {
+    if (!formData.contains("outputSteps")) {
+      return OutputStepsParser.parseForWasmOrRemote("");
+    } else {
+      String outputStepsStr = formData.getFirst("outputSteps").getValue();
+      return OutputStepsParser.parseForWasmOrRemote(outputStepsStr);
+    }
   }
 
   /**
@@ -234,8 +235,10 @@ public class JoshSimWorkerHandler implements HttpHandler {
   private boolean getProfilerEnabled(FormData formData) {
     if (!formData.contains("enableProfiler")) {
       return false;
+    } else {
+      String value = formData.getFirst("enableProfiler").getValue();
+      return "true".equals(value);
     }
-    return "true".equals(formData.getFirst("enableProfiler").getValue());
   }
 
   private Optional<JoshProgram> executeInterpretation(ValueSupportFactory valueFactory,
