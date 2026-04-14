@@ -409,7 +409,69 @@ Added `io.fabric8:kubernetes-client:7.0.0` and `kubernetes-server-mock:7.0.0` (t
 
 **Risk: LOW — dependency conflicts did not materialize. No modifications to existing behavior.**
 
-### PR 8: Dockerfile + e2e integration
+### PR 8: Dockerfile + e2e integration + CI workflow
+**Branch: off `feat/k8s-batch`**
+
+Batch worker Docker image and end-to-end integration testing, both locally and in CI.
+
+**New files:**
+- `cloud-img/Dockerfile.batch` — batch worker image: `FROM eclipse-temurin:21-jre`, copies fat jar + `entrypoint.sh`
+- `.github/workflows/test-k8s.yaml` — K8s integration test workflow (pattern follows `test-minio.yaml`)
+
+**Dockerfile.batch:**
+```dockerfile
+FROM eclipse-temurin:21-jre
+COPY build/libs/joshsim-fat.jar /app/joshsim-fat.jar
+COPY cloud-img/entrypoint.sh /app/entrypoint.sh
+RUN chmod +x /app/entrypoint.sh
+ENTRYPOINT ["/app/entrypoint.sh"]
+```
+
+**CI workflow (`test-k8s.yaml`) — end-to-end with live Kind cluster + MinIO:**
+
+Same trigger pattern as `test-minio.yaml` (push to main/dev, PRs). Uses GitHub Actions services for MinIO and [Kind](https://kind.sigs.k8s.io/) for a real K8s cluster.
+
+```
+Steps:
+1. Checkout + setup Java 21
+2. Start MinIO service container (same as test-minio.yaml)
+3. ./gradlew fatJar
+4. Build batch worker image: docker build -f cloud-img/Dockerfile.batch -t joshsim-batch:ci .
+5. Create Kind cluster: kind create cluster
+6. Load image into Kind: kind load docker-image joshsim-batch:ci
+7. Deploy MinIO inside Kind (or expose host MinIO to pods via Kind networking)
+8. Create target profile (~/.josh/targets/ci-k8s.json) pointing at Kind cluster
+9. Run batchRemote e2e:
+   - Stage test simulation to MinIO
+   - joshsim batchRemote sim.josh Main --target=ci-k8s --replicates=2 --timeout=120
+   - Verify results in MinIO via mc stat
+   - Verify K8s Job completed: kubectl get jobs
+10. Test failure detection:
+    - Submit job with bad image → verify KubernetesPollingStrategy reports ImagePullBackOff
+    - Submit job with tight memory limit → verify OOMKilled detection
+11. Cleanup: kind delete cluster
+```
+
+**Key design considerations:**
+- MinIO must be reachable from inside Kind pods. Options: (a) deploy MinIO as a K8s Deployment+Service inside Kind, or (b) use Kind's `extraPortMappings` + host.docker.internal. Option (a) is more realistic.
+- The batch worker image needs the fat jar built first — `docker build` step depends on `./gradlew fatJar`
+- Kind cluster creation takes ~30s, acceptable for CI
+- Test timeout should be generous (pods need to pull image from Kind's local registry)
+
+**Modify:**
+- `cloud/JoshSimServer.java` — no changes (server already has `/runBatch`)
+- `build.gradle` — optional: add `testKubernetes` Gradle task for running K8s integration tests separately
+
+**Test:**
+- [ ] `docker build -f cloud-img/Dockerfile.batch` succeeds
+- [ ] `entrypoint.sh` runs correctly inside container (manual: `docker run --rm joshsim-batch:ci /app/entrypoint.sh --help`)
+- [ ] `batchRemote --target=ci-k8s --replicates=2` completes in Kind cluster
+- [ ] Results appear in MinIO
+- [ ] KubernetesPollingStrategy detects ImagePullBackOff for bad image
+- [ ] KubernetesPollingStrategy detects OOMKilled for tight memory limit
+- [ ] `./gradlew test`, `./gradlew checkstyleMain`, `./gradlew fatJar` still pass
+
+**Risk: MEDIUM — Kind + Docker-in-Docker in CI can be flaky. MinIO-in-Kind networking needs testing.**
 
 ### PR 9: `preprocessBatch` — remote preprocessing via target profiles
 
