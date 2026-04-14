@@ -80,7 +80,7 @@ Used for `KubernetesTarget` only. Cleaner fluent DSL than official `io.kubernete
 ## PR Plan
 
 ```
-PR1 ✅ → PR2 ✅ → PR3 ✅ (cleanup) → PR4 ✅ (/runBatch) → PR4a ✅ (stageFromMinio opt-in) → PR4b ✅ (async+status) → PR5 (profiles) → PR6 (batchRemote) → PR7 (K8sTarget) → PR8 (Dockerfile) → PR9 (preprocessBatch)
+PR1 ✅ → PR2 ✅ → PR3 ✅ (cleanup) → PR4 ✅ (/runBatch) → PR4a ✅ (stageFromMinio opt-in) → PR4b ✅ (async+status) → PR5 (profiles+polling) → PR6 (batchRemote+HttpTarget) → PR7 (Fabric8+K8sTarget+K8sPolling) → PR8 (Dockerfile) → PR9 (preprocessBatch)
 ```
 
 ### Regression gates (every PR)
@@ -221,22 +221,98 @@ Status writes are best-effort — missing MinIO credentials don't prevent simula
 
 ---
 
-### PR 5: Fabric8 dependency + target profile system
-**Branch: `feat/k8s-target-profiles`**
+### PR 5: Target profile system + polling strategy interfaces
+**Branch: `feat/target-profiles`**
 
-Add `io.fabric8:kubernetes-client:7.0.0` to build.gradle. New files: `TargetProfile`, `HttpTargetConfig`, `KubernetesTargetConfig`, `TargetProfileLoader`. The loader reads `~/.josh/targets/<name>.json` and returns a `RemoteBatchTarget`.
+Target profiles, dispatch interface, and polling strategy. No new dependencies — Fabric8 deferred to PR 7 where it's consumed. All new files, nothing modified except tests.
 
-**Risk: HIGH (Fabric8 dep conflicts) — verify with `./gradlew dependencies` first**
+**Package: `org.joshsim.pipeline.target`** (alongside existing `pipeline/remote/`)
+
+**New files:**
+
+Interfaces:
+- `RemoteBatchTarget.java` — dispatch interface, one method: `dispatch(String jobId, String minioPrefix, String simulation)`
+- `BatchPollingStrategy.java` — status polling interface: `poll(String jobId)` returns `JobStatus`
+- `JobStatus.java` — polling result: status enum (`PENDING`, `RUNNING`, `COMPLETE`, `ERROR`) + optional message + optional timestamp
+
+Profile loading:
+- `TargetProfile.java` — parsed JSON profile. Fields: `type` (discriminator), `httpConfig`, `kubernetesConfig`, MinIO creds (`minioEndpoint`, `minioAccessKey`, `minioSecretKey`, `minioBucket`)
+- `HttpTargetConfig.java` — `endpoint`, `apiKey`
+- `KubernetesTargetConfig.java` — `context`, `namespace`, `image`, `resources` (map), `parallelism`, `timeoutSeconds`
+- `TargetProfileLoader.java` — reads `~/.josh/targets/<name>.json`, returns `TargetProfile`. Uses Jackson `ObjectMapper` (already a transitive dep via MinIO SDK)
+
+Polling:
+- `MinioPollingStrategy.java` — implements `BatchPollingStrategy`. Reads `batch-status/<jobId>/status.json` from MinIO. This is the default strategy — works for all target types. Later, `KubernetesPollingStrategy` (PR 7) can check K8s Job status API for infrastructure-level failures (OOMKill, scheduling failures, image pull errors) that never reach the status file.
+
+**Design decisions:**
+- **No `HierarchyConfig` reuse.** Target profiles are loaded from a specific JSON file, not from CLI/env/config hierarchy. The profile IS the config. Different targets = different profiles.
+- **Fabric8 deferred.** `KubernetesTargetConfig` is just a data class — stores config values, doesn't call K8s APIs. Fabric8 only needed in PR 7 when `KubernetesTarget.dispatch()` actually creates K8s Jobs.
+- **Polling is composable.** `BatchPollingStrategy` is a separate concern from dispatch. HTTP and K8s targets both default to `MinioPollingStrategy`. PR 7 adds `KubernetesPollingStrategy` for richer error info (pod OOMKill, scheduling failures — important for HPC simulations with emergent memory behavior).
+- **Target profiles hold MinIO creds.** Each profile is self-contained. No env var fallback — if you want different creds, make a different profile.
+
+**Target profile JSON format (`~/.josh/targets/<name>.json`):**
+
+HTTP:
+```json
+{
+  "type": "http",
+  "http": { "endpoint": "https://josh-executor-prod-....run.app", "apiKey": "..." },
+  "minio_endpoint": "https://storage.googleapis.com",
+  "minio_access_key": "...", "minio_secret_key": "...", "minio_bucket": "josh-storage"
+}
+```
+
+Kubernetes:
+```json
+{
+  "type": "kubernetes",
+  "kubernetes": {
+    "context": "nautilus", "namespace": "joshsim-lab",
+    "image": "ghcr.io/schmidtdse/joshsim-job:latest",
+    "resources": { "requests": { "cpu": "2", "memory": "4Gi" }, "limits": { "memory": "256Gi" } },
+    "parallelism": 10, "timeoutSeconds": 3600
+  },
+  "minio_endpoint": "...", "minio_access_key": "...", "minio_secret_key": "...", "minio_bucket": "..."
+}
+```
+
+**Test:**
+- [ ] `TargetProfileLoader` — loads HTTP profile, loads K8s profile, handles missing file, handles malformed JSON
+- [ ] `MinioPollingStrategy` — parses running/complete/error status, handles missing status file, handles null MinIO handler
+- [ ] `JobStatus` — enum values, message extraction
+- [ ] `./gradlew test` passes, `./gradlew checkstyleMain` passes
+
+**Risk: LOW — all new files, no new dependencies, no modifications to existing code**
+
+---
 
 ### PR 6: `batchRemote` command + HttpBatchTarget + BatchJobStrategy
 **Branch: `feat/batch-remote`**
 
-New top-level command. Uses `BatchJobStrategy` (target-agnostic orchestration) with `HttpBatchTarget` as first implementation (POST to `/runBatch`). Does NOT touch `runRemote`.
+New top-level CLI command. `BatchJobStrategy` orchestrates the full flow (stage → dispatch → poll). `HttpBatchTarget` is the first `RemoteBatchTarget` implementation — POSTs to `/runBatch`. Uses `MinioPollingStrategy` from PR 5 for status tracking. Does NOT touch `runRemote`.
 
-### PR 7: KubernetesTarget with Fabric8
+**New files:**
+- `target/HttpBatchTarget.java` — implements `RemoteBatchTarget`, POSTs to `/runBatch` endpoint from target profile
+- `target/BatchJobStrategy.java` — orchestrator: `stageToMinio` → `target.dispatch()` → poll loop via `BatchPollingStrategy` → report results
+- `command/BatchRemoteCommand.java` — picocli command, `--target=<name>` flag loads profile via `TargetProfileLoader`
+
+**Modify:**
+- `JoshSimCommander.java` — register `BatchRemoteCommand` subcommand
+
+**User experience:**
+```bash
+joshsim batchRemote simulation.josh Main --target=cloudrun-prod --replicates=10
+joshsim batchRemote simulation.josh Main --target=cloudrun-prod --replicates=10 --no-wait
+```
+
+---
+
+### PR 7: Fabric8 dependency + KubernetesTarget + KubernetesPollingStrategy
 **Branch: `feat/k8s-target-impl`**
 
-Implements `RemoteBatchTarget` for K8s indexed Jobs. Plugs into same `BatchJobStrategy`.
+Add `io.fabric8:kubernetes-client:7.0.0` to build.gradle. Implements `RemoteBatchTarget` for K8s indexed Jobs and `KubernetesPollingStrategy` for native Job status (catches OOMKill, scheduling failures, image pull errors that never reach MinIO status file).
+
+**Verify with `./gradlew dependencies` before writing code — Fabric8 dep conflicts are HIGH risk.**
 
 ### PR 8: Dockerfile + e2e integration
 
@@ -283,7 +359,8 @@ Implements `RemoteBatchTarget` for K8s indexed Jobs. Plugs into same `BatchJobSt
 
 | Risk | Level | Mitigation |
 |------|-------|------------|
-| Fabric8 dep conflicts | **HIGH** | Verify with `./gradlew dependencies` before code (PR 5) |
-| `--upload-*` removal | MEDIUM | joshpy bottling supersedes; `stageToMinio` covers explicit uploads |
-| K8s Job failure cases | MEDIUM | `backoffLimit: 3` + `activeDeadlineSeconds` + poll |
-| MinIO cred passing | MEDIUM | Env vars via HierarchyConfig; K8s Secrets later |
+| Fabric8 dep conflicts | **HIGH** | Deferred to PR 7 (not PR 5). Verify with `./gradlew dependencies` before code |
+| `--upload-*` removal | ~~MEDIUM~~ DONE | Completed in PR 3. joshpy bottling supersedes; `stageToMinio` covers explicit uploads |
+| K8s Job failure cases | MEDIUM | `backoffLimit: 3` + `activeDeadlineSeconds` + `KubernetesPollingStrategy` for native status (OOMKill, scheduling) |
+| MinIO cred passing | MEDIUM | Target profiles hold creds directly; K8s Secrets later |
+| Emergent memory behavior | MEDIUM | K8s polling (PR 7) catches OOMKill that MinIO status misses — critical for HPC-scale ecological sims |

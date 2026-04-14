@@ -111,6 +111,19 @@ test {
     exceptionFormat = "full"
   }
   exclude 'org/joshsim/conformance/**'
+  exclude '**/MinioPollingStrategyIntegrationTest*'
+}
+
+// MinIO integration tests — requires MinIO env vars (run in test-minio.yaml CI workflow)
+task testMinioPolling(type: Test) {
+  description = 'Runs MinioPollingStrategy integration tests against a live MinIO instance'
+  group = 'verification'
+  useJUnitPlatform()
+  include '**/MinioPollingStrategyIntegrationTest*'
+  testLogging {
+    events "passed", "skipped", "failed"
+    exceptionFormat = "full"
+  }
 }
 
 // JUnit resource assets for tests.
