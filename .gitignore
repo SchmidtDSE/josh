@@ -73,3 +73,4 @@ jotr
 
 # Joshpy bottles (compressed archives and extracted debug sessions)
 joshpy-bottles/
+!joshpy-bottles/README.md
