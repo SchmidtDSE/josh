@@ -118,57 +118,17 @@ jobs:
           }
           echo "MinIO accessible at localhost:9000"
 
-      - name: Create test simulation
-        run: |
-          mkdir -p /tmp/k8s-e2e-test
-          cat > /tmp/k8s-e2e-test/k8s_test.josh << 'JOSH'
-          start simulation K8sTest
-            grid.size = 100 m
-            grid.low = 0 degrees latitude, 0 degrees longitude
-            grid.high = 0.01 degrees latitude, 0.01 degrees longitude
-            grid.patch = "Default"
-            steps.low = 0 count
-            steps.high = 2 count
-            exportFiles.patch = "minio://josh-test-bucket/k8s-e2e-results/results.csv"
-          end simulation
-
-          start patch Default
-            Tree.init = create 3 count of Tree
-            export.treeCount.step = count(Tree)
-          end patch
-
-          start organism Tree
-            age.init = 0 count
-            age.step = prior.age + 1 count
-          end organism
-          JOSH
-
-      - name: Create K8s target profile
+      - name: Install target profiles
         run: |
           mkdir -p ~/.josh/targets
-          cat > ~/.josh/targets/ci-k8s.json << 'PROFILE'
-          {
-            "type": "kubernetes",
-            "kubernetes": {
-              "context": "kind-kind",
-              "namespace": "default",
-              "image": "joshsim-batch:ci",
-              "parallelism": 2,
-              "timeoutSeconds": 300,
-              "pod_minio_endpoint": "http://minio.default.svc:9000"
-            },
-            "minio_endpoint": "http://localhost:9000",
-            "minio_access_key": "minioadmin",
-            "minio_secret_key": "minioadmin",
-            "minio_bucket": "josh-test-bucket"
-          }
-          PROFILE
+          cp examples/test/k8s/ci-k8s-profile.json ~/.josh/targets/ci-k8s.json
+          cp examples/test/k8s/ci-k8s-bad-image-profile.json ~/.josh/targets/ci-k8s-bad-image.json
 
       - name: Run batchRemote end-to-end
         run: |
           echo "Running batchRemote with K8s target..."
           java -jar build/libs/joshsim-fat.jar batchRemote \
-            /tmp/k8s-e2e-test/ K8sTest \
+            examples/test/k8s/ K8sTest \
             --target=ci-k8s \
             --replicates=2 \
             --poll-interval=5 \
@@ -214,28 +174,11 @@ jobs:
         run: |
           set -o pipefail
           echo "Testing ImagePullBackOff detection..."
-          cat > ~/.josh/targets/ci-k8s-bad-image.json << 'PROFILE'
-          {
-            "type": "kubernetes",
-            "kubernetes": {
-              "context": "kind-kind",
-              "namespace": "default",
-              "image": "nonexistent-registry.example.com/no-such-image:v999",
-              "parallelism": 1,
-              "timeoutSeconds": 180,
-              "pod_minio_endpoint": "http://minio.default.svc:9000"
-            },
-            "minio_endpoint": "http://localhost:9000",
-            "minio_access_key": "minioadmin",
-            "minio_secret_key": "minioadmin",
-            "minio_bucket": "josh-test-bucket"
-          }
-          PROFILE
 
           # batchRemote should fail — capture exit code through tee
           EXIT_CODE=0
           java -jar build/libs/joshsim-fat.jar batchRemote \
-            /tmp/k8s-e2e-test/ K8sTest \
+            examples/test/k8s/ K8sTest \
             --target=ci-k8s-bad-image \
             --replicates=1 \
             --poll-interval=10 \

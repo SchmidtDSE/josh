@@ -1,0 +1,15 @@
+{
+  "type": "kubernetes",
+  "kubernetes": {
+    "context": "kind-kind",
+    "namespace": "default",
+    "image": "nonexistent-registry.example.com/no-such-image:v999",
+    "parallelism": 1,
+    "timeoutSeconds": 180,
+    "pod_minio_endpoint": "http://minio.default.svc:9000"
+  },
+  "minio_endpoint": "http://localhost:9000",
+  "minio_access_key": "minioadmin",
+  "minio_secret_key": "minioadmin",
+  "minio_bucket": "josh-test-bucket"
+}
