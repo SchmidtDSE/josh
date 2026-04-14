@@ -37,10 +37,11 @@ jobs:
       - name: Create Kind cluster
         uses: helm/kind-action@ef37e7f390d99f746eb8b610417061a60e82a6cc # v1.14.0
         with:
+          cluster_name: kind
           wait: 300s
 
       - name: Load batch image into Kind
-        run: kind load docker-image joshsim-batch:ci
+        run: kind load docker-image joshsim-batch:ci --name kind
 
       - name: Deploy MinIO inside Kind
         run: |
