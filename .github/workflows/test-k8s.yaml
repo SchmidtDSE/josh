@@ -1,0 +1,278 @@
+name: Kubernetes Integration Tests
+
+on:
+  push:
+    branches:
+      - main
+      - dev
+  pull_request:
+
+jobs:
+  test-k8s-batch:
+    runs-on: ubuntu-latest
+    name: Test K8s Batch Execution
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+
+      - name: Setup Java
+        uses: actions/setup-java@be666c2fcd27ec809703dec50e508c2fdc7f6654 # v5.2.0
+        with:
+          distribution: 'temurin'
+          java-version: '21'
+
+      - name: Setup netCDF
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libnetcdf-dev
+
+      - name: Build fat jar
+        run: ./gradlew fatJar
+
+      - name: Build batch worker image
+        run: docker build -f cloud-img/Dockerfile.batch -t joshsim-batch:ci .
+
+      - name: Create Kind cluster
+        uses: helm/kind-action@ef37e7f390d99f746eb8b610417061a60e82a6cc # v1.14.0
+        with:
+          wait: 300s
+
+      - name: Load batch image into Kind
+        run: kind load docker-image joshsim-batch:ci
+
+      - name: Deploy MinIO inside Kind
+        run: |
+          kubectl apply -f - <<'EOF'
+          apiVersion: apps/v1
+          kind: Deployment
+          metadata:
+            name: minio
+            labels:
+              app: minio
+          spec:
+            replicas: 1
+            selector:
+              matchLabels:
+                app: minio
+            template:
+              metadata:
+                labels:
+                  app: minio
+              spec:
+                containers:
+                - name: minio
+                  image: minio/minio:latest
+                  args: ["server", "/data"]
+                  env:
+                  - name: MINIO_ROOT_USER
+                    value: minioadmin
+                  - name: MINIO_ROOT_PASSWORD
+                    value: minioadmin
+                  ports:
+                  - containerPort: 9000
+                  readinessProbe:
+                    httpGet:
+                      path: /minio/health/ready
+                      port: 9000
+                    initialDelaySeconds: 5
+                    periodSeconds: 5
+          ---
+          apiVersion: v1
+          kind: Service
+          metadata:
+            name: minio
+          spec:
+            selector:
+              app: minio
+            ports:
+            - port: 9000
+              targetPort: 9000
+          EOF
+
+          echo "Waiting for MinIO pod to be ready..."
+          kubectl wait --for=condition=ready pod -l app=minio --timeout=120s
+
+      - name: Create MinIO test bucket
+        run: |
+          MINIO_POD=$(kubectl get pod -l app=minio -o jsonpath='{.items[0].metadata.name}')
+
+          # Install mc inside the MinIO pod and create bucket
+          kubectl exec $MINIO_POD -- sh -c '
+            curl -sL https://dl.min.io/client/mc/release/linux-amd64/mc -o /tmp/mc &&
+            chmod +x /tmp/mc &&
+            /tmp/mc alias set local http://localhost:9000 minioadmin minioadmin &&
+            /tmp/mc mb local/josh-test-bucket
+          '
+
+      - name: Port-forward MinIO to host
+        run: |
+          kubectl port-forward svc/minio 9000:9000 &
+          sleep 2
+          # Verify port-forward works
+          curl -sf http://localhost:9000/minio/health/ready || {
+            echo "Port-forward failed"
+            exit 1
+          }
+          echo "MinIO accessible at localhost:9000"
+
+      - name: Create test simulation
+        run: |
+          mkdir -p /tmp/k8s-e2e-test
+          cat > /tmp/k8s-e2e-test/k8s_test.josh << 'JOSH'
+          start simulation K8sTest
+            grid.size = 100 m
+            grid.low = 0 degrees latitude, 0 degrees longitude
+            grid.high = 0.01 degrees latitude, 0.01 degrees longitude
+            grid.patch = "Default"
+            steps.low = 0 count
+            steps.high = 2 count
+            exportFiles.patch = "minio://josh-test-bucket/k8s-e2e-results/results.csv"
+          end simulation
+
+          start patch Default
+            Tree.init = create 3 count of Tree
+            export.treeCount.step = count(Tree)
+          end patch
+
+          start organism Tree
+            age.init = 0 count
+            age.step = prior.age + 1 count
+          end organism
+          JOSH
+
+      - name: Create K8s target profile
+        run: |
+          mkdir -p ~/.josh/targets
+          cat > ~/.josh/targets/ci-k8s.json << 'PROFILE'
+          {
+            "type": "kubernetes",
+            "kubernetes": {
+              "context": "kind-kind",
+              "namespace": "default",
+              "image": "joshsim-batch:ci",
+              "parallelism": 2,
+              "timeoutSeconds": 300,
+              "pod_minio_endpoint": "http://minio.default.svc:9000"
+            },
+            "minio_endpoint": "http://localhost:9000",
+            "minio_access_key": "minioadmin",
+            "minio_secret_key": "minioadmin",
+            "minio_bucket": "josh-test-bucket"
+          }
+          PROFILE
+
+      - name: Run batchRemote end-to-end
+        run: |
+          echo "Running batchRemote with K8s target..."
+          java -jar build/libs/joshsim-fat.jar batchRemote \
+            /tmp/k8s-e2e-test/ K8sTest \
+            --target=ci-k8s \
+            --replicates=2 \
+            --poll-interval=5 \
+            --timeout=300
+
+          echo "batchRemote completed successfully"
+
+      - name: Verify K8s Job completed
+        run: |
+          echo "Checking K8s Jobs..."
+          kubectl get jobs
+          echo "---"
+          kubectl get pods
+          echo "---"
+
+          # Verify at least one job exists with completions
+          SUCCEEDED=$(kubectl get jobs -o jsonpath='{.items[0].status.succeeded}')
+          if [ "$SUCCEEDED" -ge 1 ]; then
+            echo "K8s Job completed with $SUCCEEDED succeeded pods"
+          else
+            echo "K8s Job did not complete as expected"
+            kubectl describe jobs
+            exit 1
+          fi
+
+      - name: Verify results in MinIO
+        run: |
+          MINIO_POD=$(kubectl get pod -l app=minio -o jsonpath='{.items[0].metadata.name}')
+
+          echo "Checking results in MinIO..."
+          kubectl exec $MINIO_POD -- /tmp/mc ls local/josh-test-bucket/k8s-e2e-results/
+
+          # Verify results CSV exists and is non-empty
+          SIZE=$(kubectl exec $MINIO_POD -- /tmp/mc stat local/josh-test-bucket/k8s-e2e-results/results.csv --json 2>/dev/null | grep -o '"size":[0-9]*' | cut -d':' -f2)
+          if [ "$SIZE" -gt 0 ]; then
+            echo "Results CSV found in MinIO ($SIZE bytes)"
+          else
+            echo "Results CSV empty or missing"
+            exit 1
+          fi
+
+      - name: Test failure detection - bad image
+        run: |
+          echo "Testing ImagePullBackOff detection..."
+          cat > ~/.josh/targets/ci-k8s-bad-image.json << 'PROFILE'
+          {
+            "type": "kubernetes",
+            "kubernetes": {
+              "context": "kind-kind",
+              "namespace": "default",
+              "image": "nonexistent-registry.example.com/no-such-image:v999",
+              "parallelism": 1,
+              "timeoutSeconds": 60,
+              "pod_minio_endpoint": "http://minio.default.svc:9000"
+            },
+            "minio_endpoint": "http://localhost:9000",
+            "minio_access_key": "minioadmin",
+            "minio_secret_key": "minioadmin",
+            "minio_bucket": "josh-test-bucket"
+          }
+          PROFILE
+
+          # This should fail with an image pull error
+          if java -jar build/libs/joshsim-fat.jar batchRemote \
+            /tmp/k8s-e2e-test/ K8sTest \
+            --target=ci-k8s-bad-image \
+            --replicates=1 \
+            --poll-interval=5 \
+            --timeout=90 2>&1 | tee /tmp/bad-image-output.txt; then
+            echo "ERROR: batchRemote should have failed for bad image"
+            exit 1
+          fi
+
+          # Verify the error mentions image pull
+          if grep -qi "ImagePull\|ErrImage\|image" /tmp/bad-image-output.txt; then
+            echo "Image pull failure detected correctly"
+          else
+            echo "Warning: error detected but message may not mention image pull"
+            cat /tmp/bad-image-output.txt
+          fi
+
+      - name: Collect logs on failure
+        if: failure()
+        run: |
+          echo "=== K8s Jobs ==="
+          kubectl get jobs -o wide
+          echo "=== K8s Pods ==="
+          kubectl get pods -o wide
+          echo "=== Pod Logs ==="
+          kubectl logs -l app=joshsim --all-containers=true --tail=50 2>/dev/null || true
+          echo "=== Job Descriptions ==="
+          kubectl describe jobs 2>/dev/null || true
+          echo "=== MinIO Pod Logs ==="
+          kubectl logs -l app=minio --tail=20 2>/dev/null || true
+
+      - name: Test summary
+        if: always()
+        run: |
+          echo "================================================"
+          echo "Kubernetes Integration Test Summary"
+          echo "================================================"
+          echo "  Kind cluster creation"
+          echo "  Batch worker image build + load"
+          echo "  MinIO deployment inside Kind"
+          echo "  batchRemote e2e (K8s target, 2 replicates)"
+          echo "  Job completion verification"
+          echo "  Results verification in MinIO"
+          echo "  Failure detection (bad image)"
+          echo "================================================"
