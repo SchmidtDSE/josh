@@ -80,7 +80,7 @@ Used for `KubernetesTarget` only. Cleaner fluent DSL than official `io.kubernete
 ## PR Plan
 
 ```
-PR1 ✅ → PR2 ✅ → PR3 ✅ (cleanup) → PR4 ✅ (/runBatch) → PR4a ✅ (stageFromMinio opt-in) → PR4b ✅ (async+status) → PR5 ✅ (profiles+polling) → PR6 (batchRemote+HttpTarget) → PR7 (Fabric8+K8sTarget+K8sPolling) → PR8 (Dockerfile) → PR9 (preprocessBatch)
+PR1 ✅ → PR2 ✅ → PR3 ✅ (cleanup) → PR4 ✅ (/runBatch) → PR4a ✅ (stageFromMinio opt-in) → PR4b ✅ (async+status) → PR5 ✅ (profiles+polling) → PR6 ✅ (batchRemote+HttpTarget) → PR7 ✅ (Fabric8+K8sTarget+K8sPolling) → PR8 (Dockerfile) → PR9 (preprocessBatch)
 ```
 
 ### Regression gates (every PR)
@@ -286,7 +286,7 @@ Kubernetes:
 
 ---
 
-### PR 6: `batchRemote` command + HttpBatchTarget + BatchJobStrategy
+### PR 6 ✅: `batchRemote` command + HttpBatchTarget + BatchJobStrategy — #394
 **Branch: `feat/batch-remote`**
 
 The client-side command that ties everything together. `BatchRemoteCommand` is the picocli entry point, `BatchJobStrategy` orchestrates stage → dispatch → poll, and `HttpBatchTarget` is the first `RemoteBatchTarget` implementation (POST to `/runBatch`). No new dependencies — uses `java.net.http.HttpClient` (already used in `RunRemoteOffloadLeaderStrategy`).
@@ -379,14 +379,99 @@ Results in MinIO via minio:// export paths in simulation.josh
 
 ---
 
-### PR 7: Fabric8 dependency + KubernetesTarget + KubernetesPollingStrategy
-**Branch: `feat/k8s-target-impl`**
+### PR 7 ✅: Fabric8 dependency + KubernetesTarget + KubernetesPollingStrategy
+**Branch: `feat/k8s-target`**
 
-Add `io.fabric8:kubernetes-client:7.0.0` to build.gradle. Implements `RemoteBatchTarget` for K8s indexed Jobs and `KubernetesPollingStrategy` for native Job status (catches OOMKill, scheduling failures, image pull errors that never reach MinIO status file).
+Added `io.fabric8:kubernetes-client:7.0.0` and `kubernetes-server-mock:7.0.0` (test). Implements `RemoteBatchTarget` for K8s indexed Jobs and `KubernetesPollingStrategy` for native Job status API polling.
 
-**Verify with `./gradlew dependencies` before writing code — Fabric8 dep conflicts are HIGH risk.**
+**Dependency risk turned out to be LOW** (not HIGH). Fabric8 7.0.0 uses Jackson 2.18.2 (same as Josh), Vert.x HTTP transport (not OkHttp), SLF4J 2.0.16 → resolved to 2.0.17. Zero conflicts.
 
-### PR 8: Dockerfile + e2e integration
+**New files:**
+- `pipeline/target/KubernetesTarget.java` (~220 lines) — creates K8s indexed Jobs via Fabric8 fluent API. `completionMode: Indexed`, each pod runs 1 replicate. MinIO creds passed as env vars (picked up by `HierarchyConfig` automatically). Container command: `stageFromMinio → find .josh → run`.
+- `pipeline/target/KubernetesPollingStrategy.java` (~230 lines) — reads K8s Job API. Detects infrastructure failures on Job failure only (minimizes API chatter): OOMKill, ImagePullBackOff, scheduling failures, DeadlineExceeded, BackoffLimitExceeded.
+
+**Modified files:**
+- `build.gradle` — Fabric8 deps
+- `pipeline/target/KubernetesTargetConfig.java` — added `jarPath` field (default `/app/joshsim-fat.jar`)
+- `command/BatchRemoteCommand.java` — added "kubernetes" case in `buildTarget()`, `buildPoller()` selects `KubernetesPollingStrategy` for K8s targets
+
+**Key design decisions:**
+- **MinIO creds to KubernetesTarget**: passed as explicit strings from `TargetProfile`, keeping `KubernetesTarget` decoupled from profile parsing
+- **Client sharing**: `KubernetesTarget.getClient()` shared with `KubernetesPollingStrategy` — one connection per cluster
+- **Pod inspection only on failure**: `extractFailureReason()` lists pods only when Job condition is `Failed`, not on every poll
+- **Container jar path configurable**: `jarPath` field in `KubernetesTargetConfig` for custom container images
+
+**Test:**
+- [x] 8 unit tests for `KubernetesTarget` (Job spec, env vars, resources, parallelism cap, name format, command)
+- [x] 9 unit tests for `KubernetesPollingStrategy` (PENDING, RUNNING, COMPLETE, ERROR, DeadlineExceeded, BackoffLimitExceeded, OOMKill, ImagePull, scheduling)
+- [x] All tests use Mockito (Fabric8 mock server has JDK 21 SSL compat issues)
+- [x] `./gradlew test` passes, `./gradlew checkstyleMain checkstyleTest` passes, `./gradlew fatJar` builds
+
+**Risk: LOW — dependency conflicts did not materialize. No modifications to existing behavior.**
+
+### PR 8: Dockerfile + e2e integration + CI workflow
+**Branch: off `feat/k8s-batch`**
+
+Batch worker Docker image and end-to-end integration testing, both locally and in CI.
+
+**New files:**
+- `cloud-img/Dockerfile.batch` — batch worker image: `FROM eclipse-temurin:21-jre`, copies fat jar + `entrypoint.sh`
+- `.github/workflows/test-k8s.yaml` — K8s integration test workflow (pattern follows `test-minio.yaml`)
+
+**Dockerfile.batch:**
+```dockerfile
+FROM eclipse-temurin:21-jre
+COPY build/libs/joshsim-fat.jar /app/joshsim-fat.jar
+COPY cloud-img/entrypoint.sh /app/entrypoint.sh
+RUN chmod +x /app/entrypoint.sh
+ENTRYPOINT ["/app/entrypoint.sh"]
+```
+
+**CI workflow (`test-k8s.yaml`) — end-to-end with live Kind cluster + MinIO:**
+
+Same trigger pattern as `test-minio.yaml` (push to main/dev, PRs). Uses GitHub Actions services for MinIO and [Kind](https://kind.sigs.k8s.io/) for a real K8s cluster.
+
+```
+Steps:
+1. Checkout + setup Java 21
+2. Start MinIO service container (same as test-minio.yaml)
+3. ./gradlew fatJar
+4. Build batch worker image: docker build -f cloud-img/Dockerfile.batch -t joshsim-batch:ci .
+5. Create Kind cluster: kind create cluster
+6. Load image into Kind: kind load docker-image joshsim-batch:ci
+7. Deploy MinIO inside Kind (or expose host MinIO to pods via Kind networking)
+8. Create target profile (~/.josh/targets/ci-k8s.json) pointing at Kind cluster
+9. Run batchRemote e2e:
+   - Stage test simulation to MinIO
+   - joshsim batchRemote sim.josh Main --target=ci-k8s --replicates=2 --timeout=120
+   - Verify results in MinIO via mc stat
+   - Verify K8s Job completed: kubectl get jobs
+10. Test failure detection:
+    - Submit job with bad image → verify KubernetesPollingStrategy reports ImagePullBackOff
+    - Submit job with tight memory limit → verify OOMKilled detection
+11. Cleanup: kind delete cluster
+```
+
+**Key design considerations:**
+- MinIO must be reachable from inside Kind pods. Options: (a) deploy MinIO as a K8s Deployment+Service inside Kind, or (b) use Kind's `extraPortMappings` + host.docker.internal. Option (a) is more realistic.
+- The batch worker image needs the fat jar built first — `docker build` step depends on `./gradlew fatJar`
+- Kind cluster creation takes ~30s, acceptable for CI
+- Test timeout should be generous (pods need to pull image from Kind's local registry)
+
+**Modify:**
+- `cloud/JoshSimServer.java` — no changes (server already has `/runBatch`)
+- `build.gradle` — optional: add `testKubernetes` Gradle task for running K8s integration tests separately
+
+**Test:**
+- [ ] `docker build -f cloud-img/Dockerfile.batch` succeeds
+- [ ] `entrypoint.sh` runs correctly inside container (manual: `docker run --rm joshsim-batch:ci /app/entrypoint.sh --help`)
+- [ ] `batchRemote --target=ci-k8s --replicates=2` completes in Kind cluster
+- [ ] Results appear in MinIO
+- [ ] KubernetesPollingStrategy detects ImagePullBackOff for bad image
+- [ ] KubernetesPollingStrategy detects OOMKilled for tight memory limit
+- [ ] `./gradlew test`, `./gradlew checkstyleMain`, `./gradlew fatJar` still pass
+
+**Risk: MEDIUM — Kind + Docker-in-Docker in CI can be flaky. MinIO-in-Kind networking needs testing.**
 
 ### PR 9: `preprocessBatch` — remote preprocessing via target profiles
 
@@ -431,7 +516,7 @@ Add `io.fabric8:kubernetes-client:7.0.0` to build.gradle. Implements `RemoteBatc
 
 | Risk | Level | Mitigation |
 |------|-------|------------|
-| Fabric8 dep conflicts | **HIGH** | Deferred to PR 7 (not PR 5). Verify with `./gradlew dependencies` before code |
+| Fabric8 dep conflicts | ~~HIGH~~ **DONE** | Resolved in PR 7 — zero conflicts (Jackson 2.18.2, SLF4J 2.0.17, Vert.x transport) |
 | `--upload-*` removal | ~~MEDIUM~~ DONE | Completed in PR 3. joshpy bottling supersedes; `stageToMinio` covers explicit uploads |
 | K8s Job failure cases | MEDIUM | `backoffLimit: 3` + `activeDeadlineSeconds` + `KubernetesPollingStrategy` for native status (OOMKill, scheduling) |
 | MinIO cred passing | MEDIUM | Target profiles hold creds directly; K8s Secrets later |
