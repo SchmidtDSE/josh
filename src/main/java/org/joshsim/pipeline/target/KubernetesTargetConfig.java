@@ -40,6 +40,9 @@ public class KubernetesTargetConfig {
   @JsonProperty("timeoutSeconds")
   private int timeoutSeconds;
 
+  @JsonProperty("jarPath")
+  private String jarPath;
+
   /**
    * Default constructor for Jackson deserialization.
    */
@@ -101,5 +104,20 @@ public class KubernetesTargetConfig {
    */
   public int getTimeoutSeconds() {
     return timeoutSeconds;
+  }
+
+  /**
+   * Returns the path to the joshsim fat jar inside the container image.
+   *
+   * <p>Defaults to {@code /app/joshsim-fat.jar} if not specified in the profile.
+   * Override this for custom container images that place the jar elsewhere.</p>
+   *
+   * @return The jar path inside the container.
+   */
+  public String getJarPath() {
+    if (jarPath == null || jarPath.isEmpty()) {
+      return "/app/joshsim-fat.jar";
+    }
+    return jarPath;
   }
 }
