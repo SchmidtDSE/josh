@@ -198,6 +198,17 @@ jobs:
             exit 6
           fi
 
+      - name: Test MinioPollingStrategy integration
+        env:
+          MINIO_ENDPOINT: http://localhost:9000
+          MINIO_ACCESS_KEY: minioadmin
+          MINIO_SECRET_KEY: minioadmin
+          MINIO_BUCKET: josh-test-bucket
+        run: |
+          echo "Testing MinioPollingStrategy against local MinIO..."
+          ./gradlew testMinioPolling
+          echo "✓ MinioPollingStrategy integration tests passed"
+
       - name: Upload test artifacts
         uses: actions/upload-artifact@bbbca2ddaa5d8feaa63e36b76fdaad77386f024f # v7.0.0
         if: always()
@@ -219,6 +230,7 @@ jobs:
           echo "✓ File upload verification"
           echo "✓ Queue backpressure handling"
           echo "✓ Error handling validation"
+          echo "✓ MinioPollingStrategy integration"
           echo "================================================"
           echo "All MinIO integration tests completed!"
           echo "================================================"

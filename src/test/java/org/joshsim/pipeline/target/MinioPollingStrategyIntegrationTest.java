@@ -1,8 +1,9 @@
 /**
- * Integration tests for MinioPollingStrategy against live MinIO/GCS.
+ * Integration tests for MinioPollingStrategy against a real MinIO instance.
  *
  * <p>Requires MINIO_ENDPOINT, MINIO_ACCESS_KEY, MINIO_SECRET_KEY, and MINIO_BUCKET
- * environment variables. Skipped if credentials are not available.</p>
+ * environment variables pointing to a running MinIO service. In CI, these are
+ * provided by the MinIO service container in test-minio.yaml.</p>
  *
  * @license BSD-3-Clause
  */
@@ -12,8 +13,8 @@ package org.joshsim.pipeline.target;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
-import static org.junit.jupiter.api.Assumptions.assumeTrue;
 
+import java.nio.charset.StandardCharsets;
 import org.joshsim.util.MinioHandler;
 import org.joshsim.util.MinioOptions;
 import org.joshsim.util.OutputOptions;
@@ -22,76 +23,75 @@ import org.junit.jupiter.api.Test;
 
 
 /**
- * Integration tests that poll real status files in MinIO written by /runBatch.
+ * Integration tests that seed status files into MinIO and poll them back
+ * via MinioPollingStrategy.
  *
- * <p>These tests read status.json files from previous /runBatch executions
- * that exist in the josh-batch-storage bucket. They validate that
- * MinioPollingStrategy correctly parses all three lifecycle states
- * (running, complete, error) from real server output.</p>
+ * <p>Tests all three lifecycle states (running, complete, error) plus the
+ * nonexistent-job case. Each test writes a known status.json to MinIO via
+ * {@code MinioHandler.putBytes()}, then reads it back through the polling
+ * strategy to verify end-to-end correctness.</p>
  */
 class MinioPollingStrategyIntegrationTest {
 
   private static MinioHandler minioHandler;
-  private static boolean credentialsAvailable;
+  private static MinioPollingStrategy strategy;
 
   @BeforeAll
-  static void setUp() {
-    try {
-      MinioOptions options = new MinioOptions();
-      OutputOptions output = new OutputOptions();
-      minioHandler = new MinioHandler(options, output);
-      credentialsAvailable = true;
-    } catch (Exception e) {
-      credentialsAvailable = false;
-    }
+  static void setUp() throws Exception {
+    MinioOptions options = new MinioOptions();
+    OutputOptions output = new OutputOptions();
+    minioHandler = new MinioHandler(options, output);
+    strategy = new MinioPollingStrategy(minioHandler);
+
+    // Seed status files for each lifecycle state
+    seedStatus("integ-complete-001",
+        "{\"status\":\"complete\",\"jobId\":\"integ-complete-001\","
+            + "\"completedAt\":\"2026-04-14T12:00:00Z\"}");
+    seedStatus("integ-running-001",
+        "{\"status\":\"running\",\"jobId\":\"integ-running-001\","
+            + "\"startedAt\":\"2026-04-14T11:00:00Z\"}");
+    seedStatus("integ-error-001",
+        "{\"status\":\"error\",\"jobId\":\"integ-error-001\","
+            + "\"message\":\"Simulation not found: BadSim\","
+            + "\"failedAt\":\"2026-04-14T11:30:00Z\"}");
+  }
+
+  private static void seedStatus(String jobId, String json) throws Exception {
+    String path = "batch-status/" + jobId + "/status.json";
+    minioHandler.putBytes(json.getBytes(StandardCharsets.UTF_8), path, "application/json");
   }
 
   @Test
-  void pollsCompletedJobFromMinio() throws Exception {
-    assumeTrue(credentialsAvailable, "MinIO credentials not available");
-
-    MinioPollingStrategy strategy = new MinioPollingStrategy(minioHandler);
-    JobStatus status = strategy.poll("local-test-001");
+  void pollsCompletedJob() throws Exception {
+    JobStatus status = strategy.poll("integ-complete-001");
 
     assertEquals(JobStatus.State.COMPLETE, status.getState());
     assertTrue(status.isTerminal());
     assertTrue(status.getMessage().isEmpty());
-    assertTrue(status.getTimestamp().isPresent());
-    assertTrue(status.getTimestamp().get().startsWith("2026-"));
+    assertEquals("2026-04-14T12:00:00Z", status.getTimestamp().get());
   }
 
   @Test
-  void pollsErrorJobFromMinio() throws Exception {
-    assumeTrue(credentialsAvailable, "MinIO credentials not available");
-
-    MinioPollingStrategy strategy = new MinioPollingStrategy(minioHandler);
-    JobStatus status = strategy.poll("err-006");
-
-    assertEquals(JobStatus.State.ERROR, status.getState());
-    assertTrue(status.isTerminal());
-    assertTrue(status.getMessage().isPresent());
-    assertTrue(status.getMessage().get().contains("Simulation not found"));
-    assertTrue(status.getTimestamp().isPresent());
-  }
-
-  @Test
-  void pollsRunningJobFromMinio() throws Exception {
-    assumeTrue(credentialsAvailable, "MinIO credentials not available");
-
-    MinioPollingStrategy strategy = new MinioPollingStrategy(minioHandler);
-    JobStatus status = strategy.poll("slow-test-001");
+  void pollsRunningJob() throws Exception {
+    JobStatus status = strategy.poll("integ-running-001");
 
     assertEquals(JobStatus.State.RUNNING, status.getState());
     assertFalse(status.isTerminal());
-    assertTrue(status.getTimestamp().isPresent());
-    assertTrue(status.getTimestamp().get().contains("2026-"));
+    assertEquals("2026-04-14T11:00:00Z", status.getTimestamp().get());
+  }
+
+  @Test
+  void pollsErrorJob() throws Exception {
+    JobStatus status = strategy.poll("integ-error-001");
+
+    assertEquals(JobStatus.State.ERROR, status.getState());
+    assertTrue(status.isTerminal());
+    assertEquals("Simulation not found: BadSim", status.getMessage().get());
+    assertEquals("2026-04-14T11:30:00Z", status.getTimestamp().get());
   }
 
   @Test
   void pollsNonexistentJobReturnsPending() throws Exception {
-    assumeTrue(credentialsAvailable, "MinIO credentials not available");
-
-    MinioPollingStrategy strategy = new MinioPollingStrategy(minioHandler);
     JobStatus status = strategy.poll("nonexistent-job-xyz-999");
 
     assertEquals(JobStatus.State.PENDING, status.getState());
