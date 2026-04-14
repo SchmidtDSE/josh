@@ -12,6 +12,8 @@ import org.joshsim.pipeline.target.BatchJobStrategy;
 import org.joshsim.pipeline.target.BatchPollingStrategy;
 import org.joshsim.pipeline.target.HttpBatchTarget;
 import org.joshsim.pipeline.target.JobStatus;
+import org.joshsim.pipeline.target.KubernetesPollingStrategy;
+import org.joshsim.pipeline.target.KubernetesTarget;
 import org.joshsim.pipeline.target.MinioPollingStrategy;
 import org.joshsim.pipeline.target.RemoteBatchTarget;
 import org.joshsim.pipeline.target.TargetProfile;
@@ -94,7 +96,9 @@ public class BatchRemoteCommand implements Callable<Integer> {
 
       RemoteBatchTarget target = buildTarget(profile);
       MinioHandler minioHandler = profile.buildMinioHandler(output);
-      BatchPollingStrategy poller = new MinioPollingStrategy(minioHandler);
+      BatchPollingStrategy poller = buildPoller(
+          profile, target, minioHandler
+      );
 
       BatchJobStrategy strategy = new BatchJobStrategy(
           target, poller, minioHandler, output,
@@ -127,13 +131,39 @@ public class BatchRemoteCommand implements Callable<Integer> {
     }
   }
 
+  private BatchPollingStrategy buildPoller(
+      TargetProfile profile,
+      RemoteBatchTarget target,
+      MinioHandler minioHandler
+  ) {
+    if ("kubernetes".equals(profile.getType())
+        && target instanceof KubernetesTarget k8sTarget) {
+      return new KubernetesPollingStrategy(
+          k8sTarget.getClient(),
+          k8sTarget.getConfig().getNamespace()
+      );
+    }
+    return new MinioPollingStrategy(minioHandler);
+  }
+
   private RemoteBatchTarget buildTarget(TargetProfile profile) {
     String type = profile.getType();
     if ("http".equals(type)) {
       return new HttpBatchTarget(profile.getHttpConfig());
     }
-    throw new IllegalArgumentException("Unsupported target type: " + type
-        + ". Supported types: http (kubernetes coming in PR 7)");
+    if ("kubernetes".equals(type)) {
+      return new KubernetesTarget(
+          profile.getKubernetesConfig(),
+          profile.getMinioEndpoint(),
+          profile.getMinioAccessKey(),
+          profile.getMinioSecretKey(),
+          profile.getMinioBucket()
+      );
+    }
+    throw new IllegalArgumentException(
+        "Unsupported target type: " + type
+        + ". Supported types: http, kubernetes"
+    );
   }
 
   /**
