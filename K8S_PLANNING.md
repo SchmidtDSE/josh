@@ -80,7 +80,7 @@ Used for `KubernetesTarget` only. Cleaner fluent DSL than official `io.kubernete
 ## PR Plan
 
 ```
-PR1 ✅ → PR2 ✅ → PR3 ✅ (cleanup) → PR4 ✅ (/runBatch) → PR4a ✅ (stageFromMinio opt-in) → PR4b ✅ (async+status) → PR5 ✅ (profiles+polling) → PR6 ✅ (batchRemote+HttpTarget) → PR7 ✅ (Fabric8+K8sTarget+K8sPolling) → PR8 (Dockerfile) → PR9 (preprocessBatch)
+PR1 ✅ → PR2 ✅ → PR3 ✅ (cleanup) → PR4 ✅ (/runBatch) → PR4a ✅ (stageFromMinio opt-in) → PR4b ✅ (async+status) → PR5 ✅ (profiles+polling) → PR6 ✅ (batchRemote+HttpTarget) → PR7 ✅ (Fabric8+K8sTarget+K8sPolling) → PR8 ✅ (Dockerfile+e2e+K8sCI) → PR9 (preprocessBatch)
 ```
 
 ### Regression gates (every PR)
@@ -409,69 +409,41 @@ Added `io.fabric8:kubernetes-client:7.0.0` and `kubernetes-server-mock:7.0.0` (t
 
 **Risk: LOW — dependency conflicts did not materialize. No modifications to existing behavior.**
 
-### PR 8: Dockerfile + e2e integration + CI workflow
-**Branch: off `feat/k8s-batch`**
+### PR 8 ✅: Dockerfile.batch + pod_minio_endpoint + Kind CI — #399
+**Branch: `feat/k8s-target` → merged to `feat/k8s-batch`**
 
-Batch worker Docker image and end-to-end integration testing, both locally and in CI.
+Batch worker Docker image, dual MinIO endpoint support, and end-to-end K8s integration testing in CI.
 
 **New files:**
-- `cloud-img/Dockerfile.batch` — batch worker image: `FROM eclipse-temurin:21-jre`, copies fat jar + `entrypoint.sh`
-- `.github/workflows/test-k8s.yaml` — K8s integration test workflow (pattern follows `test-minio.yaml`)
+- `cloud-img/Dockerfile.batch` — minimal JRE-only batch worker image (`eclipse-temurin:21-jre` + fat jar + `entrypoint.sh`)
+- `.github/workflows/test-k8s.yaml` — Kind cluster + MinIO e2e CI workflow
+- `examples/test/k8s/k8s_test.josh` — test simulation
+- `examples/test/k8s/ci-k8s-profile.json` — Kind target profile
+- `examples/test/k8s/ci-k8s-bad-image-profile.json` — bad image failure test profile
 
-**Dockerfile.batch:**
-```dockerfile
-FROM eclipse-temurin:21-jre
-COPY build/libs/joshsim-fat.jar /app/joshsim-fat.jar
-COPY cloud-img/entrypoint.sh /app/entrypoint.sh
-RUN chmod +x /app/entrypoint.sh
-ENTRYPOINT ["/app/entrypoint.sh"]
-```
+**Modified files:**
+- `pipeline/target/KubernetesTargetConfig.java` — added required `pod_minio_endpoint` field
+- `pipeline/target/TargetProfileLoader.java` — validates `pod_minio_endpoint` for K8s targets
+- `pipeline/target/KubernetesTarget.java` — Secret uses `pod_minio_endpoint`, not host endpoint
+- `pipeline/target/KubernetesPollingStrategy.java` — detects stuck pods while Job is active (ImagePullBackOff, CrashLoopBackOff), not just on Job failure. Also fixed false-positive on successfully completed pods (exit code 0).
+- `llms-full.txt` — documented batchRemote, target profiles, credential resolution, staging commands
+- `README.md` — added "Batch execution on your own infrastructure" section
 
-**CI workflow (`test-k8s.yaml`) — end-to-end with live Kind cluster + MinIO:**
+**Key design decisions:**
+- **`pod_minio_endpoint` is required** for K8s targets. Pods and host often have different MinIO paths (cluster DNS vs public URL). Making it required forces users to explicitly confirm the pod endpoint.
+- **Stuck pod detection**: `checkAllPodsStuck()` runs when Job has active pods. If ALL pods are in a failure waiting state, reports ERROR immediately instead of showing RUNNING until deadline.
+- **MinIO in Kind**: deployed as K8s Deployment+Service, port-forwarded to host for staging. Profile uses `minio_endpoint: localhost:9000` (host) + `pod_minio_endpoint: minio.default.svc:9000` (pods).
 
-Same trigger pattern as `test-minio.yaml` (push to main/dev, PRs). Uses GitHub Actions services for MinIO and [Kind](https://kind.sigs.k8s.io/) for a real K8s cluster.
+**CI verified:**
+- [x] Dockerfile.batch builds
+- [x] Kind cluster creation (~20s)
+- [x] Image load into Kind
+- [x] MinIO deployment + bucket creation inside Kind
+- [x] `batchRemote --target=ci-k8s --replicates=2` — Jobs created, pods run, results in MinIO
+- [x] ImagePullBackOff detection — stuck pods caught while Job still active
+- [x] All unit tests pass, checkstyle clean, fatJar builds
 
-```
-Steps:
-1. Checkout + setup Java 21
-2. Start MinIO service container (same as test-minio.yaml)
-3. ./gradlew fatJar
-4. Build batch worker image: docker build -f cloud-img/Dockerfile.batch -t joshsim-batch:ci .
-5. Create Kind cluster: kind create cluster
-6. Load image into Kind: kind load docker-image joshsim-batch:ci
-7. Deploy MinIO inside Kind (or expose host MinIO to pods via Kind networking)
-8. Create target profile (~/.josh/targets/ci-k8s.json) pointing at Kind cluster
-9. Run batchRemote e2e:
-   - Stage test simulation to MinIO
-   - joshsim batchRemote sim.josh Main --target=ci-k8s --replicates=2 --timeout=120
-   - Verify results in MinIO via mc stat
-   - Verify K8s Job completed: kubectl get jobs
-10. Test failure detection:
-    - Submit job with bad image → verify KubernetesPollingStrategy reports ImagePullBackOff
-    - Submit job with tight memory limit → verify OOMKilled detection
-11. Cleanup: kind delete cluster
-```
-
-**Key design considerations:**
-- MinIO must be reachable from inside Kind pods. Options: (a) deploy MinIO as a K8s Deployment+Service inside Kind, or (b) use Kind's `extraPortMappings` + host.docker.internal. Option (a) is more realistic.
-- The batch worker image needs the fat jar built first — `docker build` step depends on `./gradlew fatJar`
-- Kind cluster creation takes ~30s, acceptable for CI
-- Test timeout should be generous (pods need to pull image from Kind's local registry)
-
-**Modify:**
-- `cloud/JoshSimServer.java` — no changes (server already has `/runBatch`)
-- `build.gradle` — optional: add `testKubernetes` Gradle task for running K8s integration tests separately
-
-**Test:**
-- [ ] `docker build -f cloud-img/Dockerfile.batch` succeeds
-- [ ] `entrypoint.sh` runs correctly inside container (manual: `docker run --rm joshsim-batch:ci /app/entrypoint.sh --help`)
-- [ ] `batchRemote --target=ci-k8s --replicates=2` completes in Kind cluster
-- [ ] Results appear in MinIO
-- [ ] KubernetesPollingStrategy detects ImagePullBackOff for bad image
-- [ ] KubernetesPollingStrategy detects OOMKilled for tight memory limit
-- [ ] `./gradlew test`, `./gradlew checkstyleMain`, `./gradlew fatJar` still pass
-
-**Risk: MEDIUM — Kind + Docker-in-Docker in CI can be flaky. MinIO-in-Kind networking needs testing.**
+**Risk: LOW — Kind CI proved reliable across multiple runs. MinIO-in-Kind networking works cleanly with port-forward.**
 
 ### PR 9: `preprocessBatch` — remote preprocessing via target profiles
 
@@ -516,8 +488,10 @@ Steps:
 
 | Risk | Level | Mitigation |
 |------|-------|------------|
-| Fabric8 dep conflicts | ~~HIGH~~ **DONE** | Resolved in PR 7 — zero conflicts (Jackson 2.18.2, SLF4J 2.0.17, Vert.x transport) |
-| `--upload-*` removal | ~~MEDIUM~~ DONE | Completed in PR 3. joshpy bottling supersedes; `stageToMinio` covers explicit uploads |
-| K8s Job failure cases | MEDIUM | `backoffLimit: 3` + `activeDeadlineSeconds` + `KubernetesPollingStrategy` for native status (OOMKill, scheduling) |
-| MinIO cred passing | MEDIUM | Target profiles hold creds directly; K8s Secrets later |
-| Emergent memory behavior | MEDIUM | K8s polling (PR 7) catches OOMKill that MinIO status misses — critical for HPC-scale ecological sims |
+| Fabric8 dep conflicts | ~~HIGH~~ **DONE** | Resolved in PR 7 — zero conflicts |
+| `--upload-*` removal | ~~MEDIUM~~ **DONE** | Completed in PR 3 |
+| K8s Job failure cases | ~~MEDIUM~~ **DONE** | PR 7+8: polling detects OOMKill, ImagePullBackOff, scheduling, deadline failures — including stuck pods while Job still active |
+| MinIO cred passing | ~~MEDIUM~~ **DONE** | PR 7: HierarchyConfig → MinioOptions → K8s Secrets. No secrets required in JSON. |
+| Emergent memory behavior | ~~MEDIUM~~ **DONE** | PR 7: K8s polling catches OOMKill that MinIO status misses |
+| Host vs pod MinIO endpoint | ~~MEDIUM~~ **DONE** | PR 8: required `pod_minio_endpoint` separates host and pod network paths |
+| Kind CI flakiness | ~~MEDIUM~~ **DONE** | PR 8: Kind proved reliable across multiple runs. ~6min total workflow. |
