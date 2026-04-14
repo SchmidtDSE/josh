@@ -160,6 +160,26 @@ jobs:
             exit 5
           fi
 
+      - name: Test large CSV export to MinIO (multipart upload)
+        run: |
+          echo "Testing large export forcing multipart upload (>10MB)..."
+          java -Xmx2g -jar build/libs/joshsim-fat.jar run \
+            --replicates=1 \
+            examples/test/minio/large_export.josh \
+            MinioLargeTest \
+            --minio-endpoint=http://localhost:9000 \
+            --minio-access-key=minioadmin \
+            --minio-secret-key=minioadmin
+
+          echo "Verifying large file exists and exceeds 10MB..."
+          SIZE=$(./mc stat testminio/josh-test-bucket/results/large_test.csv --json | grep -o '"size":[0-9]*' | cut -d':' -f2)
+          if [ "$SIZE" -gt 10485760 ]; then
+            echo "✓ Large export test passed: $SIZE bytes (multipart path exercised)"
+          else
+            echo "✗ Large export too small: $SIZE bytes (expected >10MB)"
+            exit 8
+          fi
+
       - name: Test queue backpressure with small queue
         run: |
           echo "Testing queue backpressure with small queue size..."
@@ -319,6 +339,7 @@ jobs:
           echo "✓ NetCDF export to MinIO"
           echo "✓ Mixed MinIO and local exports"
           echo "✓ File upload verification"
+          echo "✓ Large CSV export (>10MB multipart upload)"
           echo "✓ Queue backpressure handling"
           echo "✓ Error handling validation"
           echo "✓ MinioPollingStrategy integration"

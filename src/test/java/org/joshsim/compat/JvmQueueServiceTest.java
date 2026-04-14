@@ -94,6 +94,48 @@ class JvmQueueServiceTest {
   }
 
   @Test
+  void testExceptionInOnEndPropagatesToJoin() {
+    QueueServiceCallback failingCallback = new QueueServiceCallback() {
+      @Override
+      public void onStart() {}
+
+      @Override
+      public void onTask(Optional<Object> task) {}
+
+      @Override
+      public void onEnd() {
+        throw new RuntimeException("Upload failed");
+      }
+    };
+    JvmQueueService service = new JvmQueueService(failingCallback);
+    service.start();
+    service.add("task");
+    assertThrows(RuntimeException.class, () -> service.join());
+  }
+
+  @Test
+  void testExceptionInOnTaskPropagatesToJoin() {
+    QueueServiceCallback failingCallback = new QueueServiceCallback() {
+      @Override
+      public void onStart() {}
+
+      @Override
+      public void onTask(Optional<Object> task) {
+        if (task.isPresent()) {
+          throw new RuntimeException("Task processing failed");
+        }
+      }
+
+      @Override
+      public void onEnd() {}
+    };
+    JvmQueueService service = new JvmQueueService(failingCallback);
+    service.start();
+    service.add("task");
+    assertThrows(RuntimeException.class, () -> service.join());
+  }
+
+  @Test
   void testCannotAddWhenNotActive() {
     TestCallback callback = new TestCallback();
     JvmQueueService jvmQueueService = new JvmQueueService(callback, 10);

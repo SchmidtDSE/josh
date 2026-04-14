@@ -1,0 +1,32 @@
+start simulation MinioLargeTest
+  # Test large CSV export to MinIO, forcing multipart upload (>10MB).
+  # ~1000 patches x 100 steps x ~100 bytes/row > 10MB.
+  grid.size = 100 m
+  grid.low = 0 degrees latitude, 0 degrees longitude
+  grid.high = 0.03 degrees latitude, 0.03 degrees longitude
+  steps.low = 0 count
+  steps.high = 100 count
+  exportFiles.patch = "minio://josh-test-bucket/results/large_test.csv"
+end simulation
+
+start patch Default
+  TestIndividual.init = create 10 count of TestIndividual
+
+  export.avgAge.step = mean(TestIndividual.age)
+  export.maxAge.step = max(TestIndividual.age)
+  export.minAge.step = min(TestIndividual.age)
+  export.avgHeight.step = mean(TestIndividual.height)
+  export.maxHeight.step = max(TestIndividual.height)
+end patch
+
+start organism TestIndividual
+  age.init = 0 year
+  age.step = prior.age + 1 year
+
+  height.init = 1.0 m
+  height.step = prior.height + 0.1 m
+end organism
+
+start unit year
+  alias years
+end unit
