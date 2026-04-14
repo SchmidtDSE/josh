@@ -328,6 +328,117 @@ task generateTestData {
     dependsOn preprocessTestData
 }
 
+// Task to extract and debug a joshpy bottle with JDWP on port 5005.
+// Usage: ./gradlew debugBottle -Pbottle=<path-or-name.tar.gz>
+task debugBottle {
+  description = 'Extracts a joshpy bottle and launches the simulation with JDWP debugger on port 5005'
+  group = 'debugging'
+  dependsOn fatJar
+
+  doLast {
+    if (!project.hasProperty('bottle')) {
+      throw new GradleException('Usage: ./gradlew debugBottle -Pbottle=<bottle.tar.gz>')
+    }
+
+    def bottlePath = project.property('bottle') as String
+    def compressedDir = file("${rootDir}/joshpy-bottles/compressed")
+    def extractedDir = file("${rootDir}/joshpy-bottles/extracted")
+    def envFile = file("${rootDir}/.devcontainer/.env")
+
+    // Resolve bottle: as given, then compressed/ directory
+    def resolved = [
+      file(bottlePath),
+      new File(compressedDir, bottlePath),
+      new File(compressedDir, new File(bottlePath).name),
+    ].find { it.exists() }
+
+    if (resolved == null) {
+      throw new GradleException("Bottle not found: ${bottlePath} (also checked ${compressedDir})")
+    }
+    if (!resolved.name.endsWith('.tar.gz')) {
+      throw new GradleException("Expected a .tar.gz file, got: ${resolved.name}")
+    }
+
+    // Extract
+    extractedDir.mkdirs()
+    def dirName = ['tar', '-tzf', resolved.absolutePath].execute().text
+        .split('/')[0]
+    def extractDir = new File(extractedDir, dirName)
+    if (!extractDir.exists()) {
+      exec { commandLine 'tar', '-xzf', resolved.absolutePath, '-C', extractedDir.absolutePath }
+      println "Extracted: ${extractDir}"
+    } else {
+      println "Already extracted: ${extractDir}"
+    }
+
+    // Parse manifest
+    def manifest = new File(extractDir, 'manifest.json')
+    if (!manifest.exists()) {
+      throw new GradleException("No manifest.json in bottle")
+    }
+    def mf = new groovy.json.JsonSlurper().parse(manifest)
+
+    // Parse run.sh for --data and --custom-tag args
+    def runSh = new File(extractDir, 'run.sh')
+    if (!runSh.exists()) {
+      throw new GradleException("No run.sh in bottle")
+    }
+    def jvmArgs = []
+    def appArgs = ['run', 'simulation.josh', mf.simulation]
+    runSh.eachLine { line ->
+      def dataMatcher = (line =~ /--data\s+(\S+)/)
+      if (dataMatcher.find()) {
+        appArgs.addAll(['--data', dataMatcher.group(1).replaceAll(/\s*\\$/, '')])
+      }
+      def tagMatcher = (line =~ /--custom-tag\s+(\S+)/)
+      if (tagMatcher.find()) {
+        appArgs.addAll(['--custom-tag', tagMatcher.group(1).replaceAll(/\s*\\$/, '')])
+      }
+    }
+
+    // Load .devcontainer/.env
+    def extraEnv = [:]
+    if (envFile.exists()) {
+      envFile.eachLine { line ->
+        line = line.trim()
+        if (line && !line.startsWith('#')) {
+          def eqIdx = line.indexOf('=')
+          if (eqIdx > 0) {
+            extraEnv[line.substring(0, eqIdx)] = line.substring(eqIdx + 1)
+          }
+        }
+      }
+      println "Loaded ${extraEnv.size()} env vars from ${envFile}"
+    } else {
+      println "Warning: ${envFile} not found -- MinIO credentials may be missing"
+    }
+
+    println ""
+    println "=== Bottle Debug Session ==="
+    println "Simulation:  ${mf.simulation}"
+    println "Run hash:    ${mf.run_hash}"
+    println "Bottled at:  ${mf.bottled_at}"
+    println "Data files:  ${mf.original_data_paths?.size() ?: 0}"
+    println "Parameters:  ${mf.parameters?.size() ?: 0}"
+    println "Debug port:  5005 (suspend=y)"
+    println ""
+    println "Waiting for debugger on port 5005..."
+    println "-> Attach VSCode debugger \"Attach to Bottle\" to continue"
+    println ""
+
+    // Launch with JDWP
+    exec {
+      commandLine(['java',
+        '-agentlib:jdwp=transport=dt_socket,server=y,suspend=y,address=*:5005',
+        '-ea', '-Xmx4g',
+        '-jar', fatJar.archiveFile.get().asFile.absolutePath,
+      ] + appArgs)
+      workingDir = extractDir
+      environment System.getenv() + extraEnv
+    }
+  }
+}
+
 // Task to run conformance tests
 task conformanceTest(type: Test) {
     description = 'Runs conformance tests'
