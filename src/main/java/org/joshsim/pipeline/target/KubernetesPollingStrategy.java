@@ -230,7 +230,9 @@ public class KubernetesPollingStrategy implements BatchPollingStrategy {
     }
 
     ContainerStateTerminated terminated = state.getTerminated();
-    if (terminated != null && terminated.getReason() != null) {
+    if (terminated != null && terminated.getReason() != null
+        && terminated.getExitCode() != null
+        && terminated.getExitCode() != 0) {
       return terminated.getReason();
     }
 
