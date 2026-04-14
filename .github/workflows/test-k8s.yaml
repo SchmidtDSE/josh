@@ -212,6 +212,7 @@ jobs:
 
       - name: Test failure detection - bad image
         run: |
+          set -o pipefail
           echo "Testing ImagePullBackOff detection..."
           cat > ~/.josh/targets/ci-k8s-bad-image.json << 'PROFILE'
           {
@@ -221,7 +222,7 @@ jobs:
               "namespace": "default",
               "image": "nonexistent-registry.example.com/no-such-image:v999",
               "parallelism": 1,
-              "timeoutSeconds": 60,
+              "timeoutSeconds": 180,
               "pod_minio_endpoint": "http://minio.default.svc:9000"
             },
             "minio_endpoint": "http://localhost:9000",
@@ -231,22 +232,27 @@ jobs:
           }
           PROFILE
 
-          # This should fail with an image pull error
-          if java -jar build/libs/joshsim-fat.jar batchRemote \
+          # batchRemote should fail — capture exit code through tee
+          EXIT_CODE=0
+          java -jar build/libs/joshsim-fat.jar batchRemote \
             /tmp/k8s-e2e-test/ K8sTest \
             --target=ci-k8s-bad-image \
             --replicates=1 \
-            --poll-interval=5 \
-            --timeout=90 2>&1 | tee /tmp/bad-image-output.txt; then
+            --poll-interval=10 \
+            --timeout=180 2>&1 | tee /tmp/bad-image-output.txt || EXIT_CODE=$?
+
+          if [ "$EXIT_CODE" -eq 0 ]; then
             echo "ERROR: batchRemote should have failed for bad image"
             exit 1
           fi
 
-          # Verify the error mentions image pull
-          if grep -qi "ImagePull\|ErrImage\|image" /tmp/bad-image-output.txt; then
-            echo "Image pull failure detected correctly"
+          echo "batchRemote failed as expected (exit code $EXIT_CODE)"
+
+          # Check that the error is related to image or backoff
+          if grep -qi "ImagePull\|ErrImage\|BackoffLimit\|image" /tmp/bad-image-output.txt; then
+            echo "Failure reason detected correctly"
           else
-            echo "Warning: error detected but message may not mention image pull"
+            echo "Warning: failed but reason may not mention image pull"
             cat /tmp/bad-image-output.txt
           fi
 
