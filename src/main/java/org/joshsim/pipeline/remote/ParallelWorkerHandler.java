@@ -265,12 +265,13 @@ public class ParallelWorkerHandler {
    */
   private HttpResponse<Stream<String>> sendWorkerRequest(WorkerTask task) {
     String bodyString = String.format(
-        "code=%s&name=%s&apiKey=%s&externalData=%s&favorBigDecimal=%s",
+        "code=%s&name=%s&apiKey=%s&externalData=%s&favorBigDecimal=%s&enableProfiler=%s",
         URLEncoder.encode(task.getCode(), StandardCharsets.UTF_8),
         URLEncoder.encode(task.getSimulationName(), StandardCharsets.UTF_8),
         URLEncoder.encode(task.getApiKey(), StandardCharsets.UTF_8),
         URLEncoder.encode(task.getExternalData(), StandardCharsets.UTF_8),
-        URLEncoder.encode(task.isFavorBigDecimal() ? "true" : "false", StandardCharsets.UTF_8)
+        URLEncoder.encode(task.isFavorBigDecimal() ? "true" : "false", StandardCharsets.UTF_8),
+        URLEncoder.encode(task.isEnableProfiler() ? "true" : "false", StandardCharsets.UTF_8)
     );
     HttpRequest.BodyPublisher body = HttpRequest.BodyPublishers.ofString(bodyString);
 

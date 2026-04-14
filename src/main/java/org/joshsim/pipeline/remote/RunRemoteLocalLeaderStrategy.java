@@ -201,7 +201,8 @@ public class RunRemoteLocalLeaderStrategy implements RunRemoteStrategy {
           context.getExternalDataSerialized(),
           favorBigDecimal,
           context.getReplicateNumber() + i,  // Offset by replicateNumber
-          ""  // No output filtering for local leader strategy (export all steps)
+          "",  // No output filtering for local leader strategy (export all steps)
+          context.isEnableProfiler()
       );
       tasks.add(task);
     }

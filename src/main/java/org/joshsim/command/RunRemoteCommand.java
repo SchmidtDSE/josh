@@ -110,6 +110,14 @@ public class RunRemoteCommand implements Callable<Integer> {
   )
   private boolean useFloat64;
 
+  @Option(
+      names = "--enable-profiler",
+      description = "Enable per-request profiling. Sends enableProfiler=true to the worker. "
+                  + "The server must also support this field (component 6) for timings to appear.",
+      defaultValue = "false"
+  )
+  private boolean enableProfiler;
+
   @Mixin
   private OutputOptions output = new OutputOptions();
 
@@ -330,6 +338,7 @@ public class RunRemoteCommand implements Callable<Integer> {
           .withOutputOptions(output)
           .withMinioOptions(minioOptions)
           .withMaxConcurrentWorkers(concurrentWorkers)
+          .withEnableProfiler(enableProfiler)
           .build();
 
       // Execute strategy for this job combination
