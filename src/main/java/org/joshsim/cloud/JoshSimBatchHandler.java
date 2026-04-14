@@ -173,9 +173,16 @@ public class JoshSimBatchHandler implements HttpHandler {
       return Optional.of(apiKey);
     }
 
+    int replicates;
+    try {
+      replicates = parseReplicates(formData);
+    } catch (IllegalArgumentException e) {
+      sendJsonError(exchange, 400, jobId, e.getMessage());
+      return Optional.of(apiKey);
+    }
+
     MinioHandler statusMinio = initStatusMinio(jobId);
     String simulation = formData.getFirst("simulation").getValue();
-    int replicates = parseReplicates(formData);
     String statusPath = "batch-status/" + jobId + "/status.json";
     sendJsonAccepted(exchange, jobId, statusPath);
 
@@ -236,16 +243,25 @@ public class JoshSimBatchHandler implements HttpHandler {
     }
   }
 
+  /**
+   * Parses the replicates form field. Returns 1 if not present.
+   * Throws IllegalArgumentException if present but invalid.
+   */
   private int parseReplicates(FormData formData) {
     if (!formData.contains("replicates")) {
       return 1;
     }
+    String raw = formData.getFirst("replicates").getValue();
+    int value;
     try {
-      int value = Integer.parseInt(formData.getFirst("replicates").getValue());
-      return value < 1 ? 1 : value;
+      value = Integer.parseInt(raw);
     } catch (NumberFormatException e) {
-      return 1;
+      throw new IllegalArgumentException("Invalid replicates value: " + raw);
     }
+    if (value < 1) {
+      throw new IllegalArgumentException("replicates must be >= 1, got: " + value);
+    }
+    return value;
   }
 
   private void runBatchWithStatus(MinioHandler statusMinio, String jobId,
@@ -309,26 +325,33 @@ public class JoshSimBatchHandler implements HttpHandler {
     ValueSupportFactory valueFactory = new ValueSupportFactory();
     GridGeometryFactory geometryFactory = new GridGeometryFactory();
 
+    // Interpret once — the program doesn't change between replicates.
+    // Only the InputOutputLayer changes (replicate index, append mode).
+    InputOutputLayer initialLayer = new JvmInputOutputLayerBuilder()
+        .withInputStrategy(new JvmMappedInputGetter(fileMapping))
+        .withMinioOptions(minioOptions)
+        .build();
+
+    JoshProgram program = JoshSimFacadeUtil.interpret(
+        valueFactory, geometryFactory, parseResult, initialLayer
+    );
+
+    if (!program.getSimulations().hasPrototype(simulation)) {
+      throw new IllegalArgumentException("Simulation not found: " + simulation);
+    }
+
     for (int replicate = 0; replicate < replicates; replicate++) {
-      InputOutputLayer inputOutputLayer = new JvmInputOutputLayerBuilder()
+      InputOutputLayer replicateLayer = new JvmInputOutputLayerBuilder()
           .withReplicate(replicate)
           .withInputStrategy(new JvmMappedInputGetter(fileMapping))
           .withMinioOptions(minioOptions)
           .withAppendMode(replicate > 0)
           .build();
 
-      JoshProgram program = JoshSimFacadeUtil.interpret(
-          valueFactory, geometryFactory, parseResult, inputOutputLayer
-      );
-
-      if (!program.getSimulations().hasPrototype(simulation)) {
-        throw new IllegalArgumentException("Simulation not found: " + simulation);
-      }
-
       JoshSimFacadeUtil.runSimulation(
           valueFactory,
           geometryFactory,
-          inputOutputLayer,
+          replicateLayer,
           program,
           simulation,
           (step) -> { /* progress unused in batch mode */ },

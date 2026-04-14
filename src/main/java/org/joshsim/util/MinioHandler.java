@@ -51,31 +51,6 @@ public class MinioHandler {
 
   }
 
-  /**
-   * Creates a new MinioHandler from raw credential strings.
-   *
-   * <p>For programmatic use when constructing from a target profile rather than
-   * CLI options. The base path is set to empty (root of bucket).</p>
-   *
-   * @param endpoint The MinIO/S3 endpoint URL
-   * @param accessKey The access key
-   * @param secretKey The secret key
-   * @param bucket The bucket name
-   * @param output For logging information and errors
-   * @throws Exception If MinIO client creation or bucket validation fails
-   */
-  public MinioHandler(String endpoint, String accessKey, String secretKey,
-      String bucket, OutputOptions output) throws Exception {
-    this.minioClient = MinioClient.builder()
-        .endpoint(endpoint)
-        .credentials(accessKey, secretKey)
-        .build();
-    this.bucketName = bucket;
-    this.basePath = "";
-    this.output = output;
-
-    validateOrCreateBucket(false);
-  }
 
   /**
    * Ensures the target bucket exists, creating it if needed.

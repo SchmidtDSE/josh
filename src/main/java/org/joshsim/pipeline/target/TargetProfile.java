@@ -8,6 +8,9 @@ package org.joshsim.pipeline.target;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import org.joshsim.util.MinioHandler;
+import org.joshsim.util.MinioOptions;
+import org.joshsim.util.OutputOptions;
 
 
 /**
@@ -44,6 +47,9 @@ public class TargetProfile {
 
   @JsonProperty("minio_bucket")
   private String minioBucket;
+
+  /** Path to the JSON file this profile was loaded from. Set by TargetProfileLoader. */
+  private transient String sourceFilePath;
 
   /**
    * Default constructor for Jackson deserialization.
@@ -112,5 +118,39 @@ public class TargetProfile {
    */
   public String getMinioBucket() {
     return minioBucket;
+  }
+
+  /**
+   * Sets the file path this profile was loaded from. Called by {@link TargetProfileLoader}.
+   *
+   * @param path The absolute path to the JSON profile file.
+   */
+  void setSourceFilePath(String path) {
+    this.sourceFilePath = path;
+  }
+
+  /**
+   * Returns the file path this profile was loaded from.
+   *
+   * @return The source file path, or null if not loaded from a file.
+   */
+  public String getSourceFilePath() {
+    return sourceFilePath;
+  }
+
+  /**
+   * Creates a MinioHandler configured with this profile's MinIO credentials.
+   *
+   * <p>Uses the profile's JSON file as a {@link MinioOptions} config source,
+   * reusing the same config hierarchy as all other MinIO operations.</p>
+   *
+   * @param output For logging information and errors.
+   * @return A MinioHandler ready for staging and polling operations.
+   * @throws Exception If MinIO client creation or bucket validation fails.
+   */
+  public MinioHandler buildMinioHandler(OutputOptions output) throws Exception {
+    MinioOptions options = new MinioOptions();
+    options.setConfigFile(sourceFilePath);
+    return new MinioHandler(options, output);
   }
 }

@@ -63,6 +63,7 @@ public class TargetProfileLoader {
     }
 
     TargetProfile profile = mapper.readValue(profileFile, TargetProfile.class);
+    profile.setSourceFilePath(profileFile.getAbsolutePath());
     validate(name, profile);
     return profile;
   }

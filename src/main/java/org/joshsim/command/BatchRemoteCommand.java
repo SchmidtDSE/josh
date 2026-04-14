@@ -93,13 +93,7 @@ public class BatchRemoteCommand implements Callable<Integer> {
       TargetProfile profile = loader.load(targetName);
 
       RemoteBatchTarget target = buildTarget(profile);
-      MinioHandler minioHandler = new MinioHandler(
-          profile.getMinioEndpoint(),
-          profile.getMinioAccessKey(),
-          profile.getMinioSecretKey(),
-          profile.getMinioBucket(),
-          output
-      );
+      MinioHandler minioHandler = profile.buildMinioHandler(output);
       BatchPollingStrategy poller = new MinioPollingStrategy(minioHandler);
 
       BatchJobStrategy strategy = new BatchJobStrategy(
