@@ -27,9 +27,11 @@ import java.util.List;
  * errors) that never reach the MinIO status file because the
  * container process is killed or never starts.</p>
  *
- * <p>Pod-level inspection is performed only when the Job has a
- * {@code Failed} condition, minimizing K8s API calls during normal
- * execution.</p>
+ * <p>Pod-level inspection is performed when the Job has a
+ * {@code Failed} condition, and also when the Job is active —
+ * if all active pods are stuck (ImagePullBackOff, CrashLoopBackOff,
+ * Unschedulable), reports an error immediately rather than waiting
+ * for the deadline to expire.</p>
  */
 public class KubernetesPollingStrategy implements BatchPollingStrategy {
 
@@ -91,6 +93,12 @@ public class KubernetesPollingStrategy implements BatchPollingStrategy {
 
     Integer active = job.getStatus().getActive();
     if (active != null && active > 0) {
+      String stuckReason = checkAllPodsStuck(job);
+      if (stuckReason != null) {
+        return new JobStatus(
+            JobStatus.State.ERROR, stuckReason, null
+        );
+      }
       return new JobStatus(JobStatus.State.RUNNING);
     }
 
@@ -128,6 +136,32 @@ public class KubernetesPollingStrategy implements BatchPollingStrategy {
     }
 
     return "Job failed";
+  }
+
+  private String checkAllPodsStuck(Job job) {
+    String jobName = job.getMetadata().getName();
+
+    List<Pod> pods = client.pods()
+        .inNamespace(namespace)
+        .withLabel("job-name", jobName)
+        .list()
+        .getItems();
+
+    if (pods.isEmpty()) {
+      return null;
+    }
+
+    String firstReason = null;
+    for (Pod pod : pods) {
+      String reason = inspectPod(pod);
+      if (reason == null) {
+        return null;
+      }
+      if (firstReason == null) {
+        firstReason = reason;
+      }
+    }
+    return firstReason;
   }
 
   private String getPodFailureDetail(Job job) {

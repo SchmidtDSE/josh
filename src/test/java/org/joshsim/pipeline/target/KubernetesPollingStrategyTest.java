@@ -119,6 +119,50 @@ class KubernetesPollingStrategyTest {
   }
 
   @Test
+  void pollReportsErrorWhenAllPodsStuck() throws Exception {
+    when(mockJobResource.get()).thenReturn(
+        new JobBuilder()
+            .withNewMetadata().withName(JOB_NAME).endMetadata()
+            .withNewSpec().endSpec()
+            .withStatus(new JobStatusBuilder()
+                .withActive(1)
+                .build())
+            .build()
+    );
+
+    when(mockLabeledPods.list()).thenReturn(
+        new PodListBuilder()
+            .withItems(new PodBuilder()
+                .withNewMetadata()
+                    .withName("josh-pod-0")
+                .endMetadata()
+                .withNewStatus()
+                    .withContainerStatuses(
+                        new ContainerStatusBuilder()
+                            .withName("joshsim")
+                            .withState(new ContainerStateBuilder()
+                                .withNewWaiting()
+                                    .withReason("ImagePullBackOff")
+                                    .withMessage(
+                                        "image not found"
+                                    )
+                                .endWaiting()
+                                .build())
+                            .build())
+                .endStatus()
+                .build())
+            .build()
+    );
+
+    JobStatus status = strategy.poll(JOB_ID);
+
+    assertEquals(JobStatus.State.ERROR, status.getState());
+    assertTrue(
+        status.getMessage().get().contains("ImagePullBackOff")
+    );
+  }
+
+  @Test
   void pollReturnsCompleteOnCompleteCondition() throws Exception {
     when(mockJobResource.get()).thenReturn(
         new JobBuilder()

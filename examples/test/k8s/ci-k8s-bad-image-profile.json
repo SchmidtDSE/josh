@@ -5,7 +5,7 @@
     "namespace": "default",
     "image": "nonexistent-registry.example.com/no-such-image:v999",
     "parallelism": 1,
-    "timeoutSeconds": 180,
+    "timeoutSeconds": 120,
     "pod_minio_endpoint": "http://minio.default.svc:9000"
   },
   "minio_endpoint": "http://localhost:9000",
