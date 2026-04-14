@@ -1,9 +1,9 @@
 start simulation MinioLargeTest
   # Test large CSV export to MinIO, forcing multipart upload (>10MB).
-  # ~1000 patches x 100 steps x ~100 bytes/row > 10MB.
+  # ~1300 patches x 100 steps x ~80 bytes/row > 10MB.
   grid.size = 100 m
   grid.low = 0 degrees latitude, 0 degrees longitude
-  grid.high = 0.03 degrees latitude, 0.03 degrees longitude
+  grid.high = 0.035 degrees latitude, 0.035 degrees longitude
   steps.low = 0 count
   steps.high = 100 count
   exportFiles.patch = "minio://josh-test-bucket/results/large_test.csv"
