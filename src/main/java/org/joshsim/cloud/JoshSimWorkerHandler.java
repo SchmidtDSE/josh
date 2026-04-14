@@ -157,9 +157,7 @@ public class JoshSimWorkerHandler implements HttpHandler {
         ? formData.getFirst("outputSteps").getValue() : "";
     final Optional<Set<Integer>> outputSteps = parseOutputSteps(outputStepsStr);
 
-    boolean requestEnableProfiler = formData.contains("enableProfiler")
-        && "true".equals(formData.getFirst("enableProfiler").getValue());
-    boolean useProfiler = this.enableProfiler || requestEnableProfiler;
+    boolean useProfiler = this.enableProfiler || getProfilerEnabled(formData);
 
     ParseResult result = JoshSimFacadeUtil.parse(code);
     if (result.hasErrors()) {
@@ -208,9 +206,11 @@ public class JoshSimWorkerHandler implements HttpHandler {
    * @return A ValueSupportFactory configured according to the given flags.
    */
   ValueSupportFactory buildValueFactory(boolean favorBigDecimal, boolean useProfiler) {
-    return useProfiler
-        ? new ValueSupportFactory(favorBigDecimal, new TimedRecursiveValueResolverFactory())
-        : new ValueSupportFactory(favorBigDecimal);
+    if (useProfiler) {
+      return new ValueSupportFactory(favorBigDecimal, new TimedRecursiveValueResolverFactory());
+    } else {
+      return new ValueSupportFactory(favorBigDecimal);
+    }
   }
 
   /**
@@ -223,6 +223,19 @@ public class JoshSimWorkerHandler implements HttpHandler {
    */
   private static Optional<Set<Integer>> parseOutputSteps(String outputSteps) {
     return OutputStepsParser.parseForWasmOrRemote(outputSteps);
+  }
+
+  /**
+   * Determine whether the per-request enableProfiler form field is set to true.
+   *
+   * @param formData The form data submitted with the request.
+   * @return True if the enableProfiler field is present and equal to "true", false otherwise.
+   */
+  private boolean getProfilerEnabled(FormData formData) {
+    if (!formData.contains("enableProfiler")) {
+      return false;
+    }
+    return "true".equals(formData.getFirst("enableProfiler").getValue());
   }
 
   private Optional<JoshProgram> executeInterpretation(ValueSupportFactory valueFactory,

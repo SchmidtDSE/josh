@@ -56,7 +56,6 @@ public class RunRemoteContextBuilder {
   private int maxConcurrentWorkers = 10;
   private int replicateNumber = 0;
 
-  // Profiler flag
   private boolean enableProfiler = false;
 
   /**
@@ -240,7 +239,8 @@ public class RunRemoteContextBuilder {
         joshCode.get(), externalDataSerialized.get(),
         metadata.get(), progressCalculator.get(),
         outputOptions.get(), minioOptions.get(),
-        maxConcurrentWorkers, enableProfiler
+        maxConcurrentWorkers,
+        enableProfiler
     );
   }
 

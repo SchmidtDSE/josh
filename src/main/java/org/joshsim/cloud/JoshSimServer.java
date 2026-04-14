@@ -57,6 +57,8 @@ public class JoshSimServer {
    */
   public JoshSimServer(CloudApiDataLayer dataLayer, boolean useHttp2, String workerUrl, int port,
       int maxParallelRequests, boolean serialPatches, boolean enableProfiler) {
+    JoshSimWorkerHandler workerHandler = new JoshSimWorkerHandler(
+        dataLayer, true, Optional.empty(), serialPatches, enableProfiler);
     PathHandler pathHandler = Handlers.path()
         // CORS preflight
         .addPrefixPath("/*", exchange -> {
@@ -116,8 +118,7 @@ public class JoshSimServer {
         )
         .addPrefixPath(
             "/runReplicate",
-            new JoshSimWorkerHandler(
-                dataLayer, true, Optional.empty(), serialPatches, enableProfiler)
+            workerHandler
         )
         .addPrefixPath(
             "/runReplicates",
