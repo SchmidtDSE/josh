@@ -80,7 +80,7 @@ Used for `KubernetesTarget` only. Cleaner fluent DSL than official `io.kubernete
 ## PR Plan
 
 ```
-PR1 ✅ → PR2 ✅ → PR3 ✅ (cleanup) → PR4 ✅ (/runBatch) → PR4a ✅ (stageFromMinio opt-in) → PR4b ✅ (async+status) → PR5 (profiles+polling) → PR6 (batchRemote+HttpTarget) → PR7 (Fabric8+K8sTarget+K8sPolling) → PR8 (Dockerfile) → PR9 (preprocessBatch)
+PR1 ✅ → PR2 ✅ → PR3 ✅ (cleanup) → PR4 ✅ (/runBatch) → PR4a ✅ (stageFromMinio opt-in) → PR4b ✅ (async+status) → PR5 ✅ (profiles+polling) → PR6 (batchRemote+HttpTarget) → PR7 (Fabric8+K8sTarget+K8sPolling) → PR8 (Dockerfile) → PR9 (preprocessBatch)
 ```
 
 ### Regression gates (every PR)
@@ -221,7 +221,7 @@ Status writes are best-effort — missing MinIO credentials don't prevent simula
 
 ---
 
-### PR 5: Target profile system + polling strategy interfaces
+### PR 5 ✅: Target profile system + polling strategy interfaces — #393
 **Branch: `feat/target-profiles`**
 
 Target profiles, dispatch interface, and polling strategy. No new dependencies — Fabric8 deferred to PR 7 where it's consumed. All new files, nothing modified except tests.
@@ -289,21 +289,93 @@ Kubernetes:
 ### PR 6: `batchRemote` command + HttpBatchTarget + BatchJobStrategy
 **Branch: `feat/batch-remote`**
 
-New top-level CLI command. `BatchJobStrategy` orchestrates the full flow (stage → dispatch → poll). `HttpBatchTarget` is the first `RemoteBatchTarget` implementation — POSTs to `/runBatch`. Uses `MinioPollingStrategy` from PR 5 for status tracking. Does NOT touch `runRemote`.
+The client-side command that ties everything together. `BatchRemoteCommand` is the picocli entry point, `BatchJobStrategy` orchestrates stage → dispatch → poll, and `HttpBatchTarget` is the first `RemoteBatchTarget` implementation (POST to `/runBatch`). No new dependencies — uses `java.net.http.HttpClient` (already used in `RunRemoteOffloadLeaderStrategy`).
+
+**Key design principle: replicates are the target's responsibility.**
+The CLI passes `--replicates=N` through to `RemoteBatchTarget.dispatch()`. How those replicates actually run depends on the target:
+- `HttpBatchTarget` → passes `replicates` to `/runBatch`, which runs N replicates in-process (same as local `run --replicates=N` — JIT warmup, one container)
+- `KubernetesTarget` (PR 7) → creates an indexed Job with N pod completions (K8s handles parallelism)
+- Future custom targets → split however makes sense (SLURM `--array`, SSH round-robin, etc.)
+
+The caller (joshpy, scripts) can also handle parallelism itself by calling `batchRemote` multiple times with different jobIds. This is bring-your-own-infrastructure — the target defines how it runs, the caller defines how many times it calls.
+
+**Interface change from PR 5:**
+```java
+// PR 5 (current)
+void dispatch(String jobId, String minioPrefix, String simulation) throws Exception;
+
+// PR 6 (updated)
+void dispatch(String jobId, String minioPrefix, String simulation, int replicates) throws Exception;
+```
 
 **New files:**
-- `target/HttpBatchTarget.java` — implements `RemoteBatchTarget`, POSTs to `/runBatch` endpoint from target profile
-- `target/BatchJobStrategy.java` — orchestrator: `stageToMinio` → `target.dispatch()` → poll loop via `BatchPollingStrategy` → report results
-- `command/BatchRemoteCommand.java` — picocli command, `--target=<name>` flag loads profile via `TargetProfileLoader`
+
+`pipeline/target/HttpBatchTarget.java` (~80 lines):
+- Implements `RemoteBatchTarget`
+- Constructor takes `HttpTargetConfig` (endpoint, apiKey)
+- `dispatch(jobId, minioPrefix, simulation, replicates)` → POST form to `<endpoint>/runBatch` with fields: `apiKey`, `jobId`, `simulation`, `replicates`, `workDir=/tmp/batch-<jobId>`, `stageFromMinio=true`, `minioPrefix`
+- Uses `java.net.http.HttpClient` with form-encoded body (same pattern as `RunRemoteOffloadLeaderStrategy`)
+- Validates response: 202 accepted → success; anything else → throw with message from response body
+
+`pipeline/target/BatchJobStrategy.java` (~120 lines):
+- Constructor takes `RemoteBatchTarget`, `BatchPollingStrategy`, `MinioHandler` (for staging), `OutputOptions`
+- `execute(File inputDir, String simulation, String jobId, int replicates)`:
+  1. **Stage**: upload `inputDir` to `batch-jobs/<jobId>/inputs/` via `MinioHandler`
+  2. **Dispatch**: call `target.dispatch(jobId, minioPrefix, simulation, replicates)`
+  3. **Poll**: loop on `poller.poll(jobId)` at configurable intervals until `isTerminal()`
+  4. **Report**: print final status (complete with timestamp, or error with message)
+- `executeNoWait(...)`: stage + dispatch, skip polling, print statusPath
+- Poll timeout: configurable, default 3600s
+
+`command/BatchRemoteCommand.java` (~100 lines):
+- Picocli `@Command(name = "batchRemote")`
+- Positional params: `File script`, `String simulation`
+- `--target=<name>` (required) — loads profile via `TargetProfileLoader`
+- `--replicates=<N>` (default 1) — passed through to `target.dispatch()`
+- `--no-wait` — stage and dispatch, skip polling
+- `--poll-interval=<seconds>` (default 5)
+- `--timeout=<seconds>` (default 3600)
+- Wiring: loads profile → builds `MinioHandler` from profile creds → builds `HttpBatchTarget` from `httpConfig` → builds `MinioPollingStrategy` from same `MinioHandler` → creates `BatchJobStrategy` → calls `execute()`
 
 **Modify:**
-- `JoshSimCommander.java` — register `BatchRemoteCommand` subcommand
+- `JoshSimCommander.java` — add `BatchRemoteCommand.class` to subcommands array (1 line)
+- `MinioHandler.java` — add second constructor taking raw strings: `MinioHandler(String endpoint, String accessKey, String secretKey, String bucket, OutputOptions output)`. Needed because `TargetProfile` holds MinIO creds directly, not via `MinioOptions` picocli hierarchy.
+- `RemoteBatchTarget.java` — add `replicates` parameter to `dispatch()` signature
+- `cloud/JoshSimBatchHandler.java` — accept optional `replicates` form field, pass through to `JoshSimFacadeUtil.runSimulation()`. Default 1.
 
 **User experience:**
 ```bash
+# Single job, single replicate, wait for completion
+joshsim batchRemote simulation.josh Main --target=cloudrun-prod
+
+# Single job, 10 replicates (target decides how to run them), wait
 joshsim batchRemote simulation.josh Main --target=cloudrun-prod --replicates=10
-joshsim batchRemote simulation.josh Main --target=cloudrun-prod --replicates=10 --no-wait
+
+# Fire and forget
+joshsim batchRemote simulation.josh Main --target=nautilus --replicates=50 --no-wait
 ```
+
+**Output:**
+```
+Loading target profile: cloudrun-prod
+Staging to MinIO (batch-jobs/a1b2c3/inputs/)...  done (1 file)
+Dispatching to https://josh-executor-prod... (10 replicates)
+  [0s] accepted (batch-status/a1b2c3/status.json)
+  [5s] running
+  [45s] complete
+Results in MinIO via minio:// export paths in simulation.josh
+```
+
+**Test:**
+- [ ] `HttpBatchTarget` — unit tests with mock HTTP responses (202 accepted, 400 error, connection refused)
+- [ ] `BatchJobStrategy` — unit tests with mock target + mock poller (stage → dispatch → poll complete, poll error, poll timeout)
+- [ ] `BatchRemoteCommand` — unit test for argument parsing and profile loading
+- [ ] `MinioHandler` — test new raw-string constructor
+- [ ] `JoshSimBatchHandler` — test replicates form field parsing (default 1, explicit value)
+- [ ] Integration: end-to-end against dev Cloud Run
+- [ ] `./gradlew test` passes, `./gradlew checkstyleMain` passes, `./gradlew fatJar` builds
+
+**Risk: LOW — mostly new files. Small modifications: JoshSimCommander (1 line), MinioHandler (new constructor), RemoteBatchTarget (add parameter), JoshSimBatchHandler (replicates field).**
 
 ---
 

@@ -209,6 +209,97 @@ jobs:
           ./gradlew testMinioPolling
           echo "✓ MinioPollingStrategy integration tests passed"
 
+      - name: Test batchRemote end-to-end
+        env:
+          MINIO_ENDPOINT: http://localhost:9000
+          MINIO_ACCESS_KEY: minioadmin
+          MINIO_SECRET_KEY: minioadmin
+          MINIO_BUCKET: josh-test-bucket
+        run: |
+          echo "Testing batchRemote end-to-end against local server + MinIO..."
+
+          # Start local joshsim server
+          java -Xmx2g -jar build/libs/joshsim-fat.jar server > /tmp/josh_batch_server.log 2>&1 &
+          SERVER_PID=$!
+
+          # Wait for server ready
+          for i in $(seq 1 30); do
+            if curl -s --max-time 1 http://localhost:8085/health > /dev/null 2>&1; then
+              echo "Server ready after ${i}s"
+              break
+            fi
+            if [ $i -eq 30 ]; then
+              echo "Server failed to start. Log:"
+              cat /tmp/josh_batch_server.log
+              exit 1
+            fi
+            sleep 1
+          done
+
+          # Create target profile
+          mkdir -p ~/.josh/targets
+          cat > ~/.josh/targets/ci-local.json << 'PROFILE'
+          {
+            "type": "http",
+            "http": {
+              "endpoint": "http://localhost:8085",
+              "apiKey": "testkey"
+            },
+            "minio_endpoint": "http://localhost:9000",
+            "minio_access_key": "minioadmin",
+            "minio_secret_key": "minioadmin",
+            "minio_bucket": "josh-test-bucket"
+          }
+          PROFILE
+
+          # Create test simulation with MinIO export
+          mkdir -p /tmp/batch-e2e-test
+          cat > /tmp/batch-e2e-test/e2e_test.josh << 'JOSH'
+          start simulation E2ETest
+            grid.size = 100 m
+            grid.low = 0 degrees latitude, 0 degrees longitude
+            grid.high = 0.01 degrees latitude, 0.01 degrees longitude
+            grid.patch = "Default"
+            steps.low = 0 count
+            steps.high = 2 count
+            exportFiles.patch = "minio://josh-test-bucket/batch-e2e-results/results.csv"
+          end simulation
+
+          start patch Default
+            Tree.init = create 3 count of Tree
+            export.treeCount.step = count(Tree)
+          end patch
+
+          start organism Tree
+            age.init = 0 count
+            age.step = prior.age + 1 count
+          end organism
+          JOSH
+
+          # Run batchRemote with wait
+          java -jar build/libs/joshsim-fat.jar batchRemote \
+            /tmp/batch-e2e-test/e2e_test.josh E2ETest \
+            --target=ci-local \
+            --replicates=1 \
+            --poll-interval=2 \
+            --timeout=120
+
+          echo "✓ batchRemote completed successfully"
+
+          # Verify results landed in MinIO
+          echo "Verifying results in MinIO..."
+          ./mc stat testminio/josh-test-bucket/batch-e2e-results/results.csv
+          SIZE=$(./mc stat testminio/josh-test-bucket/batch-e2e-results/results.csv --json | grep -o '"size":[0-9]*' | cut -d':' -f2)
+          if [ "$SIZE" -gt 0 ]; then
+            echo "✓ Results CSV found in MinIO ($SIZE bytes)"
+          else
+            echo "✗ Results CSV empty or missing"
+            exit 7
+          fi
+
+          # Cleanup server
+          kill $SERVER_PID 2>/dev/null || true
+
       - name: Upload test artifacts
         uses: actions/upload-artifact@bbbca2ddaa5d8feaa63e36b76fdaad77386f024f # v7.0.0
         if: always()
@@ -231,6 +322,7 @@ jobs:
           echo "✓ Queue backpressure handling"
           echo "✓ Error handling validation"
           echo "✓ MinioPollingStrategy integration"
+          echo "✓ batchRemote end-to-end (server + MinIO)"
           echo "================================================"
           echo "All MinIO integration tests completed!"
           echo "================================================"

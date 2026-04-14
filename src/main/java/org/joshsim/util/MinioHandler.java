@@ -31,7 +31,7 @@ public class MinioHandler {
   private final OutputOptions output;
 
   /**
-   * Creates a new MinioHandler.
+   * Creates a new MinioHandler from picocli MinioOptions.
    *
    * @param options The MinioOptions containing credentials and base path
    * @param output For logging information and errors
@@ -50,6 +50,7 @@ public class MinioHandler {
     validateOrCreateBucket(options.isEnsureBucketExists());
 
   }
+
 
   /**
    * Ensures the target bucket exists, creating it if needed.

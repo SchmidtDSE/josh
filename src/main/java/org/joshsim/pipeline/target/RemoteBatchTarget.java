@@ -29,11 +29,18 @@ public interface RemoteBatchTarget {
    * method. The target is responsible for ensuring the worker can access those
    * inputs (e.g., by passing the MinIO prefix in the request or Job spec).</p>
    *
+   * <p>How replicates are executed depends on the target implementation. An HTTP
+   * target may run all replicates in a single container (JIT warmup, shared memory).
+   * A Kubernetes target may create an indexed Job with N pod completions. The caller
+   * does not prescribe parallelism — the target decides.</p>
+   *
    * @param jobId Unique identifier for this job, used for status tracking.
    * @param minioPrefix The MinIO object prefix where inputs are staged
    *     (e.g., {@code batch-jobs/abc123/inputs/}).
    * @param simulation The name of the simulation to run.
+   * @param replicates The number of replicates to execute.
    * @throws Exception If the dispatch fails (e.g., network error, auth failure).
    */
-  void dispatch(String jobId, String minioPrefix, String simulation) throws Exception;
+  void dispatch(String jobId, String minioPrefix, String simulation, int replicates)
+      throws Exception;
 }

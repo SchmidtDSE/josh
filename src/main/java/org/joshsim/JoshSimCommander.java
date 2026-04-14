@@ -14,6 +14,7 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.util.Optional;
+import org.joshsim.command.BatchRemoteCommand;
 import org.joshsim.command.DiscoverConfigCommand;
 import org.joshsim.command.InspectExportsCommand;
 import org.joshsim.command.InspectJshdCommand;
@@ -64,7 +65,8 @@ import picocli.CommandLine;
         InspectJshdCommand.class,
         InspectExportsCommand.class,
         StageToMinioCommand.class,
-        StageFromMinioCommand.class
+        StageFromMinioCommand.class,
+        BatchRemoteCommand.class
     }
 )
 public class JoshSimCommander {
