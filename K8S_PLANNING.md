@@ -80,7 +80,7 @@ Used for `KubernetesTarget` only. Cleaner fluent DSL than official `io.kubernete
 ## PR Plan
 
 ```
-PR1 ✅ → PR2 ✅ → PR3 ✅ (cleanup) → PR4 ✅ (/runBatch) → PR4a ✅ (stageFromMinio opt-in) → PR4b ✅ (async+status) → PR5 ✅ (profiles+polling) → PR6 (batchRemote+HttpTarget) → PR7 (Fabric8+K8sTarget+K8sPolling) → PR8 (Dockerfile) → PR9 (preprocessBatch)
+PR1 ✅ → PR2 ✅ → PR3 ✅ (cleanup) → PR4 ✅ (/runBatch) → PR4a ✅ (stageFromMinio opt-in) → PR4b ✅ (async+status) → PR5 ✅ (profiles+polling) → PR6 ✅ (batchRemote+HttpTarget) → PR7 ✅ (Fabric8+K8sTarget+K8sPolling) → PR8 (Dockerfile) → PR9 (preprocessBatch)
 ```
 
 ### Regression gates (every PR)
@@ -286,7 +286,7 @@ Kubernetes:
 
 ---
 
-### PR 6: `batchRemote` command + HttpBatchTarget + BatchJobStrategy
+### PR 6 ✅: `batchRemote` command + HttpBatchTarget + BatchJobStrategy — #394
 **Branch: `feat/batch-remote`**
 
 The client-side command that ties everything together. `BatchRemoteCommand` is the picocli entry point, `BatchJobStrategy` orchestrates stage → dispatch → poll, and `HttpBatchTarget` is the first `RemoteBatchTarget` implementation (POST to `/runBatch`). No new dependencies — uses `java.net.http.HttpClient` (already used in `RunRemoteOffloadLeaderStrategy`).
@@ -379,12 +379,35 @@ Results in MinIO via minio:// export paths in simulation.josh
 
 ---
 
-### PR 7: Fabric8 dependency + KubernetesTarget + KubernetesPollingStrategy
-**Branch: `feat/k8s-target-impl`**
+### PR 7 ✅: Fabric8 dependency + KubernetesTarget + KubernetesPollingStrategy
+**Branch: `feat/k8s-target`**
 
-Add `io.fabric8:kubernetes-client:7.0.0` to build.gradle. Implements `RemoteBatchTarget` for K8s indexed Jobs and `KubernetesPollingStrategy` for native Job status (catches OOMKill, scheduling failures, image pull errors that never reach MinIO status file).
+Added `io.fabric8:kubernetes-client:7.0.0` and `kubernetes-server-mock:7.0.0` (test). Implements `RemoteBatchTarget` for K8s indexed Jobs and `KubernetesPollingStrategy` for native Job status API polling.
 
-**Verify with `./gradlew dependencies` before writing code — Fabric8 dep conflicts are HIGH risk.**
+**Dependency risk turned out to be LOW** (not HIGH). Fabric8 7.0.0 uses Jackson 2.18.2 (same as Josh), Vert.x HTTP transport (not OkHttp), SLF4J 2.0.16 → resolved to 2.0.17. Zero conflicts.
+
+**New files:**
+- `pipeline/target/KubernetesTarget.java` (~220 lines) — creates K8s indexed Jobs via Fabric8 fluent API. `completionMode: Indexed`, each pod runs 1 replicate. MinIO creds passed as env vars (picked up by `HierarchyConfig` automatically). Container command: `stageFromMinio → find .josh → run`.
+- `pipeline/target/KubernetesPollingStrategy.java` (~230 lines) — reads K8s Job API. Detects infrastructure failures on Job failure only (minimizes API chatter): OOMKill, ImagePullBackOff, scheduling failures, DeadlineExceeded, BackoffLimitExceeded.
+
+**Modified files:**
+- `build.gradle` — Fabric8 deps
+- `pipeline/target/KubernetesTargetConfig.java` — added `jarPath` field (default `/app/joshsim-fat.jar`)
+- `command/BatchRemoteCommand.java` — added "kubernetes" case in `buildTarget()`, `buildPoller()` selects `KubernetesPollingStrategy` for K8s targets
+
+**Key design decisions:**
+- **MinIO creds to KubernetesTarget**: passed as explicit strings from `TargetProfile`, keeping `KubernetesTarget` decoupled from profile parsing
+- **Client sharing**: `KubernetesTarget.getClient()` shared with `KubernetesPollingStrategy` — one connection per cluster
+- **Pod inspection only on failure**: `extractFailureReason()` lists pods only when Job condition is `Failed`, not on every poll
+- **Container jar path configurable**: `jarPath` field in `KubernetesTargetConfig` for custom container images
+
+**Test:**
+- [x] 8 unit tests for `KubernetesTarget` (Job spec, env vars, resources, parallelism cap, name format, command)
+- [x] 9 unit tests for `KubernetesPollingStrategy` (PENDING, RUNNING, COMPLETE, ERROR, DeadlineExceeded, BackoffLimitExceeded, OOMKill, ImagePull, scheduling)
+- [x] All tests use Mockito (Fabric8 mock server has JDK 21 SSL compat issues)
+- [x] `./gradlew test` passes, `./gradlew checkstyleMain checkstyleTest` passes, `./gradlew fatJar` builds
+
+**Risk: LOW — dependency conflicts did not materialize. No modifications to existing behavior.**
 
 ### PR 8: Dockerfile + e2e integration
 
@@ -431,7 +454,7 @@ Add `io.fabric8:kubernetes-client:7.0.0` to build.gradle. Implements `RemoteBatc
 
 | Risk | Level | Mitigation |
 |------|-------|------------|
-| Fabric8 dep conflicts | **HIGH** | Deferred to PR 7 (not PR 5). Verify with `./gradlew dependencies` before code |
+| Fabric8 dep conflicts | ~~HIGH~~ **DONE** | Resolved in PR 7 — zero conflicts (Jackson 2.18.2, SLF4J 2.0.17, Vert.x transport) |
 | `--upload-*` removal | ~~MEDIUM~~ DONE | Completed in PR 3. joshpy bottling supersedes; `stageToMinio` covers explicit uploads |
 | K8s Job failure cases | MEDIUM | `backoffLimit: 3` + `activeDeadlineSeconds` + `KubernetesPollingStrategy` for native status (OOMKill, scheduling) |
 | MinIO cred passing | MEDIUM | Target profiles hold creds directly; K8s Secrets later |
