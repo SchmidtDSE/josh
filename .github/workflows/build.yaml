@@ -197,7 +197,7 @@ jobs:
             --api-key testkey \
             --replicates=1 \
             --enable-profiler
-          python3 .github/scripts/check_profiler_on.py
+          python3 .github/scripts/check_profiler.py on
           rm -f /tmp/profiler_multi_josh.csv
       - name: Test profiler mismatch remote (client --enable-profiler, server honors field, expect non-zero timings)
         run: |
@@ -208,7 +208,7 @@ jobs:
             --api-key testkey \
             --replicates=1 \
             --enable-profiler
-          python3 .github/scripts/check_profiler_on.py
+          python3 .github/scripts/check_profiler.py on
           rm -f /tmp/profiler_multi_josh.csv
       - name: Stop server before profiler server
         run: pkill -f joshsim-fat.jar || true
@@ -237,7 +237,7 @@ jobs:
             --endpoint http://localhost:8085/runReplicates \
             --api-key testkey \
             --replicates=1
-          python3 .github/scripts/check_profiler_on.py
+          python3 .github/scripts/check_profiler.py on
           rm -f /tmp/profiler_multi_josh.csv
       - name: Stop server
         if: always()
@@ -425,7 +425,7 @@ jobs:
             --replicates=1 \
             examples/simulations/profiler_multi.josh \
             ProfilerMultiExample
-          python3 .github/scripts/check_profiler_off.py
+          python3 .github/scripts/check_profiler.py off
           rm -f /tmp/profiler_multi_josh.csv
       - name: Test profiler on local (expect non-zero timings)
         run: |
@@ -434,7 +434,7 @@ jobs:
             --enable-profiler \
             examples/simulations/profiler_multi.josh \
             ProfilerMultiExample
-          python3 .github/scripts/check_profiler_on.py
+          python3 .github/scripts/check_profiler.py on
           rm -f /tmp/profiler_multi_josh.csv
       - name: Test profiler on local with 5 replicates (expect non-zero timings)
         run: |
@@ -443,7 +443,7 @@ jobs:
             --enable-profiler \
             examples/simulations/profiler_multi.josh \
             ProfilerMultiExample
-          python3 .github/scripts/check_profiler_on.py
+          python3 .github/scripts/check_profiler.py on
           rm -f /tmp/profiler_multi_josh.csv
   buildWeb:
     environment: Build
