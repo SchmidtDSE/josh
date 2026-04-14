@@ -5,6 +5,7 @@ on:
     branches:
       - main
       - dev
+      - feat/k8s-target
   pull_request:
 
 jobs:
