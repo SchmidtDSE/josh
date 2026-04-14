@@ -165,6 +165,10 @@ public class KubernetesTarget implements RemoteBatchTarget {
   private void createSecret(String secretName) {
     Map<String, String> resolved =
         minioOptions.getResolvedCredentials();
+    // Pods use the explicit pod endpoint, not the host-resolved one
+    resolved.put(
+        "MINIO_ENDPOINT", config.getPodMinioEndpoint()
+    );
     Map<String, String> data = new HashMap<>();
     resolved.forEach(
         (k, v) -> data.put(k, encode(v))
