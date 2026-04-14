@@ -43,6 +43,9 @@ public class KubernetesTargetConfig {
   @JsonProperty("jarPath")
   private String jarPath;
 
+  @JsonProperty("pod_minio_endpoint")
+  private String podMinioEndpoint;
+
   /**
    * Default constructor for Jackson deserialization.
    */
@@ -119,5 +122,20 @@ public class KubernetesTargetConfig {
       return "/app/joshsim-fat.jar";
     }
     return jarPath;
+  }
+
+  /**
+   * Returns the MinIO endpoint that pods use inside the cluster.
+   *
+   * <p>Required for K8s targets. Pods often have a different
+   * network path to MinIO than the host running {@code batchRemote}
+   * (e.g., cluster DNS {@code http://minio.ns.svc:9000} vs public
+   * URL {@code https://storage.googleapis.com}). This value goes
+   * into the K8s Secret that pods read.</p>
+   *
+   * @return The pod-facing MinIO endpoint, or null if not set.
+   */
+  public String getPodMinioEndpoint() {
+    return podMinioEndpoint;
   }
 }

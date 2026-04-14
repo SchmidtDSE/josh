@@ -106,6 +106,27 @@ $ java -jar joshsim.jar server --worker-url your-server-url.com/runReplicate
 
 See also our [example Dockerfile](https://github.com/SchmidtDSE/josh/blob/main/cloud-img/Dockerfile.prod).
 
+### Batch execution on your own infrastructure
+For large-scale runs on your own Kubernetes cluster or server, Josh provides the `batchRemote` command. This stages simulation files to S3-compatible storage (MinIO, GCS, AWS S3), dispatches execution to a configured target, and polls for completion. Results are written back to storage via `minio://` export paths.
+
+```
+$ java -jar joshsim.jar batchRemote simulation.josh Main --target=nautilus --replicates=50
+```
+
+Targets are defined as JSON profiles at `~/.josh/targets/<name>.json`. Two target types are supported:
+
+- **HTTP targets** — dispatch to any joshsim server (Cloud Run, self-hosted). The server runs all replicates in-process.
+- **Kubernetes targets** — create an indexed K8s Job where each pod runs one replicate. Supports GKE, [Nautilus/NRP](https://nrp.ai), EKS, and self-hosted clusters.
+
+MinIO credentials are resolved from environment variables, the profile JSON, or CLI flags — secrets do not need to live in the profile file. See `llms-full.txt` for the full target profile specification and credential resolution details.
+
+The batch worker container image is built from `cloud-img/Dockerfile.batch`. Staging commands (`stageToMinio`, `stageFromMinio`) are also available for manual workflows:
+
+```
+$ java -jar joshsim.jar stageToMinio --input-dir=./sim/ --prefix=batch-jobs/abc/inputs/ \
+  --minio-endpoint=https://s3.amazonaws.com --minio-bucket=my-bucket
+```
+
 ## Security
 When running in server mode, some additional security mechanisms are in place.
 

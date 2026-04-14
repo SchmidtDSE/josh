@@ -88,5 +88,19 @@ public class TargetProfileLoader {
               + "but is missing 'kubernetes' config block"
       );
     }
+
+    if ("kubernetes".equals(type) && profile.getKubernetesConfig() != null) {
+      String podEndpoint =
+          profile.getKubernetesConfig().getPodMinioEndpoint();
+      if (podEndpoint == null || podEndpoint.isEmpty()) {
+        throw new IllegalArgumentException(
+            "Target profile '" + name + "' has type 'kubernetes'"
+                + " but is missing required 'pod_minio_endpoint'"
+                + " in the 'kubernetes' config block. Pods need"
+                + " an explicit MinIO endpoint (may differ from"
+                + " the host endpoint)."
+        );
+      }
+    }
   }
 }

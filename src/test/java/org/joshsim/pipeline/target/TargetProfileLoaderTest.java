@@ -70,7 +70,8 @@ class TargetProfileLoaderTest {
               "limits": { "memory": "256Gi" }
             },
             "parallelism": 10,
-            "timeoutSeconds": 3600
+            "timeoutSeconds": 3600,
+            "pod_minio_endpoint": "http://minio.joshsim-lab.svc:9000"
           },
           "minio_endpoint": "https://minio.example.com",
           "minio_access_key": "k8s-access",
@@ -153,6 +154,29 @@ class TargetProfileLoaderTest {
         IllegalArgumentException.class, () -> loader.load("bad-k8s")
     );
     assertTrue(exception.getMessage().contains("missing 'kubernetes' config block"));
+  }
+
+  @Test
+  void throwsOnK8sWithoutPodMinioEndpoint() throws Exception {
+    writeProfile("k8s-no-pod-ep", """
+        {
+          "type": "kubernetes",
+          "kubernetes": {
+            "context": "test",
+            "namespace": "default",
+            "image": "test:latest",
+            "parallelism": 1,
+            "timeoutSeconds": 60
+          },
+          "minio_endpoint": "https://example.com"
+        }
+        """);
+    TargetProfileLoader loader = new TargetProfileLoader(tempDir);
+    IllegalArgumentException ex = assertThrows(
+        IllegalArgumentException.class,
+        () -> loader.load("k8s-no-pod-ep")
+    );
+    assertTrue(ex.getMessage().contains("pod_minio_endpoint"));
   }
 
   @Test

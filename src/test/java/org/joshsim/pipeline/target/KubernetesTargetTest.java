@@ -52,6 +52,8 @@ class KubernetesTargetTest {
   private static final String PREFIX =
       "batch-jobs/abc-123-def/inputs/";
   private static final String SIMULATION = "Main";
+  private static final String POD_ENDPOINT =
+      "http://minio.default.svc:9000";
 
   private KubernetesClient mockClient;
   private ScalableResource mockJobResource;
@@ -144,7 +146,13 @@ class KubernetesTargetTest {
         secret.getMetadata().getName()
     );
     Map<String, String> data = secret.getData();
-    assertNotNull(data.get("MINIO_ENDPOINT"));
+    // Secret should use pod endpoint, not host endpoint
+    String decodedEndpoint = new String(
+        java.util.Base64.getDecoder().decode(
+            data.get("MINIO_ENDPOINT")
+        )
+    );
+    assertEquals(POD_ENDPOINT, decodedEndpoint);
     assertNotNull(data.get("MINIO_ACCESS_KEY"));
     assertNotNull(data.get("MINIO_SECRET_KEY"));
     assertNotNull(data.get("MINIO_BUCKET"));
@@ -311,6 +319,7 @@ class KubernetesTargetTest {
       setField(cfg, "resources", resources);
       setField(cfg, "parallelism", parallelism);
       setField(cfg, "timeoutSeconds", timeout);
+      setField(cfg, "podMinioEndpoint", POD_ENDPOINT);
     } catch (Exception e) {
       throw new RuntimeException(e);
     }
