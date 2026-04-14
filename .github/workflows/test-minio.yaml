@@ -210,6 +210,11 @@ jobs:
           echo "✓ MinioPollingStrategy integration tests passed"
 
       - name: Test batchRemote end-to-end
+        env:
+          MINIO_ENDPOINT: http://localhost:9000
+          MINIO_ACCESS_KEY: minioadmin
+          MINIO_SECRET_KEY: minioadmin
+          MINIO_BUCKET: josh-test-bucket
         run: |
           echo "Testing batchRemote end-to-end against local server + MinIO..."
 
