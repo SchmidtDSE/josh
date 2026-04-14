@@ -85,39 +85,20 @@ public class TargetProfile {
   }
 
   /**
-   * Returns the MinIO endpoint URL for this target's storage.
+   * Builds a {@link MinioOptions} resolved through {@link
+   * org.joshsim.util.HierarchyConfig}.
    *
-   * @return The MinIO endpoint.
-   */
-  public String getMinioEndpoint() {
-    return minioEndpoint;
-  }
-
-  /**
-   * Returns the MinIO access key for this target's storage.
+   * <p>Values are resolved in priority order: JSON profile file →
+   * environment variables. This means MinIO credentials do not need
+   * to live in the profile JSON — they can be set via
+   * {@code MINIO_ENDPOINT}, {@code MINIO_ACCESS_KEY}, etc.</p>
    *
-   * @return The MinIO access key.
+   * @return A configured MinioOptions instance.
    */
-  public String getMinioAccessKey() {
-    return minioAccessKey;
-  }
-
-  /**
-   * Returns the MinIO secret key for this target's storage.
-   *
-   * @return The MinIO secret key.
-   */
-  public String getMinioSecretKey() {
-    return minioSecretKey;
-  }
-
-  /**
-   * Returns the MinIO bucket name for this target's storage.
-   *
-   * @return The MinIO bucket name.
-   */
-  public String getMinioBucket() {
-    return minioBucket;
+  public MinioOptions buildMinioOptions() {
+    MinioOptions options = new MinioOptions();
+    options.setConfigFile(sourceFilePath);
+    return options;
   }
 
   /**
@@ -148,9 +129,8 @@ public class TargetProfile {
    * @return A MinioHandler ready for staging and polling operations.
    * @throws Exception If MinIO client creation or bucket validation fails.
    */
-  public MinioHandler buildMinioHandler(OutputOptions output) throws Exception {
-    MinioOptions options = new MinioOptions();
-    options.setConfigFile(sourceFilePath);
-    return new MinioHandler(options, output);
+  public MinioHandler buildMinioHandler(OutputOptions output)
+      throws Exception {
+    return new MinioHandler(buildMinioOptions(), output);
   }
 }

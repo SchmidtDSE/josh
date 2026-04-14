@@ -156,10 +156,7 @@ public class BatchRemoteCommand implements Callable<Integer> {
   ) {
     return new KubernetesTarget(
         profile.getKubernetesConfig(),
-        profile.getMinioEndpoint(),
-        profile.getMinioAccessKey(),
-        profile.getMinioSecretKey(),
-        profile.getMinioBucket()
+        profile.buildMinioOptions()
     );
   }
 

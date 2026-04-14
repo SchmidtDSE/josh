@@ -30,6 +30,7 @@ import io.fabric8.kubernetes.client.dsl.V1BatchAPIGroupDSL;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import org.joshsim.util.MinioOptions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
@@ -278,13 +279,23 @@ class KubernetesTargetTest {
       KubernetesTargetConfig cfg
   ) {
     return new KubernetesTarget(
-        cfg,
-        "https://minio.test",
-        "access",
-        "secret",
-        "test-bucket",
-        mockClient
+        cfg, buildTestMinioOptions(), mockClient
     );
+  }
+
+  private MinioOptions buildTestMinioOptions() {
+    return new MinioOptions() {
+      @Override
+      protected String getEnvValue(String name) {
+        return switch (name) {
+          case "MINIO_ENDPOINT" -> "https://minio.test";
+          case "MINIO_ACCESS_KEY" -> "access";
+          case "MINIO_SECRET_KEY" -> "secret";
+          case "MINIO_BUCKET" -> "test-bucket";
+          default -> null;
+        };
+      }
+    };
   }
 
   private KubernetesTargetConfig buildConfig(

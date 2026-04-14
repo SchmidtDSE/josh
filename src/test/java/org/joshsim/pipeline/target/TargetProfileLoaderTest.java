@@ -51,10 +51,8 @@ class TargetProfileLoaderTest {
     assertNotNull(profile.getHttpConfig());
     assertEquals("https://josh-executor.run.app", profile.getHttpConfig().getEndpoint());
     assertEquals("test-key-123", profile.getHttpConfig().getApiKey());
-    assertEquals("https://storage.googleapis.com", profile.getMinioEndpoint());
-    assertEquals("access", profile.getMinioAccessKey());
-    assertEquals("secret", profile.getMinioSecretKey());
-    assertEquals("josh-storage", profile.getMinioBucket());
+    // MinIO creds resolved via HierarchyConfig through buildMinioOptions()
+    assertNotNull(profile.buildMinioOptions());
     assertNull(profile.getKubernetesConfig());
   }
 

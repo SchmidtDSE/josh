@@ -23,6 +23,7 @@ import java.util.Base64;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import org.joshsim.util.MinioOptions;
 
 
 /**
@@ -42,61 +43,44 @@ public class KubernetesTarget implements RemoteBatchTarget {
 
   private final KubernetesTargetConfig config;
   private final KubernetesClient client;
-  private final String minioEndpoint;
-  private final String minioAccessKey;
-  private final String minioSecretKey;
-  private final String minioBucket;
+  private final MinioOptions minioOptions;
 
   /**
-   * Constructs a KubernetesTarget from config and MinIO credentials.
+   * Constructs a KubernetesTarget from config and MinIO options.
    *
    * <p>Creates a Fabric8 client configured for the kubectl context
    * specified in the config. If the context is null, Fabric8 uses
    * default auto-discovery (~/.kube/config or in-cluster SA).</p>
    *
+   * <p>MinIO credentials are resolved through {@link
+   * org.joshsim.util.HierarchyConfig} — they can come from the
+   * target profile JSON, environment variables, or CLI flags.
+   * Secrets do not need to live in the profile file.</p>
+   *
    * @param config The Kubernetes target configuration.
-   * @param minioEndpoint MinIO endpoint URL for pod env vars.
-   * @param minioAccessKey MinIO access key for pod env vars.
-   * @param minioSecretKey MinIO secret key for pod env vars.
-   * @param minioBucket MinIO bucket name for pod env vars.
+   * @param minioOptions MinIO options resolved via HierarchyConfig.
    */
   public KubernetesTarget(
       KubernetesTargetConfig config,
-      String minioEndpoint,
-      String minioAccessKey,
-      String minioSecretKey,
-      String minioBucket
+      MinioOptions minioOptions
   ) {
-    this(
-        config, minioEndpoint, minioAccessKey,
-        minioSecretKey, minioBucket,
-        buildClient(config.getContext())
-    );
+    this(config, minioOptions, buildClient(config.getContext()));
   }
 
   /**
    * Constructs a KubernetesTarget with an injected client (testing).
    *
    * @param config The Kubernetes target configuration.
-   * @param minioEndpoint MinIO endpoint URL for pod env vars.
-   * @param minioAccessKey MinIO access key for pod env vars.
-   * @param minioSecretKey MinIO secret key for pod env vars.
-   * @param minioBucket MinIO bucket name for pod env vars.
+   * @param minioOptions MinIO options resolved via HierarchyConfig.
    * @param client The Fabric8 Kubernetes client to use.
    */
   KubernetesTarget(
       KubernetesTargetConfig config,
-      String minioEndpoint,
-      String minioAccessKey,
-      String minioSecretKey,
-      String minioBucket,
+      MinioOptions minioOptions,
       KubernetesClient client
   ) {
     this.config = config;
-    this.minioEndpoint = minioEndpoint;
-    this.minioAccessKey = minioAccessKey;
-    this.minioSecretKey = minioSecretKey;
-    this.minioBucket = minioBucket;
+    this.minioOptions = minioOptions;
     this.client = client;
   }
 
@@ -179,11 +163,12 @@ public class KubernetesTarget implements RemoteBatchTarget {
   }
 
   private void createSecret(String secretName) {
+    Map<String, String> resolved =
+        minioOptions.getResolvedCredentials();
     Map<String, String> data = new HashMap<>();
-    data.put("MINIO_ENDPOINT", encode(minioEndpoint));
-    data.put("MINIO_ACCESS_KEY", encode(minioAccessKey));
-    data.put("MINIO_SECRET_KEY", encode(minioSecretKey));
-    data.put("MINIO_BUCKET", encode(minioBucket));
+    resolved.forEach(
+        (k, v) -> data.put(k, encode(v))
+    );
 
     Secret secret = new SecretBuilder()
         .withNewMetadata()
