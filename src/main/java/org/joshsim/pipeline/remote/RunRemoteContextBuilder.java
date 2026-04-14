@@ -56,6 +56,8 @@ public class RunRemoteContextBuilder {
   private int maxConcurrentWorkers = 10;
   private int replicateNumber = 0;
 
+  private boolean enableProfiler = false;
+
   /**
    * Set the Josh simulation file.
    *
@@ -212,6 +214,17 @@ public class RunRemoteContextBuilder {
   }
 
   /**
+   * Set whether to enable per-request profiling.
+   *
+   * @param enableProfiler Whether to enable profiling for this request
+   * @return This builder instance for chaining
+   */
+  public RunRemoteContextBuilder withEnableProfiler(boolean enableProfiler) {
+    this.enableProfiler = enableProfiler;
+    return this;
+  }
+
+  /**
    * Build the RunRemoteContext instance.
    *
    * @return A new RunRemoteContext instance with the configured parameters
@@ -226,7 +239,8 @@ public class RunRemoteContextBuilder {
         joshCode.get(), externalDataSerialized.get(),
         metadata.get(), progressCalculator.get(),
         outputOptions.get(), minioOptions.get(),
-        maxConcurrentWorkers
+        maxConcurrentWorkers,
+        enableProfiler
     );
   }
 

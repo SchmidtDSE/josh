@@ -119,6 +119,7 @@ public class RunRemoteOffloadLeaderStrategy implements RunRemoteStrategy {
     formData.put("apiKey", context.getApiKey());
     formData.put("externalData", context.getExternalDataSerialized());
     formData.put("favorBigDecimal", String.valueOf(!context.isUseFloat64()));
+    formData.put("enableProfiler", String.valueOf(context.isEnableProfiler()));
 
     // URL encode the form data
     StringBuilder formBody = new StringBuilder();

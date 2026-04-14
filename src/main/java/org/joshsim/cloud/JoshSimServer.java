@@ -52,9 +52,19 @@ public class JoshSimServer {
    * @param maxParallelRequests The maximum parallel requests to allow in leaders.
    * @param serialPatches Flag indicating if patches should be processed in serial. True if serial
    *     and false if parallel.
+   * @param enableProfiler If true, all worker requests will use a profiling value resolver
+   *     regardless of the per-request enableProfiler form field.
    */
   public JoshSimServer(CloudApiDataLayer dataLayer, boolean useHttp2, String workerUrl, int port,
-      int maxParallelRequests, boolean serialPatches) {
+      int maxParallelRequests, boolean serialPatches, boolean enableProfiler) {
+    JoshSimWorkerHandler workerHandler = new JoshSimWorkerHandler(
+        dataLayer,
+        true,
+        Optional.empty(),
+        serialPatches,
+        enableProfiler
+    );
+
     PathHandler pathHandler = Handlers.path()
         // CORS preflight
         .addPrefixPath("/*", exchange -> {
@@ -114,7 +124,7 @@ public class JoshSimServer {
         )
         .addPrefixPath(
             "/runReplicate",
-            new JoshSimWorkerHandler(dataLayer, true, Optional.empty(), serialPatches)
+            workerHandler
         )
         .addPrefixPath(
             "/runReplicates",

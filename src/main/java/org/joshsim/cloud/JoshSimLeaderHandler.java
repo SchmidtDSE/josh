@@ -172,7 +172,8 @@ public class JoshSimLeaderHandler implements HttpHandler {
           externalData,
           favorBigDecimal,
           i,
-          outputStepsStr
+          outputStepsStr,
+          false
       );
       tasks.add(task);
     }
