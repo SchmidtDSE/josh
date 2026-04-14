@@ -31,7 +31,7 @@ public class MinioHandler {
   private final OutputOptions output;
 
   /**
-   * Creates a new MinioHandler.
+   * Creates a new MinioHandler from picocli MinioOptions.
    *
    * @param options The MinioOptions containing credentials and base path
    * @param output For logging information and errors
@@ -49,6 +49,32 @@ public class MinioHandler {
 
     validateOrCreateBucket(options.isEnsureBucketExists());
 
+  }
+
+  /**
+   * Creates a new MinioHandler from raw credential strings.
+   *
+   * <p>For programmatic use when constructing from a target profile rather than
+   * CLI options. The base path is set to empty (root of bucket).</p>
+   *
+   * @param endpoint The MinIO/S3 endpoint URL
+   * @param accessKey The access key
+   * @param secretKey The secret key
+   * @param bucket The bucket name
+   * @param output For logging information and errors
+   * @throws Exception If MinIO client creation or bucket validation fails
+   */
+  public MinioHandler(String endpoint, String accessKey, String secretKey,
+      String bucket, OutputOptions output) throws Exception {
+    this.minioClient = MinioClient.builder()
+        .endpoint(endpoint)
+        .credentials(accessKey, secretKey)
+        .build();
+    this.bucketName = bucket;
+    this.basePath = "";
+    this.output = output;
+
+    validateOrCreateBucket(false);
   }
 
   /**

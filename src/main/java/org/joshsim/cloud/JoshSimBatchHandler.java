@@ -175,12 +175,15 @@ public class JoshSimBatchHandler implements HttpHandler {
 
     MinioHandler statusMinio = initStatusMinio(jobId);
     String simulation = formData.getFirst("simulation").getValue();
+    int replicates = parseReplicates(formData);
     String statusPath = "batch-status/" + jobId + "/status.json";
     sendJsonAccepted(exchange, jobId, statusPath);
 
     String capturedApiKey = apiKey;
     CompletableFuture.runAsync(() -> {
-      runBatchWithStatus(statusMinio, jobId, simulation, workDir, statusPath, capturedApiKey);
+      runBatchWithStatus(
+          statusMinio, jobId, simulation, workDir, replicates, statusPath, capturedApiKey
+      );
     }, BATCH_EXECUTOR);
 
     return Optional.of(apiKey);
@@ -233,14 +236,26 @@ public class JoshSimBatchHandler implements HttpHandler {
     }
   }
 
+  private int parseReplicates(FormData formData) {
+    if (!formData.contains("replicates")) {
+      return 1;
+    }
+    try {
+      int value = Integer.parseInt(formData.getFirst("replicates").getValue());
+      return value < 1 ? 1 : value;
+    } catch (NumberFormatException e) {
+      return 1;
+    }
+  }
+
   private void runBatchWithStatus(MinioHandler statusMinio, String jobId,
-      String simulation, File workDir, String statusPath, String apiKey) {
+      String simulation, File workDir, int replicates, String statusPath, String apiKey) {
     writeStatus(statusMinio, statusPath, buildStatusJson(
         "running", jobId, "startedAt", Instant.now().toString()
     ));
 
     try {
-      executeBatchJob(jobId, simulation, workDir);
+      executeBatchJob(jobId, simulation, workDir, replicates);
 
       writeStatus(statusMinio, statusPath, buildStatusJson(
           "complete", jobId, "completedAt", Instant.now().toString()
@@ -273,7 +288,8 @@ public class JoshSimBatchHandler implements HttpHandler {
     }
   }
 
-  private void executeBatchJob(String jobId, String simulation, File workDir) throws Exception {
+  private void executeBatchJob(String jobId, String simulation, File workDir,
+      int replicates) throws Exception {
     // Ensure JVM threading for parallel patch export
     CompatibilityLayerKeeper.set(new JvmCompatibilityLayer());
 
@@ -289,32 +305,37 @@ public class JoshSimBatchHandler implements HttpHandler {
 
     Map<String, String> fileMapping = LocalFileUtil.buildFileMapping(workDir);
     MinioOptions minioOptions = new MinioOptions();
-    InputOutputLayer inputOutputLayer = new JvmInputOutputLayerBuilder()
-        .withInputStrategy(new JvmMappedInputGetter(fileMapping))
-        .withMinioOptions(minioOptions)
-        .build();
 
     ValueSupportFactory valueFactory = new ValueSupportFactory();
     GridGeometryFactory geometryFactory = new GridGeometryFactory();
 
-    JoshProgram program = JoshSimFacadeUtil.interpret(
-        valueFactory, geometryFactory, parseResult, inputOutputLayer
-    );
+    for (int replicate = 0; replicate < replicates; replicate++) {
+      InputOutputLayer inputOutputLayer = new JvmInputOutputLayerBuilder()
+          .withReplicate(replicate)
+          .withInputStrategy(new JvmMappedInputGetter(fileMapping))
+          .withMinioOptions(minioOptions)
+          .withAppendMode(replicate > 0)
+          .build();
 
-    if (!program.getSimulations().hasPrototype(simulation)) {
-      throw new IllegalArgumentException("Simulation not found: " + simulation);
+      JoshProgram program = JoshSimFacadeUtil.interpret(
+          valueFactory, geometryFactory, parseResult, inputOutputLayer
+      );
+
+      if (!program.getSimulations().hasPrototype(simulation)) {
+        throw new IllegalArgumentException("Simulation not found: " + simulation);
+      }
+
+      JoshSimFacadeUtil.runSimulation(
+          valueFactory,
+          geometryFactory,
+          inputOutputLayer,
+          program,
+          simulation,
+          (step) -> { /* progress unused in batch mode */ },
+          false,
+          Optional.empty()
+      );
     }
-
-    JoshSimFacadeUtil.runSimulation(
-        valueFactory,
-        geometryFactory,
-        inputOutputLayer,
-        program,
-        simulation,
-        (step) -> { /* progress unused in batch mode */ },
-        false,
-        Optional.empty()
-    );
   }
 
   private void sendJsonAccepted(HttpServerExchange exchange, String jobId, String statusPath) {
