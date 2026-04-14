@@ -188,7 +188,7 @@ jobs:
             --replicates 5
       - name: Check step labeling
         run: python3 .github/scripts/check_remote_step.py
-      - name: Test profiler on remote (expect non-zero timings — intentionally RED)
+      - name: Test profiler on remote (client --enable-profiler, expect non-zero timings)
         run: |
           java -Xmx2g -jar build/libs/joshsim-fat.jar runRemote \
             examples/simulations/profiler_multi.josh \
@@ -199,7 +199,7 @@ jobs:
             --enable-profiler
           python3 .github/scripts/check_profiler_on.py
           rm -f /tmp/profiler_multi_josh.csv
-      - name: Test profiler mismatch remote (client on, server unaware, expect zero)
+      - name: Test profiler mismatch remote (client --enable-profiler, server honors field, expect non-zero timings)
         run: |
           java -Xmx2g -jar build/libs/joshsim-fat.jar runRemote \
             examples/simulations/profiler_multi.josh \
@@ -208,6 +208,35 @@ jobs:
             --api-key testkey \
             --replicates=1 \
             --enable-profiler
+          python3 .github/scripts/check_profiler_on.py
+          rm -f /tmp/profiler_multi_josh.csv
+      - name: Stop server before profiler server
+        run: pkill -f joshsim-fat.jar || true
+      - name: Start profiler server
+        run: java -Xmx2g -jar build/libs/joshsim-fat.jar server --enable-profiler > /tmp/josh_profiler_server.log 2>&1 &
+      - name: Wait for profiler server ready
+        run: |
+          for i in {1..30}; do
+            if curl -s --max-time 1 --connect-timeout 1 http://localhost:8085 -o /dev/null 2>&1; then
+              echo "Profiler server ready after $i seconds"
+              break
+            fi
+            echo "Waiting for profiler server... ($i/30)"
+            sleep 1
+            if [ $i -eq 30 ]; then
+              echo "Profiler server failed to start. Log:"
+              cat /tmp/josh_profiler_server.log
+              exit 1
+            fi
+          done
+      - name: Test server-global profiler flag (client without --enable-profiler)
+        run: |
+          java -Xmx2g -jar build/libs/joshsim-fat.jar runRemote \
+            examples/simulations/profiler_multi.josh \
+            ProfilerMultiExample \
+            --endpoint http://localhost:8085/runReplicates \
+            --api-key testkey \
+            --replicates=1
           python3 .github/scripts/check_profiler_on.py
           rm -f /tmp/profiler_multi_josh.csv
       - name: Stop server
