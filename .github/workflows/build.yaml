@@ -164,81 +164,21 @@ jobs:
       - name: Start local server
         run: java -Xmx2g -jar build/libs/joshsim-fat.jar server > /tmp/josh_server.log 2>&1 &
       - name: Wait for server ready
-        run: |
-          for i in {1..30}; do
-            if curl -s --max-time 1 --connect-timeout 1 http://localhost:8085 -o /dev/null 2>&1; then
-              echo "Server ready after $i seconds"
-              break
-            fi
-            echo "Waiting for server... ($i/30)"
-            sleep 1
-            if [ $i -eq 30 ]; then
-              echo "Server failed to start. Log:"
-              cat /tmp/josh_server.log
-              exit 1
-            fi
-          done
-      - name: Run remote simulation with 5 replicates
-        run: |
-          java -Xmx2g -jar build/libs/joshsim-fat.jar runRemote \
-            examples/test/remote_step_check.josh \
-            StepCheck \
-            --endpoint http://localhost:8085/runReplicates \
-            --api-key testkey \
-            --replicates 5
-      - name: Check step labeling
-        run: python3 .github/scripts/check_remote_step.py
+        run: bash .github/scripts/wait_for_server.sh /tmp/josh_server.log
+      - name: Run remote simulation and check step labeling
+        run: bash .github/scripts/run_remote_step_check.sh
       - name: Test profiler on remote (client --enable-profiler, expect non-zero timings)
-        run: |
-          java -Xmx2g -jar build/libs/joshsim-fat.jar runRemote \
-            examples/simulations/profiler_multi.josh \
-            ProfilerMultiExample \
-            --endpoint http://localhost:8085/runReplicates \
-            --api-key testkey \
-            --replicates=1 \
-            --enable-profiler
-          python3 .github/scripts/check_profiler.py on
-          rm -f /tmp/profiler_multi_josh.csv
+        run: bash .github/scripts/run_profiler_remote.sh on --enable-profiler
       - name: Test profiler mismatch remote (client --enable-profiler, server honors field, expect non-zero timings)
-        run: |
-          java -Xmx2g -jar build/libs/joshsim-fat.jar runRemote \
-            examples/simulations/profiler_multi.josh \
-            ProfilerMultiExample \
-            --endpoint http://localhost:8085/runReplicates \
-            --api-key testkey \
-            --replicates=1 \
-            --enable-profiler
-          python3 .github/scripts/check_profiler.py on
-          rm -f /tmp/profiler_multi_josh.csv
+        run: bash .github/scripts/run_profiler_remote.sh on --enable-profiler
       - name: Stop server before profiler server
         run: pkill -f joshsim-fat.jar || true
       - name: Start profiler server
         run: java -Xmx2g -jar build/libs/joshsim-fat.jar server --enable-profiler > /tmp/josh_profiler_server.log 2>&1 &
       - name: Wait for profiler server ready
-        run: |
-          for i in {1..30}; do
-            if curl -s --max-time 1 --connect-timeout 1 http://localhost:8085 -o /dev/null 2>&1; then
-              echo "Profiler server ready after $i seconds"
-              break
-            fi
-            echo "Waiting for profiler server... ($i/30)"
-            sleep 1
-            if [ $i -eq 30 ]; then
-              echo "Profiler server failed to start. Log:"
-              cat /tmp/josh_profiler_server.log
-              exit 1
-            fi
-          done
+        run: bash .github/scripts/wait_for_server.sh /tmp/josh_profiler_server.log
       - name: Test server-global profiler flag (client without --enable-profiler)
-        run: |
-          java -Xmx2g -jar build/libs/joshsim-fat.jar runRemote \
-            examples/simulations/profiler_multi.josh \
-            ProfilerMultiExample \
-            --endpoint http://localhost:8085/runReplicates \
-            --api-key testkey \
-            --replicates=1
-          python3 .github/scripts/check_profiler.py on
-          rm -f /tmp/profiler_multi_josh.csv
+        run: bash .github/scripts/run_profiler_remote.sh on
       - name: Stop server
         if: always()
         run: pkill -f joshsim-fat.jar || true
@@ -262,18 +202,7 @@ jobs:
       - name: Move artifact
         run: mkdir -p build/libs; mv joshsim-fat.jar build/libs/joshsim-fat.jar
       - name: Test CSV output
-        run: |
-          echo "Testing CSV output..."
-          rm -f /tmp/simple_josh.csv
-          java -Xmx6g -jar build/libs/joshsim-fat.jar run --replicates=1 examples/simulations/simple.josh TestSimpleSimulation || exit 1
-          [ -f "/tmp/simple_josh.csv" ] || exit 2
-          [ -s "/tmp/simple_josh.csv" ] || exit 3
-          echo "Testing CSV with Earth-space output..."
-          rm -f /tmp/simple_seki_josh.csv
-          java -Xmx6g -jar build/libs/joshsim-fat.jar run --replicates=2 examples/simulations/simple_seki.josh TestSimpleSimulation || exit 4
-          [ -f "/tmp/simple_seki_josh.csv" ] || exit 5
-          [ -s "/tmp/simple_seki_josh.csv" ] || exit 6
-          echo "✓ CSV output format tests passed!"
+        run: bash .github/scripts/test_csv_output.sh
   testOutputFormatNetCDF:
     needs: [validateExamples, testPreprocessing]
     environment: Build
@@ -298,15 +227,7 @@ jobs:
       - name: Move artifact
         run: mkdir -p build/libs; mv joshsim-fat.jar build/libs/joshsim-fat.jar
       - name: Test netCDF output
-        run: |
-          echo "Testing netCDF output..."
-          rm -f /tmp/simple_josh_*.nc
-          java -Xmx6g -jar build/libs/joshsim-fat.jar run --replicates=2 examples/simulations/simple_netcdf.josh TestSimpleSimulation || exit 7
-          [ -f "/tmp/simple_josh_0.nc" ] || exit 8
-          [ -f "/tmp/simple_josh_1.nc" ] || exit 9
-          [ -s "/tmp/simple_josh_0.nc" ] || exit 10
-          [ -s "/tmp/simple_josh_1.nc" ] || exit 11
-          echo "✓ NetCDF output format tests passed!"
+        run: bash .github/scripts/test_netcdf_output.sh
   testOutputFormatGeoTIFF:
     needs: [validateExamples, testPreprocessing]
     environment: Build
@@ -327,15 +248,7 @@ jobs:
       - name: Move artifact
         run: mkdir -p build/libs; mv joshsim-fat.jar build/libs/joshsim-fat.jar
       - name: Test geotiff output
-        run: |
-          echo "Testing geotiff output..."
-          rm -f /tmp/simple_josh_*.tiff
-          java -Xmx6g -jar build/libs/joshsim-fat.jar run --replicates=2 examples/simulations/simple_geotiff.josh TestSimpleSimulation || exit 12
-          [ -f "/tmp/simple_josh_averageAge_0_0.tiff" ] || exit 13
-          [ -s "/tmp/simple_josh_averageAge_0_0.tiff" ] || exit 14
-          [ -f "/tmp/simple_josh_averageHeight_1_1.tiff" ] || exit 15
-          [ -s "/tmp/simple_josh_averageHeight_1_1.tiff" ] || exit 16
-          echo "✓ GeoTIFF output format tests passed!"
+        run: bash .github/scripts/test_geotiff_output.sh
   testGuideExamples:
     needs: [validateExamples, testPreprocessing]
     environment: Build
@@ -420,31 +333,11 @@ jobs:
       - name: Test job configuration template functionality
         run: bash examples/test_job_config.sh
       - name: Test profiler off local (expect zero timings)
-        run: |
-          java -Xmx2g -jar build/libs/joshsim-fat.jar run \
-            --replicates=1 \
-            examples/simulations/profiler_multi.josh \
-            ProfilerMultiExample
-          python3 .github/scripts/check_profiler.py off
-          rm -f /tmp/profiler_multi_josh.csv
+        run: bash .github/scripts/run_profiler_local.sh 1 off
       - name: Test profiler on local (expect non-zero timings)
-        run: |
-          java -Xmx2g -jar build/libs/joshsim-fat.jar run \
-            --replicates=1 \
-            --enable-profiler \
-            examples/simulations/profiler_multi.josh \
-            ProfilerMultiExample
-          python3 .github/scripts/check_profiler.py on
-          rm -f /tmp/profiler_multi_josh.csv
+        run: bash .github/scripts/run_profiler_local.sh 1 on --enable-profiler
       - name: Test profiler on local with 5 replicates (expect non-zero timings)
-        run: |
-          java -Xmx2g -jar build/libs/joshsim-fat.jar run \
-            --replicates=5 \
-            --enable-profiler \
-            examples/simulations/profiler_multi.josh \
-            ProfilerMultiExample
-          python3 .github/scripts/check_profiler.py on
-          rm -f /tmp/profiler_multi_josh.csv
+        run: bash .github/scripts/run_profiler_local.sh 5 on --enable-profiler
   buildWeb:
     environment: Build
     needs: [ checkJava, buildJava, testJava, validateExamples, testRemote, testOutputFormatCSV, testOutputFormatNetCDF, testOutputFormatGeoTIFF, testGuideExamples, testConfiguration, testAdditionalFeatures, testPreprocessing ]
