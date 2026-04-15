@@ -20,6 +20,7 @@ import io.fabric8.kubernetes.api.model.EnvVar;
 import io.fabric8.kubernetes.api.model.Quantity;
 import io.fabric8.kubernetes.api.model.ResourceRequirements;
 import io.fabric8.kubernetes.api.model.Secret;
+import io.fabric8.kubernetes.api.model.Toleration;
 import io.fabric8.kubernetes.api.model.batch.v1.Job;
 import io.fabric8.kubernetes.client.KubernetesClient;
 import io.fabric8.kubernetes.client.dsl.BatchAPIGroupDSL;
@@ -267,6 +268,65 @@ class KubernetesTargetTest {
     assertEquals(
         "joshsim",
         job.getMetadata().getLabels().get("app")
+    );
+  }
+
+  @Test
+  void dispatchSetsSpotNodeSelectorAndToleration()
+      throws Exception {
+    config = buildConfig(10, 3600, null);
+    setField(config, "spot", true);
+
+    KubernetesTarget target = buildTarget(config);
+    target.dispatch(JOB_ID, PREFIX, SIMULATION, 1);
+
+    Job job = jobCaptor.getValue();
+    Map<String, String> nodeSelector =
+        job.getSpec().getTemplate().getSpec()
+            .getNodeSelector();
+    assertNotNull(nodeSelector);
+    assertEquals(
+        "true",
+        nodeSelector.get("cloud.google.com/gke-spot")
+    );
+
+    List<Toleration> tolerations = job.getSpec()
+        .getTemplate().getSpec().getTolerations();
+    assertNotNull(tolerations);
+    assertTrue(tolerations.stream().anyMatch(
+        t -> "cloud.google.com/gke-spot".equals(t.getKey())
+    ));
+  }
+
+  @Test
+  void dispatchOmitsSpotWhenFalse() throws Exception {
+    config = buildConfig(10, 3600, null);
+
+    KubernetesTarget target = buildTarget(config);
+    target.dispatch(JOB_ID, PREFIX, SIMULATION, 1);
+
+    Job job = jobCaptor.getValue();
+    Map<String, String> nodeSelector =
+        job.getSpec().getTemplate().getSpec()
+            .getNodeSelector();
+    assertTrue(
+        nodeSelector == null || nodeSelector.isEmpty()
+    );
+  }
+
+  @Test
+  void dispatchSetsTtlSecondsAfterFinished()
+      throws Exception {
+    config = buildConfig(10, 3600, null);
+    setField(config, "ttlSecondsAfterFinished", 600);
+
+    KubernetesTarget target = buildTarget(config);
+    target.dispatch(JOB_ID, PREFIX, SIMULATION, 1);
+
+    Job job = jobCaptor.getValue();
+    assertEquals(
+        600,
+        job.getSpec().getTtlSecondsAfterFinished()
     );
   }
 
