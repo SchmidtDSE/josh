@@ -1,11 +1,10 @@
 /**
- * Handler for batch simulation execution from pre-staged local files.
+ * Handler for batch preprocessing of external data to jshd format.
  *
- * <p>Implements the {@code /runBatch} endpoint. Unlike {@code /runReplicate} which streams code
- * and data in the request body and returns results via wire format, this handler runs a simulation
- * from a local directory of pre-staged files and results land in MinIO via {@code minio://} export
- * paths configured in the Josh script. Staging is a separate concern handled by the caller (e.g.,
- * {@code stageFromMinio} CLI command or K8s container entrypoint).</p>
+ * <p>Implements the {@code /preprocessBatch} endpoint. Accepts a pre-staged directory
+ * containing a Josh script and data file, runs preprocessing via {@link
+ * org.joshsim.command.PreprocessUtil}, and uploads the resulting .jshd file to MinIO.
+ * Status tracking follows the same lifecycle as {@code /runBatch}.</p>
  *
  * @license BSD-3-Clause
  */
@@ -21,7 +20,6 @@ import io.undertow.util.HttpString;
 import java.io.File;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
-import java.nio.file.Files;
 import java.time.Instant;
 import java.util.LinkedHashMap;
 import java.util.Map;
@@ -29,16 +27,7 @@ import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
-import org.joshsim.JoshSimFacadeUtil;
-import org.joshsim.compat.CompatibilityLayerKeeper;
-import org.joshsim.compat.JvmCompatibilityLayer;
-import org.joshsim.engine.geometry.grid.GridGeometryFactory;
-import org.joshsim.engine.value.engine.ValueSupportFactory;
-import org.joshsim.lang.interpret.JoshProgram;
-import org.joshsim.lang.io.InputOutputLayer;
-import org.joshsim.lang.io.JvmInputOutputLayerBuilder;
-import org.joshsim.lang.io.JvmMappedInputGetter;
-import org.joshsim.lang.parse.ParseResult;
+import org.joshsim.command.PreprocessUtil;
 import org.joshsim.util.MinioHandler;
 import org.joshsim.util.MinioOptions;
 import org.joshsim.util.MinioStagingUtil;
@@ -46,31 +35,39 @@ import org.joshsim.util.OutputOptions;
 
 
 /**
- * Handles batch simulation requests where inputs are pre-staged locally.
+ * Handles batch preprocessing requests where inputs are pre-staged locally.
  *
  * <p>Expected form fields:</p>
  * <ul>
  *   <li>{@code apiKey} — API key for authentication</li>
- *   <li>{@code jobId} — unique job identifier (returned in response)</li>
- *   <li>{@code simulation} — name of the simulation to run</li>
- *   <li>{@code workDir} — path to local directory containing pre-staged simulation files</li>
+ *   <li>{@code jobId} — unique job identifier</li>
+ *   <li>{@code simulation} — name of the simulation (for grid/metadata extraction)</li>
+ *   <li>{@code dataFile} — filename of the data file within workDir</li>
+ *   <li>{@code variable} — variable name or band number</li>
+ *   <li>{@code units} — units string for simulation use</li>
+ *   <li>{@code outputFile} — filename for the output .jshd</li>
+ *   <li>{@code workDir} — path to local directory containing pre-staged files</li>
  * </ul>
  *
- * <p>Optional form fields for serverless environments where staging and execution
- * must happen atomically within the same request:</p>
+ * <p>Optional form fields:</p>
  * <ul>
- *   <li>{@code stageFromMinio} — set to {@code "true"} to download inputs from MinIO
- *       into {@code workDir} before running. Controls input staging only, not outputs.</li>
- *   <li>{@code minioPrefix} — required when {@code stageFromMinio=true}. The object prefix
- *       to download from (e.g., {@code batch-jobs/abc/inputs/}).</li>
+ *   <li>{@code stageFromMinio} / {@code minioPrefix} — same as /runBatch</li>
+ *   <li>{@code crs} (default {@code EPSG:4326})</li>
+ *   <li>{@code xCoord} (default {@code lon})</li>
+ *   <li>{@code yCoord} (default {@code lat})</li>
+ *   <li>{@code timeDim} (default {@code calendar_year})</li>
+ *   <li>{@code timestep} — single timestep for parallel preprocessing</li>
+ *   <li>{@code defaultValue} — default fill value</li>
+ *   <li>{@code parallel} (default {@code false})</li>
+ *   <li>{@code amend} (default {@code false})</li>
  * </ul>
  */
-public class JoshSimBatchHandler implements HttpHandler {
+public class JoshSimPreprocessBatchHandler implements HttpHandler {
 
   private static final ExecutorService BATCH_EXECUTOR =
       Executors.newCachedThreadPool(runnable -> {
         Thread thread = new Thread(runnable);
-        thread.setName("batch-sim-" + thread.threadId());
+        thread.setName("batch-preprocess-" + thread.threadId());
         thread.setDaemon(true);
         return thread;
       });
@@ -78,16 +75,14 @@ public class JoshSimBatchHandler implements HttpHandler {
   private final CloudApiDataLayer apiDataLayer;
 
   /**
-   * Constructs a new JoshSimBatchHandler.
+   * Constructs a new JoshSimPreprocessBatchHandler.
    *
    * @param apiDataLayer The cloud API data layer for API key validation and logging.
    */
-  public JoshSimBatchHandler(CloudApiDataLayer apiDataLayer) {
+  public JoshSimPreprocessBatchHandler(CloudApiDataLayer apiDataLayer) {
     this.apiDataLayer = apiDataLayer;
   }
 
-  // TODO: Extract common handleRequest boilerplate to an abstract base handler.
-  //       See identical pattern in Worker, Leader, Parse, ConfigDiscovery handlers.
   @Override
   public void handleRequest(HttpServerExchange exchange) throws Exception {
     if (exchange.isInIoThread()) {
@@ -104,7 +99,7 @@ public class JoshSimBatchHandler implements HttpHandler {
     long endTime = System.nanoTime();
 
     long runtimeSeconds = (endTime - startTime) / 1_000_000_000;
-    apiDataLayer.log(apiKey.orElse(""), "batch", runtimeSeconds);
+    apiDataLayer.log(apiKey.orElse(""), "preprocessBatch", runtimeSeconds);
   }
 
   private Optional<String> handleRequestInner(HttpServerExchange exchange) {
@@ -133,10 +128,9 @@ public class JoshSimBatchHandler implements HttpHandler {
   }
 
   /**
-   * Processes parsed form data for a batch request.
+   * Processes parsed form data for a preprocess batch request.
    *
-   * <p>Package-visible for testing — allows tests to bypass form parsing by providing
-   * pre-built FormData directly.</p>
+   * <p>Package-visible for testing.</p>
    *
    * @param exchange The HTTP exchange for sending responses.
    * @param formData The parsed form data containing request parameters.
@@ -150,11 +144,16 @@ public class JoshSimBatchHandler implements HttpHandler {
     }
     String apiKey = apiCheck.getApiKey();
 
-    if (!formData.contains("jobId") || !formData.contains("simulation")
-        || !formData.contains("workDir")) {
-      sendJsonError(exchange, 400, "missing-fields",
-          "Required fields: jobId, simulation, workDir");
-      return Optional.of(apiKey);
+    // Validate required fields
+    String[] requiredFields = {
+        "jobId", "simulation", "dataFile", "variable", "units", "outputFile", "workDir"
+    };
+    for (String field : requiredFields) {
+      if (!formData.contains(field)) {
+        sendJsonError(exchange, 400, "missing-fields",
+            "Required fields: jobId, simulation, dataFile, variable, units, outputFile, workDir");
+        return Optional.of(apiKey);
+      }
     }
 
     String jobId = formData.getFirst("jobId").getValue();
@@ -173,27 +172,106 @@ public class JoshSimBatchHandler implements HttpHandler {
       return Optional.of(apiKey);
     }
 
-    int replicates;
-    try {
-      replicates = parseReplicates(formData);
-    } catch (IllegalArgumentException e) {
-      sendJsonError(exchange, 400, jobId, e.getMessage());
-      return Optional.of(apiKey);
-    }
-
     MinioHandler statusMinio = initStatusMinio(jobId);
     String simulation = formData.getFirst("simulation").getValue();
+    String dataFile = formData.getFirst("dataFile").getValue();
+    String variable = formData.getFirst("variable").getValue();
+    String units = formData.getFirst("units").getValue();
+    String outputFile = formData.getFirst("outputFile").getValue();
+
+    // Optional preprocess fields
+    String crs = getFormValue(formData, "crs", "EPSG:4326");
+    String horizCoord = getFormValue(formData, "xCoord", "lon");
+    String vertCoord = getFormValue(formData, "yCoord", "lat");
+    String timeDim = getFormValue(formData, "timeDim", "calendar_year");
+    String timestep = getFormValue(formData, "timestep", null);
+    String defaultValue = getFormValue(formData, "defaultValue", null);
+    boolean parallel = "true".equalsIgnoreCase(getFormValue(formData, "parallel", "false"));
+    boolean amend = "true".equalsIgnoreCase(getFormValue(formData, "amend", "false"));
+
     String statusPath = "batch-status/" + jobId + "/status.json";
     sendJsonAccepted(exchange, jobId, statusPath);
 
     String capturedApiKey = apiKey;
     CompletableFuture.runAsync(() -> {
-      runBatchWithStatus(
-          statusMinio, jobId, simulation, workDir, replicates, statusPath, capturedApiKey
+      runPreprocessWithStatus(
+          statusMinio, jobId, simulation, workDir, dataFile, variable, units,
+          outputFile, crs, horizCoord, vertCoord, timeDim, timestep, defaultValue,
+          parallel, amend, statusPath, capturedApiKey
       );
     }, BATCH_EXECUTOR);
 
     return Optional.of(apiKey);
+  }
+
+  private void runPreprocessWithStatus(MinioHandler statusMinio, String jobId,
+      String simulation, File workDir, String dataFile, String variable, String units,
+      String outputFile, String crs, String horizCoord, String vertCoord, String timeDim,
+      String timestep, String defaultValue, boolean parallel, boolean amend,
+      String statusPath, String apiKey) {
+    writeStatus(statusMinio, statusPath, buildStatusJson(
+        "running", jobId, "startedAt", Instant.now().toString()
+    ));
+
+    try {
+      executePreprocessJob(jobId, simulation, workDir, dataFile, variable, units,
+          outputFile, crs, horizCoord, vertCoord, timeDim, timestep, defaultValue, parallel, amend);
+
+      // Upload result .jshd to MinIO
+      uploadResult(jobId, workDir, outputFile);
+
+      writeStatus(statusMinio, statusPath, buildStatusJson(
+          "complete", jobId, "completedAt", Instant.now().toString(),
+          "resultPath", "batch-jobs/" + jobId + "/outputs/" + outputFile
+      ));
+    } catch (Exception e) {
+      SecurityUtil.logSecureError(apiDataLayer, apiKey, "preprocessBatch", e, null);
+
+      String safeMessage = e.getMessage() != null
+          ? e.getMessage().replace("\"", "\\\"").replace("\n", " ")
+          : "unknown error";
+      writeStatus(statusMinio, statusPath, buildStatusJson(
+          "error", jobId, "failedAt", Instant.now().toString(), "message", safeMessage
+      ));
+    }
+  }
+
+  private void executePreprocessJob(String jobId, String simulation, File workDir,
+      String dataFile, String variable, String units, String outputFile,
+      String crs, String horizCoord, String vertCoord, String timeDim,
+      String timestep, String defaultValue, boolean parallel, boolean amend)
+      throws Exception {
+
+    File scriptFile = LocalFileUtil.findScriptFile(workDir);
+    File dataFilePath = new File(workDir, dataFile);
+    File outputFilePath = new File(workDir, outputFile);
+
+    PreprocessUtil.PreprocessOptions options = new PreprocessUtil.PreprocessOptions(
+        crs, horizCoord, vertCoord, timeDim,
+        timestep != null ? timestep : "", defaultValue, parallel, amend
+    );
+
+    PreprocessUtil.preprocess(
+        scriptFile, simulation, dataFilePath.getPath(), variable, units,
+        outputFilePath, options, new OutputOptions()
+    );
+  }
+
+  private void uploadResult(String jobId, File workDir, String outputFile) throws Exception {
+    File resultFile = new File(workDir, outputFile);
+    if (!resultFile.exists()) {
+      throw new IOException("Preprocessing completed but output file not found: " + resultFile);
+    }
+
+    try {
+      MinioHandler minio = new MinioHandler(new MinioOptions(), new OutputOptions());
+      String objectPath = "batch-jobs/" + jobId + "/outputs/" + outputFile;
+      if (!minio.uploadFile(resultFile, objectPath)) {
+        throw new IOException("Failed to upload result to MinIO: " + objectPath);
+      }
+    } catch (Exception e) {
+      throw new IOException("Failed to upload result to MinIO: " + e.getMessage(), e);
+    }
   }
 
   /**
@@ -209,11 +287,6 @@ public class JoshSimBatchHandler implements HttpHandler {
     }
   }
 
-  /**
-   * Stage inputs from MinIO into workDir if the stageFromMinio flag is set.
-   *
-   * @return Empty if staging succeeded or was not requested; a StagingError otherwise.
-   */
   private Optional<StagingError> stageInputsIfRequested(
       FormData formData, String jobId, File workDir) {
     boolean shouldStage = formData.contains("stageFromMinio")
@@ -245,63 +318,24 @@ public class JoshSimBatchHandler implements HttpHandler {
     return Optional.empty();
   }
 
-  /**
-   * Initialize a MinioHandler for writing status files. Returns null if MinIO
-   * credentials are unavailable (status tracking degrades gracefully).
-   */
   private MinioHandler initStatusMinio(String jobId) {
     try {
       return new MinioHandler(new MinioOptions(), new OutputOptions());
     } catch (Exception e) {
-      System.err.println("[batch] Status tracking unavailable for job " + jobId
+      System.err.println("[preprocessBatch] Status tracking unavailable for job " + jobId
           + ": " + e.getMessage());
       return null;
     }
   }
 
-  /**
-   * Parses the replicates form field. Returns 1 if not present.
-   * Throws IllegalArgumentException if present but invalid.
-   */
-  private int parseReplicates(FormData formData) {
-    if (!formData.contains("replicates")) {
-      return 1;
+  private static String getFormValue(FormData formData, String field, String defaultValue) {
+    if (formData.contains(field)) {
+      String value = formData.getFirst(field).getValue();
+      if (value != null && !value.isEmpty()) {
+        return value;
+      }
     }
-    String raw = formData.getFirst("replicates").getValue();
-    int value;
-    try {
-      value = Integer.parseInt(raw);
-    } catch (NumberFormatException e) {
-      throw new IllegalArgumentException("Invalid replicates value: " + raw);
-    }
-    if (value < 1) {
-      throw new IllegalArgumentException("replicates must be >= 1, got: " + value);
-    }
-    return value;
-  }
-
-  private void runBatchWithStatus(MinioHandler statusMinio, String jobId,
-      String simulation, File workDir, int replicates, String statusPath, String apiKey) {
-    writeStatus(statusMinio, statusPath, buildStatusJson(
-        "running", jobId, "startedAt", Instant.now().toString()
-    ));
-
-    try {
-      executeBatchJob(jobId, simulation, workDir, replicates);
-
-      writeStatus(statusMinio, statusPath, buildStatusJson(
-          "complete", jobId, "completedAt", Instant.now().toString()
-      ));
-    } catch (Exception e) {
-      SecurityUtil.logSecureError(apiDataLayer, apiKey, "batch", e, null);
-
-      String safeMessage = e.getMessage() != null
-          ? e.getMessage().replace("\"", "\\\"").replace("\n", " ")
-          : "unknown error";
-      writeStatus(statusMinio, statusPath, buildStatusJson(
-          "error", jobId, "failedAt", Instant.now().toString(), "message", safeMessage
-      ));
-    }
+    return defaultValue;
   }
 
   private void writeStatus(MinioHandler statusMinio, String statusPath, String statusJson) {
@@ -315,65 +349,8 @@ public class JoshSimBatchHandler implements HttpHandler {
           "application/json"
       );
     } catch (Exception e) {
-      System.err.println("[batch] Failed to write status to " + statusPath
+      System.err.println("[preprocessBatch] Failed to write status to " + statusPath
           + ": " + e.getMessage());
-    }
-  }
-
-  private void executeBatchJob(String jobId, String simulation, File workDir,
-      int replicates) throws Exception {
-    // Ensure JVM threading for parallel patch export
-    CompatibilityLayerKeeper.set(new JvmCompatibilityLayer());
-
-    File scriptFile = LocalFileUtil.findScriptFile(workDir);
-    String code = Files.readString(scriptFile.toPath());
-
-    ParseResult parseResult = JoshSimFacadeUtil.parse(code);
-    if (parseResult.hasErrors()) {
-      throw new IllegalArgumentException(
-          "Parse errors in Josh script: " + parseResult.getErrors().iterator().next()
-      );
-    }
-
-    Map<String, String> fileMapping = LocalFileUtil.buildFileMapping(workDir);
-    MinioOptions minioOptions = new MinioOptions();
-
-    ValueSupportFactory valueFactory = new ValueSupportFactory();
-    GridGeometryFactory geometryFactory = new GridGeometryFactory();
-
-    // Interpret once — the program doesn't change between replicates.
-    // Only the InputOutputLayer changes (replicate index, append mode).
-    InputOutputLayer initialLayer = new JvmInputOutputLayerBuilder()
-        .withInputStrategy(new JvmMappedInputGetter(fileMapping))
-        .withMinioOptions(minioOptions)
-        .build();
-
-    JoshProgram program = JoshSimFacadeUtil.interpret(
-        valueFactory, geometryFactory, parseResult, initialLayer
-    );
-
-    if (!program.getSimulations().hasPrototype(simulation)) {
-      throw new IllegalArgumentException("Simulation not found: " + simulation);
-    }
-
-    for (int replicate = 0; replicate < replicates; replicate++) {
-      InputOutputLayer replicateLayer = new JvmInputOutputLayerBuilder()
-          .withReplicate(replicate)
-          .withInputStrategy(new JvmMappedInputGetter(fileMapping))
-          .withMinioOptions(minioOptions)
-          .withAppendMode(replicate > 0)
-          .build();
-
-      JoshSimFacadeUtil.runSimulation(
-          valueFactory,
-          geometryFactory,
-          replicateLayer,
-          program,
-          simulation,
-          (step) -> { /* progress unused in batch mode */ },
-          false,
-          Optional.empty()
-      );
     }
   }
 
@@ -399,14 +376,6 @@ public class JoshSimBatchHandler implements HttpHandler {
     exchange.getResponseSender().send(toJson(fields));
   }
 
-  /**
-   * Build a JSON status string with the given status, jobId, and additional key-value pairs.
-   *
-   * @param status The status value (running, complete, error)
-   * @param jobId The job identifier
-   * @param extra Additional key-value pairs (must be even number of args)
-   * @return JSON string
-   */
   private String buildStatusJson(String status, String jobId, String... extra) {
     Map<String, String> fields = new LinkedHashMap<>();
     fields.put("status", status);

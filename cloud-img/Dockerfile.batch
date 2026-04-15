@@ -3,7 +3,10 @@ FROM eclipse-temurin:21-jre
 WORKDIR /app
 
 COPY build/libs/joshsim-fat.jar /app/joshsim-fat.jar
-COPY cloud-img/entrypoint.sh /app/entrypoint.sh
-RUN chmod +x /app/entrypoint.sh
+COPY cloud-img/run-entrypoint.sh /app/run-entrypoint.sh
+COPY cloud-img/preprocess-entrypoint.sh /app/preprocess-entrypoint.sh
+RUN chmod +x /app/run-entrypoint.sh /app/preprocess-entrypoint.sh
 
-ENTRYPOINT ["/app/entrypoint.sh"]
+# Default entrypoint is run. KubernetesPreprocessTarget overrides the
+# container command to /app/preprocess-entrypoint.sh for preprocessing jobs.
+ENTRYPOINT ["/app/run-entrypoint.sh"]

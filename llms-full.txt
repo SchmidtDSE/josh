@@ -186,6 +186,7 @@ The server exposes the following API endpoints:
 - `POST /runReplicate` — Execute a single simulation replicate via HTTP streaming. Code and data are sent in the request body; results stream back in wire format.
 - `POST /runReplicates` — Leader endpoint that coordinates multiple replicates across workers.
 - `POST /runBatch` — Asynchronously execute a simulation from a local directory of pre-staged files. Returns 202 Accepted immediately with a `statusPath` for polling. Results are written to MinIO via `minio://` export paths in the Josh script. Job status is tracked via a `status.json` file in MinIO. Staging is a separate concern (use `stageFromMinio` CLI command or equivalent before calling this endpoint).
+- `POST /preprocessBatch` — Asynchronously preprocess external data to `.jshd` format from pre-staged files. Returns 202 Accepted immediately. The result `.jshd` is uploaded to MinIO at `batch-jobs/<jobId>/outputs/<outputFile>`. Same status lifecycle as `/runBatch`.
 - `POST /parse` — Parse Josh code and return the AST or errors.
 - `POST /discoverConfig` — Discover configuration variables in Josh code.
 - `GET /health` — Health check endpoint (returns "healthy").
@@ -236,6 +237,40 @@ Status writes are best-effort — if the status writer cannot be initialized (e.
 5. Retrieve results using `stageFromMinio` (client side)
 
 MinIO credentials for `minio://` export paths are read from server environment variables (`MINIO_ENDPOINT`, `MINIO_ACCESS_KEY`, `MINIO_SECRET_KEY`, `MINIO_BUCKET`).
+
+**`/preprocessBatch` Endpoint Details:**
+
+The `/preprocessBatch` endpoint preprocesses external data to `.jshd` format from pre-staged files. Same async pattern as `/runBatch`.
+
+```
+POST /preprocessBatch
+Content-Type: multipart/form-data
+```
+
+**Required form fields:**
+- `apiKey` — API key for authentication
+- `jobId` — Unique job identifier
+- `simulation` — Name of the simulation (for grid/metadata extraction)
+- `dataFile` — Filename of the data file within workDir
+- `variable` — Variable name or band number
+- `units` — Units string
+- `outputFile` — Filename for the output `.jshd`
+- `workDir` — Path to local directory with pre-staged files
+
+**Optional form fields:**
+- `stageFromMinio` / `minioPrefix` — Same as `/runBatch`
+- `crs` (default `EPSG:4326`) — Coordinate reference system
+- `xCoord` (default `lon`) — Horizontal coordinate name
+- `yCoord` (default `lat`) — Vertical coordinate name
+- `timeDim` (default `calendar_year`) — Time dimension name
+- `timestep` — Single timestep to process
+- `defaultValue` — Default fill value
+- `parallel` (default `false`) — Parallel patch processing
+- `amend` (default `false`) — Amend existing output
+
+**Response:** Same as `/runBatch` — 202 Accepted with `statusPath`, or 400/401 on validation errors.
+
+**Result:** The preprocessed `.jshd` is uploaded to `batch-jobs/<jobId>/outputs/<outputFile>` in MinIO. The status file includes `resultPath` on completion.
 
 #### `runRemote` - Cloud Execution
 Executes simulations on Josh Cloud infrastructure for distributed processing.
@@ -328,7 +363,55 @@ Target profiles are JSON files at `~/.josh/targets/<name>.json` that define a co
 
 **Pod MinIO endpoint:** Kubernetes targets require `pod_minio_endpoint` in the kubernetes config block — the MinIO endpoint that pods use inside the cluster. This may differ from the outer `minio_endpoint` used by the host for staging (e.g., `http://minio.namespace.svc:9000` vs `https://storage.googleapis.com`).
 
-**Kubernetes Job details:** `batchRemote` with a K8s target creates an indexed Job (`completionMode: Indexed`) where each pod runs one replicate. MinIO credentials are stored in a per-job K8s Secret (`josh-creds-<jobId>`) and referenced via `secretKeyRef`. Pods run `entrypoint.sh` which calls `stageFromMinio` to download inputs, then `run` to execute the simulation. Infrastructure failures (OOMKill, ImagePullBackOff, scheduling failures) are detected by polling the K8s Job API.
+**Kubernetes Job details:** `batchRemote` with a K8s target creates an indexed Job (`completionMode: Indexed`) where each pod runs one replicate. MinIO credentials are stored in a per-job K8s Secret (`josh-creds-<jobId>`) and referenced via `secretKeyRef`. Pods run `run-entrypoint.sh` which calls `stageFromMinio` to download inputs, then `run` to execute the simulation. Infrastructure failures (OOMKill, ImagePullBackOff, scheduling failures) are detected by polling the K8s Job API.
+
+#### `preprocessBatch` - Remote Preprocessing on Batch Targets
+Dispatches preprocessing (converting external data to `.jshd` format) to a remote compute target via MinIO staging. Uses the same target profile system as `batchRemote`. After completion, downloads the resulting `.jshd` file from MinIO.
+
+```bash
+java -jar joshsim-fat.jar preprocessBatch <script.josh | inputDir> <SimulationName> <dataFile> <variable> <units> <outputFile> [OPTIONS]
+```
+
+**Parameters:**
+- `<script.josh>` or `<inputDir>`: Path to Josh simulation file or directory containing simulation files
+- `<SimulationName>`: Name of simulation (for grid/metadata extraction)
+- `<dataFile>`: Data file name within the input directory (NetCDF, GeoTIFF, jshd)
+- `<variable>`: Variable name or band number to extract
+- `<units>`: Units of the data for simulation use
+- `<outputFile>`: Local path for the resulting `.jshd` file
+
+**Options:**
+- `--target <name>` (required): Target profile name (loads `~/.josh/targets/<name>.json`)
+- `--no-wait`: Dispatch and exit without polling for completion
+- `--poll-interval <seconds>`: Seconds between status polls (default: 5)
+- `--timeout <seconds>`: Maximum seconds to wait for completion (default: 3600)
+- `--crs <CRS>`: Coordinate Reference System (default: `EPSG:4326`)
+- `--x-coord <name>`: Name of X coordinate dimension (default: `lon`)
+- `--y-coord <name>`: Name of Y coordinate dimension (default: `lat`)
+- `--time-dim <name>`: Name of time dimension (default: `calendar_year`)
+- `--timestep <value>`: Process only a single timestep
+- `--default-value <value>`: Default fill value for grid spaces
+- `--parallel`: Enable parallel patch processing
+- `--amend`: Amend existing output file
+
+**Examples:**
+```bash
+# Preprocess on Kubernetes, wait for result
+java -jar joshsim-fat.jar preprocessBatch simulation.josh Main data.nc temperature celsius output.jshd \
+  --target=nautilus --crs=EPSG:4326
+
+# Preprocess single timestep on Cloud Run
+java -jar joshsim-fat.jar preprocessBatch simulation.josh Main precip.nc rainfall "mm/year" precip.jshd \
+  --target=cloudrun-prod --timestep=2020
+```
+
+**Workflow:**
+1. Stages local simulation files (Josh script + data file) to MinIO (`batch-jobs/<jobId>/inputs/`)
+2. Dispatches to the configured target (HTTP POST to `/preprocessBatch` or K8s Job with `preprocess-entrypoint.sh`)
+3. Polls for completion (MinIO status file for HTTP, K8s Job API for Kubernetes)
+4. On completion: downloads the result `.jshd` from MinIO to the local output path
+
+**Key difference from `batchRemote`:** The output is the `.jshd` file itself, downloaded from MinIO after completion. `batchRemote` relies on `minio://` export paths in the Josh script — `preprocessBatch` produces a file that gets downloaded to the client.
 
 #### `stageToMinio` - Upload Files to MinIO
 Uploads local files to MinIO for batch job staging.

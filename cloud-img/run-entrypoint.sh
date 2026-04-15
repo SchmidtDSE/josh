@@ -1,10 +1,11 @@
 #!/bin/sh
-# Batch job entrypoint for K8s pods.
+# Run batch entrypoint for K8s pods.
+# Stages inputs from MinIO, finds .josh script, runs simulation.
 # Expects env vars: JOSH_MINIO_PREFIX, JOSH_SIMULATION
 # MinIO creds (MINIO_ENDPOINT, etc.) are picked up automatically
 # by HierarchyConfig from the environment.
 #
-# Usage: /app/entrypoint.sh [jar_path]
+# Usage: /app/run-entrypoint.sh [jar_path]
 #   jar_path defaults to /app/joshsim-fat.jar
 
 set -e

@@ -1,5 +1,5 @@
 /**
- * Kubernetes-based batch execution target using Fabric8 client.
+ * Kubernetes-based preprocessing target using Fabric8 client.
  *
  * @license BSD-3-Clause
  */
@@ -27,40 +27,31 @@ import org.joshsim.util.MinioOptions;
 
 
 /**
- * Dispatches batch jobs by creating Kubernetes indexed Jobs via Fabric8.
+ * Dispatches preprocessing jobs by creating Kubernetes Jobs via Fabric8.
  *
- * <p>Each call to {@link #dispatch} creates a K8s Job with
- * {@code completionMode: Indexed} where each pod runs one replicate.
- * MinIO credentials are stored in a K8s Secret and referenced via
- * {@code secretKeyRef} so they don't appear in the Job spec.</p>
+ * <p>Unlike {@link KubernetesTarget} which creates indexed Jobs with one pod
+ * per replicate, this target creates a single-completion Job for preprocessing.
+ * The pod runs {@code preprocess-entrypoint.sh} which stages inputs from MinIO,
+ * runs the preprocess command, and uploads the resulting .jshd back to MinIO.</p>
  */
-public class KubernetesTarget implements RemoteBatchTarget {
+public class KubernetesPreprocessTarget implements RemotePreprocessTarget {
 
   private static final String JOB_NAME_PREFIX = "josh-";
   private static final String SECRET_NAME_PREFIX = "josh-creds-";
   private static final int BACKOFF_LIMIT = 3;
-  private static final String ENTRYPOINT = "/app/run-entrypoint.sh";
+  private static final String ENTRYPOINT = "/app/preprocess-entrypoint.sh";
 
   private final KubernetesTargetConfig config;
   private final KubernetesClient client;
   private final MinioOptions minioOptions;
 
   /**
-   * Constructs a KubernetesTarget from config and MinIO options.
-   *
-   * <p>Creates a Fabric8 client configured for the kubectl context
-   * specified in the config. If the context is null, Fabric8 uses
-   * default auto-discovery (~/.kube/config or in-cluster SA).</p>
-   *
-   * <p>MinIO credentials are resolved through {@link
-   * org.joshsim.util.HierarchyConfig} — they can come from the
-   * target profile JSON, environment variables, or CLI flags.
-   * Secrets do not need to live in the profile file.</p>
+   * Constructs a KubernetesPreprocessTarget from config and MinIO options.
    *
    * @param config The Kubernetes target configuration.
    * @param minioOptions MinIO options resolved via HierarchyConfig.
    */
-  public KubernetesTarget(
+  public KubernetesPreprocessTarget(
       KubernetesTargetConfig config,
       MinioOptions minioOptions
   ) {
@@ -68,13 +59,13 @@ public class KubernetesTarget implements RemoteBatchTarget {
   }
 
   /**
-   * Constructs a KubernetesTarget with an injected client (testing).
+   * Constructs a KubernetesPreprocessTarget with an injected client (testing).
    *
    * @param config The Kubernetes target configuration.
    * @param minioOptions MinIO options resolved via HierarchyConfig.
    * @param client The Fabric8 Kubernetes client to use.
    */
-  KubernetesTarget(
+  KubernetesPreprocessTarget(
       KubernetesTargetConfig config,
       MinioOptions minioOptions,
       KubernetesClient client
@@ -89,7 +80,7 @@ public class KubernetesTarget implements RemoteBatchTarget {
       String jobId,
       String minioPrefix,
       String simulation,
-      int replicates
+      PreprocessParams params
   ) throws Exception {
     String secretName = SECRET_NAME_PREFIX + jobId;
 
@@ -101,13 +92,11 @@ public class KubernetesTarget implements RemoteBatchTarget {
             .withNamespace(config.getNamespace())
             .addToLabels("josh-job-id", jobId)
             .addToLabels("app", "joshsim")
+            .addToLabels("josh-job-type", "preprocess")
         .endMetadata()
         .withNewSpec()
-            .withCompletionMode("Indexed")
-            .withCompletions(replicates)
-            .withParallelism(
-                Math.min(config.getParallelism(), replicates)
-            )
+            .withCompletions(1)
+            .withParallelism(1)
             .withBackoffLimit(BACKOFF_LIMIT)
             .withActiveDeadlineSeconds(
                 (long) config.getTimeoutSeconds()
@@ -116,14 +105,14 @@ public class KubernetesTarget implements RemoteBatchTarget {
                 .withNewSpec()
                     .withRestartPolicy("Never")
                     .addNewContainer()
-                        .withName("joshsim")
+                        .withName("joshsim-preprocess")
                         .withImage(config.getImage())
                         .withResources(
                             buildResourceRequirements()
                         )
                         .withEnv(buildEnvVars(
                             secretName, jobId,
-                            minioPrefix, simulation
+                            minioPrefix, simulation, params
                         ))
                         .withCommand(
                             ENTRYPOINT,
@@ -144,9 +133,6 @@ public class KubernetesTarget implements RemoteBatchTarget {
   /**
    * Returns the Fabric8 Kubernetes client used by this target.
    *
-   * <p>Shared with {@link KubernetesPollingStrategy} to avoid
-   * creating multiple connections to the same cluster.</p>
-   *
    * @return The Kubernetes client.
    */
   public KubernetesClient getClient() {
@@ -165,7 +151,6 @@ public class KubernetesTarget implements RemoteBatchTarget {
   private void createSecret(String secretName) {
     Map<String, String> resolved =
         minioOptions.getResolvedCredentials();
-    // Pods use the explicit pod endpoint, not the host-resolved one
     resolved.put(
         "MINIO_ENDPOINT", config.getPodMinioEndpoint()
     );
@@ -199,9 +184,11 @@ public class KubernetesTarget implements RemoteBatchTarget {
       String secretName,
       String jobId,
       String minioPrefix,
-      String simulation
+      String simulation,
+      PreprocessParams params
   ) {
     List<EnvVar> envVars = new ArrayList<>();
+    // MinIO credentials from secret
     envVars.add(secretEnvVar(
         "MINIO_ENDPOINT", secretName, "MINIO_ENDPOINT"
     ));
@@ -214,9 +201,31 @@ public class KubernetesTarget implements RemoteBatchTarget {
     envVars.add(secretEnvVar(
         "MINIO_BUCKET", secretName, "MINIO_BUCKET"
     ));
+    // Job identification
     envVars.add(plainEnvVar("JOSH_JOB_ID", jobId));
     envVars.add(plainEnvVar("JOSH_MINIO_PREFIX", minioPrefix));
     envVars.add(plainEnvVar("JOSH_SIMULATION", simulation));
+    // Preprocess-specific parameters
+    envVars.add(plainEnvVar("JOSH_DATA_FILE", params.getDataFile()));
+    envVars.add(plainEnvVar("JOSH_VARIABLE", params.getVariable()));
+    envVars.add(plainEnvVar("JOSH_UNITS", params.getUnits()));
+    envVars.add(plainEnvVar("JOSH_OUTPUT_FILE", params.getOutputFile()));
+    envVars.add(plainEnvVar("JOSH_CRS", params.getCrs()));
+    envVars.add(plainEnvVar("JOSH_X_COORD", params.getHorizCoord()));
+    envVars.add(plainEnvVar("JOSH_Y_COORD", params.getVertCoord()));
+    envVars.add(plainEnvVar("JOSH_TIME_DIM", params.getTimeDim()));
+    if (params.getTimestep() != null && !params.getTimestep().isEmpty()) {
+      envVars.add(plainEnvVar("JOSH_TIMESTEP", params.getTimestep()));
+    }
+    if (params.getDefaultValue() != null && !params.getDefaultValue().isEmpty()) {
+      envVars.add(plainEnvVar("JOSH_DEFAULT_VALUE", params.getDefaultValue()));
+    }
+    if (params.isParallel()) {
+      envVars.add(plainEnvVar("JOSH_PARALLEL", "true"));
+    }
+    if (params.isAmend()) {
+      envVars.add(plainEnvVar("JOSH_AMEND", "true"));
+    }
     return envVars;
   }
 
