@@ -125,10 +125,13 @@ jobs:
           cp examples/test/k8s/ci-k8s-bad-image-profile.json ~/.josh/targets/ci-k8s-bad-image.json
           cp examples/test/k8s/ci-k8s-preprocess-profile.json ~/.josh/targets/ci-k8s-preprocess.json
 
-      - name: Generate test NetCDF for preprocessing
+      - name: Prepare preprocess test data
         run: |
-          ncgen -o examples/test/k8s/test_temp.nc examples/test/k8s/test_temp.cdl
-          echo "Generated test_temp.nc ($(stat -c%s examples/test/k8s/test_temp.nc) bytes)"
+          # Ensure raw test data exists (GeoTIFF files already committed, this is a safety net)
+          ./gradlew generateRawTestData
+          # Copy GeoTIFF into the k8s test directory so it gets staged alongside the josh script
+          cp josh-tests/test-data/spatial/grid_10x10_constant.tiff examples/test/k8s/
+          echo "Test data ready ($(stat -c%s examples/test/k8s/grid_10x10_constant.tiff) bytes)"
 
       - name: Run batchRemote end-to-end
         run: |
@@ -209,8 +212,8 @@ jobs:
         run: |
           echo "Running preprocessBatch with K8s target..."
           java -jar build/libs/joshsim-fat.jar preprocessBatch \
-            examples/test/k8s/k8s_test.josh K8sTest \
-            test_temp.nc temperature celsius output.jshd \
+            examples/test/k8s/k8s_preprocess_test.josh K8sPreprocessTest \
+            grid_10x10_constant.tiff 0 count output.jshd \
             --target=ci-k8s-preprocess \
             --poll-interval=5 \
             --timeout=300
