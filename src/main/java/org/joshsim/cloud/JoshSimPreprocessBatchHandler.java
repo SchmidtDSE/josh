@@ -159,10 +159,10 @@ public class JoshSimPreprocessBatchHandler implements HttpHandler {
     String jobId = formData.getFirst("jobId").getValue();
     File workDir = new File(formData.getFirst("workDir").getValue());
 
-    Optional<String> stagingError = stageInputsIfRequested(formData, jobId, workDir);
+    Optional<StagingError> stagingError = stageInputsIfRequested(formData, jobId, workDir);
     if (stagingError.isPresent()) {
-      sendJsonError(exchange, stagingError.get().startsWith("5") ? 500 : 400, jobId,
-          stagingError.get().substring(4));
+      sendJsonError(exchange, stagingError.get().statusCode, jobId,
+          stagingError.get().message);
       return Optional.of(apiKey);
     }
 
@@ -274,7 +274,21 @@ public class JoshSimPreprocessBatchHandler implements HttpHandler {
     }
   }
 
-  private Optional<String> stageInputsIfRequested(FormData formData, String jobId, File workDir) {
+  /**
+   * Structured error from MinIO staging with HTTP status code and message.
+   */
+  private static class StagingError {
+    final int statusCode;
+    final String message;
+
+    StagingError(int statusCode, String message) {
+      this.statusCode = statusCode;
+      this.message = message;
+    }
+  }
+
+  private Optional<StagingError> stageInputsIfRequested(
+      FormData formData, String jobId, File workDir) {
     boolean shouldStage = formData.contains("stageFromMinio")
         && "true".equalsIgnoreCase(formData.getFirst("stageFromMinio").getValue());
 
@@ -283,19 +297,22 @@ public class JoshSimPreprocessBatchHandler implements HttpHandler {
     }
 
     if (!formData.contains("minioPrefix")) {
-      return Optional.of("400:minioPrefix is required when stageFromMinio=true");
+      return Optional.of(
+          new StagingError(400, "minioPrefix is required when stageFromMinio=true"));
     }
 
     String minioPrefix = formData.getFirst("minioPrefix").getValue();
     try {
       if (!workDir.exists() && !workDir.mkdirs()) {
-        return Optional.of("400:Failed to create workDir: " + workDir.getPath());
+        return Optional.of(
+            new StagingError(400, "Failed to create workDir: " + workDir.getPath()));
       }
       MinioOptions minioOptions = new MinioOptions();
       MinioHandler minio = new MinioHandler(minioOptions, new OutputOptions());
       MinioStagingUtil.stageFromMinio(minio, minioPrefix, workDir, new OutputOptions());
     } catch (Exception e) {
-      return Optional.of("500:Staging from MinIO failed: " + e.getMessage());
+      return Optional.of(
+          new StagingError(500, "Staging from MinIO failed: " + e.getMessage()));
     }
 
     return Optional.empty();
