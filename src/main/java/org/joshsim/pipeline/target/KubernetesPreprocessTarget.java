@@ -36,7 +36,7 @@ import org.joshsim.util.MinioOptions;
  */
 public class KubernetesPreprocessTarget implements RemotePreprocessTarget {
 
-  private static final String JOB_NAME_PREFIX = "josh-preprocess-";
+  private static final String JOB_NAME_PREFIX = "josh-";
   private static final String SECRET_NAME_PREFIX = "josh-creds-";
   private static final int BACKOFF_LIMIT = 3;
   private static final String ENTRYPOINT = "/app/preprocess-entrypoint.sh";

@@ -119,7 +119,7 @@ class KubernetesPreprocessTargetTest {
     target.dispatch(JOB_ID, PREFIX, SIMULATION, buildParams());
 
     Job job = jobCaptor.getValue();
-    assertEquals("josh-preprocess-" + JOB_ID, job.getMetadata().getName());
+    assertEquals("josh-" + JOB_ID, job.getMetadata().getName());
     assertEquals(JOB_ID, job.getMetadata().getLabels().get("josh-job-id"));
     assertEquals("joshsim", job.getMetadata().getLabels().get("app"));
     assertEquals("preprocess", job.getMetadata().getLabels().get("josh-job-type"));
