@@ -80,7 +80,7 @@ Used for `KubernetesTarget` only. Cleaner fluent DSL than official `io.kubernete
 ## PR Plan
 
 ```
-PR1 ✅ → PR2 ✅ → PR3 ✅ (cleanup) → PR4 ✅ (/runBatch) → PR4a ✅ (stageFromMinio opt-in) → PR4b ✅ (async+status) → PR5 ✅ (profiles+polling) → PR6 ✅ (batchRemote+HttpTarget) → PR7 ✅ (Fabric8+K8sTarget+K8sPolling) → PR8 ✅ (Dockerfile+e2e+K8sCI) → PR9 (preprocessBatch)
+PR1 ✅ → PR2 ✅ → PR3 ✅ (cleanup) → PR4 ✅ (/runBatch) → PR4a ✅ (stageFromMinio opt-in) → PR4b ✅ (async+status) → PR5 ✅ (profiles+polling) → PR6 ✅ (batchRemote+HttpTarget) → PR7 ✅ (Fabric8+K8sTarget+K8sPolling) → PR8 ✅ (Dockerfile+e2e+K8sCI) → PR9 ✅ (preprocessBatch)
 ```
 
 ### Regression gates (every PR)
@@ -445,9 +445,8 @@ Batch worker Docker image, dual MinIO endpoint support, and end-to-end K8s integ
 
 **Risk: LOW — Kind CI proved reliable across multiple runs. MinIO-in-Kind networking works cleanly with port-forward.**
 
-### PR 9: `preprocessBatch` — remote preprocessing via target profiles
-**Branch: `feat/preprocess-batch` off `feat/k8s-batch`**
-**Status: COMPLETE (all 14 steps implemented)**
+### PR 9 ✅: `preprocessBatch` — remote preprocessing via target profiles — #405
+**Branch: `feat/preprocess-batch` → merged to `feat/k8s-batch`**
 
 Mirrors the run architecture exactly — separate endpoint, interface, targets, entrypoint. No generalization or mixing of concerns between run and preprocess.
 
@@ -503,6 +502,8 @@ joshsim preprocessBatch simulation.josh Main data.nc temperature celsius output.
 - [x] `./gradlew test`, checkstyle, fatJar pass
 
 **Risk: LOW — additive, mirrors existing architecture, no modifications to run path**
+
+**Note:** CI preprocess e2e pending — batchRemote e2e passes, preprocessBatch e2e needs the GeoTIFF preprocessing to succeed inside the Kind pod (depends on GeoTools native libs in JRE-only image).
 
 ---
 
