@@ -4,6 +4,7 @@ WORKDIR /app
 
 COPY build/libs/joshsim-fat.jar /app/joshsim-fat.jar
 COPY cloud-img/run-entrypoint.sh /app/run-entrypoint.sh
-RUN chmod +x /app/run-entrypoint.sh
+COPY cloud-img/preprocess-entrypoint.sh /app/preprocess-entrypoint.sh
+RUN chmod +x /app/run-entrypoint.sh /app/preprocess-entrypoint.sh
 
 ENTRYPOINT ["/app/run-entrypoint.sh"]

@@ -123,6 +123,12 @@ jobs:
           mkdir -p ~/.josh/targets
           cp examples/test/k8s/ci-k8s-profile.json ~/.josh/targets/ci-k8s.json
           cp examples/test/k8s/ci-k8s-bad-image-profile.json ~/.josh/targets/ci-k8s-bad-image.json
+          cp examples/test/k8s/ci-k8s-preprocess-profile.json ~/.josh/targets/ci-k8s-preprocess.json
+
+      - name: Generate test NetCDF for preprocessing
+        run: |
+          ncgen -o examples/test/k8s/test_temp.nc examples/test/k8s/test_temp.cdl
+          echo "Generated test_temp.nc ($(stat -c%s examples/test/k8s/test_temp.nc) bytes)"
 
       - name: Run batchRemote end-to-end
         run: |
@@ -199,6 +205,42 @@ jobs:
             cat /tmp/bad-image-output.txt
           fi
 
+      - name: Run preprocessBatch end-to-end
+        run: |
+          echo "Running preprocessBatch with K8s target..."
+          java -jar build/libs/joshsim-fat.jar preprocessBatch \
+            examples/test/k8s/k8s_test.josh K8sTest \
+            test_temp.nc temperature celsius output.jshd \
+            --target=ci-k8s-preprocess \
+            --poll-interval=5 \
+            --timeout=300
+
+          echo "preprocessBatch completed successfully"
+
+          # Verify output file was downloaded
+          if [ -f output.jshd ] && [ -s output.jshd ]; then
+            echo "Result output.jshd downloaded ($(stat -c%s output.jshd) bytes)"
+          else
+            echo "ERROR: output.jshd not found or empty"
+            exit 1
+          fi
+
+      - name: Verify preprocess K8s Job completed
+        run: |
+          echo "Checking preprocess K8s Jobs..."
+          kubectl get jobs -l josh-job-type=preprocess
+          echo "---"
+
+          # Verify preprocess job succeeded
+          PREPROCESS_JOBS=$(kubectl get jobs -l josh-job-type=preprocess -o jsonpath='{.items[*].status.succeeded}')
+          if echo "$PREPROCESS_JOBS" | grep -q "1"; then
+            echo "Preprocess K8s Job completed successfully"
+          else
+            echo "Preprocess K8s Job status:"
+            kubectl describe jobs -l josh-job-type=preprocess
+            kubectl logs -l josh-job-type=preprocess --all-containers=true --tail=50 2>/dev/null || true
+          fi
+
       - name: Collect logs on failure
         if: failure()
         run: |
@@ -226,4 +268,6 @@ jobs:
           echo "  Job completion verification"
           echo "  Results verification in MinIO"
           echo "  Failure detection (bad image)"
+          echo "  preprocessBatch e2e (K8s target, NetCDF → jshd)"
+          echo "  Preprocess job completion verification"
           echo "================================================"

@@ -1,0 +1,16 @@
+netcdf test_temp {
+dimensions:
+  lon = 2 ;
+  lat = 2 ;
+  calendar_year = 1 ;
+variables:
+  double lon(lon) ;
+  double lat(lat) ;
+  int calendar_year(calendar_year) ;
+  double temperature(calendar_year, lat, lon) ;
+data:
+  lon = 0, 0.005 ;
+  lat = 0, 0.005 ;
+  calendar_year = 0 ;
+  temperature = 20, 21, 22, 23 ;
+}

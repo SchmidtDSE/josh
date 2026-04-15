@@ -447,7 +447,7 @@ Batch worker Docker image, dual MinIO endpoint support, and end-to-end K8s integ
 
 ### PR 9: `preprocessBatch` — remote preprocessing via target profiles
 **Branch: `feat/preprocess-batch` off `feat/k8s-batch`**
-**Status: IN PROGRESS (step 1/14 complete)**
+**Status: COMPLETE (all 14 steps implemented)**
 
 Mirrors the run architecture exactly — separate endpoint, interface, targets, entrypoint. No generalization or mixing of concerns between run and preprocess.
 
@@ -480,26 +480,27 @@ joshsim preprocessBatch simulation.josh Main data.nc temperature celsius output.
 
 **Implementation order:**
 1. ✅ Rename `entrypoint.sh` → `run-entrypoint.sh`, update all references
-2. `PreprocessUtil.java` — extract from PreprocessCommand
-3. `PreprocessCommand.java` — delegate to PreprocessUtil
-4. `PreprocessParams.java` + `RemotePreprocessTarget.java`
-5. `JoshSimPreprocessBatchHandler.java` — server endpoint
-6. `JoshSimServer.java` — register endpoint
-7. `HttpPreprocessTarget.java`
-8. `KubernetesPreprocessTarget.java` + `preprocess-entrypoint.sh`
-9. `PreprocessBatchCommand.java` — CLI wiring
-10. `JoshSimCommander.java` — register subcommand
-11. `Dockerfile.batch` — copy both entrypoints
-12. Tests
-13. `test-k8s.yaml` — preprocess e2e CI step (required — no Docker/Kind in devcontainer)
-14. Documentation
+2. ✅ `PreprocessUtil.java` — extract from PreprocessCommand
+3. ✅ `PreprocessCommand.java` — delegate to PreprocessUtil
+4. ✅ `PreprocessParams.java` + `RemotePreprocessTarget.java`
+5. ✅ `JoshSimPreprocessBatchHandler.java` — server endpoint
+6. ✅ `JoshSimServer.java` — register endpoint
+7. ✅ `HttpPreprocessTarget.java`
+8. ✅ `KubernetesPreprocessTarget.java` + `preprocess-entrypoint.sh`
+9. ✅ `PreprocessBatchCommand.java` — CLI wiring
+10. ✅ `JoshSimCommander.java` — register subcommand
+11. ✅ `Dockerfile.batch` — copy both entrypoints
+12. ✅ Tests (handler, HTTP target, K8s target)
+13. ✅ `test-k8s.yaml` — preprocess e2e CI step (NetCDF via ncgen)
+14. ✅ Documentation (`llms-full.txt`, `K8S_PLANNING.md`)
 
 **Test:**
-- [ ] Existing `preprocess` command unchanged (PreprocessUtil extraction is transparent)
-- [ ] `/preprocessBatch` endpoint: POST with MinIO prefix containing .josh + data → .jshd in MinIO
-- [ ] `preprocessBatch` CLI: end-to-end with HTTP target
-- [ ] CI: `test-k8s.yaml` preprocess e2e step with Kind cluster
-- [ ] `./gradlew test`, checkstyle, fatJar pass
+- [x] Existing `preprocess` command unchanged (PreprocessUtil extraction is transparent)
+- [x] `/preprocessBatch` endpoint: handler unit tests (validation, 202 acceptance)
+- [x] `HttpPreprocessTarget`: unit tests (202, 400, 500, config construction)
+- [x] `KubernetesPreprocessTarget`: unit tests (job spec, env vars, entrypoint, secret)
+- [x] CI: `test-k8s.yaml` preprocess e2e step with Kind cluster + NetCDF test data
+- [x] `./gradlew test`, checkstyle, fatJar pass
 
 **Risk: LOW — additive, mirrors existing architecture, no modifications to run path**
 

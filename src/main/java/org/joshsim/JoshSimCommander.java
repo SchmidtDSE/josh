@@ -18,6 +18,7 @@ import org.joshsim.command.BatchRemoteCommand;
 import org.joshsim.command.DiscoverConfigCommand;
 import org.joshsim.command.InspectExportsCommand;
 import org.joshsim.command.InspectJshdCommand;
+import org.joshsim.command.PreprocessBatchCommand;
 import org.joshsim.command.PreprocessCommand;
 import org.joshsim.command.RunCommand;
 import org.joshsim.command.RunRemoteCommand;
@@ -66,7 +67,8 @@ import picocli.CommandLine;
         InspectExportsCommand.class,
         StageToMinioCommand.class,
         StageFromMinioCommand.class,
-        BatchRemoteCommand.class
+        BatchRemoteCommand.class,
+        PreprocessBatchCommand.class
     }
 )
 public class JoshSimCommander {
