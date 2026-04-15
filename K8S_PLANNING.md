@@ -446,41 +446,62 @@ Batch worker Docker image, dual MinIO endpoint support, and end-to-end K8s integ
 **Risk: LOW — Kind CI proved reliable across multiple runs. MinIO-in-Kind networking works cleanly with port-forward.**
 
 ### PR 9: `preprocessBatch` — remote preprocessing via target profiles
+**Branch: `feat/preprocess-batch` off `feat/k8s-batch`**
+**Status: IN PROGRESS (step 1/14 complete)**
 
-**Why this matters:** Preprocessing is the most time-consuming step for large simulations (converting GeoTIFF/NetCDF to .jshd). Currently it runs only locally. For HPC-scale workflows, preprocessing should be offloadable to the same compute targets used for simulation.
+Mirrors the run architecture exactly — separate endpoint, interface, targets, entrypoint. No generalization or mixing of concerns between run and preprocess.
 
-**Key insight:** `preprocessBatch` is a natural consumer of the target profile system (PRs 5-7). The dispatch flow is identical to `batchRemote` — only the operation differs:
-
-```
-1. STAGE:    stageToMinio (upload raw data files + .josh script)
-2. DISPATCH: target.dispatch(jobId, "preprocess", minioPrefix)
-3. EXECUTE:  worker does stageFromMinio → cd workdir → preprocess → upload .jshd to MinIO
-4. RESULTS:  .jshd files land in MinIO, ready for stageFromMinio before simulation
-```
-
-**What "wiring MinioOptions into preprocess" actually requires:**
-- Just adding `@Mixin MinioOptions` to `PreprocessCommand` is not sufficient — it only declares CLI flags with nothing consuming them. `PreprocessCommand` writes output to a local `FileOutputStream` ([PreprocessCommand.java:327](src/main/java/org/joshsim/command/PreprocessCommand.java#L327)), not via the export facade / `minio://` path system.
-- Full wiring would need: (a) a `/preprocessBatch` server endpoint (analogous to `/runBatch` from PR 4) that does `stageFromMinio → preprocess → upload .jshd to MinIO`, and (b) a `preprocessBatch` client command that stages inputs and dispatches via `RemoteBatchTarget`.
+**Design choice:** Separate `/preprocessBatch` endpoint (not a generalized `/execBatch`). Run and preprocess have fundamentally different parameters — a shared handler would be stringly-typed dispatch over two different code paths. Only two heavyweight commands will ever run server-side (run and preprocess), so the generalization isn't worth it.
 
 **New files:**
-- `cloud/JoshSimPreprocessBatchHandler.java` — Undertow `HttpHandler` for `/preprocessBatch`
-- `command/PreprocessBatchCommand.java` — client command, reuses `BatchJobStrategy` with preprocess operation
+- `command/PreprocessUtil.java` — extracted core preprocessing logic from `PreprocessCommand`, callable from both CLI and server handler
+- `command/PreprocessBatchCommand.java` — CLI command, mirrors `BatchRemoteCommand` structure with preprocess params
+- `cloud/JoshSimPreprocessBatchHandler.java` — `/preprocessBatch` server endpoint
+- `pipeline/target/RemotePreprocessTarget.java` — dispatch interface (mirrors `RemoteBatchTarget`)
+- `pipeline/target/PreprocessParams.java` — immutable data class for preprocess-specific params (dataFile, variable, units, outputFile, crs, timestep, etc.)
+- `pipeline/target/HttpPreprocessTarget.java` — HTTP dispatch to `/preprocessBatch` (mirrors `HttpBatchTarget`)
+- `pipeline/target/KubernetesPreprocessTarget.java` — K8s dispatch with preprocess env vars (mirrors `KubernetesTarget`)
+- `cloud-img/preprocess-entrypoint.sh` — separate entrypoint: `stageFromMinio → preprocess → stageToMinio` (uploads .jshd result)
 
-**Modify:**
-- `cloud/JoshSimServer.java` — register `/preprocessBatch` endpoint
-- `JoshSimCommander.java` — register `PreprocessBatchCommand` subcommand
-- `BatchJobStrategy` (or equivalent) — accept operation type parameter (run vs. preprocess)
+**Modified files:**
+- `command/PreprocessCommand.java` — delegate to `PreprocessUtil`
+- `cloud/JoshSimServer.java` — register `/preprocessBatch`
+- `JoshSimCommander.java` — register `PreprocessBatchCommand`
+- `cloud-img/Dockerfile.batch` — copy `preprocess-entrypoint.sh`
+- `cloud-img/entrypoint.sh` → renamed to `cloud-img/run-entrypoint.sh` (DONE)
 
-**The target profiles don't change.** Same JSON, same creds, same `HttpBatchTarget` / `KubernetesTarget`. The only difference is the operation dispatched.
+**Key difference from run:** After completion, client downloads the result `.jshd` from MinIO. The output file is the deliverable, not `minio://` export paths in the josh script.
 
-**Parallel preprocessing:** For large datasets with many timesteps, multiple preprocessing jobs can run concurrently using `--timestep` to split work across K8s indexed Jobs (each worker processes one timestep, writes to a separate .jshd, then `--amend` combines them).
+**CLI usage:**
+```bash
+joshsim preprocessBatch simulation.josh Main data.nc temperature celsius output.jshd \
+  --target=nautilus --crs=EPSG:4326 --timestep=2000
+```
+
+**Implementation order:**
+1. ✅ Rename `entrypoint.sh` → `run-entrypoint.sh`, update all references
+2. `PreprocessUtil.java` — extract from PreprocessCommand
+3. `PreprocessCommand.java` — delegate to PreprocessUtil
+4. `PreprocessParams.java` + `RemotePreprocessTarget.java`
+5. `JoshSimPreprocessBatchHandler.java` — server endpoint
+6. `JoshSimServer.java` — register endpoint
+7. `HttpPreprocessTarget.java`
+8. `KubernetesPreprocessTarget.java` + `preprocess-entrypoint.sh`
+9. `PreprocessBatchCommand.java` — CLI wiring
+10. `JoshSimCommander.java` — register subcommand
+11. `Dockerfile.batch` — copy both entrypoints
+12. Tests
+13. `test-k8s.yaml` — preprocess e2e CI step (required — no Docker/Kind in devcontainer)
+14. Documentation
 
 **Test:**
-- [ ] `/preprocessBatch` endpoint: POST with MinIO prefix containing raw data → .jshd appears in MinIO
-- [ ] `preprocessBatch` command: end-to-end with HTTP target
-- [ ] Existing `preprocess` command unchanged
+- [ ] Existing `preprocess` command unchanged (PreprocessUtil extraction is transparent)
+- [ ] `/preprocessBatch` endpoint: POST with MinIO prefix containing .josh + data → .jshd in MinIO
+- [ ] `preprocessBatch` CLI: end-to-end with HTTP target
+- [ ] CI: `test-k8s.yaml` preprocess e2e step with Kind cluster
+- [ ] `./gradlew test`, checkstyle, fatJar pass
 
-**Risk: LOW — additive, all new files, existing commands untouched**
+**Risk: LOW — additive, mirrors existing architecture, no modifications to run path**
 
 ---
 
