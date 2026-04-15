@@ -124,9 +124,16 @@ public class BatchRemoteCommand implements Callable<Integer> {
       File inputDir = resolveInputDir();
 
       if (noWait) {
-        String jobId = strategy.executeNoWait(inputDir, simulation, replicates);
-        output.printInfo("Job dispatched: " + jobId);
-        output.printInfo("Poll manually: batch-status/" + jobId + "/status.json");
+        String jobId = strategy.executeNoWait(
+            inputDir, simulation, replicates
+        );
+        String statusPath = "batch-status/" + jobId
+            + "/status.json";
+        System.out.println(
+            "{\"jobId\":\"" + jobId
+            + "\",\"target\":\"" + targetName
+            + "\",\"statusPath\":\"" + statusPath + "\"}"
+        );
         return 0;
       }
 

@@ -8,6 +8,9 @@ package org.joshsim.pipeline.target;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import io.fabric8.kubernetes.client.Config;
+import io.fabric8.kubernetes.client.KubernetesClient;
+import io.fabric8.kubernetes.client.KubernetesClientBuilder;
 import org.joshsim.util.MinioHandler;
 import org.joshsim.util.MinioOptions;
 import org.joshsim.util.OutputOptions;
@@ -132,5 +135,40 @@ public class TargetProfile {
   public MinioHandler buildMinioHandler(OutputOptions output)
       throws Exception {
     return new MinioHandler(buildMinioOptions(), output);
+  }
+
+  /**
+   * Creates the appropriate {@link BatchPollingStrategy} for this target.
+   *
+   * <p>HTTP targets use {@link MinioPollingStrategy} (reads status.json
+   * from MinIO). Kubernetes targets use {@link KubernetesPollingStrategy}
+   * (queries the K8s Job API via Fabric8).</p>
+   *
+   * @param output For logging during MinIO handler construction.
+   * @return A polling strategy configured for this target's type.
+   * @throws Exception If strategy construction fails.
+   */
+  public BatchPollingStrategy buildPollingStrategy(
+      OutputOptions output
+  ) throws Exception {
+    if ("http".equals(type)) {
+      return new MinioPollingStrategy(buildMinioHandler(output));
+    } else if ("kubernetes".equals(type)) {
+      KubernetesTargetConfig k8sConfig = getKubernetesConfig();
+      String context = k8sConfig.getContext();
+      Config kubeConfig = (context != null && !context.isEmpty())
+          ? Config.autoConfigure(context)
+          : Config.autoConfigure(null);
+      KubernetesClient client = new KubernetesClientBuilder()
+          .withConfig(kubeConfig)
+          .build();
+      return new KubernetesPollingStrategy(
+          client, k8sConfig.getNamespace()
+      );
+    }
+    throw new IllegalArgumentException(
+        "Unsupported target type for polling: " + type
+        + ". Supported types: http, kubernetes"
+    );
   }
 }
