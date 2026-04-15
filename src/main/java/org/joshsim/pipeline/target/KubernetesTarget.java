@@ -39,7 +39,7 @@ public class KubernetesTarget implements RemoteBatchTarget {
   private static final String JOB_NAME_PREFIX = "josh-";
   private static final String SECRET_NAME_PREFIX = "josh-creds-";
   private static final int BACKOFF_LIMIT = 3;
-  private static final String ENTRYPOINT = "/app/entrypoint.sh";
+  private static final String ENTRYPOINT = "/app/run-entrypoint.sh";
 
   private final KubernetesTargetConfig config;
   private final KubernetesClient client;

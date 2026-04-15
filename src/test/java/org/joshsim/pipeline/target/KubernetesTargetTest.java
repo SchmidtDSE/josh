@@ -279,7 +279,7 @@ class KubernetesTargetTest {
     Job job = jobCaptor.getValue();
     Container container = getContainer(job);
     List<String> command = container.getCommand();
-    assertEquals("/app/entrypoint.sh", command.get(0));
+    assertEquals("/app/run-entrypoint.sh", command.get(0));
     assertEquals("/app/joshsim-fat.jar", command.get(1));
   }
 
