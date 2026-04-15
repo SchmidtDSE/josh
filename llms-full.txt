@@ -352,12 +352,18 @@ Target profiles are JSON files at `~/.josh/targets/<name>.json` that define a co
       "limits": { "memory": "256Gi" }
     },
     "parallelism": 10,
-    "timeoutSeconds": 3600
+    "timeoutSeconds": 3600,
+    "spot": true,
+    "ttlSecondsAfterFinished": 3600
   },
   "minio_endpoint": "https://storage.googleapis.com",
   "minio_bucket": "josh-batch-storage"
 }
 ```
+
+**Spot pods:** Set `"spot": true` in the kubernetes config block to schedule pods on Spot (preemptible) VMs for 60-90% cost savings. The Job spec gets a `cloud.google.com/gke-spot` node selector and toleration. Preempted pods are retried via `backoffLimit`. GKE Autopilot only.
+
+**Job TTL cleanup:** Set `"ttlSecondsAfterFinished": <seconds>` to automatically delete completed/failed Jobs after the specified duration. Prevents accumulation of finished Jobs in the namespace. Omit or set to null to disable.
 
 **Credential resolution:** MinIO credentials (`minio_endpoint`, `minio_access_key`, `minio_secret_key`, `minio_bucket`) are resolved via `HierarchyConfig` in priority order: CLI flags > profile JSON > environment variables (`MINIO_ENDPOINT`, `MINIO_ACCESS_KEY`, `MINIO_SECRET_KEY`, `MINIO_BUCKET`). Secrets do not need to live in the profile JSON — they can come entirely from the environment.
 

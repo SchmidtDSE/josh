@@ -13,6 +13,8 @@ import io.fabric8.kubernetes.api.model.Quantity;
 import io.fabric8.kubernetes.api.model.ResourceRequirements;
 import io.fabric8.kubernetes.api.model.Secret;
 import io.fabric8.kubernetes.api.model.SecretBuilder;
+import io.fabric8.kubernetes.api.model.Toleration;
+import io.fabric8.kubernetes.api.model.TolerationBuilder;
 import io.fabric8.kubernetes.api.model.batch.v1.Job;
 import io.fabric8.kubernetes.api.model.batch.v1.JobBuilder;
 import io.fabric8.kubernetes.client.Config;
@@ -95,7 +97,7 @@ public class KubernetesTarget implements RemoteBatchTarget {
 
     createSecret(secretName);
 
-    Job job = new JobBuilder()
+    JobBuilder jobBuilder = new JobBuilder()
         .withNewMetadata()
             .withName(JOB_NAME_PREFIX + jobId)
             .withNamespace(config.getNamespace())
@@ -111,6 +113,9 @@ public class KubernetesTarget implements RemoteBatchTarget {
             .withBackoffLimit(BACKOFF_LIMIT)
             .withActiveDeadlineSeconds(
                 (long) config.getTimeoutSeconds()
+            )
+            .withTtlSecondsAfterFinished(
+                config.getTtlSecondsAfterFinished()
             )
             .withNewTemplate()
                 .withNewSpec()
@@ -132,8 +137,13 @@ public class KubernetesTarget implements RemoteBatchTarget {
                     .endContainer()
                 .endSpec()
             .endTemplate()
-        .endSpec()
-        .build();
+        .endSpec();
+
+    if (config.isSpot()) {
+      applySpotConfig(jobBuilder);
+    }
+
+    Job job = jobBuilder.build();
 
     client.batch().v1().jobs()
         .inNamespace(config.getNamespace())
@@ -275,6 +285,25 @@ public class KubernetesTarget implements RemoteBatchTarget {
       reqs.setLimits(limits);
     }
     return reqs;
+  }
+
+  private void applySpotConfig(JobBuilder jobBuilder) {
+    Toleration spotToleration = new TolerationBuilder()
+        .withKey("cloud.google.com/gke-spot")
+        .withOperator("Equal")
+        .withValue("true")
+        .withEffect("NoSchedule")
+        .build();
+    jobBuilder.editSpec()
+        .editTemplate()
+            .editSpec()
+                .addToNodeSelector(
+                    "cloud.google.com/gke-spot", "true"
+                )
+                .addToTolerations(spotToleration)
+            .endSpec()
+        .endTemplate()
+        .endSpec();
   }
 
   private static KubernetesClient buildClient(String context) {
