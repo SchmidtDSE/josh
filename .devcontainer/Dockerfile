@@ -25,7 +25,6 @@ RUN .devcontainer/scripts/on_build/install_visualvm.sh
 # Install kubectl and gcloud for GKE batch dispatch
 RUN .devcontainer/scripts/on_build/install_kubectl.sh
 RUN .devcontainer/scripts/on_build/install_gcloud.sh
-ENV PATH="/opt/google-cloud-sdk/bin:${PATH}"
 
 # Install third-party dependencies for the local UI server
 RUN cd editor/third_party && bash install_deps.sh

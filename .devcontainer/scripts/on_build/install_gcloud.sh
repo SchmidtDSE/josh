@@ -25,3 +25,11 @@ tar -xzf /tmp/gcloud.tar.gz -C /opt
 /opt/google-cloud-sdk/install.sh --quiet --usage-reporting=false --command-completion=false --path-update=false
 /opt/google-cloud-sdk/bin/gcloud components install gke-gcloud-auth-plugin --quiet
 rm /tmp/gcloud.tar.gz
+
+# Symlink to /usr/local/bin so gcloud and the auth plugin are on the system
+# PATH for all processes — not just interactive shells. kubectl exec's
+# gke-gcloud-auth-plugin as a subprocess, which in turn exec's gcloud;
+# neither inherits shell PATH or Dockerfile ENV PATH reliably.
+ln -sf /opt/google-cloud-sdk/bin/gcloud /usr/local/bin/gcloud
+ln -sf /opt/google-cloud-sdk/bin/gsutil /usr/local/bin/gsutil
+ln -sf /opt/google-cloud-sdk/bin/gke-gcloud-auth-plugin /usr/local/bin/gke-gcloud-auth-plugin
