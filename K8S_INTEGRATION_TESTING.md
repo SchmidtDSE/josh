@@ -2,74 +2,53 @@
 
 Integration test plan for validating the Josh batch execution system against a real GKE Autopilot cluster. This supplements the existing Kind CI tests (`.github/workflows/test-k8s.yaml`) which validate the mechanics in an isolated environment but can't test real-world GKE behavior (Spot VMs, Autopilot scheduling, GCS as MinIO backend, production-scale workloads).
 
-**Prerequisite:** GKE Autopilot cluster deployed per SchmidtDSE/fire-recovery-iac#1.
+**Cluster:** `josh-k8s-gke` in `us-west1`, project `dse-nps`
+**Deployed via:** SchmidtDSE/fire-recovery-iac#1
 
 ---
 
 ## Setup
 
-### 1. Target profiles
+### 1. Cluster credentials
 
-Create profiles for each test scenario in `~/.josh/targets/`:
-
-**gke-test.json** — standard on-demand pods:
-```json
-{
-  "type": "kubernetes",
-  "kubernetes": {
-    "context": "gke_<project>_<region>_<cluster>",
-    "namespace": "joshsim",
-    "image": "us-docker.pkg.dev/<project>/josh/joshsim-batch:latest",
-    "pod_minio_endpoint": "https://storage.googleapis.com",
-    "resources": {
-      "requests": { "cpu": "1", "memory": "2Gi" },
-      "limits": { "memory": "4Gi" }
-    },
-    "parallelism": 5,
-    "timeoutSeconds": 600,
-    "ttlSecondsAfterFinished": 3600
-  },
-  "minio_endpoint": "https://storage.googleapis.com",
-  "minio_bucket": "<gcs-bucket>"
-}
-```
-
-**gke-test-spot.json** — same but with `"spot": true`.
-
-**gke-test-large.json** — high-memory for stress testing:
-```json
-{
-  "kubernetes": {
-    "resources": {
-      "requests": { "cpu": "4", "memory": "16Gi" },
-      "limits": { "memory": "32Gi" }
-    },
-    "parallelism": 10,
-    "timeoutSeconds": 1800,
-    "spot": true,
-    "ttlSecondsAfterFinished": 3600,
-    ...
-  },
-  ...
-}
-```
-
-### 2. Environment
-
-MinIO credentials for GCS:
 ```bash
-export MINIO_ACCESS_KEY=<gcs-hmac-access-key>
-export MINIO_SECRET_KEY=<gcs-hmac-secret-key>
+gcloud container clusters get-credentials josh-k8s-gke --region us-west1 --project dse-nps
 ```
 
-### 3. Image
+### 2. MinIO/GCS credentials
+
+```bash
+export MINIO_ACCESS_KEY=$(gcloud secrets versions access latest --secret=josh-k8s-minio-access-key --project=dse-nps)
+export MINIO_SECRET_KEY=$(gcloud secrets versions access latest --secret=josh-k8s-minio-secret-key --project=dse-nps)
+```
+
+### 3. Target profiles
+
+Install the profiles from `examples/test/gke/` into `~/.josh/targets/`:
+
+```bash
+mkdir -p ~/.josh/targets
+cp examples/test/gke/gke-test.json ~/.josh/targets/gke-test.json
+cp examples/test/gke/gke-test-spot.json ~/.josh/targets/gke-test-spot.json
+cp examples/test/gke/gke-test-large.json ~/.josh/targets/gke-test-large.json
+```
+
+Three profiles are provided:
+- **gke-test** — standard on-demand pods (1 CPU, 2Gi)
+- **gke-test-spot** — same resources on Spot VMs (60-90% cheaper)
+- **gke-test-large** — high-memory Spot pods (4 CPU, 16Gi) for stress tests
+
+### 4. Image
 
 Build and push the batch worker image:
+
 ```bash
 ./gradlew fatJar
-docker build -f cloud-img/Dockerfile.batch -t us-docker.pkg.dev/<project>/josh/joshsim-batch:latest .
-docker push us-docker.pkg.dev/<project>/josh/joshsim-batch:latest
+docker build -f cloud-img/Dockerfile.batch -t ghcr.io/schmidtdse/josh/joshsim-batch:latest .
+docker push ghcr.io/schmidtdse/josh/joshsim-batch:latest
 ```
+
+The GHCR package is public — no image pull secrets needed.
 
 ---
 
@@ -81,15 +60,15 @@ Validates the basic end-to-end path: stage → dispatch → pod runs → results
 
 ```bash
 java -jar build/libs/joshsim-fat.jar batchRemote \
-  examples/test/k8s/k8s_test.josh K8sTest \
+  examples/test/gke/gke_smoke_test.josh GkeSmokeTest \
   --target=gke-test --replicates=1
 ```
 
 **Verify:**
 - [ ] CLI prints staging, dispatch, polling, and completion messages
 - [ ] `kubectl get jobs -n joshsim` shows a completed Job
-- [ ] Results CSV exists in GCS bucket at `k8s-e2e-results/results.csv`
-- [ ] Job is auto-deleted after TTL expires
+- [ ] Results CSV exists in GCS at `gke-test-results/smoke_0.csv`
+- [ ] Job is auto-deleted after TTL expires (~1 hour)
 
 ---
 
@@ -99,12 +78,12 @@ Validates indexed Job with multiple pods running in parallel.
 
 ```bash
 java -jar build/libs/joshsim-fat.jar batchRemote \
-  examples/test/k8s/k8s_test.josh K8sTest \
+  examples/test/gke/gke_smoke_test.josh GkeSmokeTest \
   --target=gke-test --replicates=5
 ```
 
 **Verify:**
-- [ ] `kubectl get pods -n joshsim` shows up to `parallelism` pods running concurrently
+- [ ] `kubectl get pods -n joshsim` shows up to 5 pods running concurrently
 - [ ] All 5 pod completions succeed
 - [ ] Results CSV has data from all replicates (append mode)
 
@@ -116,14 +95,14 @@ Validates that pods land on Spot VMs and that preemption is handled.
 
 ```bash
 java -jar build/libs/joshsim-fat.jar batchRemote \
-  examples/test/k8s/k8s_test.josh K8sTest \
+  examples/test/gke/gke_smoke_test.josh GkeSmokeTest \
   --target=gke-test-spot --replicates=3
 ```
 
 **Verify:**
-- [ ] Pods are scheduled on Spot nodes: `kubectl get pods -n joshsim -o wide` shows Spot node pool
 - [ ] Pod spec has `cloud.google.com/gke-spot` node selector and toleration
-- [ ] If a pod is preempted during the test, `backoffLimit` triggers a retry (check pod restart count)
+- [ ] `kubectl get pods -n joshsim -o wide` shows pods on Spot nodes
+- [ ] If a pod is preempted, `backoffLimit` triggers a retry
 - [ ] Job completes despite any preemptions
 
 ---
@@ -133,7 +112,6 @@ java -jar build/libs/joshsim-fat.jar batchRemote \
 Validates remote preprocessing with real GeoTIFF data.
 
 ```bash
-# Copy test data into a staging directory
 mkdir -p /tmp/preprocess-test
 cp examples/test/k8s-preprocess/k8s_preprocess_test.josh /tmp/preprocess-test/
 cp josh-tests/test-data/spatial/grid_10x10_constant.tiff /tmp/preprocess-test/
@@ -147,32 +125,25 @@ java -jar build/libs/joshsim-fat.jar preprocessBatch \
 **Verify:**
 - [ ] CLI stages files, dispatches, polls, downloads result
 - [ ] `output.jshd` is a valid non-empty file
-- [ ] `inspectJshd output.jshd 0 0 0 0` returns a value without error
-- [ ] Preprocess K8s Job used `preprocess-entrypoint.sh` (check pod command in `kubectl describe`)
+- [ ] `java -jar build/libs/joshsim-fat.jar inspectJshd output.jshd 0 0 0 0` returns a value
+- [ ] Preprocess K8s Job used `preprocess-entrypoint.sh` (`kubectl describe pod -n joshsim`)
 
 ---
 
 ### T5: Stress test — larger simulation
 
-Validates that non-trivial simulations complete on GKE with higher resource requests. Uses the existing `stress.josh` simulation (100 timesteps, stochastic growth) but with minio:// export paths.
-
-Create a modified stress simulation:
-```bash
-cp examples/simulations/stress.josh /tmp/stress-gke.josh
-# Edit exportFiles.patch to use minio:// path:
-#   exportFiles.patch = "minio://<bucket>/stress-results/results_{replicate}.csv"
-```
+Validates 100-timestep simulation with stochastic growth on high-resource Spot pods.
 
 ```bash
 java -jar build/libs/joshsim-fat.jar batchRemote \
-  /tmp/stress-gke.josh TestSimpleSimulation \
+  examples/test/gke/gke_stress_test.josh GkeStressTest \
   --target=gke-test-large --replicates=10
 ```
 
 **Verify:**
 - [ ] All 10 replicates complete
-- [ ] Each replicate produces a results CSV in GCS
-- [ ] No OOMKill (check `kubectl describe pod` for exit codes)
+- [ ] Each replicate produces a results CSV in GCS at `gke-test-results/stress_<N>.csv`
+- [ ] No OOMKill (`kubectl describe pod -n joshsim` — check exit codes)
 - [ ] Total wall time is reasonable (parallelism=10 means all run concurrently)
 
 ---
@@ -181,17 +152,34 @@ java -jar build/libs/joshsim-fat.jar batchRemote \
 
 Validates that `activeDeadlineSeconds` and error detection work on real GKE.
 
-**6a — Timeout:** Create a profile with `"timeoutSeconds": 10` and run a simulation that takes longer. Verify the Job fails with `DeadlineExceeded` and the CLI reports the error.
+**6a — Timeout:** Create a profile with `"timeoutSeconds": 10` and run the stress test. Verify the Job fails with `DeadlineExceeded` and the CLI reports the error.
 
-**6b — OOMKill:** Create a profile with `"limits": { "memory": "256Mi" }` and run a simulation that uses more memory. Verify `KubernetesPollingStrategy` detects the OOMKill and reports it.
+**6b — OOMKill:** Create a profile with `"limits": { "memory": "256Mi" }` and run the stress test. Verify `KubernetesPollingStrategy` detects the OOMKill.
 
-**6c — Bad image:** Use a profile pointing to a non-existent image. Verify `ImagePullBackOff` is detected within the poll timeout.
+**6c — Bad image:** Create a profile with `"image": "ghcr.io/schmidtdse/josh/nonexistent:v999"`. Verify `ImagePullBackOff` is detected.
 
 ```bash
-# 6c example
+# 6c example — create ad-hoc profile
+cat > /tmp/gke-bad-image.json << 'EOF'
+{
+  "type": "kubernetes",
+  "kubernetes": {
+    "context": "gke_dse-nps_us-west1_josh-k8s-gke",
+    "namespace": "joshsim",
+    "image": "ghcr.io/schmidtdse/josh/nonexistent:v999",
+    "pod_minio_endpoint": "https://storage.googleapis.com",
+    "resources": { "requests": { "cpu": "250m", "memory": "512Mi" } },
+    "parallelism": 1, "timeoutSeconds": 120
+  },
+  "minio_endpoint": "https://storage.googleapis.com",
+  "minio_bucket": "dse-nps-josh-batch-storage"
+}
+EOF
+cp /tmp/gke-bad-image.json ~/.josh/targets/gke-bad-image.json
+
 java -jar build/libs/joshsim-fat.jar batchRemote \
-  examples/test/k8s/k8s_test.josh K8sTest \
-  --target=gke-test-bad-image --replicates=1 --timeout=120
+  examples/test/gke/gke_smoke_test.josh GkeSmokeTest \
+  --target=gke-bad-image --replicates=1 --timeout=120
 # Should fail with image pull error
 ```
 
@@ -203,7 +191,7 @@ Validates fire-and-forget dispatch.
 
 ```bash
 java -jar build/libs/joshsim-fat.jar batchRemote \
-  examples/test/k8s/k8s_test.josh K8sTest \
+  examples/test/gke/gke_smoke_test.josh GkeSmokeTest \
   --target=gke-test --replicates=2 --no-wait
 ```
 
@@ -219,11 +207,11 @@ java -jar build/libs/joshsim-fat.jar batchRemote \
 
 Validates that GCS HMAC credentials work correctly through the full pipeline.
 
-- [ ] `stageToMinio` uploads to GCS bucket successfully
-- [ ] `stageFromMinio` downloads from GCS bucket
+- [ ] `stageToMinio` uploads to GCS bucket: `java -jar build/libs/joshsim-fat.jar stageToMinio --input-dir=examples/test/gke/ --prefix=test-staging/`
+- [ ] `stageFromMinio` downloads from GCS: `java -jar build/libs/joshsim-fat.jar stageFromMinio --prefix=test-staging/ --output-dir=/tmp/staged/`
 - [ ] Pod-side MinIO access uses the K8s Secret (not host env vars)
-- [ ] Pod's `MINIO_ENDPOINT` resolves to `https://storage.googleapis.com`
-- [ ] Credentials from env vars (not in profile JSON) — verify profile has no `minio_access_key`/`minio_secret_key` fields
+- [ ] Pod's `MINIO_ENDPOINT` is `https://storage.googleapis.com`
+- [ ] Credentials come from env vars, not profile JSON (profiles have no `minio_access_key`/`minio_secret_key`)
 
 ---
 
@@ -233,14 +221,14 @@ Validates that completed Jobs are garbage collected.
 
 ```bash
 java -jar build/libs/joshsim-fat.jar batchRemote \
-  examples/test/k8s/k8s_test.josh K8sTest \
+  examples/test/gke/gke_smoke_test.josh GkeSmokeTest \
   --target=gke-test --replicates=1
 ```
 
 **Verify:**
 - [ ] Immediately after completion: `kubectl get jobs -n joshsim` shows the Job
 - [ ] After TTL expires (profile has `ttlSecondsAfterFinished: 3600`): Job is gone
-- [ ] For a faster check: create a profile with `"ttlSecondsAfterFinished": 60` and wait
+- [ ] For a faster check: create ad-hoc profile with `"ttlSecondsAfterFinished": 60` and wait
 
 ---
 
@@ -251,11 +239,11 @@ Validates that multiple independent jobs can run simultaneously.
 ```bash
 # Run two jobs in parallel (background the first)
 java -jar build/libs/joshsim-fat.jar batchRemote \
-  examples/test/k8s/k8s_test.josh K8sTest \
+  examples/test/gke/gke_smoke_test.josh GkeSmokeTest \
   --target=gke-test --replicates=3 &
 
 java -jar build/libs/joshsim-fat.jar batchRemote \
-  examples/test/k8s/k8s_test.josh K8sTest \
+  examples/test/gke/gke_smoke_test.josh GkeSmokeTest \
   --target=gke-test --replicates=3
 
 wait
@@ -272,9 +260,9 @@ wait
 ## Cost Monitoring
 
 During testing, track costs in the GCP console:
-- **GKE Autopilot compute**: should only bill during active pod time
-- **GCS storage**: staging + results (should be minimal for test workloads)
-- **Network egress**: pod ↔ GCS traffic (same-region should be free)
+- **GKE Autopilot compute**: billed per-pod-second on requests, $0 when idle
+- **GCS storage**: staging + results (minimal for test workloads)
+- **Network egress**: pod ↔ GCS in same region = free
 
 After all tests, verify:
 - [ ] No lingering Jobs or pods: `kubectl get jobs,pods -n joshsim`
