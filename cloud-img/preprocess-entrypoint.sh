@@ -61,7 +61,7 @@ fi
 
 # Run preprocessing
 # shellcheck disable=SC2086
-java -jar "$JAR" preprocess "$SCRIPT" "$JOSH_SIMULATION" \
+java -XX:+ExitOnOutOfMemoryError -jar "$JAR" preprocess "$SCRIPT" "$JOSH_SIMULATION" \
   "$WORK_DIR/$JOSH_DATA_FILE" "$JOSH_VARIABLE" "$JOSH_UNITS" \
   "$WORK_DIR/$JOSH_OUTPUT_FILE" \
   $OPTS

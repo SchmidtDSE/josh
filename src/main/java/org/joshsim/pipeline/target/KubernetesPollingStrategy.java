@@ -222,10 +222,20 @@ public class KubernetesPollingStrategy implements BatchPollingStrategy {
     }
 
     ContainerStateTerminated terminated = state.getTerminated();
-    if (terminated != null && terminated.getReason() != null
-        && terminated.getExitCode() != null
+    if (terminated != null && terminated.getExitCode() != null
         && terminated.getExitCode() != 0) {
-      return terminated.getReason();
+      // Exit code 3: JVM ExitOnOutOfMemoryError — deterministic OOM signal.
+      if (terminated.getExitCode() == 3) {
+        return "OutOfMemoryError (JVM heap exhausted — increase memory limits)";
+      }
+      // Exit code 137: kernel OOMKill (SIGKILL).
+      if (terminated.getExitCode() == 137) {
+        return "OOMKilled (container exceeded memory limit)";
+      }
+      if (terminated.getReason() != null) {
+        return terminated.getReason();
+      }
+      return "Container exited with code " + terminated.getExitCode();
     }
 
     ContainerStateWaiting waiting = state.getWaiting();
