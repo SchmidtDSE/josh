@@ -99,6 +99,13 @@ public class RunCommand implements Callable<Integer> {
   private int replicates = 1;
 
   @Option(
+      names = "--replicate-index",
+      description = "Run a single replicate at this index (mutually exclusive with --replicates)."
+          + " Used by K8s indexed Jobs where each pod runs one replicate."
+  )
+  private Integer replicateIndex;
+
+  @Option(
       names = "--use-float-64",
       description = "Use double instead of BigDecimal, offering speed but lower precision.",
       defaultValue = "false"
@@ -210,6 +217,14 @@ public class RunCommand implements Callable<Integer> {
   @Override
   public Integer call() {
     // Validate replicates parameter
+    if (replicateIndex != null && replicates > 1) {
+      output.printError("--replicate-index and --replicates are mutually exclusive");
+      return 1;
+    }
+    if (replicateIndex != null && replicateIndex < 0) {
+      output.printError("--replicate-index must be >= 0");
+      return 1;
+    }
     if (replicates < 1) {
       output.printError("Number of replicates must be at least 1");
       return 1;
@@ -238,9 +253,12 @@ public class RunCommand implements Callable<Integer> {
     // Parse custom parameters from command line
     Map<String, String> customParameters = parseCustomParameters();
 
+    // When --replicate-index is set, run exactly one replicate at that index.
+    int effectiveReplicates = replicateIndex != null ? 1 : replicates;
+
     // Create job configurations using JobVariationParser for grid search
     JoshJobBuilder templateJobBuilder = new JoshJobBuilder()
-        .setReplicates(replicates)
+        .setReplicates(effectiveReplicates)
         .setCustomParameters(customParameters);
     JobVariationParser parser = new JobVariationParser();
     List<JoshJobBuilder> jobBuilders = parser.parseDataFiles(templateJobBuilder, dataFiles);
@@ -251,9 +269,14 @@ public class RunCommand implements Callable<Integer> {
         .toList();
 
     // Report grid search information
-    output.printInfo("Grid search will execute " + jobs.size() + " job combination(s) "
-        + "with " + replicates + " replicate(s) each");
-    output.printInfo("Total simulations to run: " + (jobs.size() * replicates));
+    if (replicateIndex != null) {
+      output.printInfo("Running replicate index " + replicateIndex
+          + " across " + jobs.size() + " job combination(s)");
+    } else {
+      output.printInfo("Grid search will execute " + jobs.size() + " job combination(s) "
+          + "with " + replicates + " replicate(s) each");
+    }
+    output.printInfo("Total simulations to run: " + (jobs.size() * effectiveReplicates));
 
     // Use first job for initialization (all jobs should have compatible structure)
     JoshJob firstJob = jobs.get(0);
@@ -357,7 +380,11 @@ public class RunCommand implements Callable<Integer> {
         inputStrategy = new JvmMappedInputGetter(currentJob.getFilePaths());
       }
 
-      for (int currentReplicate = 0; currentReplicate < currentJob.getReplicates();
+      int startReplicate = replicateIndex != null ? replicateIndex : 0;
+      int endReplicate = replicateIndex != null
+          ? replicateIndex + 1 : currentJob.getReplicates();
+
+      for (int currentReplicate = startReplicate; currentReplicate < endReplicate;
            currentReplicate++) {
         totalReplicateCount++;
 
