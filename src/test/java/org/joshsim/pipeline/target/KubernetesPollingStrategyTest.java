@@ -352,7 +352,10 @@ class KubernetesPollingStrategyTest {
   }
 
   @Test
-  void pollDetectsSchedulingFailure() throws Exception {
+  void pollReportsJobFailureNotSchedulingDelay() throws Exception {
+    // Scheduling failures (PodScheduled: False) are not treated as terminal
+    // — on autoscaling clusters this is transient. The Job-level Failed
+    // condition (BackoffLimitExceeded) is the real error signal.
     when(mockJobResource.get()).thenReturn(
         new JobBuilder()
             .withNewMetadata().withName(JOB_NAME).endMetadata()
@@ -391,7 +394,7 @@ class KubernetesPollingStrategyTest {
 
     assertEquals(JobStatus.State.ERROR, status.getState());
     assertTrue(
-        status.getMessage().get().contains("insufficient memory")
+        status.getMessage().get().contains("BackoffLimitExceeded")
     );
   }
 }
