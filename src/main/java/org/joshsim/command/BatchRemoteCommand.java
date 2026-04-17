@@ -6,12 +6,16 @@
 
 package org.joshsim.command;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import java.io.File;
 import java.util.concurrent.Callable;
 import org.joshsim.pipeline.target.BatchJobStrategy;
 import org.joshsim.pipeline.target.BatchPollingStrategy;
 import org.joshsim.pipeline.target.HttpBatchTarget;
 import org.joshsim.pipeline.target.JobStatus;
+import org.joshsim.pipeline.target.KubernetesPollingStrategy;
+import org.joshsim.pipeline.target.KubernetesTarget;
 import org.joshsim.pipeline.target.MinioPollingStrategy;
 import org.joshsim.pipeline.target.RemoteBatchTarget;
 import org.joshsim.pipeline.target.TargetProfile;
@@ -40,6 +44,7 @@ public class BatchRemoteCommand implements Callable<Integer> {
 
   private static final int TARGET_ERROR_CODE = 100;
   private static final int DISPATCH_ERROR_CODE = 101;
+  private static final ObjectMapper MAPPER = new ObjectMapper();
 
   @Parameters(index = "0", description = "Path to Josh simulation file or input directory")
   private File input;
@@ -92,9 +97,27 @@ public class BatchRemoteCommand implements Callable<Integer> {
       TargetProfileLoader loader = new TargetProfileLoader();
       TargetProfile profile = loader.load(targetName);
 
-      RemoteBatchTarget target = buildTarget(profile);
       MinioHandler minioHandler = profile.buildMinioHandler(output);
-      BatchPollingStrategy poller = new MinioPollingStrategy(minioHandler);
+
+      RemoteBatchTarget target;
+      BatchPollingStrategy poller;
+      String type = profile.getType();
+
+      if ("kubernetes".equals(type)) {
+        KubernetesTarget k8sTarget = buildKubernetesTarget(
+            profile
+        );
+        target = k8sTarget;
+        poller = buildPoller(k8sTarget);
+      } else if ("http".equals(type)) {
+        target = buildHttpTarget(profile);
+        poller = buildPoller(minioHandler);
+      } else {
+        throw new IllegalArgumentException(
+            "Unsupported target type: " + type
+            + ". Supported types: http, kubernetes"
+        );
+      }
 
       BatchJobStrategy strategy = new BatchJobStrategy(
           target, poller, minioHandler, output,
@@ -104,9 +127,17 @@ public class BatchRemoteCommand implements Callable<Integer> {
       File inputDir = resolveInputDir();
 
       if (noWait) {
-        String jobId = strategy.executeNoWait(inputDir, simulation, replicates);
-        output.printInfo("Job dispatched: " + jobId);
-        output.printInfo("Poll manually: batch-status/" + jobId + "/status.json");
+        String jobId = strategy.executeNoWait(
+            inputDir, simulation, replicates
+        );
+        ObjectNode node = MAPPER.createObjectNode();
+        node.put("jobId", jobId);
+        node.put("target", targetName);
+        node.put(
+            "statusPath",
+            "batch-status/" + jobId + "/status.json"
+        );
+        System.out.println(node.toString());
         return 0;
       }
 
@@ -127,13 +158,32 @@ public class BatchRemoteCommand implements Callable<Integer> {
     }
   }
 
-  private RemoteBatchTarget buildTarget(TargetProfile profile) {
-    String type = profile.getType();
-    if ("http".equals(type)) {
-      return new HttpBatchTarget(profile.getHttpConfig());
-    }
-    throw new IllegalArgumentException("Unsupported target type: " + type
-        + ". Supported types: http (kubernetes coming in PR 7)");
+  private HttpBatchTarget buildHttpTarget(TargetProfile profile) {
+    return new HttpBatchTarget(profile.getHttpConfig());
+  }
+
+  private KubernetesTarget buildKubernetesTarget(
+      TargetProfile profile
+  ) {
+    return new KubernetesTarget(
+        profile.getKubernetesConfig(),
+        profile.buildMinioOptions()
+    );
+  }
+
+  private BatchPollingStrategy buildPoller(
+      MinioHandler minioHandler
+  ) {
+    return new MinioPollingStrategy(minioHandler);
+  }
+
+  private BatchPollingStrategy buildPoller(
+      KubernetesTarget k8sTarget
+  ) {
+    return new KubernetesPollingStrategy(
+        k8sTarget.getClient(),
+        k8sTarget.getConfig().getNamespace()
+    );
   }
 
   /**

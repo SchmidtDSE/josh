@@ -134,6 +134,10 @@ public class JoshSimServer {
             "/runBatch",
             new JoshSimBatchHandler(dataLayer)
         )
+        .addPrefixPath(
+            "/preprocessBatch",
+            new JoshSimPreprocessBatchHandler(dataLayer)
+        )
 
         // Health endpoint
         .addPrefixPath("/health", exchange -> {

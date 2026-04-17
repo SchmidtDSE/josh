@@ -1,0 +1,19 @@
+{
+  "type": "kubernetes",
+  "kubernetes": {
+    "context": "gke_dse-nps_us-west1_josh-k8s-gke",
+    "namespace": "joshsim",
+    "image": "ghcr.io/schmidtdse/josh/joshsim-batch:latest",
+    "pod_minio_endpoint": "https://storage.googleapis.com",
+    "resources": {
+      "requests": { "cpu": "4", "memory": "16Gi" },
+      "limits": { "memory": "32Gi" }
+    },
+    "parallelism": 10,
+    "timeoutSeconds": 1800,
+    "ttlSecondsAfterFinished": 3600,
+    "spot": true
+  },
+  "minio_endpoint": "https://storage.googleapis.com",
+  "minio_bucket": "dse-nps-josh-batch-storage"
+}

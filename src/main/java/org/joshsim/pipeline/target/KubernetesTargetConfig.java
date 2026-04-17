@@ -40,6 +40,18 @@ public class KubernetesTargetConfig {
   @JsonProperty("timeoutSeconds")
   private int timeoutSeconds;
 
+  @JsonProperty("jarPath")
+  private String jarPath;
+
+  @JsonProperty("pod_minio_endpoint")
+  private String podMinioEndpoint;
+
+  @JsonProperty("spot")
+  private boolean spot;
+
+  @JsonProperty("ttlSecondsAfterFinished")
+  private Integer ttlSecondsAfterFinished;
+
   /**
    * Default constructor for Jackson deserialization.
    */
@@ -101,5 +113,61 @@ public class KubernetesTargetConfig {
    */
   public int getTimeoutSeconds() {
     return timeoutSeconds;
+  }
+
+  /**
+   * Returns the path to the joshsim fat jar inside the container image.
+   *
+   * <p>Defaults to {@code /app/joshsim-fat.jar} if not specified in the profile.
+   * Override this for custom container images that place the jar elsewhere.</p>
+   *
+   * @return The jar path inside the container.
+   */
+  public String getJarPath() {
+    if (jarPath == null || jarPath.isEmpty()) {
+      return "/app/joshsim-fat.jar";
+    }
+    return jarPath;
+  }
+
+  /**
+   * Returns the MinIO endpoint that pods use inside the cluster.
+   *
+   * <p>Required for K8s targets. Pods often have a different
+   * network path to MinIO than the host running {@code batchRemote}
+   * (e.g., cluster DNS {@code http://minio.ns.svc:9000} vs public
+   * URL {@code https://storage.googleapis.com}). This value goes
+   * into the K8s Secret that pods read.</p>
+   *
+   * @return The pod-facing MinIO endpoint, or null if not set.
+   */
+  public String getPodMinioEndpoint() {
+    return podMinioEndpoint;
+  }
+
+  /**
+   * Returns whether pods should run on Spot (preemptible) VMs.
+   *
+   * <p>When true, the Job spec includes a {@code gke-spot} node selector
+   * and toleration, enabling 60-90% cost savings for batch workloads.
+   * Preempted pods are retried via {@code backoffLimit}.</p>
+   *
+   * @return True if pods should use Spot VMs.
+   */
+  public boolean isSpot() {
+    return spot;
+  }
+
+  /**
+   * Returns the TTL in seconds for automatic Job cleanup after completion.
+   *
+   * <p>When set, K8s automatically deletes the Job and its pods this many
+   * seconds after the Job finishes (succeeded or failed). Prevents
+   * accumulation of completed Jobs in the namespace.</p>
+   *
+   * @return The TTL in seconds, or null to disable automatic cleanup.
+   */
+  public Integer getTtlSecondsAfterFinished() {
+    return ttlSecondsAfterFinished;
   }
 }

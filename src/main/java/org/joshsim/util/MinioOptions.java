@@ -1,6 +1,7 @@
 package org.joshsim.util;
 
 import io.minio.MinioClient;
+import java.util.LinkedHashMap;
 import java.util.Map;
 import picocli.CommandLine.Option;
 
@@ -94,6 +95,27 @@ public class MinioOptions extends HierarchyConfig {
    */
   public String getBucketName() {
     return getValue(MINIO_BUCKET_NAME, bucketNameMaybe, false, null);
+  }
+
+  /**
+   * Returns all MinIO credentials resolved through {@link
+   * HierarchyConfig}.
+   *
+   * <p>Values are resolved in priority order: direct CLI flags →
+   * config file → environment variables. This is the sole method
+   * for extracting raw credential strings — used by
+   * {@code KubernetesTarget} to create K8s Secrets.</p>
+   *
+   * @return Map with keys MINIO_ENDPOINT, MINIO_ACCESS_KEY,
+   *     MINIO_SECRET_KEY, MINIO_BUCKET.
+   */
+  public Map<String, String> getResolvedCredentials() {
+    Map<String, String> creds = new LinkedHashMap<>();
+    creds.put("MINIO_ENDPOINT", getMinioEndpoint());
+    creds.put("MINIO_ACCESS_KEY", getMinioAccessKey());
+    creds.put("MINIO_SECRET_KEY", getMinioSecretKey());
+    creds.put("MINIO_BUCKET", getBucketName());
+    return creds;
   }
 
   /**

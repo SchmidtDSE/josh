@@ -380,7 +380,11 @@ public class RunCommand implements Callable<Integer> {
         inputStrategy = new JvmMappedInputGetter(currentJob.getFilePaths());
       }
 
-      for (int currentReplicate = 0; currentReplicate < currentJob.getReplicates();
+      int startReplicate = replicateIndex != null ? replicateIndex : 0;
+      int endReplicate = replicateIndex != null
+          ? replicateIndex + 1 : currentJob.getReplicates();
+
+      for (int currentReplicate = startReplicate; currentReplicate < endReplicate;
            currentReplicate++) {
         int effectiveReplicate = replicateIndex != null ? replicateIndex : currentReplicate;
         totalReplicateCount++;

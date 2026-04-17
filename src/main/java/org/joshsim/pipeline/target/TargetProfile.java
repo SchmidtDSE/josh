@@ -8,6 +8,9 @@ package org.joshsim.pipeline.target;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import io.fabric8.kubernetes.client.Config;
+import io.fabric8.kubernetes.client.KubernetesClient;
+import io.fabric8.kubernetes.client.KubernetesClientBuilder;
 import org.joshsim.util.MinioHandler;
 import org.joshsim.util.MinioOptions;
 import org.joshsim.util.OutputOptions;
@@ -85,39 +88,20 @@ public class TargetProfile {
   }
 
   /**
-   * Returns the MinIO endpoint URL for this target's storage.
+   * Builds a {@link MinioOptions} resolved through {@link
+   * org.joshsim.util.HierarchyConfig}.
    *
-   * @return The MinIO endpoint.
-   */
-  public String getMinioEndpoint() {
-    return minioEndpoint;
-  }
-
-  /**
-   * Returns the MinIO access key for this target's storage.
+   * <p>Values are resolved in priority order: JSON profile file →
+   * environment variables. This means MinIO credentials do not need
+   * to live in the profile JSON — they can be set via
+   * {@code MINIO_ENDPOINT}, {@code MINIO_ACCESS_KEY}, etc.</p>
    *
-   * @return The MinIO access key.
+   * @return A configured MinioOptions instance.
    */
-  public String getMinioAccessKey() {
-    return minioAccessKey;
-  }
-
-  /**
-   * Returns the MinIO secret key for this target's storage.
-   *
-   * @return The MinIO secret key.
-   */
-  public String getMinioSecretKey() {
-    return minioSecretKey;
-  }
-
-  /**
-   * Returns the MinIO bucket name for this target's storage.
-   *
-   * @return The MinIO bucket name.
-   */
-  public String getMinioBucket() {
-    return minioBucket;
+  public MinioOptions buildMinioOptions() {
+    MinioOptions options = new MinioOptions();
+    options.setConfigFile(sourceFilePath);
+    return options;
   }
 
   /**
@@ -148,9 +132,43 @@ public class TargetProfile {
    * @return A MinioHandler ready for staging and polling operations.
    * @throws Exception If MinIO client creation or bucket validation fails.
    */
-  public MinioHandler buildMinioHandler(OutputOptions output) throws Exception {
-    MinioOptions options = new MinioOptions();
-    options.setConfigFile(sourceFilePath);
-    return new MinioHandler(options, output);
+  public MinioHandler buildMinioHandler(OutputOptions output)
+      throws Exception {
+    return new MinioHandler(buildMinioOptions(), output);
+  }
+
+  /**
+   * Creates the appropriate {@link BatchPollingStrategy} for this target.
+   *
+   * <p>HTTP targets use {@link MinioPollingStrategy} (reads status.json
+   * from MinIO). Kubernetes targets use {@link KubernetesPollingStrategy}
+   * (queries the K8s Job API via Fabric8).</p>
+   *
+   * @param output For logging during MinIO handler construction.
+   * @return A polling strategy configured for this target's type.
+   * @throws Exception If strategy construction fails.
+   */
+  public BatchPollingStrategy buildPollingStrategy(
+      OutputOptions output
+  ) throws Exception {
+    if ("http".equals(type)) {
+      return new MinioPollingStrategy(buildMinioHandler(output));
+    } else if ("kubernetes".equals(type)) {
+      KubernetesTargetConfig k8sConfig = getKubernetesConfig();
+      String context = k8sConfig.getContext();
+      Config kubeConfig = (context != null && !context.isEmpty())
+          ? Config.autoConfigure(context)
+          : Config.autoConfigure(null);
+      KubernetesClient client = new KubernetesClientBuilder()
+          .withConfig(kubeConfig)
+          .build();
+      return new KubernetesPollingStrategy(
+          client, k8sConfig.getNamespace()
+      );
+    }
+    throw new IllegalArgumentException(
+        "Unsupported target type for polling: " + type
+        + ". Supported types: http, kubernetes"
+    );
   }
 }

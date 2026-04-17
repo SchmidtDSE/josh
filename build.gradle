@@ -79,6 +79,12 @@ dependencies {
   // Minio for S3 storage
   implementation("io.minio:minio:8.5.2")
 
+  // Kubernetes client for K8s target dispatch and polling
+  implementation("io.fabric8:kubernetes-client:7.0.0")
+
+  // Kubernetes mock server for testing
+  testImplementation("io.fabric8:kubernetes-server-mock:7.0.0")
+
   // GeoTools dependencies
   implementation("org.geotools:gt-main:33.0")
   implementation("org.geotools:gt-geotiff:33.0") 
