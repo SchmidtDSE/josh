@@ -368,6 +368,21 @@ public class RunCommand implements Callable<Integer> {
     boolean sizeMetersFull = sizeStr.equals("meter") || sizeStr.equals("meters");
     boolean sizeMeters = sizeMetersFull || sizeMeterAbbreviated;
 
+    // Single replicate mode: run one replicate at the specified index and return.
+    if (replicateIndex != null) {
+      JoshJob currentJob = jobs.get(0);
+      if (!currentJob.getFilePaths().isEmpty()) {
+        inputStrategy = new JvmMappedInputGetter(currentJob.getFilePaths());
+      }
+      runReplicate(currentJob, replicateIndex, false, valueFactory, geometryFactory,
+          inputStrategy, hasDegrees, sizeMeters, sizeValueRaw, extractor, program,
+          simulation, progressCalculator, parsedOutputSteps);
+      output.printInfo("");
+      output.printInfo("✓ Replicate " + replicateIndex + " completed successfully!");
+      SharedRandom.clear();
+      return 0;
+    }
+
     // Execute simulation for each job combination and replicate
     int totalReplicateCount = 0;
 
@@ -380,11 +395,7 @@ public class RunCommand implements Callable<Integer> {
         inputStrategy = new JvmMappedInputGetter(currentJob.getFilePaths());
       }
 
-      int startReplicate = replicateIndex != null ? replicateIndex : 0;
-      int endReplicate = replicateIndex != null
-          ? replicateIndex + 1 : currentJob.getReplicates();
-
-      for (int currentReplicate = startReplicate; currentReplicate < endReplicate;
+      for (int currentReplicate = 0; currentReplicate < currentJob.getReplicates();
            currentReplicate++) {
         totalReplicateCount++;
 
@@ -393,52 +404,10 @@ public class RunCommand implements Callable<Integer> {
           progressCalculator.resetForNextReplicate(totalReplicateCount);
         }
 
-        // Create TemplateStringRenderer for this job and replicate
-        TemplateStringRenderer templateRenderer = new TemplateStringRenderer(currentJob,
-            currentReplicate);
-
-        // Create InputOutputLayer with template renderer (similar to JoshSimFacade logic)
-        InputOutputLayer inputOutputLayer;
-        if (hasDegrees && sizeMeters) {
-          PatchBuilderExtentsBuilder extentsBuilder = new PatchBuilderExtentsBuilder();
-          ExtentsUtil.addExtents(extentsBuilder, extractor.getStartStr(), true, valueFactory);
-          ExtentsUtil.addExtents(extentsBuilder, extractor.getEndStr(), false, valueFactory);
-          BigDecimal sizeValuePrimitive = sizeValueRaw.getAsDecimal();
-          inputOutputLayer = new JvmInputOutputLayerBuilder()
-              .withReplicate(currentReplicate)
-              .withEarthSpace(extentsBuilder.build(), sizeValuePrimitive)
-              .withInputStrategy(inputStrategy)
-              .withTemplateRenderer(templateRenderer)
-              .withMinioOptions(minioOptions)
-              .withAppendMode(totalReplicateCount > 1)
-              .withMaxDecimalPlaces(csvPrecision)
-              .build();
-        } else {
-          inputOutputLayer = new JvmInputOutputLayerBuilder()
-              .withReplicate(currentReplicate)
-              .withInputStrategy(inputStrategy)
-              .withTemplateRenderer(templateRenderer)
-              .withMinioOptions(minioOptions)
-              .withAppendMode(totalReplicateCount > 1)
-              .withMaxDecimalPlaces(csvPrecision)
-              .build();
-        }
-
-        JoshSimFacadeUtil.runSimulation(
-            valueFactory,
-            geometryFactory,
-            inputOutputLayer,
-            program,
-            simulation,
-            (step) -> {
-              ProgressUpdate update = progressCalculator.updateStep(step);
-              if (update.shouldReport()) {
-                output.printInfo(update.getMessage());
-              }
-            },
-            serialPatches,
-            parsedOutputSteps
-        );
+        runReplicate(currentJob, currentReplicate, totalReplicateCount > 1,
+            valueFactory, geometryFactory, inputStrategy, hasDegrees, sizeMeters,
+            sizeValueRaw, extractor, program, simulation, progressCalculator,
+            parsedOutputSteps);
 
         // Report replicate completion
         ProgressUpdate completion = progressCalculator.updateReplicateCompleted(
@@ -463,6 +432,58 @@ public class RunCommand implements Callable<Integer> {
     SharedRandom.clear();
 
     return 0;
+  }
+
+  private void runReplicate(JoshJob currentJob, int currentReplicate, boolean appendMode,
+      ValueSupportFactory valueFactory, EngineGeometryFactory geometryFactory,
+      InputGetterStrategy inputStrategy, boolean hasDegrees, boolean sizeMeters,
+      EngineValue sizeValueRaw, GridInfoExtractor extractor, JoshProgram program,
+      String simulation, ProgressCalculator progressCalculator,
+      Optional<Set<Integer>> parsedOutputSteps) {
+    TemplateStringRenderer templateRenderer = new TemplateStringRenderer(currentJob,
+        currentReplicate);
+
+    InputOutputLayer inputOutputLayer;
+    if (hasDegrees && sizeMeters) {
+      PatchBuilderExtentsBuilder extentsBuilder = new PatchBuilderExtentsBuilder();
+      ExtentsUtil.addExtents(extentsBuilder, extractor.getStartStr(), true, valueFactory);
+      ExtentsUtil.addExtents(extentsBuilder, extractor.getEndStr(), false, valueFactory);
+      BigDecimal sizeValuePrimitive = sizeValueRaw.getAsDecimal();
+      inputOutputLayer = new JvmInputOutputLayerBuilder()
+          .withReplicate(currentReplicate)
+          .withEarthSpace(extentsBuilder.build(), sizeValuePrimitive)
+          .withInputStrategy(inputStrategy)
+          .withTemplateRenderer(templateRenderer)
+          .withMinioOptions(minioOptions)
+          .withAppendMode(appendMode)
+          .withMaxDecimalPlaces(csvPrecision)
+          .build();
+    } else {
+      inputOutputLayer = new JvmInputOutputLayerBuilder()
+          .withReplicate(currentReplicate)
+          .withInputStrategy(inputStrategy)
+          .withTemplateRenderer(templateRenderer)
+          .withMinioOptions(minioOptions)
+          .withAppendMode(appendMode)
+          .withMaxDecimalPlaces(csvPrecision)
+          .build();
+    }
+
+    JoshSimFacadeUtil.runSimulation(
+        valueFactory,
+        geometryFactory,
+        inputOutputLayer,
+        program,
+        simulation,
+        (step) -> {
+          ProgressUpdate update = progressCalculator.updateStep(step);
+          if (update.shouldReport()) {
+            output.printInfo(update.getMessage());
+          }
+        },
+        serialPatches,
+        parsedOutputSteps
+    );
   }
 
 }
