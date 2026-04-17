@@ -6,6 +6,8 @@
 
 package org.joshsim.command;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import java.io.File;
 import java.util.concurrent.Callable;
 import org.joshsim.pipeline.target.BatchJobStrategy;
@@ -42,6 +44,7 @@ public class BatchRemoteCommand implements Callable<Integer> {
 
   private static final int TARGET_ERROR_CODE = 100;
   private static final int DISPATCH_ERROR_CODE = 101;
+  private static final ObjectMapper MAPPER = new ObjectMapper();
 
   @Parameters(index = "0", description = "Path to Josh simulation file or input directory")
   private File input;
@@ -124,9 +127,17 @@ public class BatchRemoteCommand implements Callable<Integer> {
       File inputDir = resolveInputDir();
 
       if (noWait) {
-        String jobId = strategy.executeNoWait(inputDir, simulation, replicates);
-        output.printInfo("Job dispatched: " + jobId);
-        output.printInfo("Poll manually: batch-status/" + jobId + "/status.json");
+        String jobId = strategy.executeNoWait(
+            inputDir, simulation, replicates
+        );
+        ObjectNode node = MAPPER.createObjectNode();
+        node.put("jobId", jobId);
+        node.put("target", targetName);
+        node.put(
+            "statusPath",
+            "batch-status/" + jobId + "/status.json"
+        );
+        System.out.println(node.toString());
         return 0;
       }
 
