@@ -24,4 +24,8 @@ if [ -z "$SCRIPT" ]; then
   exit 1
 fi
 
-java -jar "$JAR" run "$SCRIPT" "$JOSH_SIMULATION" --replicates=1
+# JOB_COMPLETION_INDEX is set by K8s for indexed Jobs (0, 1, 2, ...).
+# Each pod runs one replicate at its assigned index so {replicate}
+# template paths resolve to unique filenames.
+REPLICATE_INDEX="${JOB_COMPLETION_INDEX:-0}"
+java -jar "$JAR" run "$SCRIPT" "$JOSH_SIMULATION" --replicate-index="$REPLICATE_INDEX"
