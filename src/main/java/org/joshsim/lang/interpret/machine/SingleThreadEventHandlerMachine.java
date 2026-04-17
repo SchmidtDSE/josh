@@ -701,16 +701,16 @@ public class SingleThreadEventHandlerMachine implements EventHandlerMachine {
   @Override
   public EventHandlerMachine randBinomial() {
     startConversionGroup();
-    EngineValue pValue = pop();
-    EngineValue nValue = pop();
+    EngineValue prob = pop();
+    EngineValue trials = pop();
     endConversionGroup();
 
-    int nInt = (int) nValue.getAsInt();
-    double pDouble = pValue.getAsDouble();
-    int binomialResult = SharedRandom.nextBinomial(nInt, pDouble);
+    int trialsInt = (int) trials.getAsInt();
+    double probDouble = prob.getAsDouble();
+    int binomialResult = SharedRandom.nextBinomial(trialsInt, probDouble);
 
     EngineValue decoratedResult = valueFactory.buildForNumber(
-        (double) binomialResult, nValue.getUnits());
+        (double) binomialResult, trials.getUnits());
     memory.push(decoratedResult);
 
     return this;

@@ -12,7 +12,6 @@ package org.joshsim.util;
 
 import java.util.Optional;
 import java.util.Random;
-
 import org.apache.commons.math3.distribution.BinomialDistribution;
 import org.apache.commons.math3.random.RandomGeneratorFactory;
 

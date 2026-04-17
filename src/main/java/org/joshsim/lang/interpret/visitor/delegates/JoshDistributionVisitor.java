@@ -196,12 +196,12 @@ public class JoshDistributionVisitor implements JoshVisitorDelegate {
    * @return JoshFragment containing the binomial sampling expression parsed.
    */
   public JoshFragment visitBinomialSample(JoshLangParser.BinomialSampleContext ctx) {
-    EventHandlerAction nAction = ctx.n.accept(parent).getCurrentAction();
-    EventHandlerAction pAction = ctx.p.accept(parent).getCurrentAction();
+    EventHandlerAction trialsAction = ctx.n.accept(parent).getCurrentAction();
+    EventHandlerAction probAction = ctx.p.accept(parent).getCurrentAction();
 
     EventHandlerAction action = (machine) -> {
-      nAction.apply(machine);
-      pAction.apply(machine);
+      trialsAction.apply(machine);
+      probAction.apply(machine);
       machine.randBinomial();
       return machine;
     };

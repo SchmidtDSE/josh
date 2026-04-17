@@ -288,15 +288,15 @@ class JoshDistributionVisitorTest {
     context.n = mock(ExpressionContext.class);
     context.p = mock(ExpressionContext.class);
 
-    JoshFragment nFragment = mock(JoshFragment.class);
-    JoshFragment pFragment = mock(JoshFragment.class);
-    EventHandlerAction nAction = mock(EventHandlerAction.class);
-    EventHandlerAction pAction = mock(EventHandlerAction.class);
+    JoshFragment trialsFragment = mock(JoshFragment.class);
+    JoshFragment probFragment = mock(JoshFragment.class);
+    EventHandlerAction trialsAction = mock(EventHandlerAction.class);
+    EventHandlerAction probAction = mock(EventHandlerAction.class);
 
-    when(context.n.accept(parent)).thenReturn(nFragment);
-    when(context.p.accept(parent)).thenReturn(pFragment);
-    when(nFragment.getCurrentAction()).thenReturn(nAction);
-    when(pFragment.getCurrentAction()).thenReturn(pAction);
+    when(context.n.accept(parent)).thenReturn(trialsFragment);
+    when(context.p.accept(parent)).thenReturn(probFragment);
+    when(trialsFragment.getCurrentAction()).thenReturn(trialsAction);
+    when(probFragment.getCurrentAction()).thenReturn(probAction);
 
     // Test
     JoshFragment result = visitor.visitBinomialSample(context);
@@ -312,8 +312,8 @@ class JoshDistributionVisitorTest {
 
     action.apply(mockMachine);
 
-    verify(nAction).apply(mockMachine);
-    verify(pAction).apply(mockMachine);
+    verify(trialsAction).apply(mockMachine);
+    verify(probAction).apply(mockMachine);
     verify(mockMachine).randBinomial();
   }
 }
