@@ -28,4 +28,4 @@ fi
 # Each pod runs one replicate at its assigned index so {replicate}
 # template paths resolve to unique filenames.
 REPLICATE_INDEX="${JOB_COMPLETION_INDEX:-0}"
-java -jar "$JAR" run "$SCRIPT" "$JOSH_SIMULATION" --replicate-index="$REPLICATE_INDEX"
+java -XX:+ExitOnOutOfMemoryError -jar "$JAR" run "$SCRIPT" "$JOSH_SIMULATION" --replicate-index="$REPLICATE_INDEX"

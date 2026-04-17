@@ -11,7 +11,6 @@ import io.fabric8.kubernetes.api.model.ContainerStateTerminated;
 import io.fabric8.kubernetes.api.model.ContainerStateWaiting;
 import io.fabric8.kubernetes.api.model.ContainerStatus;
 import io.fabric8.kubernetes.api.model.Pod;
-import io.fabric8.kubernetes.api.model.PodCondition;
 import io.fabric8.kubernetes.api.model.batch.v1.Job;
 import io.fabric8.kubernetes.api.model.batch.v1.JobCondition;
 import io.fabric8.kubernetes.client.KubernetesClient;
@@ -208,18 +207,11 @@ public class KubernetesPollingStrategy implements BatchPollingStrategy {
   }
 
   private String checkSchedulingFailure(Pod pod) {
-    List<PodCondition> conditions =
-        pod.getStatus().getConditions();
-    if (conditions == null) {
-      return null;
-    }
-    for (PodCondition cond : conditions) {
-      if ("PodScheduled".equals(cond.getType())
-          && "False".equals(cond.getStatus())) {
-        return cond.getMessage() != null
-            ? cond.getMessage() : cond.getReason();
-      }
-    }
+    // Scheduling failures (PodScheduled: False) are not treated as terminal.
+    // On any autoscaling cluster (GKE Autopilot, Nautilus, EKS+Karpenter),
+    // pods sit unschedulable while nodes are provisioned. The Job's
+    // activeDeadlineSeconds handles the case where scheduling truly can't
+    // succeed — K8s marks the Job Failed with DeadlineExceeded.
     return null;
   }
 
@@ -230,15 +222,31 @@ public class KubernetesPollingStrategy implements BatchPollingStrategy {
     }
 
     ContainerStateTerminated terminated = state.getTerminated();
-    if (terminated != null && terminated.getReason() != null
-        && terminated.getExitCode() != null
+    if (terminated != null && terminated.getExitCode() != null
         && terminated.getExitCode() != 0) {
-      return terminated.getReason();
+      // Exit code 3: JVM ExitOnOutOfMemoryError — deterministic OOM signal.
+      if (terminated.getExitCode() == 3) {
+        return "OutOfMemoryError (JVM heap exhausted — increase memory limits)";
+      }
+      // Exit code 137: kernel OOMKill (SIGKILL).
+      if (terminated.getExitCode() == 137) {
+        return "OOMKilled (container exceeded memory limit)";
+      }
+      if (terminated.getReason() != null) {
+        return terminated.getReason();
+      }
+      return "Container exited with code " + terminated.getExitCode();
     }
 
     ContainerStateWaiting waiting = state.getWaiting();
     if (waiting != null && waiting.getReason() != null) {
-      return waiting.getReason();
+      String reason = waiting.getReason();
+      // Only report actual failure waiting states. Transient states like
+      // ContainerCreating and PodInitializing are normal during startup.
+      if (reason.contains("BackOff") || reason.contains("Err")
+          || reason.contains("Invalid") || reason.contains("Crash")) {
+        return reason;
+      }
     }
     return null;
   }
