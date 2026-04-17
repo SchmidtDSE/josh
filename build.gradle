@@ -47,6 +47,9 @@ dependencies {
   // Apache Commons CSV for CSV handling
   implementation("org.apache.commons:commons-csv:1.10.0")
 
+  // Apache Commons Math for statistical distributions (binomial, etc.)
+  implementation("org.apache.commons:commons-math3:3.6.1")
+
   // UCAR NetCDF for NetCDF support
   implementation "edu.ucar:cdm-core:5.7.0"
   implementation "edu.ucar:netcdf4:5.7.0"

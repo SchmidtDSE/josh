@@ -1,0 +1,89 @@
+# @category: stochastic
+# @subcategory: distributions
+# @priority: high
+# @issue: #407
+# @description: Test binomial distribution with different parameters - verifies n and p affect results correctly
+
+start simulation StochasticBinomialParameters
+
+  grid.size = 1 km
+  grid.low.x = 0 m
+  grid.low.y = 0 m
+  grid.high.x = 1 km
+  grid.high.y = 1 km
+  grid.patch = "Default"
+
+  steps.low = 0 count
+  steps.high = 1 count
+
+end simulation
+
+start patch Default
+
+  TestOrg1.init = create 800 count of TestOrg1
+  TestOrg2.init = create 800 count of TestOrg2
+
+  # Calculate statistics for distribution 1: Binomial(10, 0.3), expected mean = 3
+  avgValue1.step = mean(TestOrg1.value)
+  minValue1.step = min(TestOrg1.value)
+  maxValue1.step = max(TestOrg1.value)
+
+  # Calculate statistics for distribution 2: Binomial(50, 0.7), expected mean = 35
+  avgValue2.step = mean(TestOrg2.value)
+  minValue2.step = min(TestOrg2.value)
+  maxValue2.step = max(TestOrg2.value)
+
+  # Test 1: Distribution 1 mean should approximate 3 with tolerance
+  expectedMean1.step = 3 count
+  tolerance1.step = 1.5 count
+  lowerBound1.step = expectedMean1 - tolerance1
+  upperBound1.step = expectedMean1 + tolerance1
+  assert.mean1.step = (avgValue1 >= lowerBound1) and (avgValue1 <= upperBound1)
+
+  # Test 2: Distribution 2 mean should approximate 35 with tolerance
+  expectedMean2.step = 35 count
+  tolerance2.step = 4 count
+  lowerBound2.step = expectedMean2 - tolerance2
+  upperBound2.step = expectedMean2 + tolerance2
+  assert.mean2.step = (avgValue2 >= lowerBound2) and (avgValue2 <= upperBound2)
+
+  # Test 3: Distribution 2 should have higher mean than Distribution 1
+  assert.differentMeans.step = avgValue2 > avgValue1
+
+  # Test 4: Range boundaries
+  assert.range1.step = (minValue1 >= 0 count) and (maxValue1 <= 10 count)
+  assert.range2.step = (minValue2 >= 0 count) and (maxValue2 <= 50 count)
+
+end patch
+
+start organism TestOrg1
+
+  value.init = sample binomial with n of 10 count p of 0.3 count
+  value.step = prior.value
+
+end organism
+
+start organism TestOrg2
+
+  value.init = sample binomial with n of 50 count p of 0.7 count
+  value.step = prior.value
+
+end organism
+
+start unit degrees
+end unit
+
+start unit m
+  alias meter
+  alias meters
+  km = current / 1000
+end unit
+
+start unit km
+  alias kilometer
+  alias kilometers
+  m = current * 1000
+end unit
+
+start unit count
+end unit

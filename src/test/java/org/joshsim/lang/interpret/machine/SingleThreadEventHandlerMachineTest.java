@@ -779,6 +779,27 @@ public class SingleThreadEventHandlerMachineTest {
   }
 
   @Test
+  void randBinomial_shouldGenerateIntegerWithinRange() {
+    // Given
+    EngineValue n = makeIntScalar(100L);
+    EngineValue p = makeDecimalScalar(new BigDecimal("0.5"));
+
+    // When
+    machine.push(n);
+    machine.push(p);
+    machine.randBinomial();
+
+    // Then
+    machine.end();
+    DecimalScalar result = (DecimalScalar) machine.getResult();
+    BigDecimal value = result.getAsDecimal();
+
+    assertTrue(value.compareTo(BigDecimal.ZERO) >= 0);
+    assertTrue(value.compareTo(new BigDecimal("100")) <= 0);
+    assertEquals(0, value.stripTrailingZeros().scale());
+  }
+
+  @Test
   void condition_shouldExecuteActionWhenConditionIsTrue() {
     // Given
     EngineValue condition = makeBoolScalar(true);

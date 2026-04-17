@@ -699,6 +699,24 @@ public class SingleThreadEventHandlerMachine implements EventHandlerMachine {
   }
 
   @Override
+  public EventHandlerMachine randBinomial() {
+    startConversionGroup();
+    EngineValue pValue = pop();
+    EngineValue nValue = pop();
+    endConversionGroup();
+
+    int nInt = (int) nValue.getAsInt();
+    double pDouble = pValue.getAsDouble();
+    int binomialResult = SharedRandom.nextBinomial(nInt, pDouble);
+
+    EngineValue decoratedResult = valueFactory.buildForNumber(
+        (double) binomialResult, nValue.getUnits());
+    memory.push(decoratedResult);
+
+    return this;
+  }
+
+  @Override
   public EventHandlerMachine abs() {
     return applyUnaryMathFunction(v -> {
       if (favorBigDecimal) {

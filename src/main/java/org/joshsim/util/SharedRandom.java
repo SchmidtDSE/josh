@@ -13,6 +13,9 @@ package org.joshsim.util;
 import java.util.Optional;
 import java.util.Random;
 
+import org.apache.commons.math3.distribution.BinomialDistribution;
+import org.apache.commons.math3.random.RandomGeneratorFactory;
+
 
 /**
  * Utility class for managing a shared Random instance across simulation components.
@@ -172,6 +175,29 @@ public final class SharedRandom {
    */
   public static double nextGaussian(double mean, double stddev) {
     return get().nextGaussian(mean, stddev);
+  }
+
+  /**
+   * Generate a binomial-distributed random integer.
+   *
+   * <p>Draws a single sample from a Binomial(n, p) distribution using Apache Commons Math,
+   * returning the number of successes in n independent Bernoulli(p) trials.</p>
+   *
+   * @param n The number of trials (must be non-negative).
+   * @param p The probability of success on each trial (must be in [0, 1]).
+   * @return The number of successes, an integer in [0, n].
+   * @throws IllegalArgumentException if n is negative or p is not in [0, 1].
+   */
+  public static int nextBinomial(int n, double p) {
+    if (n < 0) {
+      throw new IllegalArgumentException("n must be non-negative, got: " + n);
+    }
+    if (p < 0.0 || p > 1.0) {
+      throw new IllegalArgumentException("p must be in [0, 1], got: " + p);
+    }
+    BinomialDistribution dist = new BinomialDistribution(
+        RandomGeneratorFactory.createRandomGenerator(get()), n, p);
+    return dist.sample();
   }
 
 }
