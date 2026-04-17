@@ -22,6 +22,7 @@ import io.minio.PutObjectArgs;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.nio.charset.StandardCharsets;
+import java.util.concurrent.atomic.AtomicInteger;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mock;
@@ -29,7 +30,7 @@ import org.mockito.MockitoAnnotations;
 
 /**
  * Unit tests for MinioOutputStreamStrategy, verifying streaming behavior,
- * retry logic, and bucket management.
+ * error propagation, and bucket management.
  */
 class MinioOutputStreamStrategyTest {
 
@@ -122,39 +123,13 @@ class MinioOutputStreamStrategyTest {
   }
 
   @Test
-  void testRetryLogic_failsOnce_thenSucceeds() throws Exception {
+  void testUploadFailure_propagatesException() throws Exception {
     // Arrange
     when(minioClient.bucketExists(any(BucketExistsArgs.class))).thenReturn(true);
 
-    // First call fails, second succeeds
+    // Upload fails
     when(minioClient.putObject(any(PutObjectArgs.class)))
-        .thenThrow(new RuntimeException("Temporary network error"))
-        .thenReturn(null);
-
-    MinioOutputStreamStrategy strategy = new MinioOutputStreamStrategy(
-        minioClient, TEST_BUCKET, TEST_OBJECT
-    );
-
-    // Act
-    try (OutputStream out = strategy.open()) {
-      out.write("test".getBytes(StandardCharsets.UTF_8));
-    }
-
-    // Give async upload time to retry
-    Thread.sleep(2000);
-
-    // Assert - verify putObject was called twice (1 fail + 1 retry success)
-    verify(minioClient, times(2)).putObject(any(PutObjectArgs.class));
-  }
-
-  @Test
-  void testRetryLogic_exhaustsAllRetries_throwsException() throws Exception {
-    // Arrange
-    when(minioClient.bucketExists(any(BucketExistsArgs.class))).thenReturn(true);
-
-    // All calls fail
-    when(minioClient.putObject(any(PutObjectArgs.class)))
-        .thenThrow(new RuntimeException("Persistent network error"));
+        .thenThrow(new RuntimeException("Network error"));
 
     MinioOutputStreamStrategy strategy = new MinioOutputStreamStrategy(
         minioClient, TEST_BUCKET, TEST_OBJECT
@@ -164,10 +139,13 @@ class MinioOutputStreamStrategyTest {
     OutputStream out = strategy.open();
     out.write("test".getBytes(StandardCharsets.UTF_8));
 
-    // close() should propagate the error after retries exhausted
+    // close() should propagate the error immediately (no retry)
     IOException exception = assertThrows(IOException.class, () -> out.close());
     assertTrue(exception.getMessage().contains("Upload failed"));
     assertTrue(exception.getCause().getMessage().contains("Failed to upload to MinIO"));
+
+    // Verify putObject was called exactly once (no retry)
+    verify(minioClient, times(1)).putObject(any(PutObjectArgs.class));
   }
 
   @Test
@@ -229,6 +207,39 @@ class MinioOutputStreamStrategyTest {
 
     // Assert - upload should only happen once
     verify(minioClient, times(1)).putObject(any(PutObjectArgs.class));
+  }
+
+  @Test
+  void testUploadFailure_afterStreamConsumed_propagatesError() throws Exception {
+    // Simulates real MinIO SDK behavior: putObject reads the entire stream,
+    // then fails. With the broken retry logic, the retry would read from an
+    // already-consumed stream — either blocking forever or uploading empty data.
+    // The correct behavior is to propagate the failure cleanly.
+    when(minioClient.bucketExists(any(BucketExistsArgs.class))).thenReturn(true);
+
+    AtomicInteger attempt = new AtomicInteger(0);
+    when(minioClient.putObject(any(PutObjectArgs.class))).thenAnswer(invocation -> {
+      PutObjectArgs args = invocation.getArgument(0);
+      // Consume entire stream (simulates real MinIO SDK putObject behavior)
+      byte[] buf = new byte[8192];
+      while (args.stream().read(buf) >= 0) {
+        // drain
+      }
+      if (attempt.getAndIncrement() == 0) {
+        throw new RuntimeException("Network error after consuming stream");
+      }
+      return null;
+    });
+
+    MinioOutputStreamStrategy strategy = new MinioOutputStreamStrategy(
+        minioClient, TEST_BUCKET, TEST_OBJECT
+    );
+
+    OutputStream out = strategy.open();
+    out.write("test data that will be consumed then lost".getBytes(StandardCharsets.UTF_8));
+
+    // close() must propagate the upload failure, not silently succeed with empty retry
+    assertThrows(IOException.class, () -> out.close());
   }
 
   @Test

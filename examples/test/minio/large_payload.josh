@@ -1,0 +1,38 @@
+start simulation LargePayloadTest
+  # Test large payload upload to exercise MinIO multipart upload path (>10MB)
+  grid.size = 100 m
+  grid.low = 0 degrees latitude, 0 degrees longitude
+  grid.high = 0.001 degrees latitude, 0.001 degrees longitude
+  steps.low = 0 count
+  steps.high = 100 count
+  exportFiles.entity = "minio://josh-test-bucket/results/large_payload_{replicate}.csv"
+end simulation
+
+start patch Default
+  TestIndividual.init = create 1500 count of TestIndividual
+
+  export.avgAge.step = mean(TestIndividual.age)
+end patch
+
+start organism TestIndividual
+  age.init = 0 year
+  age.step = prior.age + 1 year
+
+  height.init = 1.0 m
+  height.step = prior.height + 0.1 m
+
+  weight.init = 50.0 kg
+  weight.step = prior.weight + 0.5 kg
+
+  export.age.step = current.age
+  export.height.step = current.height
+  export.weight.step = current.weight
+end organism
+
+start unit year
+  alias years
+end unit
+
+start unit kg
+  alias kilograms
+end unit
