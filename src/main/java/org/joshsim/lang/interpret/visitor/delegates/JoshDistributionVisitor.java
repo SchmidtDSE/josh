@@ -186,4 +186,27 @@ public class JoshDistributionVisitor implements JoshVisitorDelegate {
     return new ActionFragment(action);
   }
 
+  /**
+   * Parse a binomial distribution sampling expression.
+   *
+   * <p>Parse an expression that draws a single integer from a binomial distribution Binomial(n, p)
+   * where n is the number of trials and p is the probability of success.</p>
+   *
+   * @param ctx The ANTLR context from which to parse the binomial sampling expression.
+   * @return JoshFragment containing the binomial sampling expression parsed.
+   */
+  public JoshFragment visitBinomialSample(JoshLangParser.BinomialSampleContext ctx) {
+    EventHandlerAction trialsAction = ctx.n.accept(parent).getCurrentAction();
+    EventHandlerAction probAction = ctx.p.accept(parent).getCurrentAction();
+
+    EventHandlerAction action = (machine) -> {
+      trialsAction.apply(machine);
+      probAction.apply(machine);
+      machine.randBinomial();
+      return machine;
+    };
+
+    return new ActionFragment(action);
+  }
+
 }

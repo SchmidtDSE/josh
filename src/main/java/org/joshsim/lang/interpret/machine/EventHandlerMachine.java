@@ -349,6 +349,17 @@ public interface EventHandlerMachine {
   EventHandlerMachine randNorm();
 
   /**
+   * Draw a single integer from a binomial distribution.
+   *
+   * <p>Draw a single integer randomly from a binomial distribution Binomial(n, p), pushing the
+   * value drawn to the top of the stack. Prior to pushing the result, first the probability p
+   * will be popped followed by the number of trials n.</p>
+   *
+   * @return Reference to this machine for chaining.
+   */
+  EventHandlerMachine randBinomial();
+
+  /**
    * Calculate the absolute value of a number.
    *
    * <p>Pop a value from the top of the stack, calculate its absolute value, and push the result

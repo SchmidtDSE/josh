@@ -13,6 +13,7 @@ import org.joshsim.engine.value.converter.Units;
 import org.joshsim.engine.value.engine.ValueSupportFactory;
 import org.joshsim.engine.value.type.EngineValue;
 import org.joshsim.engine.value.type.LanguageType;
+import org.joshsim.lang.antlr.JoshLangParser.BinomialSampleContext;
 import org.joshsim.lang.antlr.JoshLangParser.ExpressionContext;
 import org.joshsim.lang.antlr.JoshLangParser.NormalSampleContext;
 import org.joshsim.lang.antlr.JoshLangParser.SampleParamContext;
@@ -278,5 +279,41 @@ class JoshDistributionVisitorTest {
     verify(meanAction).apply(mockMachine);
     verify(stdevAction).apply(mockMachine);
     verify(mockMachine).randNorm();
+  }
+
+  @Test
+  void testVisitBinomialSample() {
+    // Mock
+    BinomialSampleContext context = mock(BinomialSampleContext.class);
+    context.n = mock(ExpressionContext.class);
+    context.p = mock(ExpressionContext.class);
+
+    JoshFragment trialsFragment = mock(JoshFragment.class);
+    JoshFragment probFragment = mock(JoshFragment.class);
+    EventHandlerAction trialsAction = mock(EventHandlerAction.class);
+    EventHandlerAction probAction = mock(EventHandlerAction.class);
+
+    when(context.n.accept(parent)).thenReturn(trialsFragment);
+    when(context.p.accept(parent)).thenReturn(probFragment);
+    when(trialsFragment.getCurrentAction()).thenReturn(trialsAction);
+    when(probFragment.getCurrentAction()).thenReturn(probAction);
+
+    // Test
+    JoshFragment result = visitor.visitBinomialSample(context);
+
+    // Validate
+    assertNotNull(result);
+    assertTrue(result instanceof ActionFragment);
+
+    EventHandlerAction action = result.getCurrentAction();
+    assertNotNull(action);
+
+    EventHandlerMachine mockMachine = mock(EventHandlerMachine.class);
+
+    action.apply(mockMachine);
+
+    verify(trialsAction).apply(mockMachine);
+    verify(probAction).apply(mockMachine);
+    verify(mockMachine).randBinomial();
   }
 }
