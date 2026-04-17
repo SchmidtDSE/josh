@@ -1,0 +1,19 @@
+start simulation GkeSmokeTest
+  grid.size = 100 m
+  grid.low = 0 degrees latitude, 0 degrees longitude
+  grid.high = 0.01 degrees latitude, 0.01 degrees longitude
+  grid.patch = "Default"
+  steps.low = 0 count
+  steps.high = 2 count
+  exportFiles.patch = "minio://dse-nps-josh-batch-storage/gke-test-results/smoke_{replicate}.csv"
+end simulation
+
+start patch Default
+  Tree.init = create 3 count of Tree
+  export.treeCount.step = count(Tree)
+end patch
+
+start organism Tree
+  age.init = 0 count
+  age.step = prior.age + 1 count
+end organism

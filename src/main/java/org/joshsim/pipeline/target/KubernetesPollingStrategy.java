@@ -230,7 +230,13 @@ public class KubernetesPollingStrategy implements BatchPollingStrategy {
 
     ContainerStateWaiting waiting = state.getWaiting();
     if (waiting != null && waiting.getReason() != null) {
-      return waiting.getReason();
+      String reason = waiting.getReason();
+      // Only report actual failure waiting states. Transient states like
+      // ContainerCreating and PodInitializing are normal during startup.
+      if (reason.contains("BackOff") || reason.contains("Err")
+          || reason.contains("Invalid") || reason.contains("Crash")) {
+        return reason;
+      }
     }
     return null;
   }
