@@ -99,6 +99,13 @@ public class RunCommand implements Callable<Integer> {
   private int replicates = 1;
 
   @Option(
+      names = "--replicate-index",
+      description = "Run a single replicate at this index (mutually exclusive with --replicates)."
+          + " Used by K8s indexed Jobs where each pod runs one replicate."
+  )
+  private Integer replicateIndex;
+
+  @Option(
       names = "--use-float-64",
       description = "Use double instead of BigDecimal, offering speed but lower precision.",
       defaultValue = "false"
@@ -210,6 +217,14 @@ public class RunCommand implements Callable<Integer> {
   @Override
   public Integer call() {
     // Validate replicates parameter
+    if (replicateIndex != null && replicates > 1) {
+      output.printError("--replicate-index and --replicates are mutually exclusive");
+      return 1;
+    }
+    if (replicateIndex != null && replicateIndex < 0) {
+      output.printError("--replicate-index must be >= 0");
+      return 1;
+    }
     if (replicates < 1) {
       output.printError("Number of replicates must be at least 1");
       return 1;
@@ -238,9 +253,12 @@ public class RunCommand implements Callable<Integer> {
     // Parse custom parameters from command line
     Map<String, String> customParameters = parseCustomParameters();
 
+    // When --replicate-index is set, run exactly one replicate at that index.
+    int effectiveReplicates = replicateIndex != null ? 1 : replicates;
+
     // Create job configurations using JobVariationParser for grid search
     JoshJobBuilder templateJobBuilder = new JoshJobBuilder()
-        .setReplicates(replicates)
+        .setReplicates(effectiveReplicates)
         .setCustomParameters(customParameters);
     JobVariationParser parser = new JobVariationParser();
     List<JoshJobBuilder> jobBuilders = parser.parseDataFiles(templateJobBuilder, dataFiles);
@@ -251,9 +269,14 @@ public class RunCommand implements Callable<Integer> {
         .toList();
 
     // Report grid search information
-    output.printInfo("Grid search will execute " + jobs.size() + " job combination(s) "
-        + "with " + replicates + " replicate(s) each");
-    output.printInfo("Total simulations to run: " + (jobs.size() * replicates));
+    if (replicateIndex != null) {
+      output.printInfo("Running replicate index " + replicateIndex
+          + " across " + jobs.size() + " job combination(s)");
+    } else {
+      output.printInfo("Grid search will execute " + jobs.size() + " job combination(s) "
+          + "with " + replicates + " replicate(s) each");
+    }
+    output.printInfo("Total simulations to run: " + (jobs.size() * effectiveReplicates));
 
     // Use first job for initialization (all jobs should have compatible structure)
     JoshJob firstJob = jobs.get(0);
@@ -345,97 +368,104 @@ public class RunCommand implements Callable<Integer> {
     boolean sizeMetersFull = sizeStr.equals("meter") || sizeStr.equals("meters");
     boolean sizeMeters = sizeMetersFull || sizeMeterAbbreviated;
 
-    // Execute simulation for each job combination and replicate
+    // Execute simulation for each job combination and replicate.
+    // When --replicate-index is set, run exactly one replicate at that index.
     int totalReplicateCount = 0;
 
     for (int jobIndex = 0; jobIndex < jobs.size(); jobIndex++) {
       JoshJob currentJob = jobs.get(jobIndex);
       output.printInfo("Executing job combination " + (jobIndex + 1) + "/" + jobs.size());
 
-      // Update InputGetterStrategy for this job's file mappings
       if (!currentJob.getFilePaths().isEmpty()) {
         inputStrategy = new JvmMappedInputGetter(currentJob.getFilePaths());
       }
 
       for (int currentReplicate = 0; currentReplicate < currentJob.getReplicates();
            currentReplicate++) {
+        int effectiveReplicate = replicateIndex != null ? replicateIndex : currentReplicate;
         totalReplicateCount++;
 
-        // Reset progress tracking for each new simulation (except first)
         if (totalReplicateCount > 1) {
           progressCalculator.resetForNextReplicate(totalReplicateCount);
         }
 
-        // Create TemplateStringRenderer for this job and replicate
-        TemplateStringRenderer templateRenderer = new TemplateStringRenderer(currentJob,
-            currentReplicate);
+        runReplicate(currentJob, effectiveReplicate, totalReplicateCount > 1,
+            valueFactory, geometryFactory, inputStrategy, hasDegrees, sizeMeters,
+            sizeValueRaw, extractor, program, simulation, progressCalculator,
+            parsedOutputSteps);
 
-        // Create InputOutputLayer with template renderer (similar to JoshSimFacade logic)
-        InputOutputLayer inputOutputLayer;
-        if (hasDegrees && sizeMeters) {
-          PatchBuilderExtentsBuilder extentsBuilder = new PatchBuilderExtentsBuilder();
-          ExtentsUtil.addExtents(extentsBuilder, extractor.getStartStr(), true, valueFactory);
-          ExtentsUtil.addExtents(extentsBuilder, extractor.getEndStr(), false, valueFactory);
-          BigDecimal sizeValuePrimitive = sizeValueRaw.getAsDecimal();
-          inputOutputLayer = new JvmInputOutputLayerBuilder()
-              .withReplicate(currentReplicate)
-              .withEarthSpace(extentsBuilder.build(), sizeValuePrimitive)
-              .withInputStrategy(inputStrategy)
-              .withTemplateRenderer(templateRenderer)
-              .withMinioOptions(minioOptions)
-              .withAppendMode(totalReplicateCount > 1)
-              .withMaxDecimalPlaces(csvPrecision)
-              .build();
-        } else {
-          inputOutputLayer = new JvmInputOutputLayerBuilder()
-              .withReplicate(currentReplicate)
-              .withInputStrategy(inputStrategy)
-              .withTemplateRenderer(templateRenderer)
-              .withMinioOptions(minioOptions)
-              .withAppendMode(totalReplicateCount > 1)
-              .withMaxDecimalPlaces(csvPrecision)
-              .build();
-        }
-
-        JoshSimFacadeUtil.runSimulation(
-            valueFactory,
-            geometryFactory,
-            inputOutputLayer,
-            program,
-            simulation,
-            (step) -> {
-              ProgressUpdate update = progressCalculator.updateStep(step);
-              if (update.shouldReport()) {
-                output.printInfo(update.getMessage());
-              }
-            },
-            serialPatches,
-            parsedOutputSteps
-        );
-
-        // Report replicate completion
         ProgressUpdate completion = progressCalculator.updateReplicateCompleted(
             totalReplicateCount);
         output.printInfo(completion.getMessage());
       }
 
-      // Report job combination completion
       if (jobIndex < jobs.size() - 1) {
         output.printInfo("Completed job combination " + (jobIndex + 1) + "/" + jobs.size());
       }
     }
 
-    // Report overall success
     output.printInfo("");
     output.printInfo("✓ All simulations completed successfully!");
     output.printInfo("  Total replicates run: " + totalReplicateCount);
     output.printInfo("  Job combinations: " + jobs.size());
-    output.printInfo("  Replicates per job: " + replicates);
+    output.printInfo("  Replicates per job: " + effectiveReplicates);
 
     // Clean up shared random
     SharedRandom.clear();
 
     return 0;
+  }
+
+  private void runReplicate(JoshJob currentJob, int currentReplicate, boolean appendMode,
+      ValueSupportFactory valueFactory, EngineGeometryFactory geometryFactory,
+      InputGetterStrategy inputStrategy, boolean hasDegrees, boolean sizeMeters,
+      EngineValue sizeValueRaw, GridInfoExtractor extractor, JoshProgram program,
+      String simulation, ProgressCalculator progressCalculator,
+      Optional<Set<Integer>> parsedOutputSteps) {
+    TemplateStringRenderer templateRenderer = new TemplateStringRenderer(currentJob,
+        currentReplicate);
+
+    InputOutputLayer inputOutputLayer;
+    if (hasDegrees && sizeMeters) {
+      PatchBuilderExtentsBuilder extentsBuilder = new PatchBuilderExtentsBuilder();
+      ExtentsUtil.addExtents(extentsBuilder, extractor.getStartStr(), true, valueFactory);
+      ExtentsUtil.addExtents(extentsBuilder, extractor.getEndStr(), false, valueFactory);
+      BigDecimal sizeValuePrimitive = sizeValueRaw.getAsDecimal();
+      inputOutputLayer = new JvmInputOutputLayerBuilder()
+          .withReplicate(currentReplicate)
+          .withEarthSpace(extentsBuilder.build(), sizeValuePrimitive)
+          .withInputStrategy(inputStrategy)
+          .withTemplateRenderer(templateRenderer)
+          .withMinioOptions(minioOptions)
+          .withAppendMode(appendMode)
+          .withMaxDecimalPlaces(csvPrecision)
+          .build();
+    } else {
+      inputOutputLayer = new JvmInputOutputLayerBuilder()
+          .withReplicate(currentReplicate)
+          .withInputStrategy(inputStrategy)
+          .withTemplateRenderer(templateRenderer)
+          .withMinioOptions(minioOptions)
+          .withAppendMode(appendMode)
+          .withMaxDecimalPlaces(csvPrecision)
+          .build();
+    }
+
+    JoshSimFacadeUtil.runSimulation(
+        valueFactory,
+        geometryFactory,
+        inputOutputLayer,
+        program,
+        simulation,
+        (step) -> {
+          ProgressUpdate update = progressCalculator.updateStep(step);
+          if (update.shouldReport()) {
+            output.printInfo(update.getMessage());
+          }
+        },
+        serialPatches,
+        parsedOutputSteps
+    );
   }
 
 }

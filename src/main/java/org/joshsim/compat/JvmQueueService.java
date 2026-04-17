@@ -8,8 +8,10 @@ package org.joshsim.compat;
 
 import java.util.Optional;
 import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.atomic.AtomicBoolean;
 
@@ -25,6 +27,7 @@ public class JvmQueueService implements QueueService {
   private final ExecutorService executorService = Executors.newSingleThreadExecutor();
   private final AtomicBoolean active = new AtomicBoolean(false);
   private final QueueServiceCallback callback;
+  private volatile Future<?> workerFuture;
 
   /**
    * Creates a new JvmQueueService with the specified callback handler and capacity.
@@ -49,7 +52,7 @@ public class JvmQueueService implements QueueService {
   @Override
   public void start() {
     if (active.compareAndSet(false, true)) {
-      executorService.submit(() -> {
+      workerFuture = executorService.submit(() -> {
         callback.onStart();
 
         while (active.get() || !taskQueue.isEmpty()) {
@@ -73,6 +76,18 @@ public class JvmQueueService implements QueueService {
     executorService.shutdown();
     while (!executorService.isTerminated()) {
       trySleep();
+    }
+
+    // Propagate any exception from the worker thread
+    if (workerFuture != null) {
+      try {
+        workerFuture.get();
+      } catch (ExecutionException e) {
+        throw new RuntimeException("Worker thread failed", e.getCause());
+      } catch (InterruptedException e) {
+        Thread.currentThread().interrupt();
+        throw new RuntimeException("Interrupted while waiting for worker thread", e);
+      }
     }
   }
 
