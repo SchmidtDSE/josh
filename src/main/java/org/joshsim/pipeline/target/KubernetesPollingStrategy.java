@@ -11,7 +11,6 @@ import io.fabric8.kubernetes.api.model.ContainerStateTerminated;
 import io.fabric8.kubernetes.api.model.ContainerStateWaiting;
 import io.fabric8.kubernetes.api.model.ContainerStatus;
 import io.fabric8.kubernetes.api.model.Pod;
-import io.fabric8.kubernetes.api.model.PodCondition;
 import io.fabric8.kubernetes.api.model.batch.v1.Job;
 import io.fabric8.kubernetes.api.model.batch.v1.JobCondition;
 import io.fabric8.kubernetes.client.KubernetesClient;
@@ -208,18 +207,11 @@ public class KubernetesPollingStrategy implements BatchPollingStrategy {
   }
 
   private String checkSchedulingFailure(Pod pod) {
-    List<PodCondition> conditions =
-        pod.getStatus().getConditions();
-    if (conditions == null) {
-      return null;
-    }
-    for (PodCondition cond : conditions) {
-      if ("PodScheduled".equals(cond.getType())
-          && "False".equals(cond.getStatus())) {
-        return cond.getMessage() != null
-            ? cond.getMessage() : cond.getReason();
-      }
-    }
+    // Scheduling failures (PodScheduled: False) are not treated as terminal.
+    // On any autoscaling cluster (GKE Autopilot, Nautilus, EKS+Karpenter),
+    // pods sit unschedulable while nodes are provisioned. The Job's
+    // activeDeadlineSeconds handles the case where scheduling truly can't
+    // succeed — K8s marks the Job Failed with DeadlineExceeded.
     return null;
   }
 
