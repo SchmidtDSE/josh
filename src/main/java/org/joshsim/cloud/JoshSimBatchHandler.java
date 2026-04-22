@@ -67,6 +67,12 @@ import org.joshsim.util.OutputOptions;
  */
 public class JoshSimBatchHandler implements HttpHandler {
 
+  // On Cloud Run, this async pattern requires instance-based billing
+  // (--no-cpu-throttling on gcloud run deploy; see .github/workflows/build.yaml).
+  // Without it, CPU is throttled after the 202 response flushes and the daemon
+  // threads below freeze mid-simulation — status.json never updates. See #418.
+  // Durable fix tracked in #421 (dispatch to Cloud Run Jobs instead of running
+  // in-process).
   private static final ExecutorService BATCH_EXECUTOR =
       Executors.newCachedThreadPool(runnable -> {
         Thread thread = new Thread(runnable);
@@ -187,6 +193,8 @@ public class JoshSimBatchHandler implements HttpHandler {
     sendJsonAccepted(exchange, jobId, statusPath);
 
     String capturedApiKey = apiKey;
+    // This background dispatch only survives on Cloud Run when the service is
+    // deployed with --no-cpu-throttling. See BATCH_EXECUTOR above, #418, #421.
     CompletableFuture.runAsync(() -> {
       runBatchWithStatus(
           statusMinio, jobId, simulation, workDir, replicates, statusPath, capturedApiKey
