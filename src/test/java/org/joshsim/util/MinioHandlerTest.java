@@ -382,13 +382,13 @@ public class MinioHandlerTest {
 
   @Test
   void uploadDirectory_walksAndUploadsWithRelativeKeys() throws Exception {
-    MinioHandler handler = createHandler();
     File root = new File(tempDir, "inputs");
     File nested = new File(root, "sub");
     assertTrue(nested.mkdirs());
     Files.writeString(new File(root, "a.txt").toPath(), "a");
     Files.writeString(new File(nested, "b.txt").toPath(), "b");
 
+    MinioHandler handler = createHandler();
     int count = handler.uploadDirectory(root, "prefix/");
 
     assertEquals(2, count);
@@ -415,13 +415,13 @@ public class MinioHandlerTest {
 
   @Test
   void uploadDirectory_throwsOnUploadFailure() throws Exception {
-    MinioHandler handler = createHandler();
     File root = new File(tempDir, "inputs");
     assertTrue(root.mkdirs());
     Files.writeString(new File(root, "a.txt").toPath(), "a");
     when(minioClient.uploadObject(any(UploadObjectArgs.class)))
         .thenThrow(new RuntimeException("upload kaboom"));
 
+    MinioHandler handler = createHandler();
     assertThrows(IOException.class, () -> handler.uploadDirectory(root, "prefix/"));
   }
 
