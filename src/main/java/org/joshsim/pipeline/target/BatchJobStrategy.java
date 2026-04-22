@@ -1,31 +1,24 @@
 /**
- * Orchestrates batch job execution: stage, dispatch, poll.
+ * Orchestrates batch job dispatch and polling against a pre-staged MinIO prefix.
  *
  * @license BSD-3-Clause
  */
 
 package org.joshsim.pipeline.target;
 
-import java.io.File;
-import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.util.List;
 import java.util.UUID;
-import java.util.stream.Stream;
 import org.joshsim.util.MinioHandler;
 import org.joshsim.util.OutputOptions;
 
 
 /**
- * Orchestrates the full batch remote execution flow.
+ * Orchestrates remote batch execution: dispatch an already-staged MinIO prefix and poll.
  *
- * <p>The strategy handles three phases:</p>
- * <ol>
- *   <li><b>Stage</b> — upload local input files to MinIO under a job-specific prefix</li>
- *   <li><b>Dispatch</b> — tell the target to execute the simulation</li>
- *   <li><b>Poll</b> — wait for completion by polling status via {@link BatchPollingStrategy}</li>
- * </ol>
+ * <p>This strategy assumes the caller (typically {@code BatchRemoteCommand}) has already
+ * staged inputs to the MinIO prefix — whether by delegating upload to this same process
+ * via {@code --stage-from-local-dir} or by an upstream {@code stageToMinio} invocation.
+ * This class never uploads; it only dispatches to a {@link RemoteBatchTarget} and polls
+ * via a {@link BatchPollingStrategy}.</p>
  */
 public class BatchJobStrategy {
 
@@ -34,7 +27,6 @@ public class BatchJobStrategy {
 
   private final RemoteBatchTarget target;
   private final BatchPollingStrategy poller;
-  private final MinioHandler minioHandler;
   private final OutputOptions output;
   private final long pollIntervalMs;
   private final long timeoutMs;
@@ -44,12 +36,11 @@ public class BatchJobStrategy {
    *
    * @param target The compute target to dispatch to.
    * @param poller The polling strategy for checking job status.
-   * @param minioHandler The MinIO handler for staging inputs (configured with target's creds).
    * @param output For logging.
    */
   public BatchJobStrategy(RemoteBatchTarget target, BatchPollingStrategy poller,
-      MinioHandler minioHandler, OutputOptions output) {
-    this(target, poller, minioHandler, output, DEFAULT_POLL_INTERVAL_MS, DEFAULT_TIMEOUT_MS);
+      OutputOptions output) {
+    this(target, poller, output, DEFAULT_POLL_INTERVAL_MS, DEFAULT_TIMEOUT_MS);
   }
 
   /**
@@ -57,81 +48,62 @@ public class BatchJobStrategy {
    *
    * @param target The compute target to dispatch to.
    * @param poller The polling strategy for checking job status.
-   * @param minioHandler The MinIO handler for staging inputs.
    * @param output For logging.
    * @param pollIntervalMs Milliseconds between poll attempts.
    * @param timeoutMs Maximum milliseconds to wait before timing out.
    */
   public BatchJobStrategy(RemoteBatchTarget target, BatchPollingStrategy poller,
-      MinioHandler minioHandler, OutputOptions output, long pollIntervalMs, long timeoutMs) {
+      OutputOptions output, long pollIntervalMs, long timeoutMs) {
     this.target = target;
     this.poller = poller;
-    this.minioHandler = minioHandler;
     this.output = output;
     this.pollIntervalMs = pollIntervalMs;
     this.timeoutMs = timeoutMs;
   }
 
   /**
-   * Executes the full batch flow: stage, dispatch, poll until terminal.
+   * Dispatches a batch job against the given pre-staged MinIO prefix and polls until
+   * the job reaches a terminal state.
    *
-   * @param inputDir Local directory containing simulation files to stage.
+   * @param minioPrefix The MinIO object prefix where inputs are already staged.
    * @param simulation Name of the simulation to run.
    * @param replicates Number of replicates to execute.
    * @return The final job status.
-   * @throws Exception If staging, dispatch, or polling fails.
+   * @throws Exception If dispatch or polling fails.
    */
-  public JobStatus execute(File inputDir, String simulation, int replicates) throws Exception {
+  public JobStatus execute(String minioPrefix, String simulation, int replicates)
+      throws Exception {
     String jobId = UUID.randomUUID().toString();
-    String minioPrefix = "batch-jobs/" + jobId + "/inputs/";
+    String prefix = MinioHandler.normalizePrefix(minioPrefix);
 
-    output.printInfo("Staging " + inputDir.getName() + " to MinIO (" + minioPrefix + ")...");
-    stageDirectory(inputDir, minioPrefix);
-    output.printInfo("Staging complete.");
-
-    output.printInfo("Dispatching to target (" + replicates + " replicates)...");
-    target.dispatch(jobId, minioPrefix, simulation, replicates);
+    output.printInfo("Dispatching to target (" + replicates + " replicates) against "
+        + prefix + "...");
+    target.dispatch(jobId, prefix, simulation, replicates);
     output.printInfo("Dispatched. Polling for completion...");
 
     return pollUntilTerminal(jobId);
   }
 
   /**
-   * Stages and dispatches without waiting for completion.
+   * Dispatches without waiting for completion. Returns the jobId for manual tracking.
    *
-   * @param inputDir Local directory containing simulation files to stage.
+   * @param minioPrefix The MinIO object prefix where inputs are already staged.
    * @param simulation Name of the simulation to run.
    * @param replicates Number of replicates to execute.
    * @return The jobId for manual status tracking.
-   * @throws Exception If staging or dispatch fails.
+   * @throws Exception If dispatch fails.
    */
-  public String executeNoWait(File inputDir, String simulation, int replicates) throws Exception {
+  public String executeNoWait(String minioPrefix, String simulation, int replicates)
+      throws Exception {
     String jobId = UUID.randomUUID().toString();
-    String minioPrefix = "batch-jobs/" + jobId + "/inputs/";
+    String prefix = MinioHandler.normalizePrefix(minioPrefix);
 
-    output.printInfo("Staging " + inputDir.getName() + " to MinIO (" + minioPrefix + ")...");
-    stageDirectory(inputDir, minioPrefix);
-    output.printInfo("Staging complete.");
-
-    output.printInfo("Dispatching to target (" + replicates + " replicates)...");
-    target.dispatch(jobId, minioPrefix, simulation, replicates);
+    output.printInfo("Dispatching to target (" + replicates + " replicates) against "
+        + prefix + "...");
+    target.dispatch(jobId, prefix, simulation, replicates);
     output.printInfo("Dispatched. Status path: batch-status/" + jobId + "/status.json");
 
     return jobId;
-  }
-
-  private void stageDirectory(File inputDir, String prefix) throws IOException {
-    Path basePath = inputDir.toPath();
-    try (Stream<Path> walker = Files.walk(basePath)) {
-      List<Path> files = walker.filter(Files::isRegularFile).toList();
-      for (Path file : files) {
-        String relativePath = basePath.relativize(file).toString();
-        String objectPath = prefix + relativePath;
-        if (!minioHandler.uploadFile(file.toFile(), objectPath)) {
-          throw new IOException("Failed to upload " + file);
-        }
-      }
-    }
   }
 
   private JobStatus pollUntilTerminal(String jobId) throws Exception {

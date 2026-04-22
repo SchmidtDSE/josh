@@ -49,6 +49,10 @@ public class MinioStagingUtil {
       if (relativePath.isEmpty()) {
         continue;
       }
+      if (relativePath.equals(MinioHandler.STAGED_SENTINEL_FILENAME)
+          || relativePath.endsWith("/" + MinioHandler.STAGED_SENTINEL_FILENAME)) {
+        continue;
+      }
       File destination = new File(outputDir, relativePath);
 
       File parentDir = destination.getParentFile();
@@ -58,6 +62,12 @@ public class MinioStagingUtil {
 
       minio.downloadFile(key, destination);
       downloaded++;
+    }
+
+    if (downloaded == 0) {
+      throw new IllegalArgumentException(
+          "No input objects found under prefix: " + normalizedPrefix
+              + " (sentinel present but no data files)");
     }
 
     output.printInfo("Downloaded " + downloaded + " file(s) to " + outputDir.getPath());
