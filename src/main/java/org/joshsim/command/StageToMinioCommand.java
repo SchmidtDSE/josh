@@ -12,12 +12,9 @@ package org.joshsim.command;
 
 import java.io.File;
 import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.util.List;
 import java.util.concurrent.Callable;
-import java.util.stream.Stream;
 import org.joshsim.util.MinioHandler;
+import org.joshsim.util.MinioHandler.StagedState;
 import org.joshsim.util.MinioOptions;
 import org.joshsim.util.OutputOptions;
 import picocli.CommandLine.Command;
@@ -29,7 +26,10 @@ import picocli.CommandLine.Option;
  * Uploads all files in a local directory to a MinIO prefix.
  *
  * <p>Each file is uploaded to {@code <bucket>/<prefix>/<relative-path>} where relative-path
- * preserves the directory structure under the input directory.</p>
+ * preserves the directory structure under the input directory. A
+ * {@link MinioHandler#STAGED_SENTINEL_FILENAME} sentinel is written at the root of the
+ * prefix recording the staging lifecycle ({@code staging} → {@code complete}, or
+ * {@code error} if the upload fails).</p>
  */
 @Command(
     name = "stageToMinio",
@@ -72,39 +72,28 @@ public class StageToMinioCommand implements Callable<Integer> {
       }
 
       MinioHandler minio = new MinioHandler(minioOptions, output);
-      String normalizedPrefix = normalizePrefix(prefix);
+      String normalizedPrefix = MinioHandler.normalizePrefix(prefix);
 
-      int uploaded = uploadDirectory(minio, inputDir, normalizedPrefix);
-      output.printInfo("Staged " + uploaded + " file(s) to " + prefix);
+      minio.writeStagedSentinel(normalizedPrefix, StagedState.STAGING, null);
+      int uploaded;
+      try {
+        uploaded = minio.uploadDirectory(inputDir, normalizedPrefix);
+      } catch (IOException uploadError) {
+        try {
+          minio.writeStagedSentinel(normalizedPrefix, StagedState.ERROR, uploadError.getMessage());
+        } catch (IOException sentinelError) {
+          output.printError("Additionally failed to write error sentinel: "
+              + sentinelError.getMessage());
+        }
+        throw uploadError;
+      }
+      minio.writeStagedSentinel(normalizedPrefix, StagedState.COMPLETE, null);
+      output.printInfo("Staged " + uploaded + " file(s) to " + normalizedPrefix);
       return 0;
 
     } catch (Exception e) {
       output.printError("stageToMinio failed: " + e.getMessage());
       return MINIO_ERROR_CODE;
     }
-  }
-
-  private int uploadDirectory(MinioHandler minio, File dir, String prefix) throws IOException {
-    Path basePath = dir.toPath();
-    int count = 0;
-    try (Stream<Path> walker = Files.walk(basePath)) {
-      List<Path> files = walker.filter(Files::isRegularFile).toList();
-      for (Path file : files) {
-        String relativePath = basePath.relativize(file).toString();
-        String objectPath = prefix + relativePath;
-        if (!minio.uploadFile(file.toFile(), objectPath)) {
-          throw new IOException("Failed to upload " + file);
-        }
-        count++;
-      }
-    }
-    return count;
-  }
-
-  private String normalizePrefix(String prefix) {
-    if (prefix.endsWith("/")) {
-      return prefix;
-    }
-    return prefix + "/";
   }
 }

@@ -4,6 +4,8 @@
 
 package org.joshsim.util;
 
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import io.minio.BucketExistsArgs;
 import io.minio.GetObjectArgs;
 import io.minio.ListObjectsArgs;
@@ -17,14 +19,67 @@ import io.minio.messages.Item;
 import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.FileOutputStream;
+import java.io.IOException;
 import java.io.InputStream;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.time.Instant;
 import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import java.util.stream.Stream;
 
 /**
  * Handles operations related to Minio, such as bucket management and file uploads.
  */
 public class MinioHandler {
+
+  /**
+   * Basename of the sentinel file written by {@link #writeStagedSentinel} at the root of a
+   * staged MinIO prefix. Downstream dispatchers read this to confirm that staging completed
+   * cleanly before dispatching a batch job against the prefix.
+   */
+  public static final String STAGED_SENTINEL_FILENAME = ".josh-staged.json";
+
+  private static final ObjectMapper JSON = new ObjectMapper();
+
+  /** Lifecycle state of a staged MinIO prefix, serialized to {@code .josh-staged.json}. */
+  public enum StagedState {
+    STAGING, COMPLETE, ERROR;
+
+    String jsonValue() {
+      return name().toLowerCase();
+    }
+
+    static StagedState fromJson(String value) {
+      if (value == null) {
+        return null;
+      }
+      return switch (value) {
+        case "staging" -> STAGING;
+        case "complete" -> COMPLETE;
+        case "error" -> ERROR;
+        default -> null;
+      };
+    }
+  }
+
+  /**
+   * Parsed contents of a {@code .josh-staged.json} sentinel. Only the timestamp matching the
+   * current {@link #state()} is expected to be populated by the writer; all other fields may
+   * be null.
+   */
+  public record StagedStatus(
+      StagedState state,
+      String startedAt,
+      String completedAt,
+      String failedAt,
+      String message
+  ) {}
+
   private final MinioClient minioClient;
   private final String bucketName;
   private final String basePath;
@@ -263,6 +318,121 @@ public class MinioHandler {
       output.printInfo("Deleted " + keys.size() + " objects under " + prefix);
     }
     return keys.size();
+  }
+
+  /**
+   * Append a trailing slash to a MinIO object prefix if one is not already present.
+   *
+   * @param prefix The prefix to normalize.
+   * @return The prefix with a guaranteed trailing slash.
+   */
+  public static String normalizePrefix(String prefix) {
+    return prefix.endsWith("/") ? prefix : prefix + "/";
+  }
+
+  /**
+   * Upload every regular file under {@code localDir} to {@code <prefix><relative-path>}.
+   *
+   * <p>Directory structure under {@code localDir} is preserved. The prefix is normalized
+   * with {@link #normalizePrefix(String)} before use. Fails fast on the first upload error.</p>
+   *
+   * @param localDir The local directory to upload from.
+   * @param prefix The MinIO object prefix to upload into.
+   * @return The number of files uploaded.
+   * @throws IOException If any upload fails or the directory cannot be walked.
+   */
+  public int uploadDirectory(File localDir, String prefix) throws IOException {
+    String normalizedPrefix = normalizePrefix(prefix);
+    Path basePath = localDir.toPath();
+    int count = 0;
+    try (Stream<Path> walker = Files.walk(basePath)) {
+      List<Path> files = walker.filter(Files::isRegularFile).toList();
+      for (Path file : files) {
+        String relativePath = basePath.relativize(file).toString();
+        String objectPath = normalizedPrefix + relativePath;
+        if (!uploadFile(file.toFile(), objectPath)) {
+          throw new IOException("Failed to upload " + file);
+        }
+        count++;
+      }
+    }
+    return count;
+  }
+
+  /**
+   * Write the {@link #STAGED_SENTINEL_FILENAME} sentinel at the root of the given prefix.
+   *
+   * <p>The JSON payload carries a {@code status} field (matching the shape used by
+   * {@code JoshSimBatchHandler} for job status) plus the timestamp field corresponding to
+   * the state, and an optional {@code message} field for {@link StagedState#ERROR}.</p>
+   *
+   * @param prefix The MinIO object prefix the sentinel describes.
+   * @param state The lifecycle state to record.
+   * @param messageOrNull Optional human-readable message (used for {@code ERROR}; may be null).
+   * @throws IOException If writing the sentinel fails.
+   */
+  public void writeStagedSentinel(String prefix, StagedState state, String messageOrNull)
+      throws IOException {
+    String path = normalizePrefix(prefix) + STAGED_SENTINEL_FILENAME;
+    Map<String, String> fields = new LinkedHashMap<>();
+    fields.put("status", state.jsonValue());
+    String now = Instant.now().toString();
+    switch (state) {
+      case STAGING -> fields.put("startedAt", now);
+      case COMPLETE -> fields.put("completedAt", now);
+      case ERROR -> fields.put("failedAt", now);
+      default -> { }
+    }
+    if (state == StagedState.ERROR && messageOrNull != null) {
+      fields.put("message", messageOrNull);
+    }
+    byte[] bytes = JSON.writeValueAsBytes(fields);
+    try {
+      putBytes(bytes, path, "application/json");
+    } catch (Exception e) {
+      throw new IOException("Failed to write staged sentinel to " + path + ": "
+          + e.getMessage(), e);
+    }
+  }
+
+  /**
+   * Read and parse the {@link #STAGED_SENTINEL_FILENAME} sentinel at the root of the given
+   * prefix. Returns {@link Optional#empty()} if the sentinel does not exist.
+   *
+   * @param prefix The MinIO object prefix whose sentinel should be read.
+   * @return The parsed sentinel, or empty if absent.
+   * @throws IOException If reading fails for any reason other than missing object.
+   */
+  public Optional<StagedStatus> readStagedSentinel(String prefix) throws IOException {
+    String path = normalizePrefix(prefix) + STAGED_SENTINEL_FILENAME;
+    String json;
+    try (InputStream stream = downloadStream(path)) {
+      json = new String(stream.readAllBytes(), StandardCharsets.UTF_8);
+    } catch (Exception e) {
+      if (isNotFoundError(e)) {
+        return Optional.empty();
+      }
+      throw new IOException("Failed to read staged sentinel at " + path + ": "
+          + e.getMessage(), e);
+    }
+    JsonNode root = JSON.readTree(json);
+    return Optional.of(new StagedStatus(
+        StagedState.fromJson(root.has("status") ? root.get("status").asText() : null),
+        root.has("startedAt") ? root.get("startedAt").asText() : null,
+        root.has("completedAt") ? root.get("completedAt").asText() : null,
+        root.has("failedAt") ? root.get("failedAt").asText() : null,
+        root.has("message") ? root.get("message").asText() : null
+    ));
+  }
+
+  private static boolean isNotFoundError(Exception exception) {
+    String message = exception.getMessage();
+    if (message == null) {
+      return false;
+    }
+    return message.contains("NoSuchKey")
+        || message.contains("The specified key does not exist")
+        || message.contains("Object does not exist");
   }
 
   /**

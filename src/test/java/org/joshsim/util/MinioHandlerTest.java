@@ -19,16 +19,21 @@ import io.minio.MinioClient;
 import io.minio.PutObjectArgs;
 import io.minio.RemoveObjectArgs;
 import io.minio.Result;
+import io.minio.UploadObjectArgs;
 import io.minio.messages.Item;
 import java.io.ByteArrayInputStream;
 import java.io.File;
+import java.io.IOException;
 import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
+import java.util.Optional;
 import okhttp3.Headers;
+import org.joshsim.util.MinioHandler.StagedState;
+import org.joshsim.util.MinioHandler.StagedStatus;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
@@ -359,5 +364,165 @@ public class MinioHandlerTest {
     // Verify
     assertEquals(0, deleted);
     verify(minioClient, never()).removeObject(any(RemoveObjectArgs.class));
+  }
+
+  // --- normalizePrefix tests ---
+
+  @Test
+  void normalizePrefix_appendsSlashWhenMissing() {
+    assertEquals("batch-jobs/foo/inputs/", MinioHandler.normalizePrefix("batch-jobs/foo/inputs"));
+  }
+
+  @Test
+  void normalizePrefix_leavesTrailingSlashAlone() {
+    assertEquals("batch-jobs/foo/inputs/", MinioHandler.normalizePrefix("batch-jobs/foo/inputs/"));
+  }
+
+  // --- uploadDirectory tests ---
+
+  @Test
+  void uploadDirectory_walksAndUploadsWithRelativeKeys() throws Exception {
+    MinioHandler handler = createHandler();
+    File root = new File(tempDir, "inputs");
+    File nested = new File(root, "sub");
+    assertTrue(nested.mkdirs());
+    Files.writeString(new File(root, "a.txt").toPath(), "a");
+    Files.writeString(new File(nested, "b.txt").toPath(), "b");
+
+    int count = handler.uploadDirectory(root, "prefix/");
+
+    assertEquals(2, count);
+    ArgumentCaptor<UploadObjectArgs> captor = ArgumentCaptor.forClass(UploadObjectArgs.class);
+    verify(minioClient, times(2)).uploadObject(captor.capture());
+    List<String> objects = captor.getAllValues().stream().map(UploadObjectArgs::object).sorted()
+        .toList();
+    assertEquals(List.of("prefix/a.txt", "prefix/sub/b.txt"), objects);
+  }
+
+  @Test
+  void uploadDirectory_normalizesPrefixWithoutTrailingSlash() throws Exception {
+    MinioHandler handler = createHandler();
+    File root = new File(tempDir, "inputs");
+    assertTrue(root.mkdirs());
+    Files.writeString(new File(root, "a.txt").toPath(), "a");
+
+    handler.uploadDirectory(root, "prefix");
+
+    ArgumentCaptor<UploadObjectArgs> captor = ArgumentCaptor.forClass(UploadObjectArgs.class);
+    verify(minioClient).uploadObject(captor.capture());
+    assertEquals("prefix/a.txt", captor.getValue().object());
+  }
+
+  @Test
+  void uploadDirectory_throwsOnUploadFailure() throws Exception {
+    MinioHandler handler = createHandler();
+    File root = new File(tempDir, "inputs");
+    assertTrue(root.mkdirs());
+    Files.writeString(new File(root, "a.txt").toPath(), "a");
+    when(minioClient.uploadObject(any(UploadObjectArgs.class)))
+        .thenThrow(new RuntimeException("upload kaboom"));
+
+    assertThrows(IOException.class, () -> handler.uploadDirectory(root, "prefix/"));
+  }
+
+  // --- sentinel tests ---
+
+  @Test
+  void writeStagedSentinel_writesCorrectObjectPath() throws Exception {
+    MinioHandler handler = createHandler();
+
+    handler.writeStagedSentinel("batch-jobs/foo/inputs/", StagedState.STAGING, null);
+
+    ArgumentCaptor<PutObjectArgs> captor = ArgumentCaptor.forClass(PutObjectArgs.class);
+    verify(minioClient).putObject(captor.capture());
+    assertEquals("batch-jobs/foo/inputs/.josh-staged.json", captor.getValue().object());
+    assertEquals("application/json", captor.getValue().contentType());
+  }
+
+  @Test
+  void writeStagedSentinel_normalizesPrefixWithoutTrailingSlash() throws Exception {
+    MinioHandler handler = createHandler();
+
+    handler.writeStagedSentinel("batch-jobs/foo/inputs", StagedState.COMPLETE, null);
+
+    ArgumentCaptor<PutObjectArgs> captor = ArgumentCaptor.forClass(PutObjectArgs.class);
+    verify(minioClient).putObject(captor.capture());
+    assertEquals("batch-jobs/foo/inputs/.josh-staged.json", captor.getValue().object());
+  }
+
+  @Test
+  void readStagedSentinel_parsesCompleteState() throws Exception {
+    MinioHandler handler = createHandler();
+    byte[] json = "{\"status\":\"complete\",\"completedAt\":\"2026-04-22T12:00:00Z\"}"
+        .getBytes(StandardCharsets.UTF_8);
+    GetObjectResponse mockResponse = new GetObjectResponse(
+        Headers.of(), testBucket, "", "prefix/.josh-staged.json",
+        new ByteArrayInputStream(json)
+    );
+    when(minioClient.getObject(any(GetObjectArgs.class))).thenReturn(mockResponse);
+
+    Optional<StagedStatus> status = handler.readStagedSentinel("prefix/");
+
+    assertTrue(status.isPresent());
+    assertEquals(StagedState.COMPLETE, status.get().state());
+    assertEquals("2026-04-22T12:00:00Z", status.get().completedAt());
+    assertTrue(status.get().startedAt() == null);
+    assertTrue(status.get().message() == null);
+  }
+
+  @Test
+  void readStagedSentinel_parsesErrorStateWithMessage() throws Exception {
+    MinioHandler handler = createHandler();
+    byte[] json = ("{\"status\":\"error\",\"failedAt\":\"2026-04-22T12:00:00Z\","
+        + "\"message\":\"disk full\"}").getBytes(StandardCharsets.UTF_8);
+    GetObjectResponse mockResponse = new GetObjectResponse(
+        Headers.of(), testBucket, "", "prefix/.josh-staged.json",
+        new ByteArrayInputStream(json)
+    );
+    when(minioClient.getObject(any(GetObjectArgs.class))).thenReturn(mockResponse);
+
+    Optional<StagedStatus> status = handler.readStagedSentinel("prefix/");
+
+    assertTrue(status.isPresent());
+    assertEquals(StagedState.ERROR, status.get().state());
+    assertEquals("disk full", status.get().message());
+    assertEquals("2026-04-22T12:00:00Z", status.get().failedAt());
+  }
+
+  @Test
+  void readStagedSentinel_readsFromCorrectPath() throws Exception {
+    MinioHandler handler = createHandler();
+    byte[] json = "{\"status\":\"complete\"}".getBytes(StandardCharsets.UTF_8);
+    GetObjectResponse mockResponse = new GetObjectResponse(
+        Headers.of(), testBucket, "", "prefix/.josh-staged.json",
+        new ByteArrayInputStream(json)
+    );
+    when(minioClient.getObject(any(GetObjectArgs.class))).thenReturn(mockResponse);
+
+    handler.readStagedSentinel("prefix");
+
+    ArgumentCaptor<GetObjectArgs> captor = ArgumentCaptor.forClass(GetObjectArgs.class);
+    verify(minioClient).getObject(captor.capture());
+    assertEquals("prefix/.josh-staged.json", captor.getValue().object());
+  }
+
+  @Test
+  void readStagedSentinel_returnsEmptyWhenMissing() throws Exception {
+    MinioHandler handler = createHandler();
+    when(minioClient.getObject(any(GetObjectArgs.class)))
+        .thenThrow(new RuntimeException("NoSuchKey: no such object exists"));
+
+    Optional<StagedStatus> status = handler.readStagedSentinel("prefix/");
+
+    assertTrue(status.isEmpty());
+  }
+
+  @Test
+  void readStagedSentinel_propagatesNonNotFoundError() throws Exception {
+    MinioHandler handler = createHandler();
+    when(minioClient.getObject(any(GetObjectArgs.class)))
+        .thenThrow(new RuntimeException("permission denied"));
+
+    assertThrows(IOException.class, () -> handler.readStagedSentinel("prefix/"));
   }
 }
