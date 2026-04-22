@@ -10,6 +10,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Random;
 import java.util.concurrent.ConcurrentHashMap;
 import org.joshsim.engine.config.Config;
 import org.joshsim.engine.entity.base.Entity;
@@ -30,7 +31,9 @@ import org.joshsim.engine.value.converter.Converter;
 import org.joshsim.engine.value.converter.Units;
 import org.joshsim.engine.value.engine.ValueSupportFactory;
 import org.joshsim.engine.value.type.EngineValue;
+import org.joshsim.precompute.ColdStartDataGridLayer;
 import org.joshsim.precompute.DataGridLayer;
+import org.joshsim.util.SharedRandom;
 
 
 /**
@@ -52,6 +55,7 @@ public class MinimalEngineBridge implements EngineBridge {
   private final ExternalResourceGetter externalResourceGetter;
   private final Map<String, Optional<Config>> configData;
   private final ConfigGetter configGetter;
+  private final long coldStartDuration;
 
   private Optional<Replicate> replicate;
   private long absoluteStep;
@@ -73,11 +77,14 @@ public class MinimalEngineBridge implements EngineBridge {
    * @param prototypeStore The set of prototypes to use to build new entities.
    * @param externalResourceGetter Strategy to use in loading external resources.
    * @param configGetter Strategy to use in loading configuration resources.
+   * @param coldStartDuration Number of cold-start spin-up steps to prepend. During these steps,
+   *     external data timesteps are randomly sampled. Pass 0 to disable cold start.
    */
   public MinimalEngineBridge(ValueSupportFactory engineValueFactory,
         EngineGeometryFactory geometryFactory, MutableEntity simulation,
         Converter converter, EntityPrototypeStore prototypeStore,
-        ExternalResourceGetter externalResourceGetter, ConfigGetter configGetter) {
+        ExternalResourceGetter externalResourceGetter, ConfigGetter configGetter,
+        long coldStartDuration) {
     this.engineValueFactory = engineValueFactory;
     this.geometryFactory = geometryFactory;
     this.simulation = simulation;
@@ -86,6 +93,7 @@ public class MinimalEngineBridge implements EngineBridge {
     this.externalResourceGetter = externalResourceGetter;
     this.configGetter = configGetter;
     this.configData = new ConcurrentHashMap<>();
+    this.coldStartDuration = coldStartDuration;
 
     replicate = Optional.empty();
 
@@ -95,7 +103,9 @@ public class MinimalEngineBridge implements EngineBridge {
       .getAttributeValue("steps.low")
       .orElseGet(() -> engineValueFactory.build(DEFAULT_START_STEP, Units.of("count")));
 
-    currentStep = startStep;
+    currentStep = engineValueFactory.build(
+        startStep.getAsInt() - coldStartDuration, Units.of("count")
+    );
 
     endStep = simulation
       .getAttributeValue("steps.high")
@@ -116,12 +126,14 @@ public class MinimalEngineBridge implements EngineBridge {
    *     data.
    * @param converter The converter for handling unit conversions between different engine values.
    * @param externalResourceGetter Strategy to use in loading external resources.
+   * @param configGetter Strategy to use in loading configuration resources.
    * @param replicate The replicate to use for testing.
+   * @param coldStartDuration Number of cold-start spin-up steps to prepend. Pass 0 to disable.
    */
   public MinimalEngineBridge(ValueSupportFactory engineValueFactory,
         EngineGeometryFactory geometryFactory, MutableEntity simulation, Converter converter,
         EntityPrototypeStore prototypeStore, ExternalResourceGetter externalResourceGetter,
-        ConfigGetter configGetter, Replicate replicate) {
+        ConfigGetter configGetter, Replicate replicate, long coldStartDuration) {
     this.engineValueFactory = engineValueFactory;
     this.geometryFactory = geometryFactory;
     this.simulation = simulation;
@@ -130,6 +142,7 @@ public class MinimalEngineBridge implements EngineBridge {
     this.externalResourceGetter = externalResourceGetter;
     this.configGetter = configGetter;
     this.configData = new ConcurrentHashMap<>();
+    this.coldStartDuration = coldStartDuration;
     this.replicate = Optional.of(replicate);
 
     simulation.startSubstep("constant");
@@ -138,7 +151,9 @@ public class MinimalEngineBridge implements EngineBridge {
       .getAttributeValue("steps.low")
       .orElseGet(() -> engineValueFactory.build(DEFAULT_START_STEP, Units.of("count")));
 
-    currentStep = startStep;
+    currentStep = engineValueFactory.build(
+        startStep.getAsInt() - coldStartDuration, Units.of("count")
+    );
 
     endStep = simulation
       .getAttributeValue("steps.high")
@@ -193,8 +208,14 @@ public class MinimalEngineBridge implements EngineBridge {
   @Override
   public EngineValue getExternal(GeoKey key, String name, long step) {
     String fileName = name.endsWith(".jshd") ? name : name + ".jshd";
-    DataGridLayer layer = externalData.computeIfAbsent(name,
-        k -> externalResourceGetter.getResource(fileName));
+    DataGridLayer layer = externalData.computeIfAbsent(name, k -> {
+      DataGridLayer raw = externalResourceGetter.getResource(fileName);
+      if (coldStartDuration > 0) {
+        Random rng = new Random(SharedRandom.get().nextLong());
+        return new ColdStartDataGridLayer(raw, coldStartDuration, rng);
+      }
+      return raw;
+    });
     return layer.getAt(key, step);
   }
 
@@ -297,6 +318,27 @@ public class MinimalEngineBridge implements EngineBridge {
   @Override
   public long getEndTimestep() {
     return endStep.getAsInt();
+  }
+
+  /**
+   * Get the number of cold-start spin-up steps configured for this bridge.
+   *
+   * @return The cold-start duration, or 0 if cold start is disabled.
+   */
+  public long getColdStartDuration() {
+    return coldStartDuration;
+  }
+
+  /**
+   * Get the original start step as declared in the simulation (steps.low).
+   *
+   * <p>During cold start, currentStep begins at startStep - coldStartDuration. This method
+   * returns the unshifted value for use in export filtering.</p>
+   *
+   * @return The original start step value from the simulation definition.
+   */
+  public long getOriginalStartStep() {
+    return startStep.getAsInt();
   }
 
   @Override

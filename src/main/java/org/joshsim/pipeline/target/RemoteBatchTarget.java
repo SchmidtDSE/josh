@@ -39,8 +39,9 @@ public interface RemoteBatchTarget {
    *     (e.g., {@code batch-jobs/abc123/inputs/}).
    * @param simulation The name of the simulation to run.
    * @param replicates The number of replicates to execute.
+   * @param coldStartSteps Number of cold-start spin-up steps (0 to disable).
    * @throws Exception If the dispatch fails (e.g., network error, auth failure).
    */
-  void dispatch(String jobId, String minioPrefix, String simulation, int replicates)
-      throws Exception;
+  void dispatch(String jobId, String minioPrefix, String simulation, int replicates,
+      long coldStartSteps) throws Exception;
 }

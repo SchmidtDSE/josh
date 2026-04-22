@@ -249,7 +249,8 @@ public class PreprocessUtil {
         program.getConverter(),
         program.getPrototypes(),
         new JshdExternalGetter(inputStrategy, valueFactory),
-        new JshcConfigGetter(inputStrategy, valueFactory)
+        new JshcConfigGetter(inputStrategy, valueFactory),
+        0
     );
     GridFromSimFactory gridFactory = new GridFromSimFactory(bridge);
     PatchSet patchSet = gridFactory.build(simEntity, options.getCrsCode());

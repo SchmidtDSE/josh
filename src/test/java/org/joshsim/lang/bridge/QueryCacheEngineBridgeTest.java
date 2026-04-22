@@ -67,7 +67,8 @@ public class QueryCacheEngineBridgeTest {
         mockPrototypeStore,
         mockExternalResourceGetter,
         new NoOpConfigGetter(),
-        mockReplicate
+        mockReplicate,
+        0
     );
   }
 

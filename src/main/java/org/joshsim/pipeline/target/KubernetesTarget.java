@@ -91,7 +91,8 @@ public class KubernetesTarget implements RemoteBatchTarget {
       String jobId,
       String minioPrefix,
       String simulation,
-      int replicates
+      int replicates,
+      long coldStartSteps
   ) throws Exception {
     String secretName = SECRET_NAME_PREFIX + jobId;
 
@@ -128,7 +129,8 @@ public class KubernetesTarget implements RemoteBatchTarget {
                         )
                         .withEnv(buildEnvVars(
                             secretName, jobId,
-                            minioPrefix, simulation
+                            minioPrefix, simulation,
+                            coldStartSteps
                         ))
                         .withCommand(
                             ENTRYPOINT,
@@ -209,7 +211,8 @@ public class KubernetesTarget implements RemoteBatchTarget {
       String secretName,
       String jobId,
       String minioPrefix,
-      String simulation
+      String simulation,
+      long coldStartSteps
   ) {
     List<EnvVar> envVars = new ArrayList<>();
     envVars.add(secretEnvVar(
@@ -227,6 +230,9 @@ public class KubernetesTarget implements RemoteBatchTarget {
     envVars.add(plainEnvVar("JOSH_JOB_ID", jobId));
     envVars.add(plainEnvVar("JOSH_MINIO_PREFIX", minioPrefix));
     envVars.add(plainEnvVar("JOSH_SIMULATION", simulation));
+    if (coldStartSteps > 0) {
+      envVars.add(plainEnvVar("JOSH_COLD_START", String.valueOf(coldStartSteps)));
+    }
     return envVars;
   }
 

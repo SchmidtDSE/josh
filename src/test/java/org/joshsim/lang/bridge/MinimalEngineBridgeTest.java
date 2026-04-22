@@ -78,7 +78,8 @@ public class MinimalEngineBridgeTest {
         mockPrototypeStore,
         mockExternalResourceGetter,
         new NoOpConfigGetter(),
-        mockReplicate
+        mockReplicate,
+        0
     );
   }
 
@@ -180,7 +181,8 @@ public class MinimalEngineBridgeTest {
         mockPrototypeStore,
         mockExternalResourceGetter,
         mockConfigGetter,
-        mockReplicate
+        mockReplicate,
+        0
     );
 
     // Execute - note: Josh code uses "config test.testVar" without extension
@@ -212,7 +214,8 @@ public class MinimalEngineBridgeTest {
         mockPrototypeStore,
         mockExternalGetter,
         new NoOpConfigGetter(),
-        mockReplicate
+        mockReplicate,
+        0
     );
 
     // Execute - note: Josh code uses "external Precipitation" without extension

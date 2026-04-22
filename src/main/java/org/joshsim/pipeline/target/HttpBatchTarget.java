@@ -73,8 +73,8 @@ public class HttpBatchTarget implements RemoteBatchTarget {
   }
 
   @Override
-  public void dispatch(String jobId, String minioPrefix, String simulation, int replicates)
-      throws Exception {
+  public void dispatch(String jobId, String minioPrefix, String simulation, int replicates,
+      long coldStartSteps) throws Exception {
     Map<String, String> formFields = new LinkedHashMap<>();
     formFields.put("apiKey", apiKey);
     formFields.put("jobId", jobId);
@@ -83,6 +83,9 @@ public class HttpBatchTarget implements RemoteBatchTarget {
     formFields.put("workDir", "/tmp/batch-" + jobId);
     formFields.put("stageFromMinio", "true");
     formFields.put("minioPrefix", minioPrefix);
+    if (coldStartSteps > 0) {
+      formFields.put("coldStart", String.valueOf(coldStartSteps));
+    }
 
     String formBody = formFields.entrySet().stream()
         .map(e -> URLEncoder.encode(e.getKey(), StandardCharsets.UTF_8)

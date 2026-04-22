@@ -75,7 +75,8 @@ class MinimalEngineBridgeConcurrencyTest {
         mockPrototypeStore,
         externalGetter,
         new org.joshsim.engine.config.NoOpConfigGetter(),
-        mockReplicate
+        mockReplicate,
+        0
     );
 
     CyclicBarrier barrier = new CyclicBarrier(THREAD_COUNT);
@@ -125,7 +126,8 @@ class MinimalEngineBridgeConcurrencyTest {
         mockPrototypeStore,
         mock(ExternalResourceGetter.class),
         configGetter,
-        mockReplicate
+        mockReplicate,
+        0
     );
 
     CyclicBarrier barrier = new CyclicBarrier(THREAD_COUNT);
@@ -174,7 +176,8 @@ class MinimalEngineBridgeConcurrencyTest {
         mockPrototypeStore,
         mock(ExternalResourceGetter.class),
         new org.joshsim.engine.config.NoOpConfigGetter(),
-        mockReplicate
+        mockReplicate,
+        0
     );
 
     CyclicBarrier barrier = new CyclicBarrier(THREAD_COUNT);

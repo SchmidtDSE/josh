@@ -87,6 +87,13 @@ public class BatchRemoteCommand implements Callable<Integer> {
   )
   private int timeoutSeconds = 3600;
 
+  @Option(
+      names = "--cold-start",
+      description = "Number of cold-start spin-up steps (passed to batch target)",
+      defaultValue = "0"
+  )
+  private long coldStartSteps = 0;
+
   @Mixin
   private OutputOptions output = new OutputOptions();
 
@@ -128,7 +135,7 @@ public class BatchRemoteCommand implements Callable<Integer> {
 
       if (noWait) {
         String jobId = strategy.executeNoWait(
-            inputDir, simulation, replicates
+            inputDir, simulation, replicates, coldStartSteps
         );
         ObjectNode node = MAPPER.createObjectNode();
         node.put("jobId", jobId);
@@ -141,7 +148,7 @@ public class BatchRemoteCommand implements Callable<Integer> {
         return 0;
       }
 
-      JobStatus finalStatus = strategy.execute(inputDir, simulation, replicates);
+      JobStatus finalStatus = strategy.execute(inputDir, simulation, replicates, coldStartSteps);
 
       if (finalStatus.getState() == JobStatus.State.COMPLETE) {
         output.printInfo("Batch job completed successfully.");

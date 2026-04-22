@@ -37,6 +37,7 @@ public class FutureBridgeGetter implements BridgeGetter {
   private Optional<EngineGeometryFactory> geometryFactory;
   private Optional<InputOutputLayer> inputOutputLayer;
   private Optional<CombinedDebugOutputFacade> debugOutputFacade;
+  private long coldStartDuration;
 
   /**
    * Creates a new future bridge getter with no initial configuration.
@@ -51,6 +52,7 @@ public class FutureBridgeGetter implements BridgeGetter {
     this.geometryFactory = Optional.empty();
     this.inputOutputLayer = Optional.empty();
     this.debugOutputFacade = Optional.empty();
+    this.coldStartDuration = 0;
   }
 
   /**
@@ -121,6 +123,15 @@ public class FutureBridgeGetter implements BridgeGetter {
   }
 
   /**
+   * Sets the number of cold-start spin-up steps for the bridge.
+   *
+   * @param duration Number of cold-start steps. Pass 0 to disable.
+   */
+  public void setColdStartDuration(long duration) {
+    this.coldStartDuration = duration;
+  }
+
+  /**
    * Sets the bridge to use instead of building one.
    *
    * <p>This allows injecting the main simulation bridge so that external data
@@ -178,7 +189,8 @@ public class FutureBridgeGetter implements BridgeGetter {
         converter,
         prototypeStore,
         new JshdExternalGetter(inputOutputLayerRealized.getInputStrategy(), valueFactory),
-        new JshcConfigGetter(inputOutputLayerRealized.getInputStrategy(), valueFactory)
+        new JshcConfigGetter(inputOutputLayerRealized.getInputStrategy(), valueFactory),
+        coldStartDuration
     );
 
     builtBridge = Optional.of(newBridge);

@@ -49,6 +49,8 @@ java -jar joshsim-fat.jar run <script.josh> <SimulationName> [OPTIONS]
 - `--output-format <format>`: Output format (csv, netcdf, geotiff)
 - `-o, --output <path>`: Output file path
 - `--parallel`: Enable parallel patch processing
+- `--cold-start <N>`: Number of cold-start spin-up steps to prepend (default: 0). During cold-start steps, external data timesteps are randomly sampled from the available range in each `.jshd` file, ignoring the original time alignment. After cold-start, external data switches to real time-aligned access. Export is suppressed during cold-start steps. Each replicate gets independent random draws. Useful for bringing ecological simulations to quasi-equilibrium before the real simulation period.
+  - **Note on `meta.year` and cold-start**: The built-in `meta.year` returns the current step value (`bridge.getCurrentTimestep()`), which is naturally negative during cold-start (e.g., `-100, -99, ..., -1`) and crosses zero at the real-simulation boundary. **Scripts should reference `meta.year` rather than defining their own `year` attribute** (e.g., `year.init = 0; year.step = prior.year + 1`). User-defined `year` shadows the built-in and accumulates through cold-start, producing offsets in exports and breaking timing logic that compares to specific years (e.g., `fire.step = (current.year == fireYear)` would trigger during cold-start instead of at the intended real year).
 - `--suppress-info`: Suppress standard output messages
 - `--suppress-errors`: Suppress error messages
 
@@ -62,6 +64,9 @@ java -jar joshsim-fat.jar run simulation.josh Main --replicates 10 -o results.cs
 
 # Run with external data
 java -jar joshsim-fat.jar run simulation.josh Main --data ./data -o results.netcdf
+
+# Run with 100-year cold-start spin-up before the real simulation
+java -jar joshsim-fat.jar run simulation.josh Main --cold-start 100 -o results.csv
 ```
 
 #### `preprocess` - Data Preprocessing
@@ -305,6 +310,7 @@ java -jar joshsim-fat.jar batchRemote <script.josh | inputDir> <SimulationName> 
 - `--no-wait`: Dispatch and exit without polling for completion
 - `--poll-interval <seconds>`: Seconds between status polls (default: 5)
 - `--timeout <seconds>`: Maximum seconds to wait for completion (default: 3600)
+- `--cold-start <N>`: Number of cold-start spin-up steps (default: 0). Passed to the batch target. See `run` command for behavior details.
 
 **Examples:**
 ```bash
@@ -313,6 +319,9 @@ java -jar joshsim-fat.jar batchRemote simulation.josh Main --target=cloudrun-pro
 
 # Run 50 replicates on Kubernetes (one pod each), fire and forget
 java -jar joshsim-fat.jar batchRemote simulation.josh Main --target=nautilus --replicates=50 --no-wait
+
+# Run with 100-year cold-start spin-up on Kubernetes
+java -jar joshsim-fat.jar batchRemote simulation.josh Main --target=nautilus --replicates=10 --cold-start=100
 ```
 
 **Workflow:**

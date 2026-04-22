@@ -42,11 +42,12 @@ public class QueryCacheEngineBridge extends MinimalEngineBridge {
    * @param prototypeStore The set of prototypes to use to build new entities.
    * @param externalResourceGetter Strategy to get external resources.
    * @param configGetter Strategy to get configuration resources.
+   * @param coldStartDuration Number of cold-start spin-up steps. Pass 0 to disable.
    */
   public QueryCacheEngineBridge(ValueSupportFactory valueFactory,
         EngineGeometryFactory geometryFactory, MutableEntity simulation, Converter converter,
         EntityPrototypeStore prototypeStore, ExternalResourceGetter externalResourceGetter,
-        ConfigGetter configGetter) {
+        ConfigGetter configGetter, long coldStartDuration) {
 
     super(
         valueFactory,
@@ -55,7 +56,8 @@ public class QueryCacheEngineBridge extends MinimalEngineBridge {
         converter,
         prototypeStore,
         externalResourceGetter,
-        configGetter
+        configGetter,
+        coldStartDuration
     );
     cachedPatchesByGeometry = new ConcurrentHashMap<>();
   }
@@ -72,11 +74,12 @@ public class QueryCacheEngineBridge extends MinimalEngineBridge {
    * @param externalResourceGetter Strategy to get external resources.
    * @param configGetter Strategy to get configuration resources.
    * @param replicate The replicate to use for testing.
+   * @param coldStartDuration Number of cold-start spin-up steps. Pass 0 to disable.
    */
   QueryCacheEngineBridge(ValueSupportFactory valueFactory, EngineGeometryFactory geometryFactory,
         MutableEntity simulation, Converter converter, EntityPrototypeStore prototypeStore,
         ExternalResourceGetter externalResourceGetter, ConfigGetter configGetter,
-        Replicate replicate) {
+        Replicate replicate, long coldStartDuration) {
     super(
         valueFactory,
         geometryFactory,
@@ -85,7 +88,8 @@ public class QueryCacheEngineBridge extends MinimalEngineBridge {
         prototypeStore,
         externalResourceGetter,
         configGetter,
-        replicate
+        replicate,
+        coldStartDuration
     );
     cachedPatchesByGeometry = new ConcurrentHashMap<>();
   }

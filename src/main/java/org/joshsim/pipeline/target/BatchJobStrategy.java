@@ -82,6 +82,21 @@ public class BatchJobStrategy {
    * @throws Exception If staging, dispatch, or polling fails.
    */
   public JobStatus execute(File inputDir, String simulation, int replicates) throws Exception {
+    return execute(inputDir, simulation, replicates, 0);
+  }
+
+  /**
+   * Executes the full batch flow with cold-start support.
+   *
+   * @param inputDir Local directory containing simulation files to stage.
+   * @param simulation Name of the simulation to run.
+   * @param replicates Number of replicates to execute.
+   * @param coldStartSteps Number of cold-start spin-up steps (0 to disable).
+   * @return The final job status.
+   * @throws Exception If staging, dispatch, or polling fails.
+   */
+  public JobStatus execute(File inputDir, String simulation, int replicates,
+      long coldStartSteps) throws Exception {
     String jobId = UUID.randomUUID().toString();
     String minioPrefix = "batch-jobs/" + jobId + "/inputs/";
 
@@ -90,7 +105,7 @@ public class BatchJobStrategy {
     output.printInfo("Staging complete.");
 
     output.printInfo("Dispatching to target (" + replicates + " replicates)...");
-    target.dispatch(jobId, minioPrefix, simulation, replicates);
+    target.dispatch(jobId, minioPrefix, simulation, replicates, coldStartSteps);
     output.printInfo("Dispatched. Polling for completion...");
 
     return pollUntilTerminal(jobId);
@@ -106,6 +121,21 @@ public class BatchJobStrategy {
    * @throws Exception If staging or dispatch fails.
    */
   public String executeNoWait(File inputDir, String simulation, int replicates) throws Exception {
+    return executeNoWait(inputDir, simulation, replicates, 0);
+  }
+
+  /**
+   * Stages and dispatches with cold-start support without waiting.
+   *
+   * @param inputDir Local directory containing simulation files to stage.
+   * @param simulation Name of the simulation to run.
+   * @param replicates Number of replicates to execute.
+   * @param coldStartSteps Number of cold-start spin-up steps (0 to disable).
+   * @return The jobId for manual status tracking.
+   * @throws Exception If staging or dispatch fails.
+   */
+  public String executeNoWait(File inputDir, String simulation, int replicates,
+      long coldStartSteps) throws Exception {
     String jobId = UUID.randomUUID().toString();
     String minioPrefix = "batch-jobs/" + jobId + "/inputs/";
 
@@ -114,7 +144,7 @@ public class BatchJobStrategy {
     output.printInfo("Staging complete.");
 
     output.printInfo("Dispatching to target (" + replicates + " replicates)...");
-    target.dispatch(jobId, minioPrefix, simulation, replicates);
+    target.dispatch(jobId, minioPrefix, simulation, replicates, coldStartSteps);
     output.printInfo("Dispatched. Status path: batch-status/" + jobId + "/status.json");
 
     return jobId;

@@ -175,6 +175,14 @@ public class RunCommand implements Callable<Integer> {
   )
   private int csvPrecision = MapSerializeStrategy.DEFAULT_MAX_DECIMAL_PLACES;
 
+  @Option(
+      names = "--cold-start",
+      description = "Number of cold-start spin-up steps to prepend. During these steps, "
+                  + "external data timesteps are randomly sampled. Export is suppressed.",
+      defaultValue = "0"
+  )
+  private long coldStartSteps = 0;
+
   /**
    * Parses custom parameter command-line options.
    *
@@ -227,6 +235,10 @@ public class RunCommand implements Callable<Integer> {
     }
     if (replicates < 1) {
       output.printError("Number of replicates must be at least 1");
+      return 1;
+    }
+    if (coldStartSteps < 0) {
+      output.printError("--cold-start must be >= 0");
       return 1;
     }
 
@@ -346,7 +358,7 @@ public class RunCommand implements Callable<Integer> {
     }
 
     ProgressCalculator progressCalculator = new ProgressCalculator(
-        metadata.getTotalSteps(),
+        metadata.getTotalSteps() + coldStartSteps,
         jobs.size() * replicates // Total simulations = jobs × replicates
     );
 
@@ -468,7 +480,8 @@ public class RunCommand implements Callable<Integer> {
           }
         },
         serialPatches,
-        parsedOutputSteps
+        parsedOutputSteps,
+        coldStartSteps
     );
   }
 

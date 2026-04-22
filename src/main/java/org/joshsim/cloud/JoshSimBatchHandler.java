@@ -181,6 +181,8 @@ public class JoshSimBatchHandler implements HttpHandler {
       return Optional.of(apiKey);
     }
 
+    long coldStartSteps = parseColdStart(formData);
+
     MinioHandler statusMinio = initStatusMinio(jobId);
     String simulation = formData.getFirst("simulation").getValue();
     String statusPath = "batch-status/" + jobId + "/status.json";
@@ -189,7 +191,8 @@ public class JoshSimBatchHandler implements HttpHandler {
     String capturedApiKey = apiKey;
     CompletableFuture.runAsync(() -> {
       runBatchWithStatus(
-          statusMinio, jobId, simulation, workDir, replicates, statusPath, capturedApiKey
+          statusMinio, jobId, simulation, workDir, replicates, coldStartSteps,
+          statusPath, capturedApiKey
       );
     }, BATCH_EXECUTOR);
 
@@ -280,14 +283,30 @@ public class JoshSimBatchHandler implements HttpHandler {
     return value;
   }
 
+  /**
+   * Parses the coldStart form field. Returns 0 if not present.
+   */
+  private long parseColdStart(FormData formData) {
+    if (!formData.contains("coldStart")) {
+      return 0;
+    }
+    String raw = formData.getFirst("coldStart").getValue();
+    long value = Long.parseLong(raw);
+    if (value < 0) {
+      throw new IllegalArgumentException("coldStart must be >= 0, got: " + value);
+    }
+    return value;
+  }
+
   private void runBatchWithStatus(MinioHandler statusMinio, String jobId,
-      String simulation, File workDir, int replicates, String statusPath, String apiKey) {
+      String simulation, File workDir, int replicates, long coldStartSteps,
+      String statusPath, String apiKey) {
     writeStatus(statusMinio, statusPath, buildStatusJson(
         "running", jobId, "startedAt", Instant.now().toString()
     ));
 
     try {
-      executeBatchJob(jobId, simulation, workDir, replicates);
+      executeBatchJob(jobId, simulation, workDir, replicates, coldStartSteps);
 
       writeStatus(statusMinio, statusPath, buildStatusJson(
           "complete", jobId, "completedAt", Instant.now().toString()
@@ -321,7 +340,7 @@ public class JoshSimBatchHandler implements HttpHandler {
   }
 
   private void executeBatchJob(String jobId, String simulation, File workDir,
-      int replicates) throws Exception {
+      int replicates, long coldStartSteps) throws Exception {
     // Ensure JVM threading for parallel patch export
     CompatibilityLayerKeeper.set(new JvmCompatibilityLayer());
 
@@ -372,7 +391,8 @@ public class JoshSimBatchHandler implements HttpHandler {
           simulation,
           (step) -> { /* progress unused in batch mode */ },
           false,
-          Optional.empty()
+          Optional.empty(),
+          coldStartSteps
       );
     }
   }

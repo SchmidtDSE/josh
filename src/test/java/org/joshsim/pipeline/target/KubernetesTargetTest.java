@@ -110,7 +110,7 @@ class KubernetesTargetTest {
       throws Exception {
     KubernetesTarget target = buildTarget(config);
 
-    target.dispatch(JOB_ID, PREFIX, SIMULATION, 5);
+    target.dispatch(JOB_ID, PREFIX, SIMULATION, 5, 0);
 
     Job job = jobCaptor.getValue();
     assertNotNull(job);
@@ -127,7 +127,7 @@ class KubernetesTargetTest {
   void dispatchSetsContainerImage() throws Exception {
     KubernetesTarget target = buildTarget(config);
 
-    target.dispatch(JOB_ID, PREFIX, SIMULATION, 1);
+    target.dispatch(JOB_ID, PREFIX, SIMULATION, 1, 0);
 
     Job job = jobCaptor.getValue();
     Container container = getContainer(job);
@@ -138,7 +138,7 @@ class KubernetesTargetTest {
   void dispatchCreatesSecretWithMinioCreds() throws Exception {
     KubernetesTarget target = buildTarget(config);
 
-    target.dispatch(JOB_ID, PREFIX, SIMULATION, 1);
+    target.dispatch(JOB_ID, PREFIX, SIMULATION, 1, 0);
 
     Secret secret = secretCaptor.getValue();
     assertNotNull(secret);
@@ -163,7 +163,7 @@ class KubernetesTargetTest {
   void dispatchSetsSecretRefEnvVars() throws Exception {
     KubernetesTarget target = buildTarget(config);
 
-    target.dispatch(JOB_ID, PREFIX, SIMULATION, 1);
+    target.dispatch(JOB_ID, PREFIX, SIMULATION, 1, 0);
 
     Job job = jobCaptor.getValue();
     List<EnvVar> envVars = getContainer(job).getEnv();
@@ -187,7 +187,7 @@ class KubernetesTargetTest {
   void dispatchSetsPlainJobEnvVars() throws Exception {
     KubernetesTarget target = buildTarget(config);
 
-    target.dispatch(JOB_ID, PREFIX, SIMULATION, 1);
+    target.dispatch(JOB_ID, PREFIX, SIMULATION, 1, 0);
 
     Job job = jobCaptor.getValue();
     List<EnvVar> envVars = getContainer(job).getEnv();
@@ -208,7 +208,7 @@ class KubernetesTargetTest {
     config = buildConfig(10, 3600, resources);
 
     KubernetesTarget target = buildTarget(config);
-    target.dispatch(JOB_ID, PREFIX, SIMULATION, 1);
+    target.dispatch(JOB_ID, PREFIX, SIMULATION, 1, 0);
 
     Job job = jobCaptor.getValue();
     ResourceRequirements reqs =
@@ -230,7 +230,7 @@ class KubernetesTargetTest {
     config = buildConfig(10, 3600, null);
 
     KubernetesTarget target = buildTarget(config);
-    target.dispatch(JOB_ID, PREFIX, SIMULATION, 1);
+    target.dispatch(JOB_ID, PREFIX, SIMULATION, 1, 0);
 
     Job job = jobCaptor.getValue();
     ResourceRequirements reqs =
@@ -243,7 +243,7 @@ class KubernetesTargetTest {
     config = buildConfig(10, 3600, null);
 
     KubernetesTarget target = buildTarget(config);
-    target.dispatch(JOB_ID, PREFIX, SIMULATION, 3);
+    target.dispatch(JOB_ID, PREFIX, SIMULATION, 3, 0);
 
     Job job = jobCaptor.getValue();
     assertEquals(3, job.getSpec().getParallelism());
@@ -254,7 +254,7 @@ class KubernetesTargetTest {
   void dispatchJobNameFormat() throws Exception {
     KubernetesTarget target = buildTarget(config);
 
-    target.dispatch(JOB_ID, PREFIX, SIMULATION, 1);
+    target.dispatch(JOB_ID, PREFIX, SIMULATION, 1, 0);
 
     Job job = jobCaptor.getValue();
     assertEquals(
@@ -278,7 +278,7 @@ class KubernetesTargetTest {
     setField(config, "spot", true);
 
     KubernetesTarget target = buildTarget(config);
-    target.dispatch(JOB_ID, PREFIX, SIMULATION, 1);
+    target.dispatch(JOB_ID, PREFIX, SIMULATION, 1, 0);
 
     Job job = jobCaptor.getValue();
     Map<String, String> nodeSelector =
@@ -303,7 +303,7 @@ class KubernetesTargetTest {
     config = buildConfig(10, 3600, null);
 
     KubernetesTarget target = buildTarget(config);
-    target.dispatch(JOB_ID, PREFIX, SIMULATION, 1);
+    target.dispatch(JOB_ID, PREFIX, SIMULATION, 1, 0);
 
     Job job = jobCaptor.getValue();
     Map<String, String> nodeSelector =
@@ -321,7 +321,7 @@ class KubernetesTargetTest {
     setField(config, "ttlSecondsAfterFinished", 600);
 
     KubernetesTarget target = buildTarget(config);
-    target.dispatch(JOB_ID, PREFIX, SIMULATION, 1);
+    target.dispatch(JOB_ID, PREFIX, SIMULATION, 1, 0);
 
     Job job = jobCaptor.getValue();
     assertEquals(
@@ -334,7 +334,7 @@ class KubernetesTargetTest {
   void dispatchUsesEntrypointScript() throws Exception {
     KubernetesTarget target = buildTarget(config);
 
-    target.dispatch(JOB_ID, PREFIX, SIMULATION, 1);
+    target.dispatch(JOB_ID, PREFIX, SIMULATION, 1, 0);
 
     Job job = jobCaptor.getValue();
     Container container = getContainer(job);

@@ -40,7 +40,7 @@ class HttpBatchTargetTest {
 
     HttpBatchTarget target = new HttpBatchTarget("https://example.com", "test-key", mockClient);
 
-    assertDoesNotThrow(() -> target.dispatch("job-1", "batch-jobs/job-1/inputs/", "Main", 1));
+    assertDoesNotThrow(() -> target.dispatch("job-1", "batch-jobs/job-1/inputs/", "Main", 1, 0));
     verify(mockClient).send(any(HttpRequest.class), any(HttpResponse.BodyHandler.class));
   }
 
@@ -59,7 +59,7 @@ class HttpBatchTargetTest {
     HttpBatchTarget target = new HttpBatchTarget("https://example.com", "test-key", mockClient);
 
     RuntimeException ex = assertThrows(RuntimeException.class,
-        () -> target.dispatch("job-bad", "prefix/", "Main", 1));
+        () -> target.dispatch("job-bad", "prefix/", "Main", 1, 0));
     assertTrue(ex.getMessage().contains("HTTP 400"));
     assertTrue(ex.getMessage().contains("missing-fields"));
   }
@@ -77,7 +77,7 @@ class HttpBatchTargetTest {
     HttpBatchTarget target = new HttpBatchTarget("https://example.com", "test-key", mockClient);
 
     RuntimeException ex = assertThrows(RuntimeException.class,
-        () -> target.dispatch("job-err", "prefix/", "Main", 5));
+        () -> target.dispatch("job-err", "prefix/", "Main", 5, 0));
     assertTrue(ex.getMessage().contains("HTTP 500"));
   }
 
@@ -92,7 +92,7 @@ class HttpBatchTargetTest {
         .thenReturn(mockResponse);
 
     HttpBatchTarget target = new HttpBatchTarget("https://example.com", "key", mockClient);
-    target.dispatch("job-rep", "prefix/", "Main", 10);
+    target.dispatch("job-rep", "prefix/", "Main", 10, 0);
 
     // Verify the request was made (form body contains replicates, verified via mock interaction)
     verify(mockClient).send(any(HttpRequest.class), any(HttpResponse.BodyHandler.class));
@@ -118,6 +118,6 @@ class HttpBatchTargetTest {
         .thenReturn(mockResponse);
 
     HttpBatchTarget target = new HttpBatchTarget("https://example.com/", "key", mockClient);
-    assertDoesNotThrow(() -> target.dispatch("job-1", "prefix/", "Main", 1));
+    assertDoesNotThrow(() -> target.dispatch("job-1", "prefix/", "Main", 1, 0));
   }
 }

@@ -91,6 +91,32 @@ public class JoshSimFacadeUtil {
         EngineGeometryFactory geometryFactory, InputOutputLayer inputOutputLayer,
         JoshProgram program, String simulationName, SimulationStepCallback callback,
         boolean serialPatches, Optional<Set<Integer>> outputSteps) {
+    runSimulation(valueFactory, geometryFactory, inputOutputLayer, program, simulationName,
+        callback, serialPatches, outputSteps, 0);
+  }
+
+  /**
+   * Runs a simulation from the provided program with cold-start support.
+   *
+   * <p>Creates and executes a simulation using the provided program and simulation name.
+   * When coldStartDuration is greater than 0, the simulation runs extra spin-up steps where
+   * external data timesteps are randomly sampled. Export is suppressed during cold-start steps.</p>
+   *
+   * @param valueFactory Factory with which to build simulation engine values.
+   * @param geometryFactory Factory with which to build engine geometries.
+   * @param inputOutputLayer Layer to use for external file access.
+   * @param program The Josh program containing the simulation to run.
+   * @param simulationName The name of the simulation to execute from the program.
+   * @param callback A callback invoked after each simulation step.
+   * @param serialPatches If true, patches are processed serially.
+   * @param outputSteps Optional set of step numbers to export. If empty, all non-cold-start steps
+   *     are exported.
+   * @param coldStartDuration Number of cold-start spin-up steps. Pass 0 to disable.
+   */
+  public static void runSimulation(ValueSupportFactory valueFactory,
+        EngineGeometryFactory geometryFactory, InputOutputLayer inputOutputLayer,
+        JoshProgram program, String simulationName, SimulationStepCallback callback,
+        boolean serialPatches, Optional<Set<Integer>> outputSteps, long coldStartDuration) {
 
     MutableEntity simEntityRaw = program.getSimulations().getProtoype(simulationName).build();
     MutableEntity simEntity = new ShadowingEntity(valueFactory, simEntityRaw, simEntityRaw);
@@ -101,7 +127,8 @@ public class JoshSimFacadeUtil {
         program.getConverter(),
         program.getPrototypes(),
         new JshdExternalGetter(inputOutputLayer.getInputStrategy(), valueFactory),
-        new JshcConfigGetter(inputOutputLayer.getInputStrategy(), valueFactory)
+        new JshcConfigGetter(inputOutputLayer.getInputStrategy(), valueFactory),
+        coldStartDuration
     );
 
     // Inject the main simulation bridge into the program's bridge getter
@@ -132,6 +159,25 @@ public class JoshSimFacadeUtil {
     // Create incremental export callback if export configured
     Optional<PatchExportCallback> exportCallback = exportFacade.createIncrementalCallback();
 
+    // During cold-start steps, freeze patches for prior-state access but skip export.
+    // Wrap the callback so the stepper still gets frozen entities without writing output.
+    final long originalStartStep = bridge.getStartTimestep();
+    if (coldStartDuration > 0 && exportCallback.isPresent()) {
+      PatchExportCallback innerCallback = exportCallback.get();
+      exportCallback = Optional.of((patch, step) -> {
+        if (step >= originalStartStep) {
+          return innerCallback.exportPatch(patch, step);
+        }
+        // Cold-start: freeze only, no export
+        patch.lock();
+        try {
+          return patch.freeze();
+        } finally {
+          patch.unlock();
+        }
+      });
+    }
+
     // Pass callback to SimulationStepper
     SimulationStepper stepper = new SimulationStepper(bridge, exportCallback);
 
@@ -140,17 +186,20 @@ public class JoshSimFacadeUtil {
 
     while (!bridge.isComplete()) {
       long completedStep = stepper.perform(serialPatches);
+      boolean inColdStart = completedStep < bridge.getStartTimestep();
 
-      if (outputSteps.isEmpty() || outputSteps.get().contains((int) completedStep)) {
-        TimeStep completedTimeStep = bridge.getReplicate()
-            .getTimeStep(completedStep)
-            .orElseThrow();
+      if (!inColdStart) {
+        if (outputSteps.isEmpty() || outputSteps.get().contains((int) completedStep)) {
+          TimeStep completedTimeStep = bridge.getReplicate()
+              .getTimeStep(completedStep)
+              .orElseThrow();
 
-        boolean inIncrementalMode = exportCallback.isPresent();
-        if (inIncrementalMode) {
-          exportFacade.writeMetaOnly(completedTimeStep);
-        } else {
-          exportFacade.write(completedTimeStep);
+          boolean inIncrementalMode = exportCallback.isPresent();
+          if (inIncrementalMode) {
+            exportFacade.writeMetaOnly(completedTimeStep);
+          } else {
+            exportFacade.write(completedTimeStep);
+          }
         }
       }
 

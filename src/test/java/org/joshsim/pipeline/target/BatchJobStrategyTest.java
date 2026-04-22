@@ -69,7 +69,7 @@ class BatchJobStrategyTest {
 
     assertEquals(JobStatus.State.COMPLETE, result.getState());
     verify(minioHandler).uploadFile(any(File.class), anyString());
-    verify(target).dispatch(anyString(), anyString(), eq("Test"), eq(1));
+    verify(target).dispatch(anyString(), anyString(), eq("Test"), eq(1), eq(0L));
   }
 
   @Test
@@ -83,7 +83,7 @@ class BatchJobStrategyTest {
 
     strategy.execute(tempDir, "Main", 10);
 
-    verify(target).dispatch(anyString(), anyString(), eq("Main"), eq(10));
+    verify(target).dispatch(anyString(), anyString(), eq("Main"), eq(10), eq(0L));
   }
 
   @Test
@@ -126,7 +126,7 @@ class BatchJobStrategyTest {
     String jobId = strategy.executeNoWait(tempDir, "Test", 5);
 
     assertTrue(jobId != null && !jobId.isEmpty());
-    verify(target).dispatch(anyString(), anyString(), eq("Test"), eq(5));
+    verify(target).dispatch(anyString(), anyString(), eq("Test"), eq(5), eq(0L));
     verify(poller, never()).poll(anyString());
   }
 
@@ -144,7 +144,7 @@ class BatchJobStrategyTest {
   @Test
   void executeThrowsOnDispatchFailure() throws Exception {
     doThrow(new RuntimeException("Connection refused"))
-        .when(target).dispatch(anyString(), anyString(), anyString(), eq(1));
+        .when(target).dispatch(anyString(), anyString(), anyString(), eq(1), eq(0L));
 
     BatchJobStrategy strategy = new BatchJobStrategy(
         target, poller, minioHandler, output, 10, 60000
