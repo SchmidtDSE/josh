@@ -381,6 +381,7 @@ public class MinioHandler {
       case STAGING -> fields.put("startedAt", now);
       case COMPLETE -> fields.put("completedAt", now);
       case ERROR -> fields.put("failedAt", now);
+      default -> throw new IllegalStateException("Unhandled StagedState: " + state);
     }
     if (state == StagedState.ERROR && messageOrNull != null) {
       fields.put("message", messageOrNull);
