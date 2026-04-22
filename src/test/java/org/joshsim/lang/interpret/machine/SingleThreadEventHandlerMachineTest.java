@@ -796,7 +796,7 @@ public class SingleThreadEventHandlerMachineTest {
 
     assertTrue(value.compareTo(BigDecimal.ZERO) >= 0);
     assertTrue(value.compareTo(new BigDecimal("100")) <= 0);
-    assertEquals(0, value.stripTrailingZeros().scale());
+    assertTrue(value.stripTrailingZeros().scale() <= 0);
   }
 
   @Test
