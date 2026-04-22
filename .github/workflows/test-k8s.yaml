@@ -136,9 +136,10 @@ jobs:
       - name: Run batchRemote end-to-end
         run: |
           echo "Running batchRemote with K8s target..."
-          java -jar build/libs/joshsim-fat.jar batchRemote \
-            examples/test/k8s/ K8sTest \
+          java -jar build/libs/joshsim-fat.jar batchRemote K8sTest \
             --target=ci-k8s \
+            --minio-prefix=batch-jobs/k8s-e2e/inputs/ \
+            --stage-from-local-dir=examples/test/k8s/ \
             --replicates=2 \
             --poll-interval=5 \
             --timeout=300
@@ -186,9 +187,10 @@ jobs:
 
           # batchRemote should fail — capture exit code through tee
           EXIT_CODE=0
-          java -jar build/libs/joshsim-fat.jar batchRemote \
-            examples/test/k8s/ K8sTest \
+          java -jar build/libs/joshsim-fat.jar batchRemote K8sTest \
             --target=ci-k8s-bad-image \
+            --minio-prefix=batch-jobs/k8s-bad-image/inputs/ \
+            --stage-from-local-dir=examples/test/k8s/ \
             --replicates=1 \
             --poll-interval=10 \
             --timeout=120 2>&1 | tee /tmp/bad-image-output.txt || EXIT_CODE=$?
