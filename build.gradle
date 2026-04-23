@@ -44,6 +44,10 @@ dependencies {
   // Apache Commons Collections for LRUMap
   implementation("org.apache.commons:commons-collections4:4.5.0")
 
+  // Apache Commons Compress + XZ library for LZMA2 compression (jshdz format, JVM only)
+  implementation("org.apache.commons:commons-compress:1.27.1")
+  implementation("org.tukaani:xz:1.10")
+
   // Apache Commons CSV for CSV handling
   implementation("org.apache.commons:commons-csv:1.10.0")
 

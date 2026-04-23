@@ -7,6 +7,7 @@
 package org.joshsim.command;
 
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.io.PrintWriter;
@@ -15,8 +16,10 @@ import java.util.Optional;
 import java.util.concurrent.Callable;
 import org.joshsim.engine.value.engine.ValueSupportFactory;
 import org.joshsim.engine.value.type.EngineValue;
-import org.joshsim.geo.external.readers.JshdExternalDataReader;
+import org.joshsim.precompute.BinaryGridSerializationStrategy;
 import org.joshsim.precompute.DoublePrecomputedGrid;
+import org.joshsim.precompute.GridSerializationStrategy;
+import org.joshsim.precompute.XzGridSerializationStrategy;
 import org.joshsim.util.OutputOptions;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Mixin;
@@ -50,7 +53,7 @@ import picocli.CommandLine.Parameters;
  * includes all grid cells across all timesteps with columns: x, y, timestep, value. Grid metadata
  * (bounds, dimensions, units) is printed to stdout.
  *
- * @see org.joshsim.geo.external.readers.JshdExternalDataReader
+ * @see org.joshsim.precompute.XzGridSerializationStrategy
  * @see org.joshsim.precompute.DoublePrecomputedGrid
  */
 @Command(
@@ -95,9 +98,10 @@ public class InspectJshdCommand implements Callable<Integer> {
       return 1;
     }
 
-    // Validate file is a JSHD file
-    if (!jshdFile.getName().toLowerCase().endsWith(".jshd")) {
-      output.printError("File is not a JSHD file: " + jshdFile.getName());
+    // Validate file is a JSHD or JSHDZ file
+    String lowerName = jshdFile.getName().toLowerCase();
+    if (!lowerName.endsWith(".jshd") && !lowerName.endsWith(".jshdz")) {
+      output.printError("File is not a JSHD or JSHDZ file: " + jshdFile.getName());
       return 2;
     }
 
@@ -108,18 +112,28 @@ public class InspectJshdCommand implements Callable<Integer> {
     }
   }
 
-  private Integer exportToCsv() {
+  private DoublePrecomputedGrid loadGrid() throws IOException {
     ValueSupportFactory valueFactory = new ValueSupportFactory();
-    try (JshdExternalDataReader reader = new JshdExternalDataReader(valueFactory)) {
-      reader.open(jshdFile.getAbsolutePath());
+    boolean compressed = jshdFile.getName().toLowerCase().endsWith(".jshdz");
+    GridSerializationStrategy strategy = compressed
+        ? new XzGridSerializationStrategy(new BinaryGridSerializationStrategy(valueFactory))
+        : new BinaryGridSerializationStrategy(valueFactory);
+    try (FileInputStream fis = new FileInputStream(jshdFile)) {
+      return (DoublePrecomputedGrid) strategy.deserialize(fis);
+    }
+  }
 
-      if (!reader.getVariableNames().contains(variable)) {
-        output.printError("Variable '" + variable + "' not found in JSHD file. "
-            + "Available variables: " + reader.getVariableNames());
+  private static final String JSHD_VARIABLE = "data";
+
+  private Integer exportToCsv() {
+    try {
+      DoublePrecomputedGrid grid = loadGrid();
+
+      if (!variable.equals(JSHD_VARIABLE)) {
+        output.printError("Variable '" + variable + "' not found in JSHD/JSHDZ file. "
+            + "Available variables: [" + JSHD_VARIABLE + "]");
         return 6;
       }
-
-      DoublePrecomputedGrid grid = reader.getGrid();
 
       // Print metadata as JSON to stdout
       StringBuilder json = new StringBuilder();
@@ -219,39 +233,40 @@ public class InspectJshdCommand implements Callable<Integer> {
       return 5;
     }
 
-    // Create JSHD reader and attempt to read the value
-    ValueSupportFactory valueFactory = new ValueSupportFactory();
-    try (JshdExternalDataReader reader = new JshdExternalDataReader(valueFactory)) {
-      reader.open(jshdFile.getAbsolutePath());
+    try {
+      DoublePrecomputedGrid grid = loadGrid();
 
-      // Validate variable name exists
-      if (!reader.getVariableNames().contains(variable)) {
-        output.printError("Variable '" + variable + "' not found in JSHD file. "
-            + "Available variables: " + reader.getVariableNames());
+      if (!variable.equals(JSHD_VARIABLE)) {
+        output.printError("Variable '" + variable + "' not found in JSHD/JSHDZ file. "
+            + "Available variables: [" + JSHD_VARIABLE + "]");
         return 6;
       }
 
-      // Read the value at the specified coordinates and timestep
-      Optional<EngineValue> value = reader.readValueAt(variable, x, y, (int) timePoint);
+      long gridX = x.longValue();
+      long gridY = y.longValue();
+      long gridTimeStep = timePoint + grid.getMinTimestep();
 
-      if (value.isPresent()) {
-        EngineValue engineValue = value.get();
-        String unitsStr = engineValue.getUnits().toString();
+      boolean outOfBounds = gridX < grid.getMinX() || gridX > grid.getMaxX()
+          || gridY < grid.getMinY() || gridY > grid.getMaxY()
+          || gridTimeStep < grid.getMinTimestep() || gridTimeStep > grid.getMaxTimestep();
 
-        // Print the value with units
-        output.printInfo(String.format("Value at (%s, %s, %d): %s %s",
-            xcoordinate, ycoordinate, timePoint,
-            engineValue.getAsDecimal().toString(), unitsStr));
-        return 0;
-      } else {
+      if (outOfBounds) {
         output.printError(String.format("No value found at coordinates (%s, %s) "
             + "for timestep %d in variable '%s'",
             xcoordinate, ycoordinate, timePoint, variable));
         return 7;
       }
 
+      EngineValue engineValue = grid.getAt(gridX, gridY, gridTimeStep);
+      String unitsStr = engineValue.getUnits().toString();
+
+      output.printInfo(String.format("Value at (%s, %s, %d): %s %s",
+          xcoordinate, ycoordinate, timePoint,
+          engineValue.getAsDecimal().toString(), unitsStr));
+      return 0;
+
     } catch (Exception e) {
-      output.printError("Error inspecting JSHD file: " + e.getMessage());
+      output.printError("Error inspecting JSHD/JSHDZ file: " + e.getMessage());
       return 8;
     }
   }

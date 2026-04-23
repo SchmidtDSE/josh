@@ -47,6 +47,9 @@ import org.joshsim.pipeline.job.JoshJob;
 import org.joshsim.pipeline.job.JoshJobBuilder;
 import org.joshsim.pipeline.job.config.JobVariationParser;
 import org.joshsim.pipeline.job.config.TemplateStringRenderer;
+import org.joshsim.precompute.JshdExternalGetter;
+import org.joshsim.precompute.JshdzExternalGetter;
+import org.joshsim.precompute.MultiFormatExternalGetter;
 import org.joshsim.util.MinioOptions;
 import org.joshsim.util.OutputOptions;
 import org.joshsim.util.OutputStepsParser;
@@ -455,10 +458,16 @@ public class RunCommand implements Callable<Integer> {
           .build();
     }
 
+    MultiFormatExternalGetter externalGetter = new MultiFormatExternalGetter(
+        new JshdExternalGetter(inputStrategy, valueFactory),
+        new JshdzExternalGetter(inputStrategy, valueFactory)
+    );
+
     JoshSimFacadeUtil.runSimulation(
         valueFactory,
         geometryFactory,
         inputOutputLayer,
+        externalGetter,
         program,
         simulation,
         (step) -> {
