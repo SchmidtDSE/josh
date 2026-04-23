@@ -84,9 +84,6 @@ class XzGridSerializationStrategyTest {
 
   @Test
   void testCompressedSmallerThanUncompressed() {
-    BinaryGridSerializationStrategy binary = new BinaryGridSerializationStrategy(factory);
-    XzGridSerializationStrategy xz = new XzGridSerializationStrategy(binary);
-
     // Use a larger grid to ensure compression has something to work with
     PatchBuilderExtents extents = mock(PatchBuilderExtents.class);
     when(extents.getTopLeftX()).thenReturn(BigDecimal.ZERO);
@@ -99,8 +96,11 @@ class XzGridSerializationStrategyTest {
         factory, extents, 0L, 9L, Units.of("count"), values
     );
 
+    BinaryGridSerializationStrategy binary = new BinaryGridSerializationStrategy(factory);
     ByteArrayOutputStream binaryOut = new ByteArrayOutputStream();
     binary.serialize(largeGrid, binaryOut);
+
+    XzGridSerializationStrategy xz = new XzGridSerializationStrategy(binary);
 
     ByteArrayOutputStream xzOut = new ByteArrayOutputStream();
     xz.serialize(largeGrid, xzOut);
