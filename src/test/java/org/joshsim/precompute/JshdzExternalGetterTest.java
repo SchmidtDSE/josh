@@ -21,9 +21,9 @@ import org.mockito.junit.jupiter.MockitoExtension;
 
 
 @ExtendWith(MockitoExtension.class)
-class JshdZExternalGetterTest {
+class JshdzExternalGetterTest {
 
-  private JshdZExternalGetter getter;
+  private JshdzExternalGetter getter;
   private ValueSupportFactory factory;
 
   @Mock
@@ -32,7 +32,7 @@ class JshdZExternalGetterTest {
   @BeforeEach
   void setUp() {
     factory = new ValueSupportFactory();
-    getter = new JshdZExternalGetter(mockInputStrategy, factory);
+    getter = new JshdzExternalGetter(mockInputStrategy, factory);
   }
 
   @Test

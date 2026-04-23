@@ -19,7 +19,7 @@ import org.joshsim.lang.io.InputGetterStrategy;
  * <p>Mirrors {@link JshdExternalGetter} but decompresses XZ-wrapped {@code .jshdz} files
  * before parsing. Only usable on the JVM; not compiled to WebAssembly via TeaVM.</p>
  */
-public class JshdZExternalGetter implements ExternalResourceGetter {
+public class JshdzExternalGetter implements ExternalResourceGetter {
 
   private final InputGetterStrategy inputStrategy;
   private final ValueSupportFactory valueFactory;
@@ -30,7 +30,7 @@ public class JshdZExternalGetter implements ExternalResourceGetter {
    * @param inputStrategy The strategy to use in loading files from which jshdz will be parsed.
    * @param valueFactory The factory to use in making new EngineValues.
    */
-  public JshdZExternalGetter(InputGetterStrategy inputStrategy, ValueSupportFactory valueFactory) {
+  public JshdzExternalGetter(InputGetterStrategy inputStrategy, ValueSupportFactory valueFactory) {
     this.inputStrategy = inputStrategy;
     this.valueFactory = valueFactory;
   }
