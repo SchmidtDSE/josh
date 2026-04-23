@@ -198,7 +198,7 @@ public class InspectJshdCommandTest {
     assertEquals(2, result);
 
     String output = errContent.toString();
-    assertEquals("File is not a JSHD file: test.txt\n", output);
+    assertEquals("File is not a JSHD or JSHDZ file: test.txt\n", output);
   }
 
   @Test
@@ -262,7 +262,7 @@ public class InspectJshdCommandTest {
     assertEquals(6, result);
 
     String output = errContent.toString();
-    assertEquals("Variable 'nonexistent_variable' not found in JSHD file. "
+    assertEquals("Variable 'nonexistent_variable' not found in JSHD/JSHDZ file. "
         + "Available variables: [data]\n", output);
   }
 
@@ -371,7 +371,7 @@ public class InspectJshdCommandTest {
 
     String output = errContent.toString();
     // Should contain error message about inspecting JSHD file
-    assertTrue(output.contains("Error inspecting JSHD file:"));
+    assertTrue(output.contains("Error inspecting JSHD/JSHDZ file:"));
   }
 
   @Test

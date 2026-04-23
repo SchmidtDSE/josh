@@ -14,6 +14,7 @@ import org.joshsim.engine.geometry.EngineGeometryFactory;
 import org.joshsim.engine.simulation.TimeStep;
 import org.joshsim.engine.value.engine.ValueSupportFactory;
 import org.joshsim.lang.bridge.EngineBridge;
+import org.joshsim.lang.bridge.ExternalResourceGetter;
 import org.joshsim.lang.bridge.PatchExportCallback;
 import org.joshsim.lang.bridge.QueryCacheEngineBridge;
 import org.joshsim.lang.bridge.ShadowingEntity;
@@ -91,6 +92,42 @@ public class JoshSimFacadeUtil {
         EngineGeometryFactory geometryFactory, InputOutputLayer inputOutputLayer,
         JoshProgram program, String simulationName, SimulationStepCallback callback,
         boolean serialPatches, Optional<Set<Integer>> outputSteps) {
+    runSimulation(
+        valueFactory,
+        geometryFactory,
+        inputOutputLayer,
+        new JshdExternalGetter(inputOutputLayer.getInputStrategy(), valueFactory),
+        program,
+        simulationName,
+        callback,
+        serialPatches,
+        outputSteps
+    );
+  }
+
+  /**
+   * Runs a simulation with an explicit external resource getter.
+   *
+   * <p>Accepts a caller-supplied {@link ExternalResourceGetter} so that JVM code paths can pass
+   * a multi-format getter (e.g. one that supports both {@code .jshd} and {@code .jshdz}).
+   * TeaVM code paths should use the {@code InputOutputLayer} overload above, which always
+   * creates a {@link JshdExternalGetter} internally and is safe to compile to WebAssembly.</p>
+   *
+   * @param valueFactory Factory with which to build simulation engine values.
+   * @param geometryFactory Factory with which to build engine geometries.
+   * @param inputOutputLayer Layer to use for export and debug output.
+   * @param externalResourceGetter Getter used to resolve external grid resources.
+   * @param program The Josh program containing the simulation to run.
+   * @param simulationName The name of the simulation to execute.
+   * @param callback A callback invoked after each simulation step.
+   * @param serialPatches If true, patches are processed serially; otherwise in parallel.
+   * @param outputSteps Optional set of step numbers to export.
+   */
+  public static void runSimulation(ValueSupportFactory valueFactory,
+        EngineGeometryFactory geometryFactory, InputOutputLayer inputOutputLayer,
+        ExternalResourceGetter externalResourceGetter,
+        JoshProgram program, String simulationName, SimulationStepCallback callback,
+        boolean serialPatches, Optional<Set<Integer>> outputSteps) {
 
     MutableEntity simEntityRaw = program.getSimulations().getProtoype(simulationName).build();
     MutableEntity simEntity = new ShadowingEntity(valueFactory, simEntityRaw, simEntityRaw);
@@ -100,7 +137,7 @@ public class JoshSimFacadeUtil {
         simEntity,
         program.getConverter(),
         program.getPrototypes(),
-        new JshdExternalGetter(inputOutputLayer.getInputStrategy(), valueFactory),
+        externalResourceGetter,
         new JshcConfigGetter(inputOutputLayer.getInputStrategy(), valueFactory)
     );
 

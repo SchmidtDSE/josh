@@ -52,9 +52,11 @@ import org.joshsim.precompute.BinaryGridSerializationStrategy;
 import org.joshsim.precompute.DataGridLayer;
 import org.joshsim.precompute.ExtentsTransformer;
 import org.joshsim.precompute.GridCombiner;
+import org.joshsim.precompute.GridSerializationStrategy;
 import org.joshsim.precompute.JshdExternalGetter;
 import org.joshsim.precompute.PatchKeyConverter;
 import org.joshsim.precompute.StreamToPrecomputedGridUtil;
+import org.joshsim.precompute.XzGridSerializationStrategy;
 import org.joshsim.util.OutputOptions;
 import org.opengis.referencing.crs.CoordinateReferenceSystem;
 
@@ -308,12 +310,14 @@ public class PreprocessUtil {
         parsedDefaultValue
     );
 
+    boolean useCompression = outputFile.getName().endsWith(".jshdz");
+
     // If amending, combine with existing grid
     DataGridLayer finalGrid = grid;
     if (options.isAmend() && outputFile.exists()) {
-      BinaryGridSerializationStrategy deserializer = new BinaryGridSerializationStrategy(
-          valueFactory
-      );
+      GridSerializationStrategy deserializer = useCompression
+          ? new XzGridSerializationStrategy(new BinaryGridSerializationStrategy(valueFactory))
+          : new BinaryGridSerializationStrategy(valueFactory);
       try (FileInputStream inputStream = new FileInputStream(outputFile)) {
         DataGridLayer existingGrid = deserializer.deserialize(inputStream);
         GridCombiner combiner = new GridCombiner(valueFactory, geometryFactory);
@@ -324,9 +328,9 @@ public class PreprocessUtil {
     }
 
     // Serialize to binary file
-    BinaryGridSerializationStrategy serializer = new BinaryGridSerializationStrategy(
-        valueFactory
-    );
+    GridSerializationStrategy serializer = useCompression
+        ? new XzGridSerializationStrategy(new BinaryGridSerializationStrategy(valueFactory))
+        : new BinaryGridSerializationStrategy(valueFactory);
     try (FileOutputStream outputStream = new FileOutputStream(outputFile)) {
       serializer.serialize(finalGrid, outputStream);
       outputStream.flush();
