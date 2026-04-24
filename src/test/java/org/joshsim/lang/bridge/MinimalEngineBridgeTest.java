@@ -193,8 +193,10 @@ public class MinimalEngineBridgeTest {
   }
 
   @Test
-  void testGetExternalWithExtensionHandling() {
-    // Setup
+  void testGetExternalPassesNameUnchangedToResourceGetter() {
+    // The bridge no longer synthesizes .jshd; extension resolution is the resource getter's
+    // responsibility (MultiFormatExternalGetter probes both .jshdz and .jshd for bare names;
+    // JshdExternalGetter synthesizes .jshd when used alone on the TeaVM path).
     ExternalResourceGetter mockExternalGetter = mock(ExternalResourceGetter.class);
     DataGridLayer mockLayer = mock(DataGridLayer.class);
     ValueSupportFactory engineValueFactory = new ValueSupportFactory();
@@ -202,7 +204,7 @@ public class MinimalEngineBridgeTest {
     GeoKey mockKey = mock(GeoKey.class);
 
     when(mockLayer.getAt(mockKey, 0L)).thenReturn(mockValue);
-    when(mockExternalGetter.getResource("Precipitation.jshd")).thenReturn(mockLayer);
+    when(mockExternalGetter.getResource("Precipitation")).thenReturn(mockLayer);
 
     EngineBridge bridgeWithExternal = new MinimalEngineBridge(
         new ValueSupportFactory(),
@@ -215,12 +217,10 @@ public class MinimalEngineBridgeTest {
         mockReplicate
     );
 
-    // Execute - note: Josh code uses "external Precipitation" without extension
     EngineValue result = bridgeWithExternal.getExternal(mockKey, "Precipitation", 0L);
 
-    // Verify - bridge should append .jshd before calling getter
     assertEquals(10.0, result.getAsDouble(), 0.001);
-    verify(mockExternalGetter).getResource("Precipitation.jshd");
+    verify(mockExternalGetter).getResource("Precipitation");
   }
 
   private void expectQuery(Query query, List<Patch> result) {

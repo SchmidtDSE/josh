@@ -192,9 +192,8 @@ public class MinimalEngineBridge implements EngineBridge {
 
   @Override
   public EngineValue getExternal(GeoKey key, String name, long step) {
-    String fileName = name.endsWith(".jshd") ? name : name + ".jshd";
     DataGridLayer layer = externalData.computeIfAbsent(name,
-        k -> externalResourceGetter.getResource(fileName));
+        k -> externalResourceGetter.getResource(name));
     return layer.getAt(key, step);
   }
 

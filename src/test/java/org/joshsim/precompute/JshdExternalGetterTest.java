@@ -1,7 +1,6 @@
 package org.joshsim.precompute;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.Mockito.when;
 
 import java.io.ByteArrayInputStream;
@@ -66,16 +65,24 @@ class JshdExternalGetterTest {
   }
 
   @Test
-  void testGetResourceWithInvalidExtension() {
-    assertThrows(IllegalArgumentException.class, () -> {
-      getter.getResource("test.txt");
-    });
-  }
+  void testGetResourceBareNameSynthesizesExtension() throws IOException {
+    PatchBuilderExtentsBuilder extentsBuilder = new PatchBuilderExtentsBuilder();
+    extentsBuilder.setTopLeftX(BigDecimal.ZERO);
+    extentsBuilder.setTopLeftY(BigDecimal.ZERO);
+    extentsBuilder.setBottomRightX(BigDecimal.TWO);
+    extentsBuilder.setBottomRightY(BigDecimal.TWO);
+    PatchBuilderExtents extents = extentsBuilder.build();
+    DoublePrecomputedGrid originalGrid = new DoublePrecomputedGrid(
+        factory, extents, 0L, 2L, Units.of("meters"), new double[3][3][3]
+    );
+    byte[] gridBytes = JshdUtil.serializeToBytes(originalGrid);
 
-  @Test
-  void testGetResourceWithoutExtension() {
-    assertThrows(IllegalArgumentException.class, () -> {
-      getter.getResource("test");
-    });
+    // Bare name "test" should load "test.jshd" on the underlying input strategy.
+    when(mockInputStrategy.open("test.jshd"))
+        .thenReturn(new ByteArrayInputStream(gridBytes));
+
+    DoublePrecomputedGrid result = (DoublePrecomputedGrid) getter.getResource("test");
+
+    assertEquals(originalGrid.getMinTimestep(), result.getMinTimestep());
   }
 }
