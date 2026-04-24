@@ -54,6 +54,8 @@ import org.joshsim.precompute.ExtentsTransformer;
 import org.joshsim.precompute.GridCombiner;
 import org.joshsim.precompute.GridSerializationStrategy;
 import org.joshsim.precompute.JshdExternalGetter;
+import org.joshsim.precompute.JshdzExternalGetter;
+import org.joshsim.precompute.MultiFormatExternalGetter;
 import org.joshsim.precompute.PatchKeyConverter;
 import org.joshsim.precompute.StreamToPrecomputedGridUtil;
 import org.joshsim.precompute.XzGridSerializationStrategy;
@@ -250,7 +252,10 @@ public class PreprocessUtil {
         simEntity,
         program.getConverter(),
         program.getPrototypes(),
-        new JshdExternalGetter(inputStrategy, valueFactory),
+        new MultiFormatExternalGetter(
+            new JshdExternalGetter(inputStrategy, valueFactory),
+            new JshdzExternalGetter(inputStrategy, valueFactory)
+        ),
         new JshcConfigGetter(inputStrategy, valueFactory)
     );
     GridFromSimFactory gridFactory = new GridFromSimFactory(bridge);
