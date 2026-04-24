@@ -326,11 +326,15 @@ jobs:
           end organism
           JOSH
 
-          # Run batchRemote with wait
+          # Stage inputs first, then dispatch
+          java -jar build/libs/joshsim-fat.jar stageToMinio \
+            --input-dir=/tmp/batch-e2e-test \
+            --prefix=batch-jobs/http-e2e/inputs/
+
           java -jar build/libs/joshsim-fat.jar batchRemote E2ETest \
             --target=ci-local \
             --minio-prefix=batch-jobs/http-e2e/inputs/ \
-            --stage-from-local-dir=/tmp/batch-e2e-test \
+            --require-prestaged \
             --replicates=1 \
             --poll-interval=2 \
             --timeout=120
