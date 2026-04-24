@@ -10,6 +10,7 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.Callable;
@@ -200,8 +201,9 @@ public class PreprocessBatchCommand implements Callable<Integer> {
 
       // Dispatch
       output.printInfo("Dispatching to target...");
+      final String relativeDataFile = resolveDataFileRelativeToInputDir(dataFile, inputDir);
       final PreprocessParams params = new PreprocessParams(
-          dataFile, variable, units, outputFile.getName(),
+          relativeDataFile, variable, units, outputFile.getName(),
           crs, horizCoordName, vertCoordName, timeDim,
           timestep.isBlank() ? null : timestep,
           defaultValue, parallel, amend
@@ -236,6 +238,37 @@ public class PreprocessBatchCommand implements Callable<Integer> {
       output.printError("preprocessBatch failed: " + e.getMessage());
       return TARGET_ERROR_CODE;
     }
+  }
+
+  /**
+   * Resolves {@code dataFile} to a path relative to {@code inputDir}.
+   *
+   * <p>{@link PreprocessParams#getDataFile()} is documented as "filename within workDir" and is
+   * propagated into the pod entrypoint as {@code $WORK_DIR/$JOSH_DATA_FILE}. Callers that pass
+   * an absolute path under {@code inputDir} (e.g. clients using {@code Path.resolve()} for all
+   * arguments) would otherwise produce a broken concatenated path inside the pod.</p>
+   *
+   * @param dataFile User-supplied data file argument: either a relative path, or an absolute path
+   *     under {@code inputDir}.
+   * @param inputDir The input directory being staged to MinIO.
+   * @return The path relative to {@code inputDir}, suitable for {@link PreprocessParams}.
+   * @throws IllegalArgumentException if {@code dataFile} is absolute and not under
+   *     {@code inputDir}.
+   */
+  static String resolveDataFileRelativeToInputDir(String dataFile, File inputDir) {
+    Path dataFilePath = Paths.get(dataFile);
+    if (!dataFilePath.isAbsolute()) {
+      return dataFile;
+    }
+    Path inputDirPath = inputDir.toPath().toAbsolutePath().normalize();
+    Path normalizedDataFile = dataFilePath.normalize();
+    if (!normalizedDataFile.startsWith(inputDirPath)) {
+      throw new IllegalArgumentException(
+          "dataFile '" + dataFile + "' is outside input directory '" + inputDir + "'. "
+          + "Data files must live under the input directory for batch dispatch."
+      );
+    }
+    return inputDirPath.relativize(normalizedDataFile).toString();
   }
 
   private void stageDirectory(MinioHandler minioHandler, File inputDir, String prefix)
