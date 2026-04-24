@@ -8,7 +8,6 @@ package org.joshsim.command;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
-import java.io.File;
 import java.io.IOException;
 import java.util.Optional;
 import java.util.concurrent.Callable;
@@ -35,16 +34,14 @@ import picocli.CommandLine.Parameters;
 /**
  * Dispatches a batch simulation to a remote compute target against a MinIO prefix.
  *
- * <p>Three modes:</p>
+ * <p>Two modes:</p>
  * <ol>
- *   <li><b>Stage-and-dispatch</b> ({@code --stage-from-local-dir}): upload the local directory
- *   to {@code --minio-prefix} (writing a {@code .josh-staged.json} sentinel), then dispatch.
- *   </li>
- *   <li><b>Trust-the-prefix</b> (no staging flag): read the sentinel; warn if absent (manual
- *   upload case), fail if in-progress or errored, proceed if complete.</li>
+ *   <li><b>Trust-the-prefix</b> (default): read the {@code .josh-staged.json} sentinel at
+ *   {@code --minio-prefix}; warn if absent (manual upload case), fail if in-progress or errored,
+ *   proceed if complete.</li>
  *   <li><b>Strict</b> ({@code --require-prestaged}): fail fast unless the sentinel exists and
  *   reports {@code complete}. Intended for shared/multi-dispatch workflows where staging is
- *   a separate upstream step.</li>
+ *   a separate upstream step (via {@code stageToMinio}).</li>
  * </ol>
  *
  * <p>Supports both HTTP and Kubernetes target types; the target profile determines
@@ -58,7 +55,6 @@ public class BatchRemoteCommand implements Callable<Integer> {
 
   private static final int TARGET_ERROR_CODE = 100;
   private static final int DISPATCH_ERROR_CODE = 101;
-  private static final int USAGE_ERROR_CODE = 102;
   private static final int STAGING_ERROR_CODE = 103;
   private static final ObjectMapper MAPPER = new ObjectMapper();
 
@@ -80,16 +76,8 @@ public class BatchRemoteCommand implements Callable<Integer> {
   private String minioPrefix;
 
   @Option(
-      names = "--stage-from-local-dir",
-      description = "Upload this local directory to --minio-prefix before dispatching. "
-          + "Writes a .josh-staged.json sentinel. Mutually exclusive with --require-prestaged."
-  )
-  private File stageFromLocalDir;
-
-  @Option(
       names = "--require-prestaged",
-      description = "Fail fast unless .josh-staged.json at --minio-prefix reports 'complete'. "
-          + "Mutually exclusive with --stage-from-local-dir.",
+      description = "Fail fast unless .josh-staged.json at --minio-prefix reports 'complete'.",
       defaultValue = "false"
   )
   private boolean requirePrestaged = false;
@@ -127,11 +115,6 @@ public class BatchRemoteCommand implements Callable<Integer> {
 
   @Override
   public Integer call() {
-    if (stageFromLocalDir != null && requirePrestaged) {
-      output.printError("--stage-from-local-dir and --require-prestaged are mutually exclusive.");
-      return USAGE_ERROR_CODE;
-    }
-
     try {
       output.printInfo("Loading target profile: " + targetName);
       TargetProfileLoader loader = new TargetProfileLoader();
@@ -159,16 +142,9 @@ public class BatchRemoteCommand implements Callable<Integer> {
 
       String normalizedPrefix = MinioHandler.normalizePrefix(minioPrefix);
 
-      if (stageFromLocalDir != null) {
-        Integer stagingResult = stageLocalDir(minioHandler, normalizedPrefix);
-        if (stagingResult != null) {
-          return stagingResult;
-        }
-      } else {
-        Integer preflightResult = checkSentinel(minioHandler, normalizedPrefix);
-        if (preflightResult != null) {
-          return preflightResult;
-        }
+      Integer preflightResult = checkSentinel(minioHandler, normalizedPrefix);
+      if (preflightResult != null) {
+        return preflightResult;
       }
 
       BatchJobStrategy strategy = new BatchJobStrategy(
@@ -203,42 +179,6 @@ public class BatchRemoteCommand implements Callable<Integer> {
     }
   }
 
-  private Integer stageLocalDir(MinioHandler minioHandler, String normalizedPrefix) {
-    if (!stageFromLocalDir.exists()) {
-      output.printError("--stage-from-local-dir not found: " + stageFromLocalDir.getPath());
-      return USAGE_ERROR_CODE;
-    }
-    if (!stageFromLocalDir.isDirectory()) {
-      output.printError("--stage-from-local-dir is not a directory: "
-          + stageFromLocalDir.getPath());
-      return USAGE_ERROR_CODE;
-    }
-
-    output.printInfo("Staging " + stageFromLocalDir.getName() + " to " + normalizedPrefix + "...");
-    try {
-      minioHandler.writeStagedSentinel(normalizedPrefix, StagedState.STAGING, null);
-      int uploaded;
-      try {
-        uploaded = minioHandler.uploadDirectory(stageFromLocalDir, normalizedPrefix);
-      } catch (IOException uploadError) {
-        try {
-          minioHandler.writeStagedSentinel(
-              normalizedPrefix, StagedState.ERROR, uploadError.getMessage());
-        } catch (IOException sentinelError) {
-          output.printError("Additionally failed to write error sentinel: "
-              + sentinelError.getMessage());
-        }
-        throw uploadError;
-      }
-      minioHandler.writeStagedSentinel(normalizedPrefix, StagedState.COMPLETE, null);
-      output.printInfo("Staged " + uploaded + " file(s).");
-    } catch (IOException e) {
-      output.printError("Staging failed: " + e.getMessage());
-      return STAGING_ERROR_CODE;
-    }
-    return null;
-  }
-
   private Integer checkSentinel(MinioHandler minioHandler, String normalizedPrefix) {
     Optional<StagedStatus> sentinel;
     try {
@@ -252,7 +192,7 @@ public class BatchRemoteCommand implements Callable<Integer> {
     if (sentinel.isEmpty()) {
       if (requirePrestaged) {
         output.printError("--require-prestaged: no .josh-staged.json under " + normalizedPrefix
-            + ". Run stageToMinio or use --stage-from-local-dir first.");
+            + ". Run stageToMinio first.");
         return STAGING_ERROR_CODE;
       }
       output.printInfo("WARNING: Josh did not detect .josh-staged.json under "

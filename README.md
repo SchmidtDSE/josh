@@ -110,12 +110,13 @@ See also our [example Dockerfile](https://github.com/SchmidtDSE/josh/blob/main/c
 For large-scale runs on your own Kubernetes cluster or server, Josh provides the `batchRemote` command. This stages simulation files to S3-compatible storage (MinIO, GCS, AWS S3), dispatches execution to a configured target, and polls for completion. Results are written back to storage via `minio://` export paths.
 
 ```
+$ java -jar joshsim.jar stageToMinio --input-dir=./sim/ --prefix=batch-jobs/my-run/inputs/
 $ java -jar joshsim.jar batchRemote Main --target=nautilus \
     --minio-prefix=batch-jobs/my-run/inputs/ \
-    --stage-from-local-dir=./sim/ --replicates=50
+    --require-prestaged --replicates=50
 ```
 
-For workflows where inputs are staged once and dispatched many times (e.g. joshpy driving multiple simulations against the same data), stage separately with `stageToMinio` and then dispatch against the shared prefix — pass `--require-prestaged` to fail fast if the sentinel isn't present, or omit it to just warn on manual uploads.
+Stage inputs once with `stageToMinio` and dispatch any number of times against the shared prefix (useful when joshpy drives multiple simulations against the same data). Pass `--require-prestaged` to fail fast if the `.josh-staged.json` sentinel isn't present, or omit it to just warn on manual uploads.
 
 Targets are defined as JSON profiles at `~/.josh/targets/<name>.json`. Two target types are supported:
 

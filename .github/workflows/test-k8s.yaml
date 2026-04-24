@@ -134,12 +134,22 @@ jobs:
           echo "Test data ready ($(stat -c%s examples/test/k8s-preprocess/grid_10x10_constant.tiff) bytes)"
 
       - name: Run batchRemote end-to-end
+        env:
+          MINIO_ENDPOINT: http://localhost:9000
+          MINIO_ACCESS_KEY: minioadmin
+          MINIO_SECRET_KEY: minioadmin
+          MINIO_BUCKET: josh-test-bucket
         run: |
+          echo "Staging inputs to MinIO..."
+          java -jar build/libs/joshsim-fat.jar stageToMinio \
+            --input-dir=examples/test/k8s/ \
+            --prefix=batch-jobs/k8s-e2e/inputs/
+
           echo "Running batchRemote with K8s target..."
           java -jar build/libs/joshsim-fat.jar batchRemote K8sTest \
             --target=ci-k8s \
             --minio-prefix=batch-jobs/k8s-e2e/inputs/ \
-            --stage-from-local-dir=examples/test/k8s/ \
+            --require-prestaged \
             --replicates=2 \
             --poll-interval=5 \
             --timeout=300
@@ -181,16 +191,26 @@ jobs:
           fi
 
       - name: Test failure detection - bad image
+        env:
+          MINIO_ENDPOINT: http://localhost:9000
+          MINIO_ACCESS_KEY: minioadmin
+          MINIO_SECRET_KEY: minioadmin
+          MINIO_BUCKET: josh-test-bucket
         run: |
           set -o pipefail
           echo "Testing ImagePullBackOff detection..."
+
+          # Stage inputs first (should succeed); batchRemote then fails at dispatch
+          java -jar build/libs/joshsim-fat.jar stageToMinio \
+            --input-dir=examples/test/k8s/ \
+            --prefix=batch-jobs/k8s-bad-image/inputs/
 
           # batchRemote should fail — capture exit code through tee
           EXIT_CODE=0
           java -jar build/libs/joshsim-fat.jar batchRemote K8sTest \
             --target=ci-k8s-bad-image \
             --minio-prefix=batch-jobs/k8s-bad-image/inputs/ \
-            --stage-from-local-dir=examples/test/k8s/ \
+            --require-prestaged \
             --replicates=1 \
             --poll-interval=10 \
             --timeout=120 2>&1 | tee /tmp/bad-image-output.txt || EXIT_CODE=$?
