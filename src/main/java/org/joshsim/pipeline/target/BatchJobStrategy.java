@@ -15,8 +15,7 @@ import org.joshsim.util.OutputOptions;
  * Orchestrates remote batch execution: dispatch an already-staged MinIO prefix and poll.
  *
  * <p>This strategy assumes the caller (typically {@code BatchRemoteCommand}) has already
- * staged inputs to the MinIO prefix — whether by delegating upload to this same process
- * via {@code --stage-from-local-dir} or by an upstream {@code stageToMinio} invocation.
+ * staged inputs to the MinIO prefix via an upstream {@code stageToMinio} invocation.
  * This class never uploads; it only dispatches to a {@link RemoteBatchTarget} and polls
  * via a {@link BatchPollingStrategy}.</p>
  */

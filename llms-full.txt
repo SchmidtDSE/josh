@@ -303,9 +303,8 @@ java -jar joshsim-fat.jar batchRemote <SimulationName> [OPTIONS]
 
 **Options:**
 - `--target <name>` (required): Target profile name (loads `~/.josh/targets/<name>.json`)
-- `--minio-prefix <prefix>` (required): MinIO object prefix where inputs live (e.g., `batch-jobs/my-run/inputs/`). Populate with `stageToMinio` or `--stage-from-local-dir`.
-- `--stage-from-local-dir <dir>`: Upload this local directory to `--minio-prefix` before dispatching. Writes a `.josh-staged.json` sentinel. Mutually exclusive with `--require-prestaged`.
-- `--require-prestaged`: Fail fast unless `.josh-staged.json` at `--minio-prefix` reports `complete`. Mutually exclusive with `--stage-from-local-dir`.
+- `--minio-prefix <prefix>` (required): MinIO object prefix where inputs already live (e.g., `batch-jobs/my-run/inputs/`). Populate first via `stageToMinio`.
+- `--require-prestaged`: Fail fast unless `.josh-staged.json` at `--minio-prefix` reports `complete`.
 - `--replicates <N>`: Number of replicates (default: 1). Passed to the target — HTTP targets run N in-process, K8s targets create N pods.
 - `--no-wait`: Dispatch and exit without polling for completion
 - `--poll-interval <seconds>`: Seconds between status polls (default: 5)
@@ -313,39 +312,32 @@ java -jar joshsim-fat.jar batchRemote <SimulationName> [OPTIONS]
 
 **Examples:**
 ```bash
-# Stage local directory, run on Cloud Run, wait for completion
+# Stage inputs, then run on Cloud Run and wait for completion
+java -jar joshsim-fat.jar stageToMinio \
+  --input-dir=./sim-files --prefix=batch-jobs/my-run/inputs/
 java -jar joshsim-fat.jar batchRemote Main \
   --target=cloudrun-prod \
   --minio-prefix=batch-jobs/my-run/inputs/ \
-  --stage-from-local-dir=./sim-files
+  --require-prestaged
 
-# Files already on MinIO (via stageToMinio), require sentinel before dispatching
+# Fire-and-forget on Kubernetes; prints JSON with jobId to stdout
 java -jar joshsim-fat.jar batchRemote Main \
   --target=nautilus \
   --minio-prefix=batch-jobs/my-run/inputs/ \
   --require-prestaged \
-  --replicates=50
-
-# Fire-and-forget; prints JSON with jobId to stdout
-java -jar joshsim-fat.jar batchRemote Main \
-  --target=nautilus \
-  --minio-prefix=batch-jobs/my-run/inputs/ \
-  --stage-from-local-dir=./sim-files \
   --replicates=50 --no-wait
 ```
 
 **Workflow:**
 
-Three staging modes — pick one:
+Staging and dispatch are separate commands. Use `stageToMinio` to upload inputs to `--minio-prefix` (this writes a `.josh-staged.json` sentinel: `STAGING` → `COMPLETE` or `ERROR`). Then run `batchRemote`:
 
-1. **Stage-and-dispatch** (`--stage-from-local-dir <dir>`): Uploads the local directory to `--minio-prefix`, writes a `.josh-staged.json` sentinel (`STAGING` → `COMPLETE` or `ERROR`), then dispatches.
-2. **Require-prestaged** (`--require-prestaged`): Reads the sentinel at `--minio-prefix`; fails if absent or not `complete`. Use when inputs were staged separately via `stageToMinio`.
-3. **Trust-the-prefix** (default, neither flag): Reads sentinel if present and warns if absent, then dispatches regardless. Useful when files were uploaded manually.
+- **Default (trust-the-prefix):** Reads the sentinel if present and warns if absent, then dispatches regardless. Useful when files were uploaded manually.
+- **Strict (`--require-prestaged`):** Fails fast unless the sentinel exists and reports `complete`. Use for shared/multi-dispatch workflows where staging is a separate upstream step.
 
-After staging:
-1. Dispatches to the configured target (HTTP POST or K8s Job creation)
-2. Polls for completion unless `--no-wait` (MinIO status file for HTTP, K8s Job API for Kubernetes)
-3. Results land in MinIO via `minio://` export paths in the Josh script
+After dispatch:
+1. Polls for completion unless `--no-wait` (MinIO status file for HTTP, K8s Job API for Kubernetes)
+2. Results land in MinIO via `minio://` export paths in the Josh script
 
 **`--no-wait` output:** Exits 0 immediately and prints JSON to stdout:
 `{"jobId": "<id>", "target": "<name>", "statusPath": "batch-status/<id>/status.json"}`
@@ -497,9 +489,11 @@ java -jar joshsim-fat.jar pollBatch <jobId> --target=<name>
 
 **Example:**
 ```bash
+java -jar joshsim-fat.jar stageToMinio \
+  --input-dir=./sim-files --prefix=batch-jobs/run1/inputs/
 OUT=$(java -jar joshsim-fat.jar batchRemote Main \
   --target=nautilus --minio-prefix=batch-jobs/run1/inputs/ \
-  --stage-from-local-dir=./sim-files --no-wait)
+  --require-prestaged --no-wait)
 JOB_ID=$(echo "$OUT" | jq -r .jobId)
 
 java -jar joshsim-fat.jar pollBatch "$JOB_ID" --target=nautilus
