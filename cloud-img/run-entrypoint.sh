@@ -13,6 +13,12 @@ set -e
 JAR="${1:-/app/joshsim-fat.jar}"
 WORK_DIR="/tmp/work"
 
+# cd into the staged work dir so external resources resolve relative to it.
+# JvmWorkingDirInputGetter uses cwd-relative FileInputStream, and the staged
+# files (script + any external .jshd/.jshdz inputs) all live in $WORK_DIR.
+mkdir -p "$WORK_DIR"
+cd "$WORK_DIR"
+
 java -jar "$JAR" stageFromMinio \
   --prefix="$JOSH_MINIO_PREFIX" \
   --output-dir="$WORK_DIR"
