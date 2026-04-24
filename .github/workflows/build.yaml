@@ -524,13 +524,25 @@ jobs:
     steps:
       - name: Set environment variables based on branch
         run: |
+          # EXTRA_SECRETS is appended to --set-secrets below (note the leading comma).
+          # Dev-only until prod Secret Manager entries (josh-prod-minio-key / -secret)
+          # and runtime SA IAM bindings exist. BEFORE MERGING TO MAIN: create those
+          # secrets, grant the prod runtime SA secretmanager.secretAccessor on them,
+          # then populate EXTRA_SECRETS for the main branch below (or drop the
+          # branching entirely once both envs are aligned).
+          #
+          # This is smelly but we can avoid the branching when prod is ready, and it keeps
+          # all the env var logic in one place instead of spreading it across multiple steps / partial deployments.
+
           if [[ $GITHUB_REF == refs/heads/main ]]; then
             echo "SERVICE_NAME=josh-executor-prod" >> $GITHUB_ENV
             echo "DOCKERFILE=Dockerfile.prod" >> $GITHUB_ENV
+            echo "EXTRA_SECRETS=" >> $GITHUB_ENV  # TODO: add MinIO secrets once prod secrets exist
             echo "Deploying to Production environment"
           else
             echo "SERVICE_NAME=josh-executor-dev" >> $GITHUB_ENV
             echo "DOCKERFILE=Dockerfile.dev" >> $GITHUB_ENV
+            echo "EXTRA_SECRETS=,MINIO_ACCESS_KEY=josh-dev-minio-key:latest,MINIO_SECRET_KEY=josh-dev-minio-secret:latest" >> $GITHUB_ENV
             echo "Deploying to Development environment"
           fi
       - name: Checkout code
@@ -571,7 +583,7 @@ jobs:
             --max-instances=100 \
             --port=8085 \
             --allow-unauthenticated \
-            --set-secrets="JOSH_API_KEYS=${{ secrets.SECRET_NAME }}" \
+            --set-secrets="JOSH_API_KEYS=${{ secrets.SECRET_NAME }}${{ env.EXTRA_SECRETS }}" \
             --use-http2 \
             --no-cpu-throttling \
             --concurrency=1 \
