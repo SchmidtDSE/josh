@@ -20,10 +20,32 @@ set -e
 JAR="${1:-/app/joshsim-fat.jar}"
 WORK_DIR="/tmp/work"
 
-# Stage inputs (josh script + data file)
-java -jar "$JAR" stageFromMinio \
-  --prefix="$JOSH_MINIO_PREFIX" \
-  --output-dir="$WORK_DIR"
+# GKE Autopilot pods sometimes have a brief window after start where DNS
+# isn't usable yet. Probe a stable host so a flaky resolver doesn't kill
+# stageFromMinio after we've paid full JAR startup cost.
+for attempt in 1 2 3 4 5 6 7 8 9 10; do
+  if getent hosts storage.googleapis.com >/dev/null 2>&1; then
+    break
+  fi
+  sleep 2
+done
+
+# Stage inputs (josh script + data file), with retry for transient hiccups.
+STAGE_OK=0
+for attempt in 1 2 3; do
+  if java -jar "$JAR" stageFromMinio \
+       --prefix="$JOSH_MINIO_PREFIX" \
+       --output-dir="$WORK_DIR"; then
+    STAGE_OK=1
+    break
+  fi
+  echo "stageFromMinio attempt $attempt failed, retrying..." >&2
+  sleep $((attempt * 5))
+done
+if [ "$STAGE_OK" -ne 1 ]; then
+  echo "ERROR: stageFromMinio failed after retries" >&2
+  exit 1
+fi
 
 SCRIPT=$(find "$WORK_DIR" -name '*.josh' -type f | head -1)
 
@@ -66,7 +88,20 @@ java -XX:+ExitOnOutOfMemoryError -jar "$JAR" preprocess "$SCRIPT" "$JOSH_SIMULAT
   "$WORK_DIR/$JOSH_OUTPUT_FILE" \
   $OPTS
 
-# Upload result .jshd to MinIO
-java -jar "$JAR" stageToMinio \
-  --input-dir="$WORK_DIR" \
-  --prefix="batch-jobs/$JOSH_JOB_ID/outputs/"
+# Upload result .jshd to MinIO, with retry to avoid losing a completed
+# preprocess run to a transient network hiccup.
+UPLOAD_OK=0
+for attempt in 1 2 3; do
+  if java -jar "$JAR" stageToMinio \
+       --input-dir="$WORK_DIR" \
+       --prefix="batch-jobs/$JOSH_JOB_ID/outputs/"; then
+    UPLOAD_OK=1
+    break
+  fi
+  echo "stageToMinio attempt $attempt failed, retrying..." >&2
+  sleep $((attempt * 5))
+done
+if [ "$UPLOAD_OK" -ne 1 ]; then
+  echo "ERROR: stageToMinio failed after retries" >&2
+  exit 1
+fi

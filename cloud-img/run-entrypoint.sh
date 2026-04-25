@@ -19,9 +19,32 @@ WORK_DIR="/tmp/work"
 mkdir -p "$WORK_DIR"
 cd "$WORK_DIR"
 
-java -jar "$JAR" stageFromMinio \
-  --prefix="$JOSH_MINIO_PREFIX" \
-  --output-dir="$WORK_DIR"
+# GKE Autopilot pods sometimes have a brief window after start where DNS
+# isn't usable yet. Probe a stable host so a flaky resolver doesn't kill
+# stageFromMinio after we've paid full JAR startup cost.
+for attempt in 1 2 3 4 5 6 7 8 9 10; do
+  if getent hosts storage.googleapis.com >/dev/null 2>&1; then
+    break
+  fi
+  sleep 2
+done
+
+# Retry stageFromMinio for transient network hiccups post-cold-start.
+STAGE_OK=0
+for attempt in 1 2 3; do
+  if java -jar "$JAR" stageFromMinio \
+       --prefix="$JOSH_MINIO_PREFIX" \
+       --output-dir="$WORK_DIR"; then
+    STAGE_OK=1
+    break
+  fi
+  echo "stageFromMinio attempt $attempt failed, retrying..." >&2
+  sleep $((attempt * 5))
+done
+if [ "$STAGE_OK" -ne 1 ]; then
+  echo "ERROR: stageFromMinio failed after retries" >&2
+  exit 1
+fi
 
 SCRIPT=$(find "$WORK_DIR" -name '*.josh' -type f | head -1)
 
