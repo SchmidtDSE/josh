@@ -109,6 +109,15 @@ public class RunCommand implements Callable<Integer> {
   private Integer replicateIndex;
 
   @Option(
+      names = "--replicate-start",
+      description = "Starting replicate index (default: 0). Combined with --replicates this "
+          + "selects the half-open range [start, start+count). Mutually exclusive with "
+          + "--replicate-index.",
+      defaultValue = "0"
+  )
+  private int replicateStart = 0;
+
+  @Option(
       names = "--use-float-64",
       description = "Use double instead of BigDecimal, offering speed but lower precision.",
       defaultValue = "false"
@@ -226,6 +235,14 @@ public class RunCommand implements Callable<Integer> {
     }
     if (replicateIndex != null && replicateIndex < 0) {
       output.printError("--replicate-index must be >= 0");
+      return 1;
+    }
+    if (replicateIndex != null && replicateStart != 0) {
+      output.printError("--replicate-index and --replicate-start are mutually exclusive");
+      return 1;
+    }
+    if (replicateStart < 0) {
+      output.printError("--replicate-start must be >= 0");
       return 1;
     }
     if (replicates < 1) {
@@ -383,9 +400,9 @@ public class RunCommand implements Callable<Integer> {
         inputStrategy = new JvmMappedInputGetter(currentJob.getFilePaths());
       }
 
-      int startReplicate = replicateIndex != null ? replicateIndex : 0;
+      int startReplicate = replicateIndex != null ? replicateIndex : replicateStart;
       int endReplicate = replicateIndex != null
-          ? replicateIndex + 1 : currentJob.getReplicates();
+          ? replicateIndex + 1 : replicateStart + currentJob.getReplicates();
 
       for (int currentReplicate = startReplicate; currentReplicate < endReplicate;
            currentReplicate++) {

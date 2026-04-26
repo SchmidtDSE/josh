@@ -9,6 +9,8 @@ package org.joshsim.command;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import java.io.IOException;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.Callable;
 import org.joshsim.pipeline.target.BatchJobStrategy;
@@ -90,6 +92,22 @@ public class BatchRemoteCommand implements Callable<Integer> {
   private int replicates = 1;
 
   @Option(
+      names = "--replicate-start",
+      description = "Starting replicate index (default: 0). Combined with --replicates this "
+          + "selects the half-open range [start, start+count). Used for pool/resume "
+          + "workflows where indices need to be stable across re-dispatch.",
+      defaultValue = "0"
+  )
+  private int replicateStart = 0;
+
+  @Option(
+      names = "--custom-tag",
+      description = "Custom template parameters (format: name=value). Can be specified "
+          + "multiple times. Resolvable as {name} in exportFiles paths."
+  )
+  private String[] customTags = new String[0];
+
+  @Option(
       names = "--no-wait",
       description = "Dispatch and exit without polling for completion",
       defaultValue = "false"
@@ -116,6 +134,12 @@ public class BatchRemoteCommand implements Callable<Integer> {
   @Override
   public Integer call() {
     try {
+      if (replicateStart < 0) {
+        output.printError("--replicate-start must be >= 0");
+        return DISPATCH_ERROR_CODE;
+      }
+      final Map<String, String> parsedCustomTags = parseCustomTags();
+
       output.printInfo("Loading target profile: " + targetName);
       TargetProfileLoader loader = new TargetProfileLoader();
       TargetProfile profile = loader.load(targetName);
@@ -153,7 +177,9 @@ public class BatchRemoteCommand implements Callable<Integer> {
       );
 
       if (noWait) {
-        String jobId = strategy.executeNoWait(normalizedPrefix, simulation, replicates);
+        String jobId = strategy.executeNoWait(
+            normalizedPrefix, simulation, replicates, parsedCustomTags, replicateStart
+        );
         ObjectNode node = MAPPER.createObjectNode();
         node.put("jobId", jobId);
         node.put("target", targetName);
@@ -162,7 +188,9 @@ public class BatchRemoteCommand implements Callable<Integer> {
         return 0;
       }
 
-      JobStatus finalStatus = strategy.execute(normalizedPrefix, simulation, replicates);
+      JobStatus finalStatus = strategy.execute(
+          normalizedPrefix, simulation, replicates, parsedCustomTags, replicateStart
+      );
 
       if (finalStatus.getState() == JobStatus.State.COMPLETE) {
         output.printInfo("Batch job completed successfully.");
@@ -226,6 +254,34 @@ public class BatchRemoteCommand implements Callable<Integer> {
 
   private static String describeMessage(StagedStatus status) {
     return status.message() != null ? ": " + status.message() : ".";
+  }
+
+  /**
+   * Parses {@code --custom-tag name=value} options into a map.
+   *
+   * <p>Mirrors {@code RunCommand.parseCustomParameters} so the same {@code .josh} script
+   * resolves the same template variables on either run path. Reserved names ({@code replicate},
+   * {@code step}, {@code variable}) are rejected.</p>
+   */
+  private Map<String, String> parseCustomTags() {
+    Map<String, String> parsed = new HashMap<>();
+    for (String customTag : customTags) {
+      int equalsIndex = customTag.indexOf('=');
+      if (equalsIndex <= 0 || equalsIndex == customTag.length() - 1) {
+        throw new IllegalArgumentException("Invalid custom-tag format: " + customTag
+            + ". Expected format: name=value");
+      }
+      String name = customTag.substring(0, equalsIndex).trim();
+      String value = customTag.substring(equalsIndex + 1);
+
+      if ("replicate".equals(name) || "step".equals(name) || "variable".equals(name)) {
+        throw new IllegalArgumentException("Custom parameter name '" + name
+            + "' conflicts with reserved template variable");
+      }
+
+      parsed.put(name, value);
+    }
+    return parsed;
   }
 
   private HttpBatchTarget buildHttpTarget(TargetProfile profile) {

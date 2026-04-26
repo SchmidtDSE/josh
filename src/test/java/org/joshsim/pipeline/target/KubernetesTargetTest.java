@@ -110,7 +110,7 @@ class KubernetesTargetTest {
       throws Exception {
     KubernetesTarget target = buildTarget(config);
 
-    target.dispatch(JOB_ID, PREFIX, SIMULATION, 5);
+    target.dispatch(JOB_ID, PREFIX, SIMULATION, 5, Map.of(), 0);
 
     Job job = jobCaptor.getValue();
     assertNotNull(job);
@@ -127,7 +127,7 @@ class KubernetesTargetTest {
   void dispatchSetsContainerImage() throws Exception {
     KubernetesTarget target = buildTarget(config);
 
-    target.dispatch(JOB_ID, PREFIX, SIMULATION, 1);
+    target.dispatch(JOB_ID, PREFIX, SIMULATION, 1, Map.of(), 0);
 
     Job job = jobCaptor.getValue();
     Container container = getContainer(job);
@@ -138,7 +138,7 @@ class KubernetesTargetTest {
   void dispatchCreatesSecretWithMinioCreds() throws Exception {
     KubernetesTarget target = buildTarget(config);
 
-    target.dispatch(JOB_ID, PREFIX, SIMULATION, 1);
+    target.dispatch(JOB_ID, PREFIX, SIMULATION, 1, Map.of(), 0);
 
     Secret secret = secretCaptor.getValue();
     assertNotNull(secret);
@@ -163,7 +163,7 @@ class KubernetesTargetTest {
   void dispatchSetsSecretRefEnvVars() throws Exception {
     KubernetesTarget target = buildTarget(config);
 
-    target.dispatch(JOB_ID, PREFIX, SIMULATION, 1);
+    target.dispatch(JOB_ID, PREFIX, SIMULATION, 1, Map.of(), 0);
 
     Job job = jobCaptor.getValue();
     List<EnvVar> envVars = getContainer(job).getEnv();
@@ -187,13 +187,57 @@ class KubernetesTargetTest {
   void dispatchSetsPlainJobEnvVars() throws Exception {
     KubernetesTarget target = buildTarget(config);
 
-    target.dispatch(JOB_ID, PREFIX, SIMULATION, 1);
+    target.dispatch(JOB_ID, PREFIX, SIMULATION, 1, Map.of(), 0);
 
     Job job = jobCaptor.getValue();
     List<EnvVar> envVars = getContainer(job).getEnv();
     assertPlainEnvVar(envVars, "JOSH_JOB_ID", JOB_ID);
     assertPlainEnvVar(envVars, "JOSH_MINIO_PREFIX", PREFIX);
     assertPlainEnvVar(envVars, "JOSH_SIMULATION", SIMULATION);
+  }
+
+  @Test
+  void dispatchOmitsCustomTagsAndOffsetWhenDefault() throws Exception {
+    KubernetesTarget target = buildTarget(config);
+
+    target.dispatch(JOB_ID, PREFIX, SIMULATION, 1, Map.of(), 0);
+
+    Job job = jobCaptor.getValue();
+    List<EnvVar> envVars = getContainer(job).getEnv();
+    assertNull(findEnvVar(envVars, "JOSH_CUSTOM_TAGS"));
+    assertNull(findEnvVar(envVars, "JOSH_REPLICATE_OFFSET"));
+  }
+
+  @Test
+  void dispatchSerializesCustomTagsAsNewlineDelimitedPairs() throws Exception {
+    KubernetesTarget target = buildTarget(config);
+
+    Map<String, String> tags = new java.util.LinkedHashMap<>();
+    tags.put("run_hash", "abc123");
+    tags.put("region", "west");
+    target.dispatch(JOB_ID, PREFIX, SIMULATION, 1, tags, 0);
+
+    Job job = jobCaptor.getValue();
+    List<EnvVar> envVars = getContainer(job).getEnv();
+    EnvVar tagsVar = findEnvVar(envVars, "JOSH_CUSTOM_TAGS");
+    assertNotNull(tagsVar);
+    String value = tagsVar.getValue();
+    assertTrue(value.contains("run_hash=abc123"));
+    assertTrue(value.contains("region=west"));
+    assertTrue(value.contains("\n"));
+  }
+
+  @Test
+  void dispatchEmitsReplicateOffsetWhenNonZero() throws Exception {
+    KubernetesTarget target = buildTarget(config);
+
+    target.dispatch(JOB_ID, PREFIX, SIMULATION, 3, Map.of(), 5);
+
+    Job job = jobCaptor.getValue();
+    List<EnvVar> envVars = getContainer(job).getEnv();
+    EnvVar offsetVar = findEnvVar(envVars, "JOSH_REPLICATE_OFFSET");
+    assertNotNull(offsetVar);
+    assertEquals("5", offsetVar.getValue());
   }
 
   @Test
@@ -208,7 +252,7 @@ class KubernetesTargetTest {
     config = buildConfig(10, 3600, resources);
 
     KubernetesTarget target = buildTarget(config);
-    target.dispatch(JOB_ID, PREFIX, SIMULATION, 1);
+    target.dispatch(JOB_ID, PREFIX, SIMULATION, 1, Map.of(), 0);
 
     Job job = jobCaptor.getValue();
     ResourceRequirements reqs =
@@ -230,7 +274,7 @@ class KubernetesTargetTest {
     config = buildConfig(10, 3600, null);
 
     KubernetesTarget target = buildTarget(config);
-    target.dispatch(JOB_ID, PREFIX, SIMULATION, 1);
+    target.dispatch(JOB_ID, PREFIX, SIMULATION, 1, Map.of(), 0);
 
     Job job = jobCaptor.getValue();
     ResourceRequirements reqs =
@@ -243,7 +287,7 @@ class KubernetesTargetTest {
     config = buildConfig(10, 3600, null);
 
     KubernetesTarget target = buildTarget(config);
-    target.dispatch(JOB_ID, PREFIX, SIMULATION, 3);
+    target.dispatch(JOB_ID, PREFIX, SIMULATION, 3, Map.of(), 0);
 
     Job job = jobCaptor.getValue();
     assertEquals(3, job.getSpec().getParallelism());
@@ -254,7 +298,7 @@ class KubernetesTargetTest {
   void dispatchJobNameFormat() throws Exception {
     KubernetesTarget target = buildTarget(config);
 
-    target.dispatch(JOB_ID, PREFIX, SIMULATION, 1);
+    target.dispatch(JOB_ID, PREFIX, SIMULATION, 1, Map.of(), 0);
 
     Job job = jobCaptor.getValue();
     assertEquals(
@@ -278,7 +322,7 @@ class KubernetesTargetTest {
     setField(config, "spot", true);
 
     KubernetesTarget target = buildTarget(config);
-    target.dispatch(JOB_ID, PREFIX, SIMULATION, 1);
+    target.dispatch(JOB_ID, PREFIX, SIMULATION, 1, Map.of(), 0);
 
     Job job = jobCaptor.getValue();
     Map<String, String> nodeSelector =
@@ -303,7 +347,7 @@ class KubernetesTargetTest {
     config = buildConfig(10, 3600, null);
 
     KubernetesTarget target = buildTarget(config);
-    target.dispatch(JOB_ID, PREFIX, SIMULATION, 1);
+    target.dispatch(JOB_ID, PREFIX, SIMULATION, 1, Map.of(), 0);
 
     Job job = jobCaptor.getValue();
     Map<String, String> nodeSelector =
@@ -321,7 +365,7 @@ class KubernetesTargetTest {
     setField(config, "ttlSecondsAfterFinished", 600);
 
     KubernetesTarget target = buildTarget(config);
-    target.dispatch(JOB_ID, PREFIX, SIMULATION, 1);
+    target.dispatch(JOB_ID, PREFIX, SIMULATION, 1, Map.of(), 0);
 
     Job job = jobCaptor.getValue();
     assertEquals(
@@ -334,7 +378,7 @@ class KubernetesTargetTest {
   void dispatchUsesEntrypointScript() throws Exception {
     KubernetesTarget target = buildTarget(config);
 
-    target.dispatch(JOB_ID, PREFIX, SIMULATION, 1);
+    target.dispatch(JOB_ID, PREFIX, SIMULATION, 1, Map.of(), 0);
 
     Job job = jobCaptor.getValue();
     Container container = getContainer(job);
@@ -429,5 +473,12 @@ class KubernetesTargetTest {
         .orElse(null);
     assertNotNull(found, "Missing env var: " + name);
     assertEquals(value, found.getValue());
+  }
+
+  private EnvVar findEnvVar(List<EnvVar> envVars, String name) {
+    return envVars.stream()
+        .filter(e -> name.equals(e.getName()))
+        .findFirst()
+        .orElse(null);
   }
 }

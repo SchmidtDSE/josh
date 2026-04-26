@@ -230,6 +230,79 @@ jobs:
             cat /tmp/bad-image-output.txt
           fi
 
+      - name: Run batchRemote with --custom-tag and --replicate-start
+        env:
+          MINIO_ENDPOINT: http://localhost:9000
+          MINIO_ACCESS_KEY: minioadmin
+          MINIO_SECRET_KEY: minioadmin
+          MINIO_BUCKET: josh-test-bucket
+        run: |
+          echo "Staging custom-tag test inputs to MinIO..."
+          java -jar build/libs/joshsim-fat.jar stageToMinio \
+            --input-dir=examples/test/k8s-customtag/ \
+            --prefix=batch-jobs/k8s-customtag/inputs/
+
+          echo "Dispatching with --custom-tag run_hash=ci-test --replicate-start=2 --replicates=2..."
+          # The simulation templates {run_hash} and {replicate} into the export path:
+          #   minio://josh-test-bucket/k8s-customtag-results/{run_hash}/replicate-{replicate}.csv
+          # With --custom-tag run_hash=ci-test the path renders to .../ci-test/...
+          # With --replicate-start=2 --replicates=2 the K8s Job runs indices 2 and 3.
+          java -jar build/libs/joshsim-fat.jar batchRemote K8sCustomTagTest \
+            --target=ci-k8s \
+            --minio-prefix=batch-jobs/k8s-customtag/inputs/ \
+            --require-prestaged \
+            --replicates=2 \
+            --replicate-start=2 \
+            --custom-tag=run_hash=ci-test \
+            --poll-interval=5 \
+            --timeout=300
+
+          echo "batchRemote with custom-tag and replicate-start completed"
+
+      - name: Verify custom-tag and replicate-start results in MinIO
+        run: |
+          MINIO_POD=$(kubectl get pod -l app=minio -o jsonpath='{.items[0].metadata.name}')
+
+          echo "Listing custom-tag results in MinIO..."
+          kubectl exec $MINIO_POD -- /tmp/mc ls --recursive \
+            local/josh-test-bucket/k8s-customtag-results/
+
+          # Verify run_hash interpolated into the path
+          echo "Checking that {run_hash}=ci-test rendered into the export path..."
+          if ! kubectl exec $MINIO_POD -- /tmp/mc ls \
+              local/josh-test-bucket/k8s-customtag-results/ci-test/ >/dev/null 2>&1; then
+            echo "ERROR: expected directory ci-test/ not found under k8s-customtag-results/"
+            kubectl exec $MINIO_POD -- /tmp/mc ls --recursive \
+              local/josh-test-bucket/k8s-customtag-results/
+            exit 1
+          fi
+          echo "  {run_hash} interpolation works"
+
+          # Verify replicate-start shifted absolute indices to 2 and 3
+          echo "Checking replicate indices 2 and 3 exist..."
+          for IDX in 2 3; do
+            SIZE=$(kubectl exec $MINIO_POD -- /tmp/mc stat \
+              local/josh-test-bucket/k8s-customtag-results/ci-test/replicate-$IDX.csv \
+              --json 2>/dev/null | grep -o '"size":[0-9]*' | cut -d':' -f2)
+            if [ -z "$SIZE" ] || [ "$SIZE" -le 0 ]; then
+              echo "ERROR: replicate-$IDX.csv missing or empty"
+              exit 1
+            fi
+            echo "  replicate-$IDX.csv present ($SIZE bytes)"
+          done
+
+          # Verify replicate-start shifted away from 0 (replicate-0.csv should NOT exist)
+          echo "Checking replicate-0.csv is absent (offset shifted away from 0)..."
+          if kubectl exec $MINIO_POD -- /tmp/mc stat \
+              local/josh-test-bucket/k8s-customtag-results/ci-test/replicate-0.csv \
+              --json >/dev/null 2>&1; then
+            echo "ERROR: replicate-0.csv exists; --replicate-start=2 did not shift indices"
+            exit 1
+          fi
+          echo "  replicate-0.csv absent (offset works)"
+
+          echo "Custom-tag and replicate-start integration verified"
+
       - name: Run preprocessBatch end-to-end
         run: |
           echo "Running preprocessBatch with K8s target..."
@@ -293,6 +366,8 @@ jobs:
           echo "  Job completion verification"
           echo "  Results verification in MinIO"
           echo "  Failure detection (bad image)"
+          echo "  batchRemote e2e with --custom-tag and --replicate-start (K8s target)"
+          echo "  Custom-tag template + replicate-offset verification in MinIO"
           echo "  preprocessBatch e2e (K8s target, NetCDF → jshd)"
           echo "  Preprocess job completion verification"
           echo "================================================"

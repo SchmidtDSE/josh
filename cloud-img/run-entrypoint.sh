@@ -54,7 +54,22 @@ if [ -z "$SCRIPT" ]; then
 fi
 
 # JOB_COMPLETION_INDEX is set by K8s for indexed Jobs (0, 1, 2, ...).
-# Each pod runs one replicate at its assigned index so {replicate}
-# template paths resolve to unique filenames.
-REPLICATE_INDEX="${JOB_COMPLETION_INDEX:-0}"
-java -XX:+ExitOnOutOfMemoryError -jar "$JAR" run "$SCRIPT" "$JOSH_SIMULATION" --replicate-index="$REPLICATE_INDEX"
+# JOSH_REPLICATE_OFFSET (default 0) shifts the absolute index for pool/resume
+# workflows where indices need to be stable across re-dispatch.
+REPLICATE_INDEX=$(( ${JOB_COMPLETION_INDEX:-0} + ${JOSH_REPLICATE_OFFSET:-0} ))
+
+# JOSH_CUSTOM_TAGS holds newline-delimited key=value entries. One
+# --custom-tag flag per non-empty line. Newline-delimited (vs JSON)
+# avoids needing jq in the JRE-only batch image.
+TAGS=""
+if [ -n "$JOSH_CUSTOM_TAGS" ]; then
+  while IFS= read -r line; do
+    [ -n "$line" ] && TAGS="$TAGS --custom-tag=$line"
+  done <<EOF
+$JOSH_CUSTOM_TAGS
+EOF
+fi
+
+# shellcheck disable=SC2086
+java -XX:+ExitOnOutOfMemoryError -jar "$JAR" run "$SCRIPT" "$JOSH_SIMULATION" \
+  --replicate-index="$REPLICATE_INDEX" $TAGS

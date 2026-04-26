@@ -91,7 +91,9 @@ public class KubernetesTarget implements RemoteBatchTarget {
       String jobId,
       String minioPrefix,
       String simulation,
-      int replicates
+      int replicates,
+      Map<String, String> customTags,
+      int replicateStart
   ) throws Exception {
     String secretName = SECRET_NAME_PREFIX + jobId;
 
@@ -128,7 +130,8 @@ public class KubernetesTarget implements RemoteBatchTarget {
                         )
                         .withEnv(buildEnvVars(
                             secretName, jobId,
-                            minioPrefix, simulation
+                            minioPrefix, simulation,
+                            customTags, replicateStart
                         ))
                         .withCommand(
                             ENTRYPOINT,
@@ -209,7 +212,9 @@ public class KubernetesTarget implements RemoteBatchTarget {
       String secretName,
       String jobId,
       String minioPrefix,
-      String simulation
+      String simulation,
+      Map<String, String> customTags,
+      int replicateStart
   ) {
     List<EnvVar> envVars = new ArrayList<>();
     envVars.add(secretEnvVar(
@@ -227,6 +232,16 @@ public class KubernetesTarget implements RemoteBatchTarget {
     envVars.add(plainEnvVar("JOSH_JOB_ID", jobId));
     envVars.add(plainEnvVar("JOSH_MINIO_PREFIX", minioPrefix));
     envVars.add(plainEnvVar("JOSH_SIMULATION", simulation));
+    if (customTags != null && !customTags.isEmpty()) {
+      envVars.add(plainEnvVar(
+          "JOSH_CUSTOM_TAGS", BatchArgUtil.encodeCustomTags(customTags)
+      ));
+    }
+    if (replicateStart != 0) {
+      envVars.add(plainEnvVar(
+          "JOSH_REPLICATE_OFFSET", String.valueOf(replicateStart)
+      ));
+    }
     return envVars;
   }
 
