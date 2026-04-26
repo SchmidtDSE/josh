@@ -234,7 +234,7 @@ public class KubernetesTarget implements RemoteBatchTarget {
     envVars.add(plainEnvVar("JOSH_SIMULATION", simulation));
     if (customTags != null && !customTags.isEmpty()) {
       envVars.add(plainEnvVar(
-          "JOSH_CUSTOM_TAGS", encodeCustomTags(customTags)
+          "JOSH_CUSTOM_TAGS", BatchArgUtil.encodeCustomTags(customTags)
       ));
     }
     if (replicateStart != 0) {
@@ -243,27 +243,6 @@ public class KubernetesTarget implements RemoteBatchTarget {
       ));
     }
     return envVars;
-  }
-
-  /**
-   * Encodes custom tags as a newline-delimited {@code key=value} string for the pod entrypoint.
-   *
-   * <p>The pod-side {@code run-entrypoint.sh} reads this env var and emits one
-   * {@code --custom-tag=key=value} flag per line. Newline delimiting matches
-   * {@code RunCommand}'s {@code String[] customTags} shape exactly and avoids
-   * needing a JSON parser ({@code jq}) in the JRE-only batch image.</p>
-   */
-  private static String encodeCustomTags(Map<String, String> customTags) {
-    StringBuilder sb = new StringBuilder();
-    boolean first = true;
-    for (Map.Entry<String, String> entry : customTags.entrySet()) {
-      if (!first) {
-        sb.append('\n');
-      }
-      first = false;
-      sb.append(entry.getKey()).append('=').append(entry.getValue());
-    }
-    return sb.toString();
   }
 
   private static EnvVar secretEnvVar(
