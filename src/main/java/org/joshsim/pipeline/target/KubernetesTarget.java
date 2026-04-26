@@ -91,7 +91,9 @@ public class KubernetesTarget implements RemoteBatchTarget {
       String jobId,
       String minioPrefix,
       String simulation,
-      int replicates
+      int replicates,
+      Map<String, String> customTags,
+      int replicateStart
   ) throws Exception {
     String secretName = SECRET_NAME_PREFIX + jobId;
 
@@ -128,7 +130,8 @@ public class KubernetesTarget implements RemoteBatchTarget {
                         )
                         .withEnv(buildEnvVars(
                             secretName, jobId,
-                            minioPrefix, simulation
+                            minioPrefix, simulation,
+                            customTags, replicateStart
                         ))
                         .withCommand(
                             ENTRYPOINT,
@@ -209,7 +212,9 @@ public class KubernetesTarget implements RemoteBatchTarget {
       String secretName,
       String jobId,
       String minioPrefix,
-      String simulation
+      String simulation,
+      Map<String, String> customTags,
+      int replicateStart
   ) {
     List<EnvVar> envVars = new ArrayList<>();
     envVars.add(secretEnvVar(
@@ -227,7 +232,38 @@ public class KubernetesTarget implements RemoteBatchTarget {
     envVars.add(plainEnvVar("JOSH_JOB_ID", jobId));
     envVars.add(plainEnvVar("JOSH_MINIO_PREFIX", minioPrefix));
     envVars.add(plainEnvVar("JOSH_SIMULATION", simulation));
+    if (customTags != null && !customTags.isEmpty()) {
+      envVars.add(plainEnvVar(
+          "JOSH_CUSTOM_TAGS", encodeCustomTags(customTags)
+      ));
+    }
+    if (replicateStart != 0) {
+      envVars.add(plainEnvVar(
+          "JOSH_REPLICATE_OFFSET", String.valueOf(replicateStart)
+      ));
+    }
     return envVars;
+  }
+
+  /**
+   * Encodes custom tags as a newline-delimited {@code key=value} string for the pod entrypoint.
+   *
+   * <p>The pod-side {@code run-entrypoint.sh} reads this env var and emits one
+   * {@code --custom-tag=key=value} flag per line. Newline delimiting matches
+   * {@code RunCommand}'s {@code String[] customTags} shape exactly and avoids
+   * needing a JSON parser ({@code jq}) in the JRE-only batch image.</p>
+   */
+  private static String encodeCustomTags(Map<String, String> customTags) {
+    StringBuilder sb = new StringBuilder();
+    boolean first = true;
+    for (Map.Entry<String, String> entry : customTags.entrySet()) {
+      if (!first) {
+        sb.append('\n');
+      }
+      first = false;
+      sb.append(entry.getKey()).append('=').append(entry.getValue());
+    }
+    return sb.toString();
   }
 
   private static EnvVar secretEnvVar(

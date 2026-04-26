@@ -6,6 +6,7 @@
 
 package org.joshsim.pipeline.target;
 
+import java.util.Map;
 import java.util.UUID;
 import org.joshsim.util.MinioHandler;
 import org.joshsim.util.OutputOptions;
@@ -67,17 +68,21 @@ public class BatchJobStrategy {
    * @param minioPrefix The MinIO object prefix where inputs are already staged.
    * @param simulation Name of the simulation to run.
    * @param replicates Number of replicates to execute.
+   * @param customTags Custom template parameters resolvable as {@code {key}} placeholders
+   *     in {@code exportFiles} paths. Empty map means none.
+   * @param replicateStart Starting replicate index for the half-open range
+   *     {@code [start, start+replicates)}. {@code 0} preserves prior behavior.
    * @return The final job status.
    * @throws Exception If dispatch or polling fails.
    */
-  public JobStatus execute(String minioPrefix, String simulation, int replicates)
-      throws Exception {
+  public JobStatus execute(String minioPrefix, String simulation, int replicates,
+      Map<String, String> customTags, int replicateStart) throws Exception {
     String jobId = UUID.randomUUID().toString();
     String prefix = MinioHandler.normalizePrefix(minioPrefix);
 
     output.printInfo("Dispatching to target (" + replicates + " replicates) against "
         + prefix + "...");
-    target.dispatch(jobId, prefix, simulation, replicates);
+    target.dispatch(jobId, prefix, simulation, replicates, customTags, replicateStart);
     output.printInfo("Dispatched. Polling for completion...");
 
     return pollUntilTerminal(jobId);
@@ -89,17 +94,19 @@ public class BatchJobStrategy {
    * @param minioPrefix The MinIO object prefix where inputs are already staged.
    * @param simulation Name of the simulation to run.
    * @param replicates Number of replicates to execute.
+   * @param customTags Custom template parameters; same semantics as {@link #execute}.
+   * @param replicateStart Starting replicate index; same semantics as {@link #execute}.
    * @return The jobId for manual status tracking.
    * @throws Exception If dispatch fails.
    */
-  public String executeNoWait(String minioPrefix, String simulation, int replicates)
-      throws Exception {
+  public String executeNoWait(String minioPrefix, String simulation, int replicates,
+      Map<String, String> customTags, int replicateStart) throws Exception {
     String jobId = UUID.randomUUID().toString();
     String prefix = MinioHandler.normalizePrefix(minioPrefix);
 
     output.printInfo("Dispatching to target (" + replicates + " replicates) against "
         + prefix + "...");
-    target.dispatch(jobId, prefix, simulation, replicates);
+    target.dispatch(jobId, prefix, simulation, replicates, customTags, replicateStart);
     output.printInfo("Dispatched. Status path: batch-status/" + jobId + "/status.json");
 
     return jobId;

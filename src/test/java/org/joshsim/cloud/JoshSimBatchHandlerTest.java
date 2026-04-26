@@ -214,6 +214,86 @@ class JoshSimBatchHandlerTest {
   }
 
   @Test
+  void whenReplicateStartIsNegative_shouldReturn400() throws IOException {
+    setupValidApiKey();
+    File joshScript = new File(tempDir, "test.josh");
+    Files.writeString(joshScript.toPath(), "start simulation Test end simulation");
+    setupRequiredFields("job-rs", "Test", tempDir.getAbsolutePath());
+    when(formData.contains("stageFromMinio")).thenReturn(false);
+
+    FormData.FormValue rsVal = mock(FormData.FormValue.class);
+    when(formData.contains("replicateStart")).thenReturn(true);
+    when(formData.getFirst("replicateStart")).thenReturn(rsVal);
+    when(rsVal.getValue()).thenReturn("-3");
+
+    handler.processFormData(exchange, formData);
+
+    verify(exchange).setStatusCode(400);
+    assertTrue(responseBody.toString().contains("replicateStart"),
+        "body: " + responseBody.toString());
+  }
+
+  @Test
+  void whenReplicateStartIsNotNumeric_shouldReturn400() throws IOException {
+    setupValidApiKey();
+    File joshScript = new File(tempDir, "test.josh");
+    Files.writeString(joshScript.toPath(), "start simulation Test end simulation");
+    setupRequiredFields("job-rs2", "Test", tempDir.getAbsolutePath());
+    when(formData.contains("stageFromMinio")).thenReturn(false);
+
+    FormData.FormValue rsVal = mock(FormData.FormValue.class);
+    when(formData.contains("replicateStart")).thenReturn(true);
+    when(formData.getFirst("replicateStart")).thenReturn(rsVal);
+    when(rsVal.getValue()).thenReturn("abc");
+
+    handler.processFormData(exchange, formData);
+
+    verify(exchange).setStatusCode(400);
+    assertTrue(responseBody.toString().contains("Invalid replicateStart"),
+        "body: " + responseBody.toString());
+  }
+
+  @Test
+  void whenCustomTagsHasReservedName_shouldReturn400() throws IOException {
+    setupValidApiKey();
+    File joshScript = new File(tempDir, "test.josh");
+    Files.writeString(joshScript.toPath(), "start simulation Test end simulation");
+    setupRequiredFields("job-ct", "Test", tempDir.getAbsolutePath());
+    when(formData.contains("stageFromMinio")).thenReturn(false);
+
+    FormData.FormValue ctVal = mock(FormData.FormValue.class);
+    when(formData.contains("customTags")).thenReturn(true);
+    when(formData.getFirst("customTags")).thenReturn(ctVal);
+    when(ctVal.getValue()).thenReturn("replicate=42");
+
+    handler.processFormData(exchange, formData);
+
+    verify(exchange).setStatusCode(400);
+    assertTrue(responseBody.toString().contains("reserved template variable"),
+        "body: " + responseBody.toString());
+  }
+
+  @Test
+  void whenCustomTagsMalformed_shouldReturn400() throws IOException {
+    setupValidApiKey();
+    File joshScript = new File(tempDir, "test.josh");
+    Files.writeString(joshScript.toPath(), "start simulation Test end simulation");
+    setupRequiredFields("job-ct2", "Test", tempDir.getAbsolutePath());
+    when(formData.contains("stageFromMinio")).thenReturn(false);
+
+    FormData.FormValue ctVal = mock(FormData.FormValue.class);
+    when(formData.contains("customTags")).thenReturn(true);
+    when(formData.getFirst("customTags")).thenReturn(ctVal);
+    when(ctVal.getValue()).thenReturn("no_equals_sign");
+
+    handler.processFormData(exchange, formData);
+
+    verify(exchange).setStatusCode(400);
+    assertTrue(responseBody.toString().contains("Invalid customTags"),
+        "body: " + responseBody.toString());
+  }
+
+  @Test
   void processFormDataReturnsApiKeyOnSuccess() {
     setupValidApiKey();
     setupRequiredFields("job-1", "TestSim", "/nonexistent");

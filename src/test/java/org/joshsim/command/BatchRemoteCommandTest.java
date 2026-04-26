@@ -61,4 +61,78 @@ public class BatchRemoteCommandTest {
     }
   }
 
+  @Test
+  void customTag_shouldBeStringArrayOption() throws Exception {
+    var field = BatchRemoteCommand.class.getDeclaredField("customTags");
+    var option = field.getAnnotation(CommandLine.Option.class);
+    assertEquals(false, option.required());
+    assertEquals(String[].class, field.getType());
+    assertTrue(java.util.Arrays.asList(option.names()).contains("--custom-tag"));
+  }
+
+  @Test
+  void replicateStart_shouldBeIntOptionWithDefaultZero() throws Exception {
+    var field = BatchRemoteCommand.class.getDeclaredField("replicateStart");
+    var option = field.getAnnotation(CommandLine.Option.class);
+    assertEquals(false, option.required());
+    assertEquals(int.class, field.getType());
+    assertTrue(java.util.Arrays.asList(option.names()).contains("--replicate-start"));
+    assertEquals("0", option.defaultValue());
+  }
+
+  @Test
+  void parseCustomTags_shouldRejectReservedNames() throws Exception {
+    BatchRemoteCommand cmd = new BatchRemoteCommand();
+    setCustomTags(cmd, new String[]{"replicate=42"});
+    Exception ex = assertThrows("replicate", cmd);
+    assertTrue(ex.getMessage().contains("reserved"),
+        "expected 'reserved' in message: " + ex.getMessage());
+  }
+
+  @Test
+  void parseCustomTags_shouldRejectMalformed() throws Exception {
+    BatchRemoteCommand cmd = new BatchRemoteCommand();
+    setCustomTags(cmd, new String[]{"no_equals_sign"});
+    Exception ex = assertThrows("no_equals", cmd);
+    assertTrue(ex.getMessage().contains("Invalid custom-tag"),
+        "expected 'Invalid custom-tag' in message: " + ex.getMessage());
+  }
+
+  @Test
+  void parseCustomTags_shouldParseValidPairsIntoMap() throws Exception {
+    BatchRemoteCommand cmd = new BatchRemoteCommand();
+    setCustomTags(cmd, new String[]{"run_hash=abc", "region=west"});
+    var method = BatchRemoteCommand.class.getDeclaredMethod("parseCustomTags");
+    method.setAccessible(true);
+    @SuppressWarnings("unchecked")
+    var parsed = (java.util.Map<String, String>) method.invoke(cmd);
+    assertEquals(2, parsed.size());
+    assertEquals("abc", parsed.get("run_hash"));
+    assertEquals("west", parsed.get("region"));
+  }
+
+  private static void setCustomTags(BatchRemoteCommand cmd, String[] tags) throws Exception {
+    java.lang.reflect.Field f = BatchRemoteCommand.class.getDeclaredField("customTags");
+    f.setAccessible(true);
+    f.set(cmd, tags);
+  }
+
+  private static Exception assertThrows(String description, BatchRemoteCommand cmd) {
+    try {
+      var method = BatchRemoteCommand.class.getDeclaredMethod("parseCustomTags");
+      method.setAccessible(true);
+      method.invoke(cmd);
+    } catch (java.lang.reflect.InvocationTargetException ite) {
+      Throwable cause = ite.getCause();
+      if (cause instanceof IllegalArgumentException iae) {
+        return iae;
+      }
+      throw new AssertionError(
+          "Expected IllegalArgumentException for " + description + ", got: " + cause);
+    } catch (Exception e) {
+      throw new AssertionError("Reflection failure: " + e);
+    }
+    throw new AssertionError("Expected exception for " + description + " was not thrown");
+  }
+
 }

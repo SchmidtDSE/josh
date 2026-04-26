@@ -23,6 +23,7 @@ import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.time.Instant;
+import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Optional;
@@ -39,6 +40,9 @@ import org.joshsim.lang.io.InputOutputLayer;
 import org.joshsim.lang.io.JvmInputOutputLayerBuilder;
 import org.joshsim.lang.io.JvmMappedInputGetter;
 import org.joshsim.lang.parse.ParseResult;
+import org.joshsim.pipeline.job.JoshJob;
+import org.joshsim.pipeline.job.JoshJobBuilder;
+import org.joshsim.pipeline.job.config.TemplateStringRenderer;
 import org.joshsim.util.MinioHandler;
 import org.joshsim.util.MinioOptions;
 import org.joshsim.util.MinioStagingUtil;
@@ -180,8 +184,12 @@ public class JoshSimBatchHandler implements HttpHandler {
     }
 
     int replicates;
+    int replicateStart;
+    Map<String, String> customTags;
     try {
       replicates = parseReplicates(formData);
+      replicateStart = parseReplicateStart(formData);
+      customTags = parseCustomTags(formData);
     } catch (IllegalArgumentException e) {
       sendJsonError(exchange, 400, jobId, e.getMessage());
       return Optional.of(apiKey);
@@ -197,7 +205,8 @@ public class JoshSimBatchHandler implements HttpHandler {
     // deployed with --no-cpu-throttling. See BATCH_EXECUTOR above, #418, #421.
     CompletableFuture.runAsync(() -> {
       runBatchWithStatus(
-          statusMinio, jobId, simulation, workDir, replicates, statusPath, capturedApiKey
+          statusMinio, jobId, simulation, workDir, replicates,
+          replicateStart, customTags, statusPath, capturedApiKey
       );
     }, BATCH_EXECUTOR);
 
@@ -288,14 +297,67 @@ public class JoshSimBatchHandler implements HttpHandler {
     return value;
   }
 
+  /**
+   * Parses the optional {@code replicateStart} form field. Returns 0 if not present.
+   * Throws IllegalArgumentException if present but invalid.
+   */
+  private int parseReplicateStart(FormData formData) {
+    if (!formData.contains("replicateStart")) {
+      return 0;
+    }
+    String raw = formData.getFirst("replicateStart").getValue();
+    int value;
+    try {
+      value = Integer.parseInt(raw);
+    } catch (NumberFormatException e) {
+      throw new IllegalArgumentException("Invalid replicateStart value: " + raw);
+    }
+    if (value < 0) {
+      throw new IllegalArgumentException("replicateStart must be >= 0, got: " + value);
+    }
+    return value;
+  }
+
+  /**
+   * Parses the optional {@code customTags} form field (newline-delimited
+   * {@code key=value} entries). Returns an empty map if not present.
+   */
+  private Map<String, String> parseCustomTags(FormData formData) {
+    Map<String, String> parsed = new HashMap<>();
+    if (!formData.contains("customTags")) {
+      return parsed;
+    }
+    String raw = formData.getFirst("customTags").getValue();
+    for (String line : raw.split("\n")) {
+      String trimmed = line.trim();
+      if (trimmed.isEmpty()) {
+        continue;
+      }
+      int equalsIndex = trimmed.indexOf('=');
+      if (equalsIndex <= 0 || equalsIndex == trimmed.length() - 1) {
+        throw new IllegalArgumentException("Invalid customTags entry: " + trimmed
+            + ". Expected format: name=value");
+      }
+      String name = trimmed.substring(0, equalsIndex).trim();
+      String value = trimmed.substring(equalsIndex + 1);
+      if ("replicate".equals(name) || "step".equals(name) || "variable".equals(name)) {
+        throw new IllegalArgumentException("Custom parameter name '" + name
+            + "' conflicts with reserved template variable");
+      }
+      parsed.put(name, value);
+    }
+    return parsed;
+  }
+
   private void runBatchWithStatus(MinioHandler statusMinio, String jobId,
-      String simulation, File workDir, int replicates, String statusPath, String apiKey) {
+      String simulation, File workDir, int replicates, int replicateStart,
+      Map<String, String> customTags, String statusPath, String apiKey) {
     writeStatus(statusMinio, statusPath, buildStatusJson(
         "running", jobId, "startedAt", Instant.now().toString()
     ));
 
     try {
-      executeBatchJob(jobId, simulation, workDir, replicates);
+      executeBatchJob(jobId, simulation, workDir, replicates, replicateStart, customTags);
 
       writeStatus(statusMinio, statusPath, buildStatusJson(
           "complete", jobId, "completedAt", Instant.now().toString()
@@ -329,7 +391,7 @@ public class JoshSimBatchHandler implements HttpHandler {
   }
 
   private void executeBatchJob(String jobId, String simulation, File workDir,
-      int replicates) throws Exception {
+      int replicates, int replicateStart, Map<String, String> customTags) throws Exception {
     // Ensure JVM threading for parallel patch export
     CompatibilityLayerKeeper.set(new JvmCompatibilityLayer());
 
@@ -349,10 +411,19 @@ public class JoshSimBatchHandler implements HttpHandler {
     ValueSupportFactory valueFactory = new ValueSupportFactory();
     GridGeometryFactory geometryFactory = new GridGeometryFactory();
 
+    // JoshJob carries customParameters into TemplateStringRenderer; the renderer is what
+    // makes {key} placeholders in exportFiles paths resolve to dispatched values. Without
+    // this, custom-tag template resolution silently no-ops on the batch HTTP path.
+    JoshJob job = new JoshJobBuilder()
+        .setReplicates(replicates)
+        .setCustomParameters(customTags)
+        .build();
+
     // Interpret once — the program doesn't change between replicates.
     // Only the InputOutputLayer changes (replicate index, append mode).
     InputOutputLayer initialLayer = new JvmInputOutputLayerBuilder()
         .withInputStrategy(new JvmMappedInputGetter(fileMapping))
+        .withTemplateRenderer(new TemplateStringRenderer(job, replicateStart))
         .withMinioOptions(minioOptions)
         .build();
 
@@ -364,12 +435,13 @@ public class JoshSimBatchHandler implements HttpHandler {
       throw new IllegalArgumentException("Simulation not found: " + simulation);
     }
 
-    for (int replicate = 0; replicate < replicates; replicate++) {
+    for (int replicate = replicateStart; replicate < replicateStart + replicates; replicate++) {
       InputOutputLayer replicateLayer = new JvmInputOutputLayerBuilder()
           .withReplicate(replicate)
           .withInputStrategy(new JvmMappedInputGetter(fileMapping))
+          .withTemplateRenderer(new TemplateStringRenderer(job, replicate))
           .withMinioOptions(minioOptions)
-          .withAppendMode(replicate > 0)
+          .withAppendMode(replicate > replicateStart)
           .build();
 
       JoshSimFacadeUtil.runSimulation(

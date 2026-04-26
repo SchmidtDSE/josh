@@ -148,6 +148,15 @@ public class RunRemoteCommand implements Callable<Integer> {
   )
   private int replicates = 1;
 
+  @Option(
+      names = "--replicate-start",
+      description = "Starting replicate index (default: 0). Combined with --replicates this "
+          + "selects the half-open range [start, start+count). Used for pool/resume "
+          + "workflows where indices need to be stable across re-dispatch.",
+      defaultValue = "0"
+  )
+  private int replicateStart = 0;
+
   /**
    * Parses custom parameter command-line options.
    *
@@ -181,6 +190,10 @@ public class RunRemoteCommand implements Callable<Integer> {
     // Validate replicates parameter
     if (replicates < 1) {
       output.printError("Number of replicates must be at least 1");
+      return SERIALIZATION_ERROR_CODE;
+    }
+    if (replicateStart < 0) {
+      output.printError("--replicate-start must be >= 0");
       return SERIALIZATION_ERROR_CODE;
     }
     try {
@@ -338,6 +351,7 @@ public class RunRemoteCommand implements Callable<Integer> {
           .withOutputOptions(output)
           .withMinioOptions(minioOptions)
           .withMaxConcurrentWorkers(concurrentWorkers)
+          .withReplicateNumber(replicateStart)
           .withEnableProfiler(enableProfiler)
           .build();
 

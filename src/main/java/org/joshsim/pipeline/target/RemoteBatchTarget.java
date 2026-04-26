@@ -6,6 +6,8 @@
 
 package org.joshsim.pipeline.target;
 
+import java.util.Map;
+
 
 /**
  * Dispatch interface for remote batch execution targets.
@@ -39,8 +41,15 @@ public interface RemoteBatchTarget {
    *     (e.g., {@code batch-jobs/abc123/inputs/}).
    * @param simulation The name of the simulation to run.
    * @param replicates The number of replicates to execute.
+   * @param customTags Custom template parameters resolvable as {@code {key}} placeholders
+   *     in {@code exportFiles} paths. Empty map means none. Same semantics as
+   *     {@code RunCommand --custom-tag}.
+   * @param replicateStart Starting replicate index for the half-open range
+   *     {@code [start, start+replicates)}. Used for pool/resume workflows where
+   *     indices need to be stable across re-dispatch. {@code 0} preserves prior
+   *     behavior.
    * @throws Exception If the dispatch fails (e.g., network error, auth failure).
    */
-  void dispatch(String jobId, String minioPrefix, String simulation, int replicates)
-      throws Exception;
+  void dispatch(String jobId, String minioPrefix, String simulation, int replicates,
+      Map<String, String> customTags, int replicateStart) throws Exception;
 }
