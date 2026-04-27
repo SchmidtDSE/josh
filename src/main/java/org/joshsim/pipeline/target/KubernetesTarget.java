@@ -142,6 +142,7 @@ public class KubernetesTarget implements RemoteBatchTarget {
             .endTemplate()
         .endSpec();
 
+    applyNodeSelector(jobBuilder);
     if (config.isSpot()) {
       applySpotConfig(jobBuilder);
     }
@@ -300,6 +301,20 @@ public class KubernetesTarget implements RemoteBatchTarget {
       reqs.setLimits(limits);
     }
     return reqs;
+  }
+
+  private void applyNodeSelector(JobBuilder jobBuilder) {
+    Map<String, String> selector = config.getNodeSelector();
+    if (selector == null || selector.isEmpty()) {
+      return;
+    }
+    jobBuilder.editSpec()
+        .editTemplate()
+            .editSpec()
+                .addToNodeSelector(selector)
+            .endSpec()
+        .endTemplate()
+        .endSpec();
   }
 
   private void applySpotConfig(JobBuilder jobBuilder) {

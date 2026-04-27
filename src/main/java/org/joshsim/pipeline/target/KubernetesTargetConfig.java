@@ -52,6 +52,9 @@ public class KubernetesTargetConfig {
   @JsonProperty("ttlSecondsAfterFinished")
   private Integer ttlSecondsAfterFinished;
 
+  @JsonProperty("nodeSelector")
+  private Map<String, String> nodeSelector;
+
   /**
    * Default constructor for Jackson deserialization.
    */
@@ -169,5 +172,27 @@ public class KubernetesTargetConfig {
    */
   public Integer getTtlSecondsAfterFinished() {
     return ttlSecondsAfterFinished;
+  }
+
+  /**
+   * Returns the node selector labels for pod scheduling.
+   *
+   * <p>Stock Kubernetes pod-spec field that constrains pods to nodes
+   * carrying matching labels. Used for compute-class selection on
+   * managed offerings — e.g., GKE Autopilot exposes {@code Balanced}
+   * (up to 222 vCPU / 851 GiB) and {@code Scale-Out} via
+   * {@code cloud.google.com/compute-class}; NRP, EKS, and self-hosted
+   * clusters use whatever labels the operator has set.</p>
+   *
+   * <p>Composes with {@link #isSpot()}: when both are set, the spot
+   * selector entry ({@code cloud.google.com/gke-spot=true}) is added
+   * alongside this map's entries, so a Spot Balanced pod is expressible
+   * with {@code "spot": true} plus
+   * {@code "nodeSelector": {"cloud.google.com/compute-class": "Balanced"}}.</p>
+   *
+   * @return The node selector map, or null if not specified.
+   */
+  public Map<String, String> getNodeSelector() {
+    return nodeSelector;
   }
 }
