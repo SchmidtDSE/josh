@@ -376,7 +376,10 @@ Target profiles are JSON files at `~/.josh/targets/<name>.json` that define a co
     "parallelism": 10,
     "timeoutSeconds": 3600,
     "spot": true,
-    "ttlSecondsAfterFinished": 3600
+    "ttlSecondsAfterFinished": 3600,
+    "nodeSelector": {
+      "cloud.google.com/compute-class": "Balanced"
+    }
   },
   "minio_endpoint": "https://storage.googleapis.com",
   "minio_bucket": "josh-batch-storage"
@@ -386,6 +389,8 @@ Target profiles are JSON files at `~/.josh/targets/<name>.json` that define a co
 **Spot pods:** Set `"spot": true` in the kubernetes config block to schedule pods on Spot (preemptible) VMs for 60-90% cost savings. The Job spec gets a `cloud.google.com/gke-spot` node selector and toleration. Preempted pods are retried via `backoffLimit`. GKE Autopilot only.
 
 **Job TTL cleanup:** Set `"ttlSecondsAfterFinished": <seconds>` to automatically delete completed/failed Jobs after the specified duration. Prevents accumulation of finished Jobs in the namespace. Omit or set to null to disable.
+
+**Node selector:** Set `"nodeSelector": { "<label>": "<value>", ... }` to constrain pods to nodes carrying matching labels. This is a stock K8s pod-spec field — works on any cluster — and is how compute classes are selected on managed offerings. On GKE Autopilot, `"cloud.google.com/compute-class": "Balanced"` unlocks pods up to **222 vCPU / 851 GiB** (vs the default class's 30 vCPU / 110 GiB cap); `"Scale-Out"` is also available. On NRP, EKS, or self-hosted clusters, use whatever labels the cluster operator has configured (e.g., GPU node pools, dedicated node groups). Composes with `"spot": true`: a Spot Balanced pod is expressed by setting both — the spot selector entry is added alongside the configured map.
 
 **Credential resolution:** MinIO credentials (`minio_endpoint`, `minio_access_key`, `minio_secret_key`, `minio_bucket`) are resolved via `HierarchyConfig` in priority order: CLI flags > profile JSON > environment variables (`MINIO_ENDPOINT`, `MINIO_ACCESS_KEY`, `MINIO_SECRET_KEY`, `MINIO_BUCKET`). Secrets do not need to live in the profile JSON — they can come entirely from the environment.
 

@@ -258,6 +258,45 @@ class KubernetesPreprocessTargetTest {
   }
 
   @Test
+  void dispatchAppliesNodeSelector() throws Exception {
+    config = buildConfig(10, 3600, null);
+    setField(config, "nodeSelector", Map.of(
+        "cloud.google.com/compute-class", "Balanced"
+    ));
+
+    KubernetesPreprocessTarget target = buildTarget(config);
+    target.dispatch(JOB_ID, PREFIX, SIMULATION, buildParams());
+
+    Job job = jobCaptor.getValue();
+    Map<String, String> selector = job.getSpec()
+        .getTemplate().getSpec().getNodeSelector();
+    assertNotNull(selector);
+    assertEquals("Balanced",
+        selector.get("cloud.google.com/compute-class"));
+  }
+
+  @Test
+  void dispatchMergesNodeSelectorWithSpotSelector() throws Exception {
+    config = buildConfig(10, 3600, null);
+    setField(config, "spot", true);
+    setField(config, "nodeSelector", Map.of(
+        "cloud.google.com/compute-class", "Balanced"
+    ));
+
+    KubernetesPreprocessTarget target = buildTarget(config);
+    target.dispatch(JOB_ID, PREFIX, SIMULATION, buildParams());
+
+    Job job = jobCaptor.getValue();
+    Map<String, String> selector = job.getSpec()
+        .getTemplate().getSpec().getNodeSelector();
+    assertNotNull(selector);
+    assertEquals("Balanced",
+        selector.get("cloud.google.com/compute-class"));
+    assertEquals("true",
+        selector.get("cloud.google.com/gke-spot"));
+  }
+
+  @Test
   void dispatchSetsTtlSecondsAfterFinished() throws Exception {
     config = buildConfig(10, 3600, null);
     setField(config, "ttlSecondsAfterFinished", 600);

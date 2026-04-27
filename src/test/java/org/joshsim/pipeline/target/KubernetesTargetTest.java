@@ -315,6 +315,60 @@ class KubernetesTargetTest {
   }
 
   @Test
+  void dispatchAppliesNodeSelector() throws Exception {
+    config = buildConfig(10, 3600, null);
+    setField(config, "nodeSelector", Map.of(
+        "cloud.google.com/compute-class", "Balanced"
+    ));
+
+    KubernetesTarget target = buildTarget(config);
+    target.dispatch(JOB_ID, PREFIX, SIMULATION, 1);
+
+    Job job = jobCaptor.getValue();
+    Map<String, String> selector = job.getSpec()
+        .getTemplate().getSpec().getNodeSelector();
+    assertNotNull(selector);
+    assertEquals("Balanced",
+        selector.get("cloud.google.com/compute-class"));
+  }
+
+  @Test
+  void dispatchMergesNodeSelectorWithSpotSelector() throws Exception {
+    // Spot Balanced pod: both selectors must coexist on the pod template.
+    config = buildConfig(10, 3600, null);
+    setField(config, "spot", true);
+    setField(config, "nodeSelector", Map.of(
+        "cloud.google.com/compute-class", "Balanced"
+    ));
+
+    KubernetesTarget target = buildTarget(config);
+    target.dispatch(JOB_ID, PREFIX, SIMULATION, 1);
+
+    Job job = jobCaptor.getValue();
+    Map<String, String> selector = job.getSpec()
+        .getTemplate().getSpec().getNodeSelector();
+    assertNotNull(selector);
+    assertEquals("Balanced",
+        selector.get("cloud.google.com/compute-class"));
+    assertEquals("true",
+        selector.get("cloud.google.com/gke-spot"));
+  }
+
+  @Test
+  void dispatchOmitsNodeSelectorWhenAbsent() throws Exception {
+    // Default config has no nodeSelector and no spot — selector should be empty.
+    config = buildConfig(10, 3600, null);
+
+    KubernetesTarget target = buildTarget(config);
+    target.dispatch(JOB_ID, PREFIX, SIMULATION, 1);
+
+    Job job = jobCaptor.getValue();
+    Map<String, String> selector = job.getSpec()
+        .getTemplate().getSpec().getNodeSelector();
+    assertTrue(selector == null || selector.isEmpty());
+  }
+
+  @Test
   void dispatchSetsTtlSecondsAfterFinished()
       throws Exception {
     config = buildConfig(10, 3600, null);
