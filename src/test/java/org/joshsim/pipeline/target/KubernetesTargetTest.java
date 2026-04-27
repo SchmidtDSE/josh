@@ -366,7 +366,7 @@ class KubernetesTargetTest {
     ));
 
     KubernetesTarget target = buildTarget(config);
-    target.dispatch(JOB_ID, PREFIX, SIMULATION, 1);
+    target.dispatch(JOB_ID, PREFIX, SIMULATION, 1, Map.of(), 0);
 
     Job job = jobCaptor.getValue();
     Map<String, String> selector = job.getSpec()
@@ -386,7 +386,7 @@ class KubernetesTargetTest {
     ));
 
     KubernetesTarget target = buildTarget(config);
-    target.dispatch(JOB_ID, PREFIX, SIMULATION, 1);
+    target.dispatch(JOB_ID, PREFIX, SIMULATION, 1, Map.of(), 0);
 
     Job job = jobCaptor.getValue();
     Map<String, String> selector = job.getSpec()
@@ -404,7 +404,7 @@ class KubernetesTargetTest {
     config = buildConfig(10, 3600, null);
 
     KubernetesTarget target = buildTarget(config);
-    target.dispatch(JOB_ID, PREFIX, SIMULATION, 1);
+    target.dispatch(JOB_ID, PREFIX, SIMULATION, 1, Map.of(), 0);
 
     Job job = jobCaptor.getValue();
     Map<String, String> selector = job.getSpec()
