@@ -1,10 +1,10 @@
-# Josh Language
+# Josh
 
-Josh is a domain-specific language (DSL) designed for ecological modeling, with a particular focus on vegetation and agent-based simulations. The language enables the description of multi-occupancy patch-based ecological simulations where multiple species occupying grid cells can be modeled through individual behaviors with optional state changes.
+Josh is a domain-specific language (DSL) designed for ecological modeling with focus on vegetation and agent-based simulations. It enables the description of multi-occupancy patch-based ecological simulations where multiple species occupying grid cells can be modeled through individual behaviors with optional state changes.
 
 ## Purpose
 
-Josh supports the nexus between science, policy, and software engineering by executing vegetation-focused ecological simulations to support management decisions. The language prioritizes readability and interpretability for a broad audience including ecologists, policy makers, and researchers who may not have extensive software engineering backgrounds.
+Support the nexus between science, policy, and engineering by executing vegetation-focused ecological simulations to aid management decisions. Prioritizes readability and interpretability for a broad audience including ecologists, policy makers, and researchers who may not have extensive software engineering backgrounds.
 
 ## Execution Environments
 
@@ -12,507 +12,26 @@ Josh runs across multiple execution environments without requiring code changes:
 
 1. **Browser via WebAssembly**: Complete simulations run directly in web browsers using WebAssembly compilation via TeaVM, requiring no local installation
 2. **Local JVM**: High-performance execution on local machines using Java Virtual Machine for intensive computations and parallelization
-3. **Distributed via JoshCloud**: Community infrastructure for large-scale distributed processing across multiple machines with API key access
+3. **Distributed**: Either private or via community infrastructure, large-scale distributed processing across multiple machines with API key access
 
 ## Geospatial Data Preprocessing
 
-Josh supports preprocessing of external geospatial data files into an optimized binary format called `.jshd` (Josh Data) files. The preprocessing workflow converts data from formats like GeoTIFF and NetCDF into a format optimized for simulation execution, handling coordinate system transformations, temporal alignment, and spatial resampling.
+Josh preprocesses external geospatial data files into an optimized binary format called `.jshd` (Josh Data) files. The preprocessing workflow converts data from formats like GeoTIFF and NetCDF into a simulation optimized format, handling coordinate transformations, temporal alignment, and spatial resampling. Jshd files can be reused across replicates / trials.
 
 ## Command Line Interface (CLI)
 
-Josh provides a comprehensive command line interface through the `joshsim.jar` file via the `JoshSimCommander` class. The CLI supports various operations for validation, execution, preprocessing, and management of Josh simulations.
-
-### Basic Usage
+Josh provides a CLI through `JoshSimCommander` in `joshsim.jar`.
 
 ```bash
 java -jar joshsim-fat.jar [COMMAND] [OPTIONS]
 ```
 
-### Available Commands
-
-#### `run` - Execute Simulations
-Runs a specified simulation from a Josh script file with support for replicates and various output formats.
-
-```bash
-java -jar joshsim-fat.jar run <script.josh> <SimulationName> [OPTIONS]
-```
-
-**Parameters:**
-- `<script.josh>`: Path to Josh simulation file
-- `<SimulationName>`: Name of simulation to execute
-
-**Options:**
-- `--crs <CRS>`: Coordinate Reference System (optional)
-- `--replicates <N>`: Number of replicates to run (default: 1)
-- `--use-float-64`: Use double precision instead of BigDecimal for speed vs precision tradeoff
-- `--data <path>`: Path to directory containing external data files
-- `--output-format <format>`: Output format (csv, netcdf, geotiff)
-- `-o, --output <path>`: Output file path
-- `--parallel`: Enable parallel patch processing
-- `--suppress-info`: Suppress standard output messages
-- `--suppress-errors`: Suppress error messages
-
-**Examples:**
-```bash
-# Basic simulation run
-java -jar joshsim-fat.jar run simulation.josh Main -o results.csv
-
-# Run with multiple replicates
-java -jar joshsim-fat.jar run simulation.josh Main --replicates 10 -o results.csv
-
-# Run with external data
-java -jar joshsim-fat.jar run simulation.josh Main --data ./data -o results.netcdf
-```
-
-#### `preprocess` - Data Preprocessing
-Converts external geospatial data files into optimized binary `.jshd` format for efficient simulation loading. Output can also be written as `.jshdz` (XZ/LZMA2-compressed JSHD) by using that extension — **JVM only**, not supported in the browser editor.
-
-```bash
-java -jar joshsim-fat.jar preprocess <script.josh> <SimulationName> <dataFile> <variable> <units> <output.jshd|output.jshdz> [OPTIONS]
-```
-
-**Parameters:**
-- `<script.josh>`: Path to Josh simulation file
-- `<SimulationName>`: Name of simulation for preprocessing
-- `<dataFile>`: Path to input data file (NetCDF, GeoTIFF, etc.)
-- `<variable>`: Variable name or band number to extract
-- `<units>`: Units of the data for simulation use
-- `<output.jshd>` or `<output.jshdz>`: Path for output preprocessed file. Use `.jshdz` extension to produce an XZ-compressed file (significantly smaller, JVM only).
-
-**Options:**
-- `--amend`: Amend existing JSHD/JSHDZ file rather than overwriting
-- `--crs <CRS>`: Coordinate Reference System for reading input file
-- `--x-coord <name>`: Name of X coordinate dimension
-- `--y-coord <name>`: Name of Y coordinate dimension
-- `--time-dim <name>`: Name of time dimension
-- `--timestep <value>`: Process only a single timestep (for parallel orchestration across timesteps)
-- `--default-value <value>`: Default value to fill grid spaces before copying data from source file
-- `--parallel`: Enable parallel processing of patches within each timestep for ~Nx speedup on N cores
-- `--suppress-info`: Suppress standard output messages
-- `--suppress-errors`: Suppress error messages
-
-**Examples:**
-```bash
-# Basic preprocessing (uncompressed)
-java -jar joshsim-fat.jar preprocess simulation.josh Main temperature.nc temp K temperature.jshd
-
-# Preprocessing to compressed .jshdz format (JVM only)
-java -jar joshsim-fat.jar preprocess simulation.josh Main temperature.nc temp K temperature.jshdz
-
-# Preprocessing with custom coordinates
-java -jar joshsim-fat.jar preprocess simulation.josh Main precip.nc rainfall "mm/year" precipitation.jshd --x-coord longitude --y-coord latitude
-
-# Parallel preprocessing for faster execution on multi-core machines
-java -jar joshsim-fat.jar preprocess simulation.josh Main precip.nc rainfall "kg / m * m * s" precip.jshd --parallel
-```
-
-#### `validate` - Syntax Validation
-Validates Josh script syntax and reports parsing errors without executing simulations.
-
-```bash
-java -jar joshsim-fat.jar validate <script.josh>
-```
-
-**Parameters:**
-- `<script.josh>`: Path to Josh script file to validate
-
-**Options:**
-- `--suppress-info`: Suppress standard output messages
-- `--suppress-errors`: Suppress error messages
-
-#### `discoverConfig` - Configuration Discovery
-Analyzes Josh scripts to discover all configuration variables used, helping generate appropriate `.jshc` files.
-
-```bash
-java -jar joshsim-fat.jar discoverConfig <script.josh>
-```
-
-**Parameters:**
-- `<script.josh>`: Path to Josh script file to analyze
-
-#### `inspectJshd` - Data Inspection
-Inspects values in preprocessed JSHD or JSHDZ files at specific coordinates and timesteps for debugging and validation. Both `.jshd` (uncompressed) and `.jshdz` (XZ-compressed, JVM only) files are supported.
-
-```bash
-java -jar joshsim-fat.jar inspectJshd <file.jshd|file.jshdz> <variable> <timestep> <x> <y>
-```
-
-**Parameters:**
-- `<file.jshd>` or `<file.jshdz>`: Path to JSHD or JSHDZ file to inspect
-- `<variable>`: Variable name to examine (always `data` for JSHD/JSHDZ files)
-- `<timestep>`: Time step to inspect
-- `<x>`: X coordinate (grid space)
-- `<y>`: Y coordinate (grid space)
-
-**Options:**
-- `--to-csv <outputPath>`: Export the entire grid across all timesteps to a CSV file instead of inspecting a single value. When used, `<timestep>`, `<x>`, and `<y>` are not required. The CSV contains columns `x,y,timestep,value`. Grid metadata is printed to stdout as JSON:
-```json
-{
-  "minX": 0, "maxX": 922,
-  "minY": 0, "maxY": 1112,
-  "minTimestep": 0, "maxTimestep": 1,
-  "width": 923, "height": 1113,
-  "units": "K",
-  "csv": "/path/to/output.csv"
-}
-```
-
-#### `inspect-exports` - Export Path Extraction
-Parses a Josh script and extracts the configured export and debug file paths from a simulation without running it. Useful for build systems, CI/CD pipelines, and tooling that needs to know where simulation outputs will be written.
-
-```bash
-java -jar joshsim-fat.jar inspect-exports <script.josh> <SimulationName> [OPTIONS]
-```
-
-**Parameters:**
-- `<script.josh>`: Path to Josh script file to inspect
-- `<SimulationName>`: Name of simulation to extract paths from
-
-**Options:**
-- `--json`: Output in JSON format (default: true)
-
-#### `server` - HTTP Server Mode
-Starts Josh as an HTTP server for web-based simulation execution and API access.
-
-```bash
-java -jar joshsim-fat.jar server [OPTIONS]
-```
-
-**Options:**
-- `--port <port>`: Server port (default: 8080)
-- `--host <host>`: Server host (default: localhost)
-
-**Server Endpoints:**
-
-The server exposes the following API endpoints:
-
-- `POST /runReplicate` — Execute a single simulation replicate via HTTP streaming. Code and data are sent in the request body; results stream back in wire format.
-- `POST /runReplicates` — Leader endpoint that coordinates multiple replicates across workers.
-- `POST /runBatch` — Asynchronously execute a simulation from a local directory of pre-staged files. Returns 202 Accepted immediately with a `statusPath` for polling. Results are written to MinIO via `minio://` export paths in the Josh script. Job status is tracked via a `status.json` file in MinIO. Staging is a separate concern (use `stageFromMinio` CLI command or equivalent before calling this endpoint).
-- `POST /preprocessBatch` — Asynchronously preprocess external data to `.jshd` format from pre-staged files. Returns 202 Accepted immediately. The result `.jshd` is uploaded to MinIO at `batch-jobs/<jobId>/outputs/<outputFile>`. Same status lifecycle as `/runBatch`.
-- `POST /parse` — Parse Josh code and return the AST or errors.
-- `POST /discoverConfig` — Discover configuration variables in Josh code.
-- `GET /health` — Health check endpoint (returns "healthy").
-
-**`/runBatch` Endpoint Details:**
-
-The `/runBatch` endpoint runs a simulation from a local directory of pre-staged files. Staging and execution are separate concerns — the caller is responsible for ensuring files are local before calling this endpoint (e.g., via the `stageFromMinio` CLI command).
-
-```
-POST /runBatch
-Content-Type: multipart/form-data
-```
-
-**Form fields:**
-- `apiKey` — API key for authentication (required if `JOSH_API_KEYS` is set)
-- `jobId` — Unique job identifier, returned in the response
-- `simulation` — Name of the simulation to run
-- `workDir` — Path to local directory containing pre-staged simulation files (.josh script, .jshd, .jshc)
-- `stageFromMinio` (optional) — Set to `"true"` to download inputs from MinIO into `workDir` before running. Controls input staging only, not outputs. For serverless environments where staging and execution must happen in the same request.
-- `minioPrefix` (optional, required when `stageFromMinio=true`) — Object prefix to download from (e.g., `batch-jobs/abc/inputs/`)
-
-**Response (accepted — 202):**
-```json
-{"status": "accepted", "jobId": "integration-test-001", "statusPath": "batch-status/integration-test-001/status.json"}
-```
-
-**Response (validation error — 400/401/500):**
-```json
-{"status": "error", "jobId": "integration-test-001", "message": "..."}
-```
-
-Validation errors (missing fields, bad API key, invalid workDir, staging failures) are returned synchronously before the simulation starts.
-
-**Status file in MinIO (`batch-status/<jobId>/status.json`):**
-
-The server writes a status file to MinIO at job lifecycle boundaries:
-- Running: `{"status": "running", "jobId": "...", "startedAt": "..."}`
-- Complete: `{"status": "complete", "jobId": "...", "completedAt": "..."}`
-- Error: `{"status": "error", "jobId": "...", "message": "...", "failedAt": "..."}`
-
-Status writes are best-effort — if the status writer cannot be initialized (e.g., missing MinIO credentials), the simulation still runs but no status file is written.
-
-**Workflow:**
-1. Stage simulation files to MinIO using `stageToMinio` (client side)
-2. POST to `/runBatch` — returns 202 immediately with `statusPath`
-3. Poll `status.json` in MinIO until status is `"complete"` or `"error"`
-4. Results land in MinIO via `minio://` export paths in the Josh script
-5. Retrieve results using `stageFromMinio` (client side)
-
-MinIO credentials for `minio://` export paths are read from server environment variables (`MINIO_ENDPOINT`, `MINIO_ACCESS_KEY`, `MINIO_SECRET_KEY`, `MINIO_BUCKET`).
-
-**`/preprocessBatch` Endpoint Details:**
-
-The `/preprocessBatch` endpoint preprocesses external data to `.jshd` format from pre-staged files. Same async pattern as `/runBatch`.
-
-```
-POST /preprocessBatch
-Content-Type: multipart/form-data
-```
-
-**Required form fields:**
-- `apiKey` — API key for authentication
-- `jobId` — Unique job identifier
-- `simulation` — Name of the simulation (for grid/metadata extraction)
-- `dataFile` — Filename of the data file within workDir
-- `variable` — Variable name or band number
-- `units` — Units string
-- `outputFile` — Filename for the output `.jshd`
-- `workDir` — Path to local directory with pre-staged files
-
-**Optional form fields:**
-- `stageFromMinio` / `minioPrefix` — Same as `/runBatch`
-- `crs` (default `EPSG:4326`) — Coordinate reference system
-- `xCoord` (default `lon`) — Horizontal coordinate name
-- `yCoord` (default `lat`) — Vertical coordinate name
-- `timeDim` (default `calendar_year`) — Time dimension name
-- `timestep` — Single timestep to process
-- `defaultValue` — Default fill value
-- `parallel` (default `false`) — Parallel patch processing
-- `amend` (default `false`) — Amend existing output
-
-**Response:** Same as `/runBatch` — 202 Accepted with `statusPath`, or 400/401 on validation errors.
-
-**Result:** The preprocessed `.jshd` is uploaded to `batch-jobs/<jobId>/outputs/<outputFile>` in MinIO. The status file includes `resultPath` on completion.
-
-#### `runRemote` - Cloud Execution
-Executes simulations on Josh Cloud infrastructure for distributed processing.
-
-```bash
-java -jar joshsim-fat.jar runRemote <script.josh> <SimulationName> [OPTIONS]
-```
-
-**Parameters:**
-- `<script.josh>`: Path to Josh simulation file
-- `<SimulationName>`: Name of simulation to execute
-
-**Options:**
-- `--api-key <key>`: Josh Cloud API key
-- `--replicates <N>`: Number of replicates
-- `--endpoint <url>`: Custom Josh Cloud endpoint
-
-#### `batchRemote` - Batch Execution on Remote Targets
-Dispatches a simulation to a remote compute target (Cloud Run, Kubernetes, etc.) via MinIO staging. The target profile defines how the job runs — an HTTP target POSTs to a joshsim server, a Kubernetes target creates an indexed Job with one pod per replicate.
-
-```bash
-java -jar joshsim-fat.jar batchRemote <SimulationName> [OPTIONS]
-```
-
-**Parameters:**
-- `<SimulationName>`: Name of simulation to execute
-
-**Options:**
-- `--target <name>` (required): Target profile name (loads `~/.josh/targets/<name>.json`)
-- `--minio-prefix <prefix>` (required): MinIO object prefix where inputs already live (e.g., `batch-jobs/my-run/inputs/`). Populate first via `stageToMinio`.
-- `--require-prestaged`: Fail fast unless `.josh-staged.json` at `--minio-prefix` reports `complete`.
-- `--replicates <N>`: Number of replicates (default: 1). Passed to the target — HTTP targets run N in-process, K8s targets create N pods.
-- `--no-wait`: Dispatch and exit without polling for completion
-- `--poll-interval <seconds>`: Seconds between status polls (default: 5)
-- `--timeout <seconds>`: Maximum seconds to wait for completion (default: 3600)
-
-**Examples:**
-```bash
-# Stage inputs, then run on Cloud Run and wait for completion
-java -jar joshsim-fat.jar stageToMinio \
-  --input-dir=./sim-files --prefix=batch-jobs/my-run/inputs/
-java -jar joshsim-fat.jar batchRemote Main \
-  --target=cloudrun-prod \
-  --minio-prefix=batch-jobs/my-run/inputs/ \
-  --require-prestaged
-
-# Fire-and-forget on Kubernetes; prints JSON with jobId to stdout
-java -jar joshsim-fat.jar batchRemote Main \
-  --target=nautilus \
-  --minio-prefix=batch-jobs/my-run/inputs/ \
-  --require-prestaged \
-  --replicates=50 --no-wait
-```
-
-**Workflow:**
-
-Staging and dispatch are separate commands. Use `stageToMinio` to upload inputs to `--minio-prefix` (this writes a `.josh-staged.json` sentinel: `STAGING` → `COMPLETE` or `ERROR`). Then run `batchRemote`:
-
-- **Default (trust-the-prefix):** Reads the sentinel if present and warns if absent, then dispatches regardless. Useful when files were uploaded manually.
-- **Strict (`--require-prestaged`):** Fails fast unless the sentinel exists and reports `complete`. Use for shared/multi-dispatch workflows where staging is a separate upstream step.
-
-After dispatch:
-1. Polls for completion unless `--no-wait` (MinIO status file for HTTP, K8s Job API for Kubernetes)
-2. Results land in MinIO via `minio://` export paths in the Josh script
-
-**`--no-wait` output:** Exits 0 immediately and prints JSON to stdout:
-`{"jobId": "<id>", "target": "<name>", "statusPath": "batch-status/<id>/status.json"}`
-Use `pollBatch <jobId> --target=<name>` to check status later.
-
-##### Target Profiles
-
-Target profiles are JSON files at `~/.josh/targets/<name>.json` that define a compute target and its MinIO storage configuration.
-
-**HTTP target** (Cloud Run, any joshsim server):
-```json
-{
-  "type": "http",
-  "http": {
-    "endpoint": "https://josh-executor.run.app",
-    "apiKey": "your-api-key"
-  },
-  "minio_endpoint": "https://storage.googleapis.com",
-  "minio_bucket": "josh-batch-storage"
-}
-```
-
-**Kubernetes target** (GKE, Nautilus/NRP, EKS, any K8s cluster):
-```json
-{
-  "type": "kubernetes",
-  "kubernetes": {
-    "context": "nautilus",
-    "namespace": "joshsim-lab",
-    "image": "ghcr.io/schmidtdse/joshsim-job:latest",
-    "pod_minio_endpoint": "https://storage.googleapis.com",
-    "resources": {
-      "requests": { "cpu": "2", "memory": "4Gi" },
-      "limits": { "memory": "256Gi" }
-    },
-    "parallelism": 10,
-    "timeoutSeconds": 3600,
-    "spot": true,
-    "ttlSecondsAfterFinished": 3600,
-    "nodeSelector": {
-      "cloud.google.com/compute-class": "Balanced"
-    }
-  },
-  "minio_endpoint": "https://storage.googleapis.com",
-  "minio_bucket": "josh-batch-storage"
-}
-```
-
-**Spot pods:** Set `"spot": true` in the kubernetes config block to schedule pods on Spot (preemptible) VMs for 60-90% cost savings. The Job spec gets a `cloud.google.com/gke-spot` node selector and toleration. Preempted pods are retried via `backoffLimit`. GKE Autopilot only.
-
-**Job TTL cleanup:** Set `"ttlSecondsAfterFinished": <seconds>` to automatically delete completed/failed Jobs after the specified duration. Prevents accumulation of finished Jobs in the namespace. Omit or set to null to disable.
-
-**Node selector:** Set `"nodeSelector": { "<label>": "<value>", ... }` to constrain pods to nodes carrying matching labels. This is a stock K8s pod-spec field — works on any cluster — and is how compute classes are selected on managed offerings. On GKE Autopilot, `"cloud.google.com/compute-class": "Balanced"` unlocks pods up to **222 vCPU / 851 GiB** (vs the default class's 30 vCPU / 110 GiB cap); `"Scale-Out"` is also available. On NRP, EKS, or self-hosted clusters, use whatever labels the cluster operator has configured (e.g., GPU node pools, dedicated node groups). Composes with `"spot": true`: a Spot Balanced pod is expressed by setting both — the spot selector entry is added alongside the configured map.
-
-**Credential resolution:** MinIO credentials (`minio_endpoint`, `minio_access_key`, `minio_secret_key`, `minio_bucket`) are resolved via `HierarchyConfig` in priority order: CLI flags > profile JSON > environment variables (`MINIO_ENDPOINT`, `MINIO_ACCESS_KEY`, `MINIO_SECRET_KEY`, `MINIO_BUCKET`). Secrets do not need to live in the profile JSON — they can come entirely from the environment.
-
-**Pod MinIO endpoint:** Kubernetes targets require `pod_minio_endpoint` in the kubernetes config block — the MinIO endpoint that pods use inside the cluster. This may differ from the outer `minio_endpoint` used by the host for staging (e.g., `http://minio.namespace.svc:9000` vs `https://storage.googleapis.com`).
-
-**Kubernetes Job details:** `batchRemote` with a K8s target creates an indexed Job (`completionMode: Indexed`) where each pod runs one replicate. MinIO credentials are stored in a per-job K8s Secret (`josh-creds-<jobId>`) and referenced via `secretKeyRef`. Pods run `run-entrypoint.sh` which calls `stageFromMinio` to download inputs, then `run` to execute the simulation. Infrastructure failures (OOMKill, ImagePullBackOff, scheduling failures) are detected by polling the K8s Job API.
-
-#### `preprocessBatch` - Remote Preprocessing on Batch Targets
-Dispatches preprocessing (converting external data to `.jshd` format) to a remote compute target via MinIO staging. Uses the same target profile system as `batchRemote`. After completion, downloads the resulting `.jshd` file from MinIO.
-
-```bash
-java -jar joshsim-fat.jar preprocessBatch <script.josh | inputDir> <SimulationName> <dataFile> <variable> <units> <outputFile> [OPTIONS]
-```
-
-**Parameters:**
-- `<script.josh>` or `<inputDir>`: Path to Josh simulation file or directory containing simulation files
-- `<SimulationName>`: Name of simulation (for grid/metadata extraction)
-- `<dataFile>`: Data file name within the input directory (NetCDF, GeoTIFF, jshd)
-- `<variable>`: Variable name or band number to extract
-- `<units>`: Units of the data for simulation use
-- `<outputFile>`: Local path for the resulting `.jshd` file
-
-**Options:**
-- `--target <name>` (required): Target profile name (loads `~/.josh/targets/<name>.json`)
-- `--no-wait`: Dispatch and exit without polling for completion
-- `--poll-interval <seconds>`: Seconds between status polls (default: 5)
-- `--timeout <seconds>`: Maximum seconds to wait for completion (default: 3600)
-- `--crs <CRS>`: Coordinate Reference System (default: `EPSG:4326`)
-- `--x-coord <name>`: Name of X coordinate dimension (default: `lon`)
-- `--y-coord <name>`: Name of Y coordinate dimension (default: `lat`)
-- `--time-dim <name>`: Name of time dimension (default: `calendar_year`)
-- `--timestep <value>`: Process only a single timestep
-- `--default-value <value>`: Default fill value for grid spaces
-- `--parallel`: Enable parallel patch processing
-- `--amend`: Amend existing output file
-
-**Examples:**
-```bash
-# Preprocess on Kubernetes, wait for result
-java -jar joshsim-fat.jar preprocessBatch simulation.josh Main data.nc temperature celsius output.jshd \
-  --target=nautilus --crs=EPSG:4326
-
-# Preprocess single timestep on Cloud Run
-java -jar joshsim-fat.jar preprocessBatch simulation.josh Main precip.nc rainfall "mm/year" precip.jshd \
-  --target=cloudrun-prod --timestep=2020
-```
-
-**Workflow:**
-1. Stages local simulation files (Josh script + data file) to MinIO (`batch-jobs/<jobId>/inputs/`)
-2. Dispatches to the configured target (HTTP POST to `/preprocessBatch` or K8s Job with `preprocess-entrypoint.sh`)
-3. Polls for completion (MinIO status file for HTTP, K8s Job API for Kubernetes)
-4. On completion: downloads the result `.jshd` from MinIO to the local output path
-
-**Key difference from `batchRemote`:** The output is the `.jshd` file itself, downloaded from MinIO after completion. `batchRemote` relies on `minio://` export paths in the Josh script — `preprocessBatch` produces a file that gets downloaded to the client.
-
-#### `stageToMinio` - Upload Files to MinIO
-Uploads local files to MinIO for batch job staging.
-
-```bash
-java -jar joshsim-fat.jar stageToMinio --input-dir=<dir> --prefix=<prefix> [MinioOptions]
-```
-
-**Options:**
-- `--input-dir <dir>`: Local directory containing files to upload
-- `--prefix <prefix>`: MinIO object prefix (e.g., `batch-jobs/abc/inputs/`)
-- MinIO options: `--minio-endpoint`, `--minio-access-key`, `--minio-secret-key`, `--minio-bucket`, or environment variables
-
-#### `stageFromMinio` - Download Files from MinIO
-Downloads all objects under a MinIO prefix to a local directory.
-
-```bash
-java -jar joshsim-fat.jar stageFromMinio --prefix=<prefix> --output-dir=<dir> [MinioOptions]
-```
-
-**Options:**
-- `--prefix <prefix>`: MinIO object prefix to download from
-- `--output-dir <dir>`: Local directory to download files into
-- MinIO options: same as `stageToMinio`
-
-#### `pollBatch` - Check Status of a Dispatched Batch Job
-Single-shot status check for a job dispatched with `batchRemote --no-wait`. Queries the appropriate source (MinIO `status.json` for HTTP targets, Kubernetes Job API for K8s targets) and prints JSON to stdout. Polling intervals and retry logic are the caller's responsibility.
-
-```bash
-java -jar joshsim-fat.jar pollBatch <jobId> --target=<name>
-```
-
-**Parameters:**
-- `<jobId>`: Job ID from the `batchRemote --no-wait` JSON output
-
-**Options:**
-- `--target <name>` (required): Target profile name (same profile used to dispatch)
-
-**Output (stdout):**
-```json
-{"status": "running",  "jobId": "...", "startedAt":   "<iso8601>"}
-{"status": "complete", "jobId": "...", "completedAt": "<iso8601>"}
-{"status": "error",    "jobId": "...", "failedAt":    "<iso8601>", "message": "<reason>"}
-```
-
-**Exit codes:** `0` = complete, `1` = error, `2` = running/pending, `100` = poll failure
-
-**Example:**
-```bash
-java -jar joshsim-fat.jar stageToMinio \
-  --input-dir=./sim-files --prefix=batch-jobs/run1/inputs/
-OUT=$(java -jar joshsim-fat.jar batchRemote Main \
-  --target=nautilus --minio-prefix=batch-jobs/run1/inputs/ \
-  --require-prestaged --no-wait)
-JOB_ID=$(echo "$OUT" | jq -r .jobId)
-
-java -jar joshsim-fat.jar pollBatch "$JOB_ID" --target=nautilus
-```
-
-### Global Options
-
 All commands support these global options:
+
 - `--help`: Show command help
 - `--version`: Display version information
 - `--suppress-info`: Suppress standard output messages
 - `--suppress-errors`: Suppress error messages
-
-### Integration with Build Systems
 
 The CLI can be integrated with build systems and scripts:
 
@@ -531,11 +50,383 @@ Preprocessing command structure:
 java -jar joshsim.jar preprocess simulation.josh SimulationName data.nc variable units output.jshd
 ```
 
+### `run` - Execute Simulations
+Runs a specified simulation from a Josh script file with support for replicates and various output formats.
+
+```bash
+java -jar joshsim-fat.jar run <script.josh> <SimulationName> [OPTIONS]
+```
+
+**Parameters:**
+- `<script.josh>`: Path to Josh simulation file
+- `<SimulationName>`: Name of simulation to execute
+
+**Options:**
+- `--crs <CRS>`: Coordinate Reference System (optional) like `EPSG:4326` (WGS84)
+- `--csv-precision <places>`: Maximum decimal places for numeric values in CSV output, -1 for unlimited (default: 10)
+- `--custom-tag <name=value>`: Custom template parameters (format: name=value); can be specified multiple times
+- `--data <path>`: Path to directory containing external data files
+- `--enable-profiler`: Enable evalDuration profiling to capture attribute resolution timing
+- `--export-queue-size <size>`: Maximum number of records to buffer before applying backpressure (default: 1000000)
+- `-o, --output <path>`: Output file path
+- `--output-format <format>`: Output format (csv, netcdf, geotiff)
+- `--output-steps <steps>`: Comma-separated list of time steps to export (e.g., 5,7,8,9,20)
+- `--parallel`: Enable parallel patch processing
+- `--replicate-index <index>`: Run a single replicate at this index (mutually exclusive with --replicates). Used by K8s (see batch commands) indexed Jobs where each pod runs one replicate.
+- `--replicates <N>`: Number of replicates to run (default: 1)
+- `--seed <value>`: Random seed for reproducible simulations; forces serial patch execution when specified
+- `--serial-patches`: Run patches in serial instead of parallel
+- `--suppress-errors`: Suppress error messages
+- `--suppress-info`: Suppress standard output messages
+- `--upload-config`: Upload configuration .jshc files to MinIO after completion (requires MinIO configuration)
+- `--upload-data`: Upload data .jshd files to MinIO after completion (requires MinIO configuration)
+- `--upload-source`: Upload source .josh file to MinIO after completion (requires MinIO configuration)
+- `--use-float-64`: Use double precision instead of BigDecimal for speed vs precision tradeoff
+
+**Examples:**
+```bash
+# Run with random seed for deterministic results
+java -jar joshsim-fat.jar run simulation.josh Main --seed 42 -o results.csv
+
+# Export only specific timesteps
+java -jar joshsim-fat.jar run simulation.josh Main --output-steps 5,7,8,9,20 -o results.csv
+
+# Custom template parameters
+java -jar joshsim-fat.jar run simulation.josh Main --custom-tag environment=test --custom-tag version=v2.1
+
+# Limit CSV precision
+java -jar joshsim-fat.jar run simulation.josh Main --csv-precision 4 -o results.csv
+```
+
+### `preprocess` - Data Preprocessing
+Converts external geospatial data files into optimized binary `.jshd` format reusable across runs (trials / replicates).
+
+```bash
+java -jar joshsim-fat.jar preprocess <script.josh> <SimulationName> <dataFile> <variable> <units> <output.jshd> [OPTIONS]
+```
+
+**Parameters:**
+- `<script.josh>`: Path to Josh simulation file
+- `<SimulationName>`: Name of simulation for preprocessing
+- `<dataFile>`: Path to input data file (NetCDF, GeoTIFF, etc.)
+- `<variable>`: Variable name or band number to extract
+- `<units>`: Units of the data for simulation use
+- `<output.jshd>`: Path for output preprocessed file
+
+**Options:**
+- `--amend`: Amend existing JSHD file rather than overwriting like adding new timestep
+- `--crs <CRS>`: Coordinate Reference System for reading input file like `EPSG:4326` (WGS84)
+- `--custom-tag <name=value>`: Custom template parameters (format: name=value); can be specified multiple times
+- `--data <path>`: Path to directory containing external data files
+- `--default-value <value>`: Default value to fill grid spaces before copying data from source file
+- `--parallel`: Enable parallel processing of patches within each timestep for ~Nx speedup on N cores
+- `--serial-patches`: Run patches in serial instead of parallel
+- `--suppress-errors`: Suppress error messages
+- `--suppress-info`: Suppress standard output messages
+- `--time-dim <name>`: Name of time dimension
+- `--timestep <value>`: Process only a single timestep (for parallel orchestration across timesteps)
+- `--use-float-64`: Use double precision instead of BigDecimal for speed vs precision tradeoff
+- `--x-coord <name>`: Name of X coordinate dimension
+- `--y-coord <name>`: Name of Y coordinate dimension
+
+**Examples:**
+```bash
+# Basic preprocessing
+java -jar joshsim-fat.jar preprocess simulation.josh Main temperature.nc temp K temperature.jshd
+
+# Preprocessing with custom coordinates
+java -jar joshsim-fat.jar preprocess simulation.josh Main precip.nc rainfall "mm/year" precipitation.jshd --x-coord longitude --y-coord latitude
+
+# Parallel preprocessing for faster execution on multi-core machines
+java -jar joshsim-fat.jar preprocess simulation.josh Main precip.nc rainfall "kg / m * m * s" precip.jshd --parallel
+```
+
+### `validate` - Syntax Validation
+Validates Josh script syntax and reports parsing errors without executing simulations.
+
+```bash
+java -jar joshsim-fat.jar validate <script.josh>
+```
+
+**Parameters:**
+- `<script.josh>`: Path to Josh script file to validate
+
+**Options:**
+- `--suppress-info`: Suppress standard output messages
+- `--suppress-errors`: Suppress error messages
+- `--upload-source`: Upload source .josh file to MinIO after validation (requires MinIO configuration)
+
+### `discoverConfig` - Configuration Discovery
+Analyzes Josh scripts to discover all configuration variables used, helping generate appropriate `.jshc` files.
+
+```bash
+java -jar joshsim-fat.jar discoverConfig <script.josh>
+```
+
+**Parameters:**
+- `<script.josh>`: Path to Josh script file to analyze
+
+### `inspectJshd` - Data Inspection
+Inspects values in preprocessed JSHD files at specific coordinates and timesteps for debugging and validation.
+
+```bash
+java -jar joshsim-fat.jar inspectJshd <file.jshd> <variable> <timestep> <x> <y>
+```
+
+**Parameters:**
+- `<file.jshd>`: Path to JSHD file to inspect
+- `<variable>`: Variable name to examine
+- `<timestep>`: Time step to inspect
+- `<x>`: X coordinate (grid space)
+- `<y>`: Y coordinate (grid space)
+
+**Options:**
+- `--to-csv <outputPath>`: Export the entire grid across all timesteps to a CSV file instead of inspecting a single value. When used, `<timestep>`, `<x>`, and `<y>` are not required. The CSV contains columns `x,y,timestep,value`. Grid metadata is printed to stdout as JSON:
+```json
+{
+  "minX": 0, "maxX": 922,
+  "minY": 0, "maxY": 1112,
+  "minTimestep": 0, "maxTimestep": 1,
+  "width": 923, "height": 1113,
+  "units": "K",
+  "csv": "/path/to/output.csv"
+}
+```
+
+### `inspect-exports` - Export Path Extraction
+Parses a Josh script and extracts the configured export and debug file paths from a simulation without running it. Useful for build systems, CI/CD pipelines, and tooling that needs to know where simulation outputs will be written.
+
+```bash
+java -jar joshsim-fat.jar inspect-exports <script.josh> <SimulationName> [OPTIONS]
+```
+
+**Parameters:**
+- `<script.josh>`: Path to Josh script file to inspect
+- `<SimulationName>`: Name of simulation to extract paths from
+
+**Options:**
+- `--json`: Output in JSON format (default: true), otherwise plain text
+
+### `server` - HTTP Server Mode
+Starts Josh as an HTTP server for web-based simulation execution and API access.
+
+```bash
+java -jar joshsim-fat.jar server [OPTIONS]
+```
+
+**Options:**
+- `--concurrent-workers <n>`: Number of concurrent workers allowed (default: 1)
+- `--host <host>`: Server host (default: localhost)
+- `--port <port>`: Server port (default: 8080)
+- `--serial-patches`: Run patches in serial instead of parallel
+- `--use-http2`: Enable HTTP/2 support (streaming)
+- `--worker-url <url>`: URL for worker requests (default: http://0.0.0.0:8085/runReplicate)
+
+API keys via `JOSH_API_KEYS` environment variable (comma-separated list). If not set or empty, all API keys are allowed.
+
+This opens the following endpoints (it is recommended not to access these directly and, instead, use the jar):
+
+- `/health`: Returns 200 with "healthy" text
+- `/parse`: POST Josh script, returns JSON with parsed AST or errors
+- `/discoverConfig`: POST Josh script, returns JSON with config variable names
+- `/runReplicate`: POST to run single replicate with JSON body, streams results
+- `/runReplicates`: Leader endpoint for distributed replicate execution
+- `/runBatch`: POST batch job to MinIO-staged target, returns job ID
+- `/preprocessBatch`: POST preprocessing job to MinIO-staged target, returns job ID
+
+### `runRemote` - Cloud Execution
+Executes simulations on Josh Cloud infrastructure for distributed processing.
+
+```bash
+java -jar joshsim-fat.jar runRemote <script.josh> <SimulationName> [OPTIONS]
+```
+
+**Parameters:**
+- `<script.josh>`: Path to Josh simulation file
+- `<SimulationName>`: Name of simulation to execute
+
+**Options:**
+- `--api-key <key>`: API key for authentication (required for Josh Cloud and self-hosted server running with API keys)
+- `--concurrent-workers <n>`: Number of concurrent workers allowed (default: 1)
+- `--custom-tag <name=value>`: Custom template parameters (format: name=value); can be specified multiple times
+- `--data <path>`: Path to directory containing external data files
+- `--endpoint <url>`: Custom endpoint (see `server` command)
+- `--replicates <N>`: Number of replicates
+- `--remote-leader <url>`: Remote leader URL for distributed execution
+- `--upload-config`: Upload configuration .jshc files to MinIO after completion (requires MinIO configuration)
+- `--upload-data`: Upload data .jshd files to MinIO after completion (requires MinIO configuration)
+- `--upload-source`: Upload source .josh file to MinIO after completion (requires MinIO configuration)
+- `--use-float-64`: Use double precision instead of BigDecimal for speed vs precision tradeoff
+
+### Batch commands
+
+Batch commands enable large-scale distributed batch simulation execution against MinIO-staged inputs on remote HTTP/Kubernetes targets with polling and replication support. Ask the user to confirm before taking advantage of these as, unlike other commands which may optionally use MinIO, batch commands require MinIO.
+
+#### Targets
+
+Target profiles (`~/.josh/targets/<name>.json`) define remote compute endpoints for batch execution. Two target types are supported:
+
+**HTTP targets** (Cloud Run or self-hosted server): Uses MinIO polling via `status.json` files written to object storage. All replicates run sequentially in a single container.
+
+**Kubernetes targets** (GKE, EKS, self-hosted): Creates indexed Jobs with one pod per replicate for parallel execution. Polls Job API directly.
+
+MinIO credentials are resolved through a hierarchy: profile JSON takes priority over environment variables. Secrets do not need to live in the profile file.
+
+**HTTP target profile example:**
+
+```json
+{
+  "type": "http",
+  "http": {
+    "endpoint": "https://your-cloudrun-url.run.app",
+    "apiKey": "your-api-key"
+  },
+  "minio_endpoint": "https://storage.googleapis.com",
+  "minio_bucket": "your-bucket"
+}
+```
+
+**Kubernetes target profile example:**
+
+```json
+{
+  "type": "kubernetes",
+  "kubernetes": {
+    "context": "gke_project_region_cluster",
+    "namespace": "joshsim",
+    "image": "ghcr.io/schmidtdse/josh/joshsim-batch:latest",
+    "pod_minio_endpoint": "https://storage.googleapis.com",
+    "resources": { "requests": { "cpu": "1", "memory": "2Gi" }, "limits": { "memory": "4Gi" } },
+    "parallelism": 5,
+    "timeoutSeconds": 600,
+    "ttlSecondsAfterFinished": 3600,
+    "spot": true
+  },
+  "minio_endpoint": "https://storage.googleapis.com",
+  "minio_bucket": "your-bucket"
+}
+```
+
+K8s target options include `spot` for preemptible VMs (60-90% cost savings), `ttlSecondsAfterFinished` for automatic Job cleanup, `nodeSelector` for compute class selection, and `jarPath` to override the default jar location (`/app/joshsim-fat.jar`).
+
+#### `batchRemote` - Batch Execution on Remote Targets
+Dispatches batch simulations to remote compute targets (HTTP or Kubernetes) against MinIO-staged inputs.
+
+```bash
+java -jar joshsim-fat.jar batchRemote <SimulationName> --target <name> --minio-prefix <prefix> [OPTIONS]
+```
+
+**Parameters:**
+- `<SimulationName>`: Name of simulation to execute
+
+**Options:**
+- `--custom-tag <name=value>`: Custom template parameters (format: `name=value`); can be specified multiple times; resolvable as `{name}` in exportFiles paths
+- `--minio-prefix <prefix>`: MinIO object prefix where inputs live (e.g., `batch-jobs/my-run/inputs/`) (required)
+- `--no-wait`: Dispatch and exit without polling for completion; returns job ID as JSON
+- `--poll-interval <seconds>`: Seconds between status polls (default: 5)
+- `--replicate-start <index>`: Starting replicate index (default: 0); combined with `--replicates` selects range `[start, start+count)`
+- `--replicates <N>`: Number of replicates to execute (default: 1)
+- `--require-prestaged`: Fail fast unless `.josh-staged.json` at `--minio-prefix` reports 'complete'
+- `--target <name>`: Target profile name (loads `~/.josh/targets/<name>.json`) (required)
+- `--timeout <seconds>`: Maximum seconds to wait for completion (default: 3600)
+
+**Examples:**
+```bash
+# Dispatch 50 replicates against pre-staged inputs
+java -jar joshsim-fat.jar batchRemote Main --target=nautilus \
+    --minio-prefix=batch-jobs/my-run/inputs/ \
+    --require-prestaged --replicates=50
+
+# Dispatch and return immediately (no polling)
+java -jar joshsim-fat.jar batchRemote Main --target=nautilus \
+    --minio-prefix=batch-jobs/my-run/inputs/ --no-wait
+```
+
+#### `preprocessBatch` - Remote Data Preprocessing
+Dispatches geospatial data preprocessing to remote compute targets via MinIO staging, then downloads the resulting `.jshd` file.
+
+```bash
+java -jar joshsim-fat.jar preprocessBatch <input> <SimulationName> <dataFile> <variable> <units> <output.jshd> --target <name> [OPTIONS]
+```
+
+**Parameters:**
+- `<input>`: Path to Josh simulation file or input directory containing data files
+- `<SimulationName>`: Name of simulation for grid/metadata extraction
+- `<dataFile>`: Data file name within the input directory
+- `<variable>`: Variable name or band number to extract
+- `<units>`: Units of the data for simulation use
+- `<output.jshd>`: Local output path for the resulting `.jshd` file
+
+**Options:**
+- `--amend`: Amend existing JSHD file rather than overwriting
+- `--crs <CRS>`: Coordinate Reference System for reading input file (default: EPSG:4326)
+- `--default-value <value>`: Default value to fill grid spaces before copying data from source file
+- `--no-wait`: Dispatch and exit without polling for completion
+- `--parallel`: Enable parallel processing of patches within each timestep
+- `--poll-interval <seconds>`: Seconds between status polls (default: 5)
+- `--target <name>`: Target profile name (loads `~/.josh/targets/<name>.json`) (required)
+- `--timeout <seconds>`: Maximum seconds to wait for completion (default: 3600)
+- `--time-dim <name>`: Name of time dimension (default: calendar_year)
+- `--timestep <value>`: Process only a single timestep
+- `--x-coord <name>`: Name of X coordinate dimension (default: lon)
+- `--y-coord <name>`: Name of Y coordinate dimension (default: lat)
+
+**Examples:**
+```bash
+# Preprocess NetCDF to jshd on remote Kubernetes target
+java -jar joshsim-fat.jar preprocessBatch ./sim simulation.josh temp.nc temperature K temp.jshd --target=k8s
+
+# Dispatch and return immediately (no polling)
+java -jar joshsim-fat.jar preprocessBatch ./sim simulation.josh temp.nc temperature K temp.jshd --target=http --no-wait
+```
+
+#### `stageToMinio` - MinIO Directory Staging
+Uploads all files in a local directory to a MinIO prefix, preserving directory structure. Used to stage inputs for batch jobs.
+
+```bash
+java -jar joshsim-fat.jar stageToMinio --input-dir <path> --prefix <prefix> [OPTIONS]
+```
+
+**Options:**
+- `--input-dir <path>`: Local directory to upload (required)
+- `--prefix <prefix>`: MinIO object prefix (e.g., `batch-jobs/abc/inputs/`) (required)
+
+**Examples:**
+```bash
+# Stage simulation inputs to MinIO
+java -jar joshsim-fat.jar stageToMinio --input-dir=./sim/ --prefix=batch-jobs/abc/inputs/
+
+# Stage with custom prefix
+java -jar joshsim-fat.jar stageToMinio --input-dir=./sim/ --prefix=batch-jobs/my-run/inputs/
+```
+
+#### `pollBatch` - Batch Job Status Polling
+Checks the status of a previously dispatched batch job. Outputs JSON status to stdout.
+
+```bash
+java -jar joshsim-fat.jar pollBatch <jobId> --target <name>
+```
+
+**Parameters:**
+- `<jobId>`: Job ID returned by `batchRemote --no-wait` or `preprocessBatch --no-wait`
+
+**Options:**
+- `--target <name>`: Target profile name (loads `~/.josh/targets/<name>.json`) (required)
+
+**Output:** JSON object with status, jobId, and timestamp fields. Exit codes: 0 = complete, 1 = error, 2 = running/pending.
+
+**Examples:**
+```bash
+# Check job status
+java -jar joshsim-fat.jar pollBatch 550e8400-e29b-41d4-a716-446655440000 --target=nautilus
+```
+
 ## Configuration Files (.jshc)
 
-Josh supports external configuration files using the `.jshc` format for parameterizing simulations without modifying Josh code. This enables users to modify simulation parameters without changing Josh source code.
+Josh supports external configuration files using the `.jshc` format for parameterizing simulations without modifying Josh code. This enables users to modify simulation parameters without changing Josh source code. 
 
 ### Format Specification
+
 - One variable per line: `variableName = value units`
 - Comments using `#` character (all text after # ignored until newline)
 - Empty lines allowed and ignored
@@ -544,6 +435,7 @@ Josh supports external configuration files using the `.jshc` format for paramete
 - Values must be valid EngineValue format (number + optional units)
 
 ### Usage in Josh Code
+
 - Access via `config configName.variableName` expressions
 - Example: `config example.testVar1` references `testVar1` from `example.jshc`
 - Files loaded from working directory or provided with HTTP request
@@ -561,12 +453,12 @@ testVar3 = 15 km
 ```
 
 ### Commands
-- `discoverConfig script.josh` - Lists all configuration variables used in a Josh script
-- Variables discovered can be used to generate appropriate .jshc files
+
+The `discoverConfig script.josh` lists all configuration variables used in a Josh script. Variables discovered can be used to generate appropriate .jshc files.
 
 ## Language Structure
 
-Josh uses a stanza-based approach similar to SmallTalk/HyperTalk languages. Each stanza defines an entity (object) using `start` and `end` blocks. The language is imperative with procedural elements, prioritizing behavioral description over computational specification.
+Josh uses a stanza-based approach. Each stanza defines an entity (object) inside `start` / `end` blocks. The language is imperative with procedural elements.
 
 ### Entity Types
 
@@ -597,7 +489,39 @@ Event handlers are run once per variable and may be made conditional based on va
 - **step**: Mid-step event, executed during main simulation timestep
 - **end**: End of step or termination event, executed at end of timestep or when entity is removed
 
-## Language Features
+## Language
+
+A complete Josh program consists of:
+
+1. Optional configuration statements
+2. Optional import statements  
+3. Simulation definition
+4. Other entity stanzas (patch, organism, etc.)
+5. Unit definitions
+
+Example minimal program:
+```
+start simulation Main
+  grid.size = 1000 m
+  grid.low = 33.7 degrees latitude, -115.4 degrees longitude
+  grid.high = 34.0 degrees latitude, -116.4 degrees longitude
+  steps.low = 0 count
+  steps.high = 10 count
+end simulation
+
+start patch Default
+  ExampleTree.init = create 10 count of ExampleTree
+end patch
+
+start organism ExampleTree
+  age.init = 0 year
+  age.step = prior.age + 1 year
+end organism
+
+start unit year
+  alias years
+end unit
+```
 
 ### Comments
 Single-line comments use `#` syntax:
@@ -607,8 +531,8 @@ Single-line comments use `#` syntax:
 
 ### Data Types
 
-#### Scalar Values
-Numeric values with optional units:
+**Numeric values with optional units:**
+
 ```
 5 meters
 10.5 years
@@ -616,25 +540,25 @@ Numeric values with optional units:
 33.7 degrees latitude
 ```
 
-#### Strings
-String literals enclosed in double quotes:
+**String literals enclosed in double quotes:**
+
 ```
 "Default"
 "file:///tmp/output.csv"
 ```
 
-#### Boolean Values
+**Boolean values:**
+
 ```
 true
 false
 ```
 
-#### Distributions
-Statistical distributions for stochastic modeling:
-```
-uniform from 0 meters to 1 meters
-normal with mean of 10 years std of 2 years
-```
+**Statistical distributions for stochastic modeling:**
+
+- **uniform**: Uniform distribution sampling between min and max values (`uniform from 0 meters to 1 meters`)
+- **normal**: Normal (Gaussian) distribution with specified mean and standard deviation (`normal with mean of 10 years std of 2 years`)
+- **binomial**: Binomial distribution for modeling success/failure outcomes with `n` trials and success probability `p` (`binomial with n of 20 count p of 0.5 count`)
 
 ### Unit System
 
@@ -668,9 +592,10 @@ end unit
 ### Identifiers and Attributes
 
 Identifiers follow the pattern `[A-Za-z][A-Za-z0-9]*` and can be chained with dot notation:
+
 ```
 organism.attribute
-patch.ForeverTree.age
+patch.ExampleTree.age
 current.height
 ```
 
@@ -684,12 +609,24 @@ current.height
   - `meta.year`: Current simulation year
 
 #### Spatial Keywords
+
 - **here**: Current grid cell context
 - **within**: Spatial query for nearby entities
 
+**Examples:**
+
+```
+# Count patches within 250m radius at prior timestep
+nNearby.step = count(Default within 250 m radial at prior)
+
+# Access current patch coordinates
+patch.info.step = "Patch at (" | here.x | ", " | here.y | ")"
+```
+
 ### Operators
 
-#### Arithmetic Operators
+Arithmetic:
+
 - `+`: Addition
 - `-`: Subtraction
 - `*`: Multiplication
@@ -697,7 +634,8 @@ current.height
 - `^`: Exponentiation
 - `%`: Modulo
 
-#### Comparison Operators
+Comparison:
+
 - `==`: Equality
 - `!=`: Inequality
 - `>`: Greater than
@@ -705,32 +643,39 @@ current.height
 - `<`: Less than
 - `<=`: Less than or equal
 
-#### Logical Operators
+Logical:
+
 - `and`: Logical AND
 - `or`: Logical OR
 - `xor`: Logical XOR
 
-#### String Operator
+String:
+
 - `|`: String concatenation
 
-### Expressions
+### Functions
 
-#### Function Calls
 ```
 function_name(arguments)
-mean(ForeverTree.age)
+mean(ExampleTree.age)
 sample(uniform from 0 to 10)
 ```
 
-#### Built-in Functions
+Built-in:
+
 - **mean()**: Calculate mean of collection
 - **std()**: Calculate standard deviation
 - **count()**: Count elements in collection
 - **sample()**: Sample from distribution or collection
+  ```
+  sample uniform from 0 to 10
+  sample 5 from myCollection with replacement
+  sample 5 from myCollection without replacement
+  ```
 - **create**: Create new entities
   ```
-  create ForeverTree                    # Create single entity
-  create 10 count of ForeverTree        # Create multiple entities
+  create ExampleTree                    # Create single entity
+  create 10 count of ExampleTree        # Create multiple entities
   ```
 - **force**: Type conversion and casting
   ```
@@ -738,30 +683,30 @@ sample(uniform from 0 to 10)
   force prior.temperature as degrees    # Force unit conversion
   ```
 
-#### Collection Operations
+### Collection Operations
 ```
-ForeverTree[ForeverTree.age > 5 years]  # Filtering
+ExampleTree[ExampleTree.age > 5 years]  # Filtering
 all  # All entities of specified type
 ```
 
 ### Control Flow
 
-#### Conditional Modifiers
-Event handlers can use conditional modifiers:
+**Event handlers can use conditional modifiers:**
+
 ```
 attribute.event:if(condition) = expression
 attribute.event:elif(condition) = expression
 attribute.event:else = expression
 ```
 
-#### Conditional Expressions
-Ternary-style conditional expressions:
+**Ternary-style conditional expressions:**
+
 ```
 value if condition else alternative
 ```
 
-#### Full Body Conditionals
-Multi-statement conditional blocks:
+**Multi-statement conditional blocks:**
+
 ```
 if condition {
   const temp = prior.value
@@ -773,9 +718,10 @@ if condition {
 }
 ```
 
-### Full Bodies
+### Handlers
 
 Multi-statement blocks enclosed in curly braces `{}` supporting:
+
 - `const` variable declarations
 - `return` statements
 - Conditional blocks
@@ -791,13 +737,66 @@ age.step = {
 ```
 
 Example lambda (single expression):
+
 ```
 height.step = prior.height + sample uniform from 0 meters to 1 meters
 ```
 
-### Operations
+### State Management
 
-#### Sampling
+Entities can define custom states. Event handlers in a state are only evaluated if the state attribute on an entity is set to that given state.
+
+Example setting state on an organism:
+
+```
+start organism ExampleTree
+  state.init = "alive"
+  health.step = prior.health - 1 unit if state == "damaged" else prior.health
+  state.step = "dead" if health < 1 unit else state
+end organism
+```
+
+Example of using state for handlers:
+
+```
+start state "dead"
+  timeDead.step = prior.timeDead + 1 year
+end state
+```
+
+### External Data
+
+External data references allow accessing preprocessed spatial data during simulation. External data is defined in the simulation and accessed using the `external` keyword.
+
+**Basic syntax:**
+```
+external variableName
+```
+
+**Accessing data at specific timestep:**
+```
+external variableName at prior    # Access data from previous timestep
+external variableName at N       # Access data from timestep N (0-based)
+```
+
+**Example:**
+```
+start external Temperature
+  # Temperature data loaded from preprocessed .jshd file
+end external
+
+start patch Example
+  temp.step = external Temperature  # Get current timestep value
+  tempPrior.step = external Temperature at prior  # Get prior timestep value
+end patch
+```
+
+In addition to spatial information, global config is available via `config configName.variableName` expressions with optional default fallback using `config configName.variableName else defaultValue`. Configuration variables are defined in `.jshc` files (one per line: `variableName = value units`) and enable parameterizing simulations without modifying source code. If a config variable is not defined in a `.jshc` file, the `else` clause provides a fallback value. Without `else`, the simulation will error if the config variable is missing.
+
+### Other
+
+**Sampling:**
+
 ```
 sample uniform from low to high
 sample count from collection
@@ -805,14 +804,16 @@ sample count from collection with replacement
 sample count from collection without replacement
 ```
 
-#### Limiting
+**Limiting:**
+
 ```
 limit operand to [min,]      # Minimum bound
 limit operand to [,max]      # Maximum bound
 limit operand to [min,max]   # Both bounds
 ```
 
-#### Mapping
+**Mapping:**
+
 ```
 map operand from [fromlow,fromhigh] to [tolow,tohigh]              # Linear mapping (default)
 map operand from [fromlow,fromhigh] to [tolow,tohigh] linear       # Linear mapping
@@ -826,114 +827,23 @@ Available mapping methods:
 - **sigmoid**: S-curve mapping for smooth transitions. Takes optional argument. True: increasing. False: decreasing.
 - **quadratic**: Quadratic curve mapping with controllable concavity. Takes optional argument. True: the center of the domain maps to range maximum, endpoints to minimum. False: the center maps to range minimum, endpoints to maximum.
 
-### Spatial Queries
+**Spatial:**
 
 ```
 identifier within distance radial at prior
 ```
 
-### Imports and Configuration
+### Reserved
 
-*Note: Imports and configuration are reserved for future use and are not currently implemented.*
+Following reserved for future use and are not currently implemented:
 
-#### Imports
-```
-import "filename.josh"
-```
+- Imports (`import`)
+- Named config (`config expression as identifier)`
+- Agent (`agent` and `organism` currently aliases)
 
-#### Configuration
-```
-config expression as identifier
-```
+Following keywords are reserved and should not be used for user-defined entities or variables: `as`, `const`, `debug`, `disturbance`, `elif`, `else`, `end`, `if`, `management`, `limit`, `map`, `return`, `start`, `state`, `step`, `within`, `latitude`, `longitude`
 
-### Assertions
+## Other resources
 
-Validation statements for testing and debugging:
-```
-assert.attribute.event = boolean_expression
-assert.attribute.event:if(condition) = boolean_expression
-```
-
-Assertions expect boolean values and are evaluated during event handler execution.
-
-### Exports
-
-Define simulation outputs:
-```
-export.variable.event = expression
-exportFiles.type = "output_path"
-```
-
-### Debug Output
-
-Write diagnostic messages during simulation for troubleshooting and entity tracking:
-```
-debug(expression)
-debug(expression, expression, ...)
-debugFiles.type = "output_path"
-```
-
-The `debug()` function writes messages to configured destinations. Output automatically includes step number, entity type, unique identifier, and coordinates:
-```
-[Step 5, organism @ 733264e6 (72.5, 1.5)] Tree age: 6 height: 3.1305
-```
-
-Configure destinations in the simulation entity:
-```
-debugFiles.patch = "file:///tmp/patch_debug.txt"
-debugFiles.organism = "file:///tmp/organism_debug.txt"
-```
-
-Supported protocols: `file://`, `minio://`, `stdout://`. Path templates support `{replicate}` and `{timestamp}` placeholders.
-
-The hex identifier enables entity lifecycle tracking: `grep "733264e6" organism_debug.txt`
-
-### State Management
-
-Entities can define custom states. Event handlers in a state are only evaluated if the state attribute on an entity is set to that given state.
-
-```
-start state "StateName"
-  attribute.event = expression
-end state
-```
-
-### Reserved Words
-
-The following keywords are reserved and should not be used for user-defined entities or variables:
-`as`, `const`, `debug`, `disturbance`, `elif`, `else`, `end`, `if`, `management`, `limit`, `map`, `return`, `start`, `state`, `step`, `within`
-
-### Program Structure
-
-A complete Josh program consists of:
-1. Optional configuration statements
-2. Optional import statements  
-3. Simulation definition
-4. Other entity stanzas (patch, organism, etc.)
-5. Unit definitions
-
-Example minimal program:
-```
-start simulation Main
-  grid.size = 1000 m
-  grid.low = 33.7 degrees latitude, -115.4 degrees longitude
-  grid.high = 34.0 degrees latitude, -116.4 degrees longitude
-  steps.low = 0 count
-  steps.high = 10 count
-end simulation
-
-start patch Default
-  ForeverTree.init = create 10 count of ForeverTree
-end patch
-
-start organism ForeverTree
-  age.init = 0 year
-  age.step = prior.age + 1 year
-end organism
-
-start unit year
-  alias years
-end unit
-```
-
-This language specification covers all features defined in the Josh grammar and provides comprehensive documentation for developing ecological simulations using the Josh domain-specific language.
+ - [Additional documentation](https://www.joshsim.org/llms.txt)
+ - [Latest Josh jar](https://www.joshsim.org/dist/main/joshsim-fat.jar)
