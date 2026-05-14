@@ -19,13 +19,13 @@ Information lost:
 Places to trim:
 
 - [x] **Global Options repetition**: Lines 55-60 duplicate `--help/--version/--suppress-info/--suppress-errors` in every command section; consolidate into one reference @result Consolidated: removed duplicate --suppress-info and --suppress-errors from run, preprocess, and validate command sections; global options remain documented in CLI section@
-- [ ] **Run command options**: Lines 91-110 list 20+ options; many are rarely used let's ensure we are concise but leave options described
+- [x] Run command options: Lines 91-110 list 20+ options; many are rarely used let's ensure we are concise but leave options described @result Trimmed Run command options: concise descriptions, removed repetitive qualifiers, preserved all options@
 - [ ] **Preprocess command options**: Lines 142-156 similarly verbose with 15+ options; many are rarely used let's ensure we are concise but leave options described
 - [ ] **JSON metadata example (lines 214-223)**: Verbose grid metadata output; could be truncated to essential fields
 - [ ] **Batch target profiles (lines 306-339)**: HTTP and K8s profile examples are verbose; could reference external docs. Let's add a new markdown file referenced by llms.txt and ensure that it will be deployed via github actinos.
 - [ ] **Mapping methods detail (lines 889-891)**: Quadratic mapping description is verbose; ensure concise
 
-@running git add .; git commit -a -m "Remove duplicate --suppress-info and --suppress-errors from llms-full."@
+@running git add .; git commit -a -m "Trimmed on run command options in llms-full.txt"@
 
 ------
 
@@ -93,24 +93,24 @@ java -jar joshsim-fat.jar run <script.josh> <SimulationName> [OPTIONS]
 - `<SimulationName>`: Name of simulation to execute
 
 **Options:**
-- `--crs <CRS>`: Coordinate Reference System (optional) like `EPSG:4326` (WGS84)
-- `--csv-precision <places>`: Maximum decimal places for numeric values in CSV output, -1 for unlimited (default: 10)
-- `--custom-tag <name=value>`: Custom template parameters (format: name=value); can be specified multiple times
+- `--crs <CRS>`: Coordinate Reference System (e.g., `EPSG:4326`)
+- `--csv-precision <places>`: Max decimal places in CSV output, -1 for unlimited (default: 10)
+- `--custom-tag <name=value>`: Custom template parameters; repeatable
 - `--data <path>`: Path to directory containing external data files
-- `--enable-profiler`: Enable evalDuration profiling to capture attribute resolution timing
-- `--export-queue-size <size>`: Maximum number of records to buffer before applying backpressure (default: 1000000)
+- `--enable-profiler`: Enable evalDuration profiling
+- `--export-queue-size <size>`: Max records to buffer for backpressure (default: 1000000)
 - `-o, --output <path>`: Output file path
 - `--output-format <format>`: Output format (csv, netcdf, geotiff)
 - `--output-steps <steps>`: Comma-separated list of time steps to export (e.g., 5,7,8,9,20)
 - `--parallel`: Enable parallel patch processing
-- `--replicate-index <index>`: Run a single replicate at this index (mutually exclusive with --replicates). Used by K8s (see batch commands) indexed Jobs where each pod runs one replicate.
-- `--replicates <N>`: Number of replicates to run (default: 1)
-- `--seed <value>`: Random seed for reproducible simulations; forces serial patch execution when specified
-- `--serial-patches`: Run patches in serial instead of parallel
-- `--upload-config`: Upload configuration .jshc files to MinIO after completion (requires MinIO configuration)
-- `--upload-data`: Upload data .jshd files to MinIO after completion (requires MinIO configuration)
-- `--upload-source`: Upload source .josh file to MinIO after completion (requires MinIO configuration)
-- `--use-float-64`: Use double precision instead of BigDecimal for speed vs precision tradeoff
+- `--replicate-index <index>`: Run single replicate (mutually exclusive with --replicates); used by K8s indexed Jobs
+- `--replicates <N>`: Number of replicates (default: 1)
+- `--seed <value>`: Random seed for reproducibility; forces serial patch execution
+- `--serial-patches`: Run patches serially
+- `--upload-config`: Upload .jshc files to MinIO after completion
+- `--upload-data`: Upload .jshd files to MinIO after completion
+- `--upload-source`: Upload .josh file to MinIO after completion
+- `--use-float-64`: Use float64 instead of BigDecimal
 
 **Examples:**
 ```bash
