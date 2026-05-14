@@ -25,7 +25,7 @@ Places to trim:
 - [ ] **Batch target profiles (lines 306-339)**: HTTP and K8s profile examples are verbose; could reference external docs. Let's add a new markdown file referenced by llms.txt and ensure that it will be deployed via github actinos.
 - [ ] **Mapping methods detail (lines 889-891)**: Quadratic mapping description is verbose; ensure concise
 
-@running git add; git commit -a -m "Remove duplicate --suppress-info and --suppress-errors from llms-full."@
+@running git add .; git commit -a -m "Remove duplicate --suppress-info and --suppress-errors from llms-full."@
 
 ------
 
