@@ -18,14 +18,14 @@ Information lost:
 
 Places to trim:
 
-- [ ] **Global Options repetition**: Lines 55-60 duplicate `--help/--version/--suppress-info/--suppress-errors` in every command section; consolidate into one reference
+- [x] **Global Options repetition**: Lines 55-60 duplicate `--help/--version/--suppress-info/--suppress-errors` in every command section; consolidate into one reference @result Consolidated: removed duplicate --suppress-info and --suppress-errors from run, preprocess, and validate command sections; global options remain documented in CLI section@
 - [ ] **Run command options**: Lines 91-110 list 20+ options; many are rarely used let's ensure we are concise but leave options described
 - [ ] **Preprocess command options**: Lines 142-156 similarly verbose with 15+ options; many are rarely used let's ensure we are concise but leave options described
 - [ ] **JSON metadata example (lines 214-223)**: Verbose grid metadata output; could be truncated to essential fields
 - [ ] **Batch target profiles (lines 306-339)**: HTTP and K8s profile examples are verbose; could reference external docs. Let's add a new markdown file referenced by llms.txt and ensure that it will be deployed via github actinos.
 - [ ] **Mapping methods detail (lines 889-891)**: Quadratic mapping description is verbose; ensure concise
 
-@running git add .; git commit -a -m "Before trimming."@
+@running git add; git commit -a -m "Remove duplicate --suppress-info and --suppress-errors from llms-full."@
 
 ------
 
@@ -107,8 +107,6 @@ java -jar joshsim-fat.jar run <script.josh> <SimulationName> [OPTIONS]
 - `--replicates <N>`: Number of replicates to run (default: 1)
 - `--seed <value>`: Random seed for reproducible simulations; forces serial patch execution when specified
 - `--serial-patches`: Run patches in serial instead of parallel
-- `--suppress-errors`: Suppress error messages
-- `--suppress-info`: Suppress standard output messages
 - `--upload-config`: Upload configuration .jshc files to MinIO after completion (requires MinIO configuration)
 - `--upload-data`: Upload data .jshd files to MinIO after completion (requires MinIO configuration)
 - `--upload-source`: Upload source .josh file to MinIO after completion (requires MinIO configuration)
@@ -152,8 +150,6 @@ java -jar joshsim-fat.jar preprocess <script.josh> <SimulationName> <dataFile> <
 - `--default-value <value>`: Default value to fill grid spaces before copying data from source file
 - `--parallel`: Enable parallel processing of patches within each timestep for ~Nx speedup on N cores
 - `--serial-patches`: Run patches in serial instead of parallel
-- `--suppress-errors`: Suppress error messages
-- `--suppress-info`: Suppress standard output messages
 - `--time-dim <name>`: Name of time dimension
 - `--timestep <value>`: Process only a single timestep (for parallel orchestration across timesteps)
 - `--use-float-64`: Use double precision instead of BigDecimal for speed vs precision tradeoff
@@ -186,8 +182,6 @@ java -jar joshsim-fat.jar validate <script.josh>
 - `<script.josh>`: Path to Josh script file to validate
 
 **Options:**
-- `--suppress-info`: Suppress standard output messages
-- `--suppress-errors`: Suppress error messages
 - `--upload-source`: Upload source .josh file to MinIO after validation (requires MinIO configuration)
 
 ### `discoverConfig` - Configuration Discovery
