@@ -1,10 +1,35 @@
-# Josh Language
+I am in the process of updating the document below and may have some questions and clarifications. When doing work on this file, please also read `src/main/antlr/org/joshsim/lang/antlr/JoshLang.g4` and note that additional information is available in `docs/guide/md`.
 
-Josh is a domain-specific language (DSL) designed for ecological modeling, with a particular focus on vegetation and agent-based simulations. The language enables the description of multi-occupancy patch-based ecological simulations where multiple species occupying grid cells can be modeled through individual behaviors with optional state changes.
+Missing features:
+
+- [ ] External data access at specific timestep: `external VariableName at prior` or `external VariableName at N`
+- [ ] Config with default fallback: `config configName.variableName else defaultValue`
+- [ ] `agent` entity type (listed in grammar but not documented)
+- [ ] `latitude` and `longitude` keywords for coordinate specification
+- [ ] Sampling with/without replacement: `sample N from collection with replacement` / `sample N from collection without replacement`
+
+Missing CLI commands or parameters:
+
+- [ ] `run`: Missing `--seed`, `--enable-profiler`, `--custom-tag`, `--output-steps`, `--export-queue-size`, `--csv-precision`, `--serial-patches`; Documented but missing `--crs`, `--output-format`, `-o, --output`
+- [ ] `server`: Missing `--concurrent-workers`, `--worker-url`, `--use-http2`, `--serial-patches`
+- [ ] `runRemote`: Missing `--use-float-64`, `--data`, `--custom-tag`, `--remote-leader`, `--concurrent-workers`, `--upload-source`, `--upload-config`, `--upload-data`
+- [ ] Install instructions
+
+Follow up tasks:
+- [ ] Rename inpsect-exports to inspectExports
+- [ ] Default API key
+
+@running git commit -a -m "Partially complete llms-full touch up."@
+
+-----
+
+# Josh
+
+Josh is a domain-specific language (DSL) designed for ecological modeling with focus on vegetation and agent-based simulations. It enables the description of multi-occupancy patch-based ecological simulations where multiple species occupying grid cells can be modeled through individual behaviors with optional state changes.
 
 ## Purpose
 
-Josh supports the nexus between science, policy, and software engineering by executing vegetation-focused ecological simulations to support management decisions. The language prioritizes readability and interpretability for a broad audience including ecologists, policy makers, and researchers who may not have extensive software engineering backgrounds.
+Support the nexus between science, policy, and engineering by executing vegetation-focused ecological simulations to aid management decisions. Prioritizes readability and interpretability for a broad audience including ecologists, policy makers, and researchers who may not have extensive software engineering backgrounds.
 
 ## Execution Environments
 
@@ -12,25 +37,45 @@ Josh runs across multiple execution environments without requiring code changes:
 
 1. **Browser via WebAssembly**: Complete simulations run directly in web browsers using WebAssembly compilation via TeaVM, requiring no local installation
 2. **Local JVM**: High-performance execution on local machines using Java Virtual Machine for intensive computations and parallelization
-3. **Distributed via JoshCloud**: Community infrastructure for large-scale distributed processing across multiple machines with API key access
+3. **Distributed**: Either private or via community infrastructure, large-scale distributed processing across multiple machines with API key access
 
 ## Geospatial Data Preprocessing
 
-Josh supports preprocessing of external geospatial data files into an optimized binary format called `.jshd` (Josh Data) files. The preprocessing workflow converts data from formats like GeoTIFF and NetCDF into a format optimized for simulation execution, handling coordinate system transformations, temporal alignment, and spatial resampling.
+Josh preprocesses external geospatial data files into an optimized binary format called `.jshd` (Josh Data) files. The preprocessing workflow converts data from formats like GeoTIFF and NetCDF into a simulation optimized format, handling coordinate transformations, temporal alignment, and spatial resampling. Jshd files can be reused across replicates / trials.
 
 ## Command Line Interface (CLI)
 
-Josh provides a comprehensive command line interface through the `joshsim.jar` file via the `JoshSimCommander` class. The CLI supports various operations for validation, execution, preprocessing, and management of Josh simulations.
-
-### Basic Usage
+Josh provides a CLI through `JoshSimCommander` in `joshsim.jar`.
 
 ```bash
 java -jar joshsim-fat.jar [COMMAND] [OPTIONS]
 ```
 
-### Available Commands
+All commands support these global options:
 
-#### `run` - Execute Simulations
+- `--help`: Show command help
+- `--version`: Display version information
+- `--suppress-info`: Suppress standard output messages
+- `--suppress-errors`: Suppress error messages
+
+The CLI can be integrated with build systems and scripts:
+
+```bash
+# Validate all Josh files in a directory
+find . -name "*.josh" -exec java -jar joshsim-fat.jar validate {} \;
+
+# Preprocessing pipeline
+java -jar joshsim-fat.jar preprocess simulation.josh Main temp.nc temperature K temp.jshd
+java -jar joshsim-fat.jar preprocess simulation.josh Main precip.nc precipitation "mm/year" precip.jshd
+java -jar joshsim-fat.jar run simulation.josh Main --data . -o results.csv
+```
+
+Preprocessing command structure:
+```
+java -jar joshsim.jar preprocess simulation.josh SimulationName data.nc variable units output.jshd
+```
+
+### `run` - Execute Simulations
 Runs a specified simulation from a Josh script file with support for replicates and various output formats.
 
 ```bash
@@ -42,7 +87,7 @@ java -jar joshsim-fat.jar run <script.josh> <SimulationName> [OPTIONS]
 - `<SimulationName>`: Name of simulation to execute
 
 **Options:**
-- `--crs <CRS>`: Coordinate Reference System (optional)
+- `--crs <CRS>`: Coordinate Reference System (optional) like `EPSG:4326` (WGS84)
 - `--replicates <N>`: Number of replicates to run (default: 1)
 - `--use-float-64`: Use double precision instead of BigDecimal for speed vs precision tradeoff
 - `--data <path>`: Path to directory containing external data files
@@ -67,8 +112,8 @@ java -jar joshsim-fat.jar run simulation.josh Main --replicates 10 -o results.cs
 java -jar joshsim-fat.jar run simulation.josh Main --data ./data -o results.netcdf
 ```
 
-#### `preprocess` - Data Preprocessing
-Converts external geospatial data files into optimized binary `.jshd` format for efficient simulation loading.
+### `preprocess` - Data Preprocessing
+Converts external geospatial data files into optimized binary `.jshd` format reusable across runs (trials / replicates).
 
 ```bash
 java -jar joshsim-fat.jar preprocess <script.josh> <SimulationName> <dataFile> <variable> <units> <output.jshd> [OPTIONS]
@@ -83,8 +128,8 @@ java -jar joshsim-fat.jar preprocess <script.josh> <SimulationName> <dataFile> <
 - `<output.jshd>`: Path for output preprocessed file
 
 **Options:**
-- `--amend`: Amend existing JSHD file rather than overwriting
-- `--crs <CRS>`: Coordinate Reference System for reading input file
+- `--amend`: Amend existing JSHD file rather than overwriting like adding new timestep
+- `--crs <CRS>`: Coordinate Reference System for reading input file like `EPSG:4326` (WGS84)
 - `--x-coord <name>`: Name of X coordinate dimension
 - `--y-coord <name>`: Name of Y coordinate dimension
 - `--time-dim <name>`: Name of time dimension
@@ -106,7 +151,7 @@ java -jar joshsim-fat.jar preprocess simulation.josh Main precip.nc rainfall "mm
 java -jar joshsim-fat.jar preprocess simulation.josh Main precip.nc rainfall "kg / m * m * s" precip.jshd --parallel
 ```
 
-#### `validate` - Syntax Validation
+### `validate` - Syntax Validation
 Validates Josh script syntax and reports parsing errors without executing simulations.
 
 ```bash
@@ -121,7 +166,7 @@ java -jar joshsim-fat.jar validate <script.josh>
 - `--suppress-errors`: Suppress error messages
 - `--upload-source`: Upload source .josh file to MinIO after validation (requires MinIO configuration)
 
-#### `discoverConfig` - Configuration Discovery
+### `discoverConfig` - Configuration Discovery
 Analyzes Josh scripts to discover all configuration variables used, helping generate appropriate `.jshc` files.
 
 ```bash
@@ -131,7 +176,7 @@ java -jar joshsim-fat.jar discoverConfig <script.josh>
 **Parameters:**
 - `<script.josh>`: Path to Josh script file to analyze
 
-#### `inspectJshd` - Data Inspection
+### `inspectJshd` - Data Inspection
 Inspects values in preprocessed JSHD files at specific coordinates and timesteps for debugging and validation.
 
 ```bash
@@ -158,7 +203,7 @@ java -jar joshsim-fat.jar inspectJshd <file.jshd> <variable> <timestep> <x> <y>
 }
 ```
 
-#### `inspect-exports` - Export Path Extraction
+### `inspect-exports` - Export Path Extraction
 Parses a Josh script and extracts the configured export and debug file paths from a simulation without running it. Useful for build systems, CI/CD pipelines, and tooling that needs to know where simulation outputs will be written.
 
 ```bash
@@ -170,9 +215,9 @@ java -jar joshsim-fat.jar inspect-exports <script.josh> <SimulationName> [OPTION
 - `<SimulationName>`: Name of simulation to extract paths from
 
 **Options:**
-- `--json`: Output in JSON format (default: true)
+- `--json`: Output in JSON format (default: true), otherwise plain text
 
-#### `server` - HTTP Server Mode
+### `server` - HTTP Server Mode
 Starts Josh as an HTTP server for web-based simulation execution and API access.
 
 ```bash
@@ -183,7 +228,9 @@ java -jar joshsim-fat.jar server [OPTIONS]
 - `--port <port>`: Server port (default: 8080)
 - `--host <host>`: Server host (default: localhost)
 
-#### `runRemote` - Cloud Execution
+API keys via `JOSH_API_KEYS` environment variable (comma-separated list). If not set or empty, all API keys are allowed.
+
+### `runRemote` - Cloud Execution
 Executes simulations on Josh Cloud infrastructure for distributed processing.
 
 ```bash
@@ -195,42 +242,16 @@ java -jar joshsim-fat.jar runRemote <script.josh> <SimulationName> [OPTIONS]
 - `<SimulationName>`: Name of simulation to execute
 
 **Options:**
-- `--api-key <key>`: Josh Cloud API key
+- `--api-key <key>`: API key for authentication (required for Josh Cloud and self-hosted server running with API keys)
 - `--replicates <N>`: Number of replicates
-- `--endpoint <url>`: Custom Josh Cloud endpoint
-
-### Global Options
-
-All commands support these global options:
-- `--help`: Show command help
-- `--version`: Display version information
-- `--suppress-info`: Suppress standard output messages
-- `--suppress-errors`: Suppress error messages
-
-### Integration with Build Systems
-
-The CLI can be integrated with build systems and scripts:
-
-```bash
-# Validate all Josh files in a directory
-find . -name "*.josh" -exec java -jar joshsim-fat.jar validate {} \;
-
-# Preprocessing pipeline
-java -jar joshsim-fat.jar preprocess simulation.josh Main temp.nc temperature K temp.jshd
-java -jar joshsim-fat.jar preprocess simulation.josh Main precip.nc precipitation "mm/year" precip.jshd
-java -jar joshsim-fat.jar run simulation.josh Main --data . -o results.csv
-```
-
-Preprocessing command structure:
-```
-java -jar joshsim.jar preprocess simulation.josh SimulationName data.nc variable units output.jshd
-```
+- `--endpoint <url>`: Custom endpoint (see `server` command)
 
 ## Configuration Files (.jshc)
 
-Josh supports external configuration files using the `.jshc` format for parameterizing simulations without modifying Josh code. This enables users to modify simulation parameters without changing Josh source code.
+Josh supports external configuration files using the `.jshc` format for parameterizing simulations without modifying Josh code. This enables users to modify simulation parameters without changing Josh source code. 
 
 ### Format Specification
+
 - One variable per line: `variableName = value units`
 - Comments using `#` character (all text after # ignored until newline)
 - Empty lines allowed and ignored
@@ -239,6 +260,7 @@ Josh supports external configuration files using the `.jshc` format for paramete
 - Values must be valid EngineValue format (number + optional units)
 
 ### Usage in Josh Code
+
 - Access via `config configName.variableName` expressions
 - Example: `config example.testVar1` references `testVar1` from `example.jshc`
 - Files loaded from working directory or provided with HTTP request
@@ -256,12 +278,12 @@ testVar3 = 15 km
 ```
 
 ### Commands
-- `discoverConfig script.josh` - Lists all configuration variables used in a Josh script
-- Variables discovered can be used to generate appropriate .jshc files
+
+The `discoverConfig script.josh` lists all configuration variables used in a Josh script. Variables discovered can be used to generate appropriate .jshc files.
 
 ## Language Structure
 
-Josh uses a stanza-based approach similar to SmallTalk/HyperTalk languages. Each stanza defines an entity (object) using `start` and `end` blocks. The language is imperative with procedural elements, prioritizing behavioral description over computational specification.
+Josh uses a stanza-based approach. Each stanza defines an entity (object) inside `start` / `end` blocks. The language is imperative with procedural elements.
 
 ### Entity Types
 
@@ -292,7 +314,39 @@ Event handlers are run once per variable and may be made conditional based on va
 - **step**: Mid-step event, executed during main simulation timestep
 - **end**: End of step or termination event, executed at end of timestep or when entity is removed
 
-## Language Features
+## Language
+
+A complete Josh program consists of:
+
+1. Optional configuration statements
+2. Optional import statements  
+3. Simulation definition
+4. Other entity stanzas (patch, organism, etc.)
+5. Unit definitions
+
+Example minimal program:
+```
+start simulation Main
+  grid.size = 1000 m
+  grid.low = 33.7 degrees latitude, -115.4 degrees longitude
+  grid.high = 34.0 degrees latitude, -116.4 degrees longitude
+  steps.low = 0 count
+  steps.high = 10 count
+end simulation
+
+start patch Default
+  ExampleTree.init = create 10 count of ExampleTree
+end patch
+
+start organism ExampleTree
+  age.init = 0 year
+  age.step = prior.age + 1 year
+end organism
+
+start unit year
+  alias years
+end unit
+```
 
 ### Comments
 Single-line comments use `#` syntax:
@@ -302,8 +356,8 @@ Single-line comments use `#` syntax:
 
 ### Data Types
 
-#### Scalar Values
-Numeric values with optional units:
+**Numeric values with optional units:**
+
 ```
 5 meters
 10.5 years
@@ -311,21 +365,22 @@ Numeric values with optional units:
 33.7 degrees latitude
 ```
 
-#### Strings
-String literals enclosed in double quotes:
+**String literals enclosed in double quotes:**
+
 ```
 "Default"
 "file:///tmp/output.csv"
 ```
 
-#### Boolean Values
+**Boolean values:**
+
 ```
 true
 false
 ```
 
-#### Distributions
-Statistical distributions for stochastic modeling:
+**Statistical distributions for stochastic modeling:**
+
 ```
 uniform from 0 meters to 1 meters
 normal with mean of 10 years std of 2 years
@@ -363,9 +418,10 @@ end unit
 ### Identifiers and Attributes
 
 Identifiers follow the pattern `[A-Za-z][A-Za-z0-9]*` and can be chained with dot notation:
+
 ```
 organism.attribute
-patch.ForeverTree.age
+patch.ExampleTree.age
 current.height
 ```
 
@@ -379,12 +435,24 @@ current.height
   - `meta.year`: Current simulation year
 
 #### Spatial Keywords
+
 - **here**: Current grid cell context
 - **within**: Spatial query for nearby entities
 
+**Examples:**
+
+```
+# Count patches within 250m radius at prior timestep
+nNearby.step = count(Default within 250 m radial at prior)
+
+# Access current patch coordinates
+patch.info.step = "Patch at (" | here.x | ", " | here.y | ")"
+```
+
 ### Operators
 
-#### Arithmetic Operators
+Arithmetic:
+
 - `+`: Addition
 - `-`: Subtraction
 - `*`: Multiplication
@@ -392,7 +460,8 @@ current.height
 - `^`: Exponentiation
 - `%`: Modulo
 
-#### Comparison Operators
+Comparison:
+
 - `==`: Equality
 - `!=`: Inequality
 - `>`: Greater than
@@ -400,32 +469,34 @@ current.height
 - `<`: Less than
 - `<=`: Less than or equal
 
-#### Logical Operators
+Logical:
+
 - `and`: Logical AND
 - `or`: Logical OR
 - `xor`: Logical XOR
 
-#### String Operator
+String:
+
 - `|`: String concatenation
 
-### Expressions
+### Functions
 
-#### Function Calls
 ```
 function_name(arguments)
-mean(ForeverTree.age)
+mean(ExampleTree.age)
 sample(uniform from 0 to 10)
 ```
 
-#### Built-in Functions
+Built-in:
+
 - **mean()**: Calculate mean of collection
 - **std()**: Calculate standard deviation
 - **count()**: Count elements in collection
 - **sample()**: Sample from distribution or collection
 - **create**: Create new entities
   ```
-  create ForeverTree                    # Create single entity
-  create 10 count of ForeverTree        # Create multiple entities
+  create ExampleTree                    # Create single entity
+  create 10 count of ExampleTree        # Create multiple entities
   ```
 - **force**: Type conversion and casting
   ```
@@ -433,30 +504,30 @@ sample(uniform from 0 to 10)
   force prior.temperature as degrees    # Force unit conversion
   ```
 
-#### Collection Operations
+### Collection Operations
 ```
-ForeverTree[ForeverTree.age > 5 years]  # Filtering
+ExampleTree[ExampleTree.age > 5 years]  # Filtering
 all  # All entities of specified type
 ```
 
 ### Control Flow
 
-#### Conditional Modifiers
-Event handlers can use conditional modifiers:
+**Event handlers can use conditional modifiers:**
+
 ```
 attribute.event:if(condition) = expression
 attribute.event:elif(condition) = expression
 attribute.event:else = expression
 ```
 
-#### Conditional Expressions
-Ternary-style conditional expressions:
+**Ternary-style conditional expressions:**
+
 ```
 value if condition else alternative
 ```
 
-#### Full Body Conditionals
-Multi-statement conditional blocks:
+**Multi-statement conditional blocks:**
+
 ```
 if condition {
   const temp = prior.value
@@ -468,9 +539,10 @@ if condition {
 }
 ```
 
-### Full Bodies
+### Handlers
 
 Multi-statement blocks enclosed in curly braces `{}` supporting:
+
 - `const` variable declarations
 - `return` statements
 - Conditional blocks
@@ -486,13 +558,37 @@ age.step = {
 ```
 
 Example lambda (single expression):
+
 ```
 height.step = prior.height + sample uniform from 0 meters to 1 meters
 ```
 
-### Operations
+### State Management
 
-#### Sampling
+Entities can define custom states. Event handlers in a state are only evaluated if the state attribute on an entity is set to that given state.
+
+Example setting state on an organism:
+
+```
+start organism ExampleTree
+  state.init = "alive"
+  health.step = prior.health - 1 unit if state == "damaged" else prior.health
+  state.step = "dead" if health < 1 unit else state
+end organism
+```
+
+Example of using state for handlers:
+
+```
+start state "dead"
+  timeDead.step = prior.timeDead + 1 year
+end state
+```
+
+### Other
+
+**Sampling:**
+
 ```
 sample uniform from low to high
 sample count from collection
@@ -500,14 +596,16 @@ sample count from collection with replacement
 sample count from collection without replacement
 ```
 
-#### Limiting
+**Limiting:**
+
 ```
 limit operand to [min,]      # Minimum bound
 limit operand to [,max]      # Maximum bound
 limit operand to [min,max]   # Both bounds
 ```
 
-#### Mapping
+**Mapping:**
+
 ```
 map operand from [fromlow,fromhigh] to [tolow,tohigh]              # Linear mapping (default)
 map operand from [fromlow,fromhigh] to [tolow,tohigh] linear       # Linear mapping
@@ -521,114 +619,22 @@ Available mapping methods:
 - **sigmoid**: S-curve mapping for smooth transitions. Takes optional argument. True: increasing. False: decreasing.
 - **quadratic**: Quadratic curve mapping with controllable concavity. Takes optional argument. True: the center of the domain maps to range maximum, endpoints to minimum. False: the center maps to range minimum, endpoints to maximum.
 
-### Spatial Queries
+**Spatial:**
 
 ```
 identifier within distance radial at prior
 ```
 
-### Imports and Configuration
+### Reserved
 
-*Note: Imports and configuration are reserved for future use and are not currently implemented.*
+Following reserved for future use and are not currently implemented:
 
-#### Imports
-```
-import "filename.josh"
-```
+- Imports (`import`)
+- Named config (`config expression as identifier)`
 
-#### Configuration
-```
-config expression as identifier
-```
+Following keywords are reserved and should not be used for user-defined entities or variables: `as`, `const`, `debug`, `disturbance`, `elif`, `else`, `end`, `if`, `management`, `limit`, `map`, `return`, `start`, `state`, `step`, `within`
 
-### Assertions
+## Other resources
 
-Validation statements for testing and debugging:
-```
-assert.attribute.event = boolean_expression
-assert.attribute.event:if(condition) = boolean_expression
-```
-
-Assertions expect boolean values and are evaluated during event handler execution.
-
-### Exports
-
-Define simulation outputs:
-```
-export.variable.event = expression
-exportFiles.type = "output_path"
-```
-
-### Debug Output
-
-Write diagnostic messages during simulation for troubleshooting and entity tracking:
-```
-debug(expression)
-debug(expression, expression, ...)
-debugFiles.type = "output_path"
-```
-
-The `debug()` function writes messages to configured destinations. Output automatically includes step number, entity type, unique identifier, and coordinates:
-```
-[Step 5, organism @ 733264e6 (72.5, 1.5)] Tree age: 6 height: 3.1305
-```
-
-Configure destinations in the simulation entity:
-```
-debugFiles.patch = "file:///tmp/patch_debug.txt"
-debugFiles.organism = "file:///tmp/organism_debug.txt"
-```
-
-Supported protocols: `file://`, `minio://`, `stdout://`. Path templates support `{replicate}` and `{timestamp}` placeholders.
-
-The hex identifier enables entity lifecycle tracking: `grep "733264e6" organism_debug.txt`
-
-### State Management
-
-Entities can define custom states. Event handlers in a state are only evaluated if the state attribute on an entity is set to that given state.
-
-```
-start state "StateName"
-  attribute.event = expression
-end state
-```
-
-### Reserved Words
-
-The following keywords are reserved and should not be used for user-defined entities or variables:
-`as`, `const`, `debug`, `disturbance`, `elif`, `else`, `end`, `if`, `management`, `limit`, `map`, `return`, `start`, `state`, `step`, `within`
-
-### Program Structure
-
-A complete Josh program consists of:
-1. Optional configuration statements
-2. Optional import statements  
-3. Simulation definition
-4. Other entity stanzas (patch, organism, etc.)
-5. Unit definitions
-
-Example minimal program:
-```
-start simulation Main
-  grid.size = 1000 m
-  grid.low = 33.7 degrees latitude, -115.4 degrees longitude
-  grid.high = 34.0 degrees latitude, -116.4 degrees longitude
-  steps.low = 0 count
-  steps.high = 10 count
-end simulation
-
-start patch Default
-  ForeverTree.init = create 10 count of ForeverTree
-end patch
-
-start organism ForeverTree
-  age.init = 0 year
-  age.step = prior.age + 1 year
-end organism
-
-start unit year
-  alias years
-end unit
-```
-
-This language specification covers all features defined in the Josh grammar and provides comprehensive documentation for developing ecological simulations using the Josh domain-specific language.
+ - [Additional documentation](https://www.joshsim.org/llms.txt)
+ - [Latest Josh jar](https://www.joshsim.org/dist/main/joshsim-fat.jar)
