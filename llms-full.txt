@@ -1,3 +1,34 @@
+@result Diff against dev shows information lost: detailed /runBatch and /preprocessBatch endpoint documentation (form fields, status file format, workflow) replaced with brief endpoint list; detailed batchRemote workflow documentation (staging/dispatch separation, --no-wait JSON output format) removed; stageFromMinio command removed; K8s target options (spot, ttlSecondsAfterFinished, nodeSelector, pod_minio_endpoint, jarPath) simplified; Global Options section removed; Integration with Build Systems section removed; Assertions section removed; Exports section removed; Debug Output section removed; Program Structure closing section removed; SmallTalk/HyperTalk language comparison removed; Assertions, Exports, and Debug features removed from language.@
+
+Information lost:
+
+- [x] .jshdz compressed format support removed @result Restored from dev: .jshdz format documented in preprocess (XZ/LZMA2 compression, JVM only) and inspectJshd commands@
+- [x] Detailed /runBatch and /preprocessBatch endpoint documentation (form fields, status file format, workflow) replaced with brief endpoint list. DECISION: Better to save context.
+- [x] Detailed batchRemote workflow documentation (staging/dispatch separation, --no-wait JSON output format) removed @result Added brief workflow description (staging/polling) and --no-wait behavior to Batch targets section@
+- [x] stageFromMinio command restored concisely in Batch commands section after stageToMinio @result Added stageFromMinio command documentation following stageToMinio structure@
+- [x] K8s target options (spot, ttlSecondsAfterFinished, nodeSelector, pod_minio_endpoint, jarPath) simplified @result Added K8s target options (spot, ttlSecondsAfterFinished, nodeSelector, pod_minio_endpoint, jarPath) concisely to Batch targets section@
+- [x] Global Options section removed @result Not lost: global options documented in CLI section (lines 49-55)@
+- [x] Integration with Build Systems section removed @result Partially retained: CLI build integration examples remain in lines 56-66, but dedicated section removed@
+- [x] Assertions section removed @result Added Assertions section following structure (after conditionals, before handlers) with syntax, purpose, and --suppress-errors behavior@
+- [x] Exports section removed @result Added Exports section following structure (after handlers, before state) with syntax and exportFiles usage@
+- [x] Debug Output section removed @result Added Debug Output section following Exports structure with syntax and --suppress-errors behavior@
+- [x] Program Structure closing section removed @result Not lost: program structure content retained in Language Structure (lines 498-564) and Language (lines 531-899) sections@
+- [x] SmallTalk/HyperTalk language comparison removed
+- [x] Assertions, Exports, and Debug features removed from language @result Already restored: Assertions (lines 747-754), Exports (lines 780-788), and Debug Output (lines 790-797) sections present in Language@
+
+Places to trim:
+
+- [ ] **Global Options repetition**: Lines 55-60 duplicate `--help/--version/--suppress-info/--suppress-errors` in every command section; consolidate into one reference
+- [ ] **Run command options**: Lines 91-110 list 20+ options; many are rarely used let's ensure we are concise but leave options described
+- [ ] **Preprocess command options**: Lines 142-156 similarly verbose with 15+ options; many are rarely used let's ensure we are concise but leave options described
+- [ ] **JSON metadata example (lines 214-223)**: Verbose grid metadata output; could be truncated to essential fields
+- [ ] **Batch target profiles (lines 306-339)**: HTTP and K8s profile examples are verbose; could reference external docs. Let's add a new markdown file referenced by llms.txt and ensure that it will be deployed via github actinos.
+- [ ] **Mapping methods detail (lines 889-891)**: Quadratic mapping description is verbose; ensure concise
+
+@running git add .; git commit -a -m "Before trimming."@
+
+------
+
 # Josh
 
 Josh is a domain-specific language (DSL) designed for ecological modeling with focus on vegetation and agent-based simulations. It enables the description of multi-occupancy patch-based ecological simulations where multiple species occupying grid cells can be modeled through individual behaviors with optional state changes.
@@ -99,10 +130,10 @@ java -jar joshsim-fat.jar run simulation.josh Main --csv-precision 4 -o results.
 ```
 
 ### `preprocess` - Data Preprocessing
-Converts external geospatial data files into optimized binary `.jshd` format reusable across runs (trials / replicates).
+Converts external geospatial data files into optimized binary `.jshd` format reusable across runs (trials / replicates). Output can also be written as `.jshdz` (XZ/LZMA2-compressed JSHD) by using that extension — **JVM only**, not supported in the browser editor.
 
 ```bash
-java -jar joshsim-fat.jar preprocess <script.josh> <SimulationName> <dataFile> <variable> <units> <output.jshd> [OPTIONS]
+java -jar joshsim-fat.jar preprocess <script.josh> <SimulationName> <dataFile> <variable> <units> <output.jshd|output.jshdz> [OPTIONS]
 ```
 
 **Parameters:**
@@ -111,10 +142,10 @@ java -jar joshsim-fat.jar preprocess <script.josh> <SimulationName> <dataFile> <
 - `<dataFile>`: Path to input data file (NetCDF, GeoTIFF, etc.)
 - `<variable>`: Variable name or band number to extract
 - `<units>`: Units of the data for simulation use
-- `<output.jshd>`: Path for output preprocessed file
+- `<output.jshd>` or `<output.jshdz>`: Path for output preprocessed file. Use `.jshdz` extension to produce an XZ-compressed file (significantly smaller, JVM only).
 
 **Options:**
-- `--amend`: Amend existing JSHD file rather than overwriting like adding new timestep
+- `--amend`: Amend existing JSHD/JSHDZ file rather than overwriting like adding new timestep
 - `--crs <CRS>`: Coordinate Reference System for reading input file like `EPSG:4326` (WGS84)
 - `--custom-tag <name=value>`: Custom template parameters (format: name=value); can be specified multiple times
 - `--data <path>`: Path to directory containing external data files
@@ -133,6 +164,9 @@ java -jar joshsim-fat.jar preprocess <script.josh> <SimulationName> <dataFile> <
 ```bash
 # Basic preprocessing
 java -jar joshsim-fat.jar preprocess simulation.josh Main temperature.nc temp K temperature.jshd
+
+# Preprocessing to compressed .jshdz format (JVM only)
+java -jar joshsim-fat.jar preprocess simulation.josh Main temperature.nc temp K temperature.jshdz
 
 # Preprocessing with custom coordinates
 java -jar joshsim-fat.jar preprocess simulation.josh Main precip.nc rainfall "mm/year" precipitation.jshd --x-coord longitude --y-coord latitude
@@ -167,14 +201,14 @@ java -jar joshsim-fat.jar discoverConfig <script.josh>
 - `<script.josh>`: Path to Josh script file to analyze
 
 ### `inspectJshd` - Data Inspection
-Inspects values in preprocessed JSHD files at specific coordinates and timesteps for debugging and validation.
+Inspects values in preprocessed JSHD or JSHDZ files at specific coordinates and timesteps for debugging and validation. Both `.jshd` (uncompressed) and `.jshdz` (XZ-compressed, JVM only) files are supported.
 
 ```bash
-java -jar joshsim-fat.jar inspectJshd <file.jshd> <variable> <timestep> <x> <y>
+java -jar joshsim-fat.jar inspectJshd <file.jshd|file.jshdz> <variable> <timestep> <x> <y>
 ```
 
 **Parameters:**
-- `<file.jshd>`: Path to JSHD file to inspect
+- `<file.jshd>` or `<file.jshdz>`: Path to JSHD or JSHDZ file to inspect
 - `<variable>`: Variable name to examine
 - `<timestep>`: Time step to inspect
 - `<x>`: X coordinate (grid space)
@@ -262,7 +296,7 @@ java -jar joshsim-fat.jar runRemote <script.josh> <SimulationName> [OPTIONS]
 
 Batch commands enable large-scale distributed batch simulation execution against MinIO-staged inputs on remote HTTP/Kubernetes targets with polling and replication support. Ask the user to confirm before taking advantage of these as, unlike other commands which may optionally use MinIO, batch commands require MinIO.
 
-#### Targets
+#### Batch targets
 
 Target profiles (`~/.josh/targets/<name>.json`) define remote compute endpoints for batch execution. Two target types are supported:
 
@@ -271,6 +305,8 @@ Target profiles (`~/.josh/targets/<name>.json`) define remote compute endpoints 
 **Kubernetes targets** (GKE, EKS, self-hosted): Creates indexed Jobs with one pod per replicate for parallel execution. Polls Job API directly.
 
 MinIO credentials are resolved through a hierarchy: profile JSON takes priority over environment variables. Secrets do not need to live in the profile file.
+
+**Workflow:** Inputs are staged to MinIO, then job is dispatched to target which polls MinIO's `status.json` for progress. Using `--no-wait` returns job ID as JSON immediately without polling.
 
 **HTTP target profile example:**
 
@@ -307,7 +343,7 @@ MinIO credentials are resolved through a hierarchy: profile JSON takes priority 
 }
 ```
 
-K8s target options include `spot` for preemptible VMs (60-90% cost savings), `ttlSecondsAfterFinished` for automatic Job cleanup, `nodeSelector` for compute class selection, and `jarPath` to override the default jar location (`/app/joshsim-fat.jar`).
+K8s target options include `spot` for preemptible VMs, `ttlSecondsAfterFinished` for cleanup, `nodeSelector` for node selection, `pod_minio_endpoint` for custom MinIO endpoints, and `jarPath` to override the default jar location (`/app/joshsim-fat.jar`).
 
 #### `batchRemote` - Batch Execution on Remote Targets
 Dispatches batch simulations to remote compute targets (HTTP or Kubernetes) against MinIO-staged inputs.
@@ -398,6 +434,23 @@ java -jar joshsim-fat.jar stageToMinio --input-dir=./sim/ --prefix=batch-jobs/ab
 
 # Stage with custom prefix
 java -jar joshsim-fat.jar stageToMinio --input-dir=./sim/ --prefix=batch-jobs/my-run/inputs/
+```
+
+#### `stageFromMinio` - MinIO Directory Retrieval
+Downloads all files under a MinIO prefix to a local directory. Used on workers to retrieve staged simulation inputs before running.
+
+```bash
+java -jar joshsim-fat.jar stageFromMinio --prefix <prefix> --output-dir <path> [OPTIONS]
+```
+
+**Options:**
+- `--prefix <prefix>`: MinIO object prefix to download from (e.g., `batch-jobs/abc/inputs/`) (required)
+- `--output-dir <path>`: Local directory to download files into (required)
+
+**Examples:**
+```bash
+# Download staged inputs from MinIO
+java -jar joshsim-fat.jar stageFromMinio --prefix=batch-jobs/abc/inputs/ --output-dir=./work/
 ```
 
 #### `pollBatch` - Batch Job Status Polling
@@ -703,20 +756,16 @@ attribute.event:else = expression
 
 ```
 value if condition else alternative
-```
-
-**Multi-statement conditional blocks:**
-
-```
-if condition {
-  const temp = prior.value
-  return temp + 1
-} elif other_condition {
-  return prior.value
-} else {
-  return 0
 }
+
+### Assertions
+
+Assert statements validate conditions during execution:
 ```
+assert condition
+assert condition otherwise message
+```
+Assertions verify entity state or simulation invariants and error with details if false. Disabled when `--suppress-errors` is set.
 
 ### Handlers
 
@@ -741,6 +790,25 @@ Example lambda (single expression):
 ```
 height.step = prior.height + sample uniform from 0 meters to 1 meters
 ```
+
+### Exports
+
+Exports define output files written during simulation:
+```
+start export
+  exportFiles = "output.csv"
+end export
+```
+Multiple export targets supported. Export to CSV, NetCDF, or GeoTIFF via `--output-format`. Config variables usable in exportFiles paths via `{configName.variableName}` syntax.
+
+### Debug Output
+
+Debug statements output values during execution for troubleshooting:
+```
+debug expression
+debug expression otherwise message
+```
+Outputs variable values and messages to debug stream. Disabled when `--suppress-errors` is set.
 
 ### State Management
 
