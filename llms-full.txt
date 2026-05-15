@@ -1,28 +1,3 @@
-I am in the process of updating the document below and may have some questions and clarifications. When doing work on this file, please also read `src/main/antlr/org/joshsim/lang/antlr/JoshLang.g4` and note that additional information is available in `docs/guide/md`.
-
-Missing features:
-
-- [ ] External data access at specific timestep: `external VariableName at prior` or `external VariableName at N`
-- [ ] Config with default fallback: `config configName.variableName else defaultValue`
-- [ ] `agent` entity type (listed in grammar but not documented)
-- [ ] `latitude` and `longitude` keywords for coordinate specification
-- [ ] Sampling with/without replacement: `sample N from collection with replacement` / `sample N from collection without replacement`
-
-Missing CLI commands or parameters:
-
-- [ ] `run`: Missing `--seed`, `--enable-profiler`, `--custom-tag`, `--output-steps`, `--export-queue-size`, `--csv-precision`, `--serial-patches`; Documented but missing `--crs`, `--output-format`, `-o, --output`
-- [ ] `server`: Missing `--concurrent-workers`, `--worker-url`, `--use-http2`, `--serial-patches`
-- [ ] `runRemote`: Missing `--use-float-64`, `--data`, `--custom-tag`, `--remote-leader`, `--concurrent-workers`, `--upload-source`, `--upload-config`, `--upload-data`
-- [ ] Install instructions
-
-Follow up tasks:
-- [ ] Rename inpsect-exports to inspectExports
-- [ ] Default API key
-
-@running git commit -a -m "Partially complete llms-full touch up."@
-
------
-
 # Josh
 
 Josh is a domain-specific language (DSL) designed for ecological modeling with focus on vegetation and agent-based simulations. It enables the description of multi-occupancy patch-based ecological simulations where multiple species occupying grid cells can be modeled through individual behaviors with optional state changes.
