@@ -1,31 +1,4 @@
-@result Diff against dev shows information lost: detailed /runBatch and /preprocessBatch endpoint documentation (form fields, status file format, workflow) replaced with brief endpoint list; detailed batchRemote workflow documentation (staging/dispatch separation, --no-wait JSON output format) removed; stageFromMinio command removed; K8s target options (spot, ttlSecondsAfterFinished, nodeSelector, pod_minio_endpoint, jarPath) simplified; Global Options section removed; Integration with Build Systems section removed; Assertions section removed; Exports section removed; Debug Output section removed; Program Structure closing section removed; SmallTalk/HyperTalk language comparison removed; Assertions, Exports, and Debug features removed from language.@
-
-Information lost:
-
-- [x] .jshdz compressed format support removed @result Restored from dev: .jshdz format documented in preprocess (XZ/LZMA2 compression, JVM only) and inspectJshd commands@
-- [x] Detailed /runBatch and /preprocessBatch endpoint documentation (form fields, status file format, workflow) replaced with brief endpoint list. DECISION: Better to save context.
-- [x] Detailed batchRemote workflow documentation (staging/dispatch separation, --no-wait JSON output format) removed @result Added brief workflow description (staging/polling) and --no-wait behavior to Batch targets section@
-- [x] stageFromMinio command restored concisely in Batch commands section after stageToMinio @result Added stageFromMinio command documentation following stageToMinio structure@
-- [x] K8s target options (spot, ttlSecondsAfterFinished, nodeSelector, pod_minio_endpoint, jarPath) simplified @result Added K8s target options (spot, ttlSecondsAfterFinished, nodeSelector, pod_minio_endpoint, jarPath) concisely to Batch targets section@
-- [x] Global Options section removed @result Not lost: global options documented in CLI section (lines 49-55)@
-- [x] Integration with Build Systems section removed @result Partially retained: CLI build integration examples remain in lines 56-66, but dedicated section removed@
-- [x] Assertions section removed @result Added Assertions section following structure (after conditionals, before handlers) with syntax, purpose, and --suppress-errors behavior@
-- [x] Exports section removed @result Added Exports section following structure (after handlers, before state) with syntax and exportFiles usage@
-- [x] Debug Output section removed @result Added Debug Output section following Exports structure with syntax and --suppress-errors behavior@
-- [x] Program Structure closing section removed @result Not lost: program structure content retained in Language Structure (lines 498-564) and Language (lines 531-899) sections@
-- [x] SmallTalk/HyperTalk language comparison removed
-- [x] Assertions, Exports, and Debug features removed from language @result Already restored: Assertions (lines 747-754), Exports (lines 780-788), and Debug Output (lines 790-797) sections present in Language@
-
-Places to trim:
-
-- [x] **Global Options repetition**: Lines 55-60 duplicate `--help/--version/--suppress-info/--suppress-errors` in every command section; consolidate into one reference @result Consolidated: removed duplicate --suppress-info and --suppress-errors from run, preprocess, and validate command sections; global options remain documented in CLI section@
-- [x] Run command options: Lines 91-110 list 20+ options; many are rarely used let's ensure we are concise but leave options described @result Trimmed Run command options: concise descriptions, removed repetitive qualifiers, preserved all options@
-- [ ] **Preprocess command options**: Lines 142-156 similarly verbose with 15+ options; many are rarely used let's ensure we are concise but leave options described
-- [ ] **JSON metadata example (lines 214-223)**: Verbose grid metadata output; could be truncated to essential fields
-- [ ] **Batch target profiles (lines 306-339)**: HTTP and K8s profile examples are verbose; could reference external docs. Let's add a new markdown file referenced by llms.txt and ensure that it will be deployed via github actinos.
-- [ ] **Mapping methods detail (lines 889-891)**: Quadratic mapping description is verbose; ensure concise
-
-@running git add .; git commit -a -m "Trimmed on run command options in llms-full.txt"@
+@running git add .; git commit -a -m "New draft llms-full.txt with dev features."@
 
 ------
 
@@ -143,18 +116,18 @@ java -jar joshsim-fat.jar preprocess <script.josh> <SimulationName> <dataFile> <
 - `<output.jshd>` or `<output.jshdz>`: Path for output preprocessed file. Use `.jshdz` extension to produce an XZ-compressed file (significantly smaller, JVM only).
 
 **Options:**
-- `--amend`: Amend existing JSHD/JSHDZ file rather than overwriting like adding new timestep
-- `--crs <CRS>`: Coordinate Reference System for reading input file like `EPSG:4326` (WGS84)
-- `--custom-tag <name=value>`: Custom template parameters (format: name=value); can be specified multiple times
+- `--amend`: Amend existing JSHD/JSHDZ file (adds new timestep)
+- `--crs <CRS>`: Coordinate Reference System (e.g., EPSG:4326)
+- `--custom-tag <name=value>`: Custom template parameters; repeatable
 - `--data <path>`: Path to directory containing external data files
-- `--default-value <value>`: Default value to fill grid spaces before copying data from source file
-- `--parallel`: Enable parallel processing of patches within each timestep for ~Nx speedup on N cores
-- `--serial-patches`: Run patches in serial instead of parallel
-- `--time-dim <name>`: Name of time dimension
-- `--timestep <value>`: Process only a single timestep (for parallel orchestration across timesteps)
-- `--use-float-64`: Use double precision instead of BigDecimal for speed vs precision tradeoff
-- `--x-coord <name>`: Name of X coordinate dimension
-- `--y-coord <name>`: Name of Y coordinate dimension
+- `--default-value <value>`: Default value for grid spaces before copying
+- `--parallel`: Enable parallel patch processing
+- `--serial-patches`: Run patches serially
+- `--time-dim <name>`: Time dimension name
+- `--timestep <value>`: Process single timestep
+- `--use-float-64`: Use double precision instead of BigDecimal
+- `--x-coord <name>`: X coordinate dimension name
+- `--y-coord <name>`: Y coordinate dimension name
 
 **Examples:**
 ```bash
@@ -885,9 +858,17 @@ map operand from [fromlow,fromhigh] to [tolow,tohigh] method(arg)  # Method with
 ```
 
 Available mapping methods:
+
 - **linear**: Linear interpolation between ranges. Does not take optional arguments.
 - **sigmoid**: S-curve mapping for smooth transitions. Takes optional argument. True: increasing. False: decreasing.
 - **quadratic**: Quadratic curve mapping with controllable concavity. Takes optional argument. True: the center of the domain maps to range maximum, endpoints to minimum. False: the center maps to range minimum, endpoints to maximum.
+
+Examples:
+
+```
+map temperature from [0 C, 40 C] to [0 count, 100 count] quadratic(true)   # Optimal temp in middle maps to max
+map temperature from [0 C, 40 C] to [0 count, 100 count] quadratic(false)  # Inverse: edges map to max
+```
 
 **Spatial:**
 
