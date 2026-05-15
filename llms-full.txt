@@ -1,7 +1,3 @@
-@running git add .; git commit -a -m "New draft llms-full.txt with dev features."@
-
-------
-
 # Josh
 
 Josh is a domain-specific language (DSL) designed for ecological modeling with focus on vegetation and agent-based simulations. It enables the description of multi-occupancy patch-based ecological simulations where multiple species occupying grid cells can be modeled through individual behaviors with optional state changes.
@@ -310,7 +306,7 @@ MinIO credentials are resolved through a hierarchy: profile JSON takes priority 
 }
 ```
 
-K8s target options include `spot` for preemptible VMs, `ttlSecondsAfterFinished` for cleanup, `nodeSelector` for node selection, `pod_minio_endpoint` for custom MinIO endpoints, and `jarPath` to override the default jar location (`/app/joshsim-fat.jar`).
+K8s target options include `spot` for preemptible VMs (typically 60-90% cost savings), `ttlSecondsAfterFinished` for automatic Job cleanup after a configurable time period, `nodeSelector` for node selection, `pod_minio_endpoint` for custom MinIO endpoints, and `jarPath` to override the default jar location (`/app/joshsim-fat.jar`).
 
 #### `batchRemote` - Batch Execution on Remote Targets
 Dispatches batch simulations to remote compute targets (HTTP or Kubernetes) against MinIO-staged inputs.
@@ -722,6 +718,10 @@ attribute.event:else = expression
 **Ternary-style conditional expressions:**
 
 ```
+value if condition else alternative
+```
+
+### Assertions
 value if condition else alternative
 }
 
