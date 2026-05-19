@@ -722,10 +722,6 @@ value if condition else alternative
 ```
 
 ### Assertions
-value if condition else alternative
-}
-
-### Assertions
 
 Assert statements validate conditions during execution:
 ```
@@ -760,13 +756,23 @@ height.step = prior.height + sample uniform from 0 meters to 1 meters
 
 ### Exports
 
-Exports define output files written during simulation:
+Exports define output files written during simulation and are the primary mechanism for evaluating model output. Export files are defined in the simulation stanza:
 ```
-start export
-  exportFiles = "output.csv"
-end export
+start simulation Main
+  exportFiles.patch = "file:///tmp/patch_results_{replicate}.csv"
+end simulation
 ```
 Multiple export targets supported. Export to CSV, NetCDF, or GeoTIFF via `--output-format`. Config variables usable in exportFiles paths via `{configName.variableName}` syntax.
+
+Example exporting attributes from patch stanza:
+```
+start patch Default
+  ExampleTree.init = create 5 count of ExampleTree
+  export.averageAge.step = mean(ExampleTree.age)
+  export.averageHeight.step = mean(ExampleTree.height)
+end patch
+```
+The identifier after `export.` (e.g. `averageAge`) becomes the column / variable name in the output, and the expression assigned can be any valid josh expression. 
 
 ### Debug Output
 
