@@ -45,6 +45,8 @@ java -jar joshsim-fat.jar preprocess simulation.josh Main precip.nc precipitatio
 java -jar joshsim-fat.jar run simulation.josh Main --data . -o results.csv
 ```
 
+Each `.jshd` produced above is read from Josh code by its filename stem (e.g. `temp.jshd` → `external temp`). See the **External Data** section for the language-side syntax.
+
 Preprocessing command structure:
 ```
 java -jar joshsim.jar preprocess simulation.josh SimulationName data.nc variable units output.jshd
@@ -97,7 +99,7 @@ java -jar joshsim-fat.jar run simulation.josh Main --csv-precision 4 -o results.
 ```
 
 ### `preprocess` - Data Preprocessing
-Converts external geospatial data files into optimized binary `.jshd` format reusable across runs (trials / replicates). Output can also be written as `.jshdz` (XZ/LZMA2-compressed JSHD) by using that extension — **JVM only**, not supported in the browser editor.
+Converts external geospatial data files into optimized binary `.jshd` format reusable across runs (trials / replicates). Output can also be written as `.jshdz` (XZ/LZMA2-compressed JSHD) by using that extension — **JVM only**, not supported in the browser editor. The output filename's stem becomes the identifier referenced from Josh code via the `external` keyword; see the **External Data** section.
 
 ```bash
 java -jar joshsim-fat.jar preprocess <script.josh> <SimulationName> <dataFile> <variable> <units> <output.jshd|output.jshdz> [OPTIONS]
@@ -807,32 +809,31 @@ end state
 
 ### External Data
 
-External data references allow accessing preprocessed spatial data during simulation. External data is defined in the simulation and accessed using the `external` keyword.
+External data references let a simulation read preprocessed `.jshd` files at each patch using the `external` keyword. See the **Geospatial Data Preprocessing** section and the `preprocess` command for how `.jshd` files are produced.
 
-**Basic syntax:**
-```
-external variableName
-```
+**Linking `.jshd` files to Josh code:** the output filename's stem is the identifier used in the script. Preprocessing `precip.nc` to `precipitation.jshd` makes it readable as `external precipitation`.
 
-**Accessing data at specific timestep:**
-```
-external variableName at prior    # Access data from previous timestep
-external variableName at N       # Access data from timestep N (0-based)
-```
+**Minimal use:** `external` returns a value that can be used like any other Josh expression.
 
-**Example:**
 ```
-start external Temperature
-  # Temperature data loaded from preprocessed .jshd file
-end external
-
-start patch Example
-  temp.step = external Temperature  # Get current timestep value
-  tempPrior.step = external Temperature at prior  # Get prior timestep value
+start patch Default
+  precipValue.step = external precipitation
 end patch
 ```
 
-In addition to spatial information, global config is available via `config configName.variableName` expressions with optional default fallback using `config configName.variableName else defaultValue`. Configuration variables are defined in `.jshc` files (one per line: `variableName = value units`) and enable parameterizing simulations without modifying source code. If a config variable is not defined in a `.jshc` file, the `else` clause provides a fallback value. Without `else`, the simulation will error if the config variable is missing.
+**Composing with other operators:** for example, mapping precipitation through a sigmoid response curve.
+
+```
+growth.step = map external precipitation from [200 mm, 600 mm] to [0%, 5%] sigmoid
+```
+
+**Timestep access:**
+
+```
+external variableName              # Current timestep
+external variableName at prior     # Previous timestep
+external variableName at N         # Timestep N (0-based)
+```
 
 ### Other
 
