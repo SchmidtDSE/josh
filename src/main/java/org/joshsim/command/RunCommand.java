@@ -12,52 +12,16 @@
 package org.joshsim.command;
 
 import java.io.File;
-import java.math.BigDecimal;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.Callable;
 import org.joshsim.JoshSimCommander;
-import org.joshsim.JoshSimFacadeUtil;
-import org.joshsim.compat.CompatibilityLayerKeeper;
-import org.joshsim.compat.JvmCompatibilityLayer;
-import org.joshsim.engine.entity.base.MutableEntity;
-import org.joshsim.engine.geometry.EngineGeometryFactory;
-import org.joshsim.engine.geometry.ExtentsUtil;
-import org.joshsim.engine.geometry.PatchBuilderExtentsBuilder;
-import org.joshsim.engine.geometry.grid.GridGeometryFactory;
-import org.joshsim.engine.value.converter.Units;
-import org.joshsim.engine.value.engine.ValueSupportFactory;
-import org.joshsim.engine.value.type.EngineValue;
-import org.joshsim.lang.bridge.GridInfoExtractor;
-import org.joshsim.lang.bridge.ShadowingEntity;
-import org.joshsim.lang.interpret.JoshProgram;
-import org.joshsim.lang.interpret.RecursiveValueResolverFactory;
-import org.joshsim.lang.interpret.TimedRecursiveValueResolverFactory;
-import org.joshsim.lang.interpret.ValueResolverFactory;
-import org.joshsim.lang.io.InputGetterStrategy;
-import org.joshsim.lang.io.InputOutputLayer;
-import org.joshsim.lang.io.JvmInputOutputLayerBuilder;
-import org.joshsim.lang.io.JvmMappedInputGetter;
-import org.joshsim.lang.io.JvmWorkingDirInputGetter;
 import org.joshsim.lang.io.MapSerializeStrategy;
-import org.joshsim.pipeline.job.JoshJob;
-import org.joshsim.pipeline.job.JoshJobBuilder;
-import org.joshsim.pipeline.job.config.JobVariationParser;
-import org.joshsim.pipeline.job.config.TemplateStringRenderer;
-import org.joshsim.precompute.JshdExternalGetter;
-import org.joshsim.precompute.JshdzExternalGetter;
-import org.joshsim.precompute.MultiFormatExternalGetter;
 import org.joshsim.util.MinioOptions;
 import org.joshsim.util.OutputOptions;
 import org.joshsim.util.OutputStepsParser;
-import org.joshsim.util.ProgressCalculator;
-import org.joshsim.util.ProgressUpdate;
-import org.joshsim.util.SharedRandom;
-import org.joshsim.util.SimulationMetadata;
-import org.joshsim.util.SimulationMetadataExtractor;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Mixin;
 import picocli.CommandLine.Option;
@@ -69,7 +33,9 @@ import picocli.CommandLine.Parameters;
  *
  * <p>Processes command line arguments to run a specified simulation from a Josh script file.
  * Supports configuration of the coordinate reference system and parallel/serial patch processing.
- * Can optionally save results to Minio storage.</p>
+ * Can optionally save results to Minio storage. The actual run pipeline lives in {@link RunUtil};
+ * this class only translates picocli fields into {@link RunUtil.RunOptions} and maps the
+ * {@link RunUtil.RunResult} to a process exit code.</p>
  */
 @Command(
     name = "run",
@@ -77,20 +43,6 @@ import picocli.CommandLine.Parameters;
 )
 public class RunCommand implements Callable<Integer> {
   private static final int UNKNOWN_ERROR_CODE = 404;
-
-  /**
-   * Builds the appropriate ValueResolverFactory based on whether profiling is enabled.
-   *
-   * @param enableProfiler True to use timed resolution for evalDuration support, false otherwise.
-   * @return A ValueResolverFactory configured for the requested profiling mode.
-   */
-  private static ValueResolverFactory buildValueResolverFactory(boolean enableProfiler) {
-    if (enableProfiler) {
-      return new TimedRecursiveValueResolverFactory();
-    } else {
-      return new RecursiveValueResolverFactory();
-    }
-  }
 
   @Parameters(index = "0", description = "Path to file to validate")
   private File file;
@@ -250,95 +202,30 @@ public class RunCommand implements Callable<Integer> {
       return 1;
     }
 
-    // Initialize shared random with seed for reproducibility
-    if (seed != null) {
-      SharedRandom.initialize(seed);
-      output.printInfo("Using random seed: " + seed);
-
-      // Force serial execution when seeded for deterministic results
-      // Parallel execution would cause non-deterministic random call ordering
-      if (!serialPatches) {
-        output.printInfo(
-            "Note: Forcing serial patch execution for reproducibility with --seed");
-        serialPatches = true;
-      }
-    } else {
-      SharedRandom.initialize(Optional.empty());
-    }
-
-    // Parse output steps early for fail-fast validation
-    final Optional<Set<Integer>> parsedOutputSteps = parseOutputSteps();
-    final EngineGeometryFactory geometryFactory = new GridGeometryFactory();
-
-    // Parse custom parameters from command line
+    // Parse CLI-shaped inputs up front for fail-fast validation.
     Map<String, String> customParameters = parseCustomParameters();
+    Optional<Set<Integer>> parsedOutputSteps = parseOutputSteps();
 
-    // When --replicate-index is set, run exactly one replicate at that index.
-    int effectiveReplicates = replicateIndex != null ? 1 : replicates;
-
-    // Create job configurations using JobVariationParser for grid search
-    JoshJobBuilder templateJobBuilder = new JoshJobBuilder()
-        .setReplicates(effectiveReplicates)
-        .setCustomParameters(customParameters);
-    JobVariationParser parser = new JobVariationParser();
-    List<JoshJobBuilder> jobBuilders = parser.parseDataFiles(templateJobBuilder, dataFiles);
-
-    // Build all job instances
-    List<JoshJob> jobs = jobBuilders.stream()
-        .map(JoshJobBuilder::build)
-        .toList();
-
-    // Report grid search information
-    if (replicateIndex != null) {
-      output.printInfo("Running replicate index " + replicateIndex
-          + " across " + jobs.size() + " job combination(s)");
-    } else {
-      output.printInfo("Grid search will execute " + jobs.size() + " job combination(s) "
-          + "with " + replicates + " replicate(s) each");
-    }
-    output.printInfo("Total simulations to run: " + (jobs.size() * effectiveReplicates));
-
-    // Use first job for initialization (all jobs should have compatible structure)
-    JoshJob firstJob = jobs.get(0);
-
-    // Create appropriate InputGetterStrategy based on first job configuration
-    InputGetterStrategy inputStrategy;
-    if (firstJob.getFilePaths().isEmpty()) {
-      inputStrategy = new JvmWorkingDirInputGetter();
-    } else {
-      inputStrategy = new JvmMappedInputGetter(firstJob.getFilePaths());
-    }
-
-    // Create template renderer for initialization phase (using first job, replicate 0)
-    TemplateStringRenderer initTemplateRenderer = new TemplateStringRenderer(firstJob, 0);
-
-    // Create InputOutputLayer with the chosen strategy (using first replicate for initialization)
-    InputOutputLayer initInputOutputLayer = new JvmInputOutputLayerBuilder()
-        .withReplicate(0)
-        .withInputStrategy(inputStrategy)
-        .withTemplateRenderer(initTemplateRenderer)
-        .withMinioOptions(minioOptions)
-        .withMaxDecimalPlaces(csvPrecision)
+    RunUtil.RunOptions options = RunUtil.RunOptions.builder(file, simulation)
+        .replicates(replicates)
+        .replicateIndex(replicateIndex)
+        .replicateStart(replicateStart)
+        .serialPatches(serialPatches)
+        .seed(Optional.ofNullable(seed))
+        .useFloat64(useFloat64)
+        .enableProfiler(enableProfiler)
+        .csvPrecision(csvPrecision)
+        .exportQueueSize(exportQueueSize)
+        .outputSteps(parsedOutputSteps)
+        .dataFiles(dataFiles)
+        .customParameters(customParameters)
+        .minioOptions(minioOptions)
         .build();
 
-    // Create ValueSupportFactory before interpretation so that the profiler-enabled
-    // resolver factory is used when building ValueResolver instances at compile time.
-    boolean favorBigDecimal = !useFloat64;
-    ValueSupportFactory valueFactory = new ValueSupportFactory(
-        favorBigDecimal,
-        buildValueResolverFactory(enableProfiler)
-    );
+    RunUtil.RunResult result = RunUtil.run(options, output);
 
-    JoshSimCommander.ProgramInitResult initResult = JoshSimCommander.getJoshProgram(
-        valueFactory,
-        geometryFactory,
-        file,
-        output,
-        initInputOutputLayer
-    );
-
-    if (initResult.getFailureStep().isPresent()) {
-      JoshSimCommander.CommanderStepEnum failStep = initResult.getFailureStep().get();
+    if (result.getInitFailureStep().isPresent()) {
+      JoshSimCommander.CommanderStepEnum failStep = result.getInitFailureStep().get();
       return switch (failStep) {
         case LOAD -> 1;
         case READ -> 2;
@@ -346,156 +233,11 @@ public class RunCommand implements Callable<Integer> {
         default -> UNKNOWN_ERROR_CODE;
       };
     }
-
-    output.printInfo("Validated Josh code at " + file);
-
-    JoshProgram program = initResult.getProgram().orElseThrow();
-    if (!program.getSimulations().hasPrototype(simulation)) {
-      output.printError("Could not find simulation: " + simulation);
+    if (result.isSimulationNotFound()) {
       return 4;
     }
 
-    // Extract simulation metadata for progress tracking
-    SimulationMetadata metadata;
-    try {
-      metadata = SimulationMetadataExtractor.extractMetadata(file, simulation);
-    } catch (Exception e) {
-      // Use default metadata if extraction fails
-      metadata = new SimulationMetadata(0, 10, 11);
-      output.printInfo("Using default metadata for progress tracking: " + e.getMessage());
-    }
-
-    ProgressCalculator progressCalculator = new ProgressCalculator(
-        metadata.getTotalSteps(),
-        jobs.size() * replicates // Total simulations = jobs × replicates
-    );
-
-    // Set up JVM compatibility layer
-    JvmCompatibilityLayer compatLayer = new JvmCompatibilityLayer();
-    compatLayer.setExportQueueCapacity(exportQueueSize);
-    CompatibilityLayerKeeper.set(compatLayer);
-
-    // Extract grid information for Earth-space detection (similar to JoshSimFacade)
-    MutableEntity simEntityRaw = program.getSimulations().getProtoype(simulation).build();
-    MutableEntity simEntity = new ShadowingEntity(valueFactory, simEntityRaw, simEntityRaw);
-    GridInfoExtractor extractor = new GridInfoExtractor(simEntity, valueFactory);
-    boolean hasDegrees = extractor.getStartStr().contains("degree");
-
-    EngineValue sizeValueRaw = extractor.getSize();
-    Units sizeUnits = sizeValueRaw.getUnits();
-    String sizeStr = sizeUnits.toString();
-    boolean sizeMeterAbbreviated = sizeStr.equals("m");
-    boolean sizeMetersFull = sizeStr.equals("meter") || sizeStr.equals("meters");
-    boolean sizeMeters = sizeMetersFull || sizeMeterAbbreviated;
-
-    // Execute simulation for each job combination and replicate.
-    // When --replicate-index is set, run exactly one replicate at that index.
-    int totalReplicateCount = 0;
-
-    for (int jobIndex = 0; jobIndex < jobs.size(); jobIndex++) {
-      JoshJob currentJob = jobs.get(jobIndex);
-      output.printInfo("Executing job combination " + (jobIndex + 1) + "/" + jobs.size());
-
-      if (!currentJob.getFilePaths().isEmpty()) {
-        inputStrategy = new JvmMappedInputGetter(currentJob.getFilePaths());
-      }
-
-      int startReplicate = replicateIndex != null ? replicateIndex : replicateStart;
-      int endReplicate = replicateIndex != null
-          ? replicateIndex + 1 : replicateStart + currentJob.getReplicates();
-
-      for (int currentReplicate = startReplicate; currentReplicate < endReplicate;
-           currentReplicate++) {
-        int effectiveReplicate = replicateIndex != null ? replicateIndex : currentReplicate;
-        totalReplicateCount++;
-
-        if (totalReplicateCount > 1) {
-          progressCalculator.resetForNextReplicate(totalReplicateCount);
-        }
-
-        runReplicate(currentJob, effectiveReplicate, totalReplicateCount > 1,
-            valueFactory, geometryFactory, inputStrategy, hasDegrees, sizeMeters,
-            sizeValueRaw, extractor, program, simulation, progressCalculator,
-            parsedOutputSteps);
-
-        ProgressUpdate completion = progressCalculator.updateReplicateCompleted(
-            totalReplicateCount);
-        output.printInfo(completion.getMessage());
-      }
-
-      if (jobIndex < jobs.size() - 1) {
-        output.printInfo("Completed job combination " + (jobIndex + 1) + "/" + jobs.size());
-      }
-    }
-
-    output.printInfo("");
-    output.printInfo("✓ All simulations completed successfully!");
-    output.printInfo("  Total replicates run: " + totalReplicateCount);
-    output.printInfo("  Job combinations: " + jobs.size());
-    output.printInfo("  Replicates per job: " + effectiveReplicates);
-
-    // Clean up shared random
-    SharedRandom.clear();
-
     return 0;
-  }
-
-  private void runReplicate(JoshJob currentJob, int currentReplicate, boolean appendMode,
-      ValueSupportFactory valueFactory, EngineGeometryFactory geometryFactory,
-      InputGetterStrategy inputStrategy, boolean hasDegrees, boolean sizeMeters,
-      EngineValue sizeValueRaw, GridInfoExtractor extractor, JoshProgram program,
-      String simulation, ProgressCalculator progressCalculator,
-      Optional<Set<Integer>> parsedOutputSteps) {
-    TemplateStringRenderer templateRenderer = new TemplateStringRenderer(currentJob,
-        currentReplicate);
-
-    InputOutputLayer inputOutputLayer;
-    if (hasDegrees && sizeMeters) {
-      PatchBuilderExtentsBuilder extentsBuilder = new PatchBuilderExtentsBuilder();
-      ExtentsUtil.addExtents(extentsBuilder, extractor.getStartStr(), true, valueFactory);
-      ExtentsUtil.addExtents(extentsBuilder, extractor.getEndStr(), false, valueFactory);
-      BigDecimal sizeValuePrimitive = sizeValueRaw.getAsDecimal();
-      inputOutputLayer = new JvmInputOutputLayerBuilder()
-          .withReplicate(currentReplicate)
-          .withEarthSpace(extentsBuilder.build(), sizeValuePrimitive)
-          .withInputStrategy(inputStrategy)
-          .withTemplateRenderer(templateRenderer)
-          .withMinioOptions(minioOptions)
-          .withAppendMode(appendMode)
-          .withMaxDecimalPlaces(csvPrecision)
-          .build();
-    } else {
-      inputOutputLayer = new JvmInputOutputLayerBuilder()
-          .withReplicate(currentReplicate)
-          .withInputStrategy(inputStrategy)
-          .withTemplateRenderer(templateRenderer)
-          .withMinioOptions(minioOptions)
-          .withAppendMode(appendMode)
-          .withMaxDecimalPlaces(csvPrecision)
-          .build();
-    }
-
-    MultiFormatExternalGetter externalGetter = new MultiFormatExternalGetter(
-        new JshdExternalGetter(inputStrategy, valueFactory),
-        new JshdzExternalGetter(inputStrategy, valueFactory)
-    );
-
-    JoshSimFacadeUtil.runSimulation(
-        valueFactory,
-        geometryFactory,
-        inputOutputLayer,
-        externalGetter,
-        program,
-        simulation,
-        (step) -> {
-          ProgressUpdate update = progressCalculator.updateStep(step);
-          if (update.shouldReport()) {
-            output.printInfo(update.getMessage());
-          }
-        },
-        serialPatches,
-        parsedOutputSteps
-    );
   }
 
 }

@@ -365,18 +365,26 @@ Existing CLI commands have execution logic intertwined with picocli
 field state. Extract callable pipeline classes so both the CLI
 command and the MCP backend can drive them without duplication:
 
-- From `command/RunCommand.java` — extract `RunPipeline` that takes
-  an immutable run config (file, simulation, replicates, dataFiles,
-  customTags, outputSteps, etc.), a step callback, and an
-  `OutputOptions`. `RunCommand.call()` becomes a 20-line shim that
-  builds the config from its picocli fields and invokes the pipeline.
+- From `command/RunCommand.java` — extract `RunUtil` (the immutable
+  `RunUtil.RunOptions` carries file, simulation, replicates,
+  replicateStart/Index, dataFiles, customParameters, outputSteps,
+  csvPrecision, exportQueueSize, useFloat64, enableProfiler, seed, and
+  `MinioOptions`). `RunCommand.call()` is now a shim that builds
+  `RunOptions` from its picocli fields, calls `RunUtil.run`, and maps
+  the `RunUtil.RunResult` to an exit code. **Done** — both the CLI and
+  the MCP `LocalBackend.runSimulation` drive `RunUtil`, so there is one
+  in-JVM run pipeline rather than two. `LocalBackend` sets only the
+  five MCP-exposed knobs; everything else falls through to the CLI
+  defaults, with two MCP-specific choices (profiler off; `MinioOptions`
+  resolved from the environment) documented inline.
 - From `command/RunRemoteCommand.java` — same treatment:
-  `RemoteRunPipeline`.
+  `RemoteRunPipeline`. *(Still pending — Phase 2.)*
 - From `command/PreprocessBatchCommand.java` — same:
-  `RemotePreprocessPipeline`.
+  `RemotePreprocessPipeline`. *(Still pending — Phase 2.)*
 
-No behavior change. This is the largest piece of mechanical work in
-the plan and the prerequisite for clean tool handlers.
+No behavior change for the CLI; the MCP run path now matches CLI
+behavior (including Earth-space grid handling that the earlier
+standalone MCP run loop omitted).
 
 ## Critical implementation details
 
@@ -516,7 +524,7 @@ the plan and the prerequisite for clean tool handlers.
 
 **Core files created:**
 - `src/main/java/org/joshsim/mcp/Backend.java` — Interface with four methods and inner result POJOs (`ValidateResult`, `DiscoverConfigResult`, `PreprocessResult`, `RunSimulationResult`) plus `PreprocessOptions`.
-- `src/main/java/org/joshsim/mcp/LocalBackend.java` — In-JVM implementation delegating to `JoshSimCommander.getJoshProgram`, `JoshConfigDiscoveryVisitor`, `PreprocessUtil.preprocess`, and `JoshSimFacadeUtil.runSimulation`.
+- `src/main/java/org/joshsim/mcp/LocalBackend.java` — In-JVM implementation delegating to `JoshSimCommander.getJoshProgram`, `JoshConfigDiscoveryVisitor`, `PreprocessUtil.preprocess`, and `RunUtil.run` (see Post-review refactors).
 - `src/main/java/org/joshsim/mcp/JoshMcpServer.java` — Wires the MCP SDK, loads `McpJsonMapper` via `ServiceLoader<McpJsonMapperSupplier>`, registers all four tools.
 - `src/main/java/org/joshsim/mcp/JoshPaths.java` — Path resolution utility (absolute + normalized).
 - `src/main/java/org/joshsim/mcp/StderrOutputOptions.java` — Routes all diagnostic output to `System.err`, keeping `System.out` clean for JSON-RPC.
@@ -548,7 +556,26 @@ the plan and the prerequisite for clean tool handlers.
 
 ### Known limitations
 
-- `runSimulation` is not tested end-to-end (would require a real simulation run); unit tests cover the result POJOs and backend wiring only.
 - The MCP server sends several `notifications/tools/list_changed` events on startup (one per `addTool` call); this is an SDK behavior and not harmful.
 - opencode MCP server config: https://opencode.ai/docs/mcp-servers/
 - MCP Inspector (testing tool): `npx @modelcontextprotocol/inspector`
+
+### Post-review refactors (PR #440 follow-ups)
+
+Two follow-up changes addressed code-review feedback on the Phase 1 PR:
+
+1. **Schema + handler cleanup.** Each tool's input schema moved from an
+   inline concatenated Java string to a `*.schema.json` resource under
+   `src/main/resources/org/joshsim/mcp/tool/local/`, loaded by
+   `ToolSchemas.load(...)`. Each tool's call-handler body was lifted out
+   of its anonymous lambda into a named `handle(...)` method, and shared
+   `errorResult(...)` / `requireString(...)` helpers moved to
+   `ToolHandlers`. New test: `ToolSchemasTest`.
+
+2. **`RunUtil` extraction (DRY).** `LocalBackend.runSimulation` no longer
+   reimplements the run loop; it builds `RunUtil.RunOptions` and calls
+   `RunUtil.run`, the same pipeline `RunCommand` now uses. This removed
+   the divergence where the MCP run path skipped Earth-space grid setup,
+   metadata/progress, csv-precision, and MinIO. New test: `RunUtilTest`
+   (real end-to-end run, simulation-not-found, init-failure, seed
+   determinism). `runSimulation` is now covered end-to-end.
