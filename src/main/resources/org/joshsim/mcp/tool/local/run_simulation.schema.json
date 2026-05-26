@@ -1,0 +1,29 @@
+{
+  "type": "object",
+  "properties": {
+    "script": {
+      "type": "string",
+      "description": "Path to the .josh simulation script file."
+    },
+    "simulation": {
+      "type": "string",
+      "description": "Name of the simulation block to run, exactly as it appears after 'start simulation' in the .josh file (e.g. 'Main')."
+    },
+    "replicates": {
+      "type": "integer",
+      "description": "Number of independent simulation replicates to run. Each replicate uses a different random seed unless seed is specified. Defaults to 1.",
+      "default": 1,
+      "minimum": 1
+    },
+    "serialPatches": {
+      "type": "boolean",
+      "description": "If true, patches are processed one at a time rather than in parallel. Serial mode is slower but required for reproducibility when using a fixed seed. Automatically set to true when seed is supplied. Defaults to false.",
+      "default": false
+    },
+    "seed": {
+      "type": "integer",
+      "description": "Optional random seed for reproducible simulations. When provided, all random sampling uses this seed, and serial patch processing is automatically enabled to ensure deterministic results."
+    }
+  },
+  "required": ["script", "simulation"]
+}

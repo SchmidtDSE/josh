@@ -12,11 +12,13 @@ package org.joshsim.mcp.tool.local;
 import io.modelcontextprotocol.json.McpJsonMapper;
 import io.modelcontextprotocol.server.McpServerFeatures.SyncToolSpecification;
 import io.modelcontextprotocol.server.McpSyncServer;
+import io.modelcontextprotocol.spec.McpSchema.CallToolRequest;
 import io.modelcontextprotocol.spec.McpSchema.CallToolResult;
 import io.modelcontextprotocol.spec.McpSchema.Tool;
 import java.nio.file.Path;
 import org.joshsim.mcp.Backend;
 import org.joshsim.mcp.JoshPaths;
+import org.joshsim.mcp.tool.local.ToolHandlers.MissingArgument;
 
 /**
  * Registers the {@code discover_config} MCP tool.
@@ -27,16 +29,7 @@ import org.joshsim.mcp.JoshPaths;
  */
 public final class DiscoverConfigTool {
 
-  private static final String INPUT_SCHEMA = "{"
-      + "\"type\": \"object\","
-      + "\"properties\": {"
-      + "  \"script\": {"
-      + "    \"type\": \"string\","
-      + "    \"description\": \"Path to the .josh simulation script file.\""
-      + "  }"
-      + "},"
-      + "\"required\": [\"script\"]"
-      + "}";
+  private static final String TOOL_NAME = "discover_config";
 
   private DiscoverConfigTool() {
     // Static utility
@@ -51,7 +44,7 @@ public final class DiscoverConfigTool {
    */
   public static void register(McpSyncServer server, Backend backend, McpJsonMapper jsonMapper) {
     Tool tool = Tool.builder()
-        .name("discover_config")
+        .name(TOOL_NAME)
         .description(
             "Discovers all configuration variables referenced in a Josh simulation script. "
             + "Josh scripts can reference external configuration values using the 'config' "
@@ -61,29 +54,30 @@ public final class DiscoverConfigTool {
             + "before the simulation can be run. "
             + "Returns '[No variables found]' if the script uses no configuration variables."
         )
-        .inputSchema(jsonMapper, INPUT_SCHEMA)
+        .inputSchema(jsonMapper, ToolSchemas.load(TOOL_NAME))
         .build();
 
     SyncToolSpecification spec = SyncToolSpecification.builder()
         .tool(tool)
-        .callHandler((exchange, request) -> {
-          String scriptArg = (String) request.arguments().get("script");
-          if (scriptArg == null || scriptArg.isBlank()) {
-            return CallToolResult.builder()
-                .addTextContent("Missing required argument: script")
-                .isError(Boolean.TRUE)
-                .build();
-          }
-          Path script = JoshPaths.resolve(scriptArg);
-          Backend.DiscoverConfigResult result = backend.discoverConfig(script);
-          return CallToolResult.builder()
-              .addTextContent(result.getOutput())
-              .isError(!result.isSuccess())
-              .build();
-        })
+        .callHandler((exchange, request) -> handle(request, backend))
         .build();
 
     server.addTool(spec);
+  }
+
+  private static CallToolResult handle(CallToolRequest request, Backend backend) {
+    String scriptArg;
+    try {
+      scriptArg = ToolHandlers.requireString(request.arguments(), "script");
+    } catch (MissingArgument e) {
+      return ToolHandlers.errorResult(e.getMessage());
+    }
+    Path script = JoshPaths.resolve(scriptArg);
+    Backend.DiscoverConfigResult result = backend.discoverConfig(script);
+    return CallToolResult.builder()
+        .addTextContent(result.getOutput())
+        .isError(!result.isSuccess())
+        .build();
   }
 
 }

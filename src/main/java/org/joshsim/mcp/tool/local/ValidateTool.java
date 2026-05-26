@@ -12,12 +12,13 @@ package org.joshsim.mcp.tool.local;
 import io.modelcontextprotocol.json.McpJsonMapper;
 import io.modelcontextprotocol.server.McpServerFeatures.SyncToolSpecification;
 import io.modelcontextprotocol.server.McpSyncServer;
+import io.modelcontextprotocol.spec.McpSchema.CallToolRequest;
 import io.modelcontextprotocol.spec.McpSchema.CallToolResult;
-import io.modelcontextprotocol.spec.McpSchema.TextContent;
 import io.modelcontextprotocol.spec.McpSchema.Tool;
 import java.nio.file.Path;
 import org.joshsim.mcp.Backend;
 import org.joshsim.mcp.JoshPaths;
+import org.joshsim.mcp.tool.local.ToolHandlers.MissingArgument;
 
 /**
  * Registers the {@code validate_simulation} MCP tool.
@@ -27,16 +28,7 @@ import org.joshsim.mcp.JoshPaths;
  */
 public final class ValidateTool {
 
-  private static final String INPUT_SCHEMA = "{"
-      + "\"type\": \"object\","
-      + "\"properties\": {"
-      + "  \"script\": {"
-      + "    \"type\": \"string\","
-      + "    \"description\": \"Path to the .josh simulation script file to validate.\""
-      + "  }"
-      + "},"
-      + "\"required\": [\"script\"]"
-      + "}";
+  private static final String TOOL_NAME = "validate_simulation";
 
   private ValidateTool() {
     // Static utility
@@ -51,7 +43,7 @@ public final class ValidateTool {
    */
   public static void register(McpSyncServer server, Backend backend, McpJsonMapper jsonMapper) {
     Tool tool = Tool.builder()
-        .name("validate_simulation")
+        .name(TOOL_NAME)
         .description(
             "Validates a Josh simulation script (.josh file) for syntax and semantic errors. "
             + "Use this before running a simulation to catch parse errors early. "
@@ -60,29 +52,30 @@ public final class ValidateTool {
             + "Josh scripts define simulations using 'start simulation ... end simulation' blocks "
             + "containing grid configuration and step ranges."
         )
-        .inputSchema(jsonMapper, INPUT_SCHEMA)
+        .inputSchema(jsonMapper, ToolSchemas.load(TOOL_NAME))
         .build();
 
     SyncToolSpecification spec = SyncToolSpecification.builder()
         .tool(tool)
-        .callHandler((exchange, request) -> {
-          String scriptArg = (String) request.arguments().get("script");
-          if (scriptArg == null || scriptArg.isBlank()) {
-            return CallToolResult.builder()
-                .addTextContent("Missing required argument: script")
-                .isError(Boolean.TRUE)
-                .build();
-          }
-          Path script = JoshPaths.resolve(scriptArg);
-          Backend.ValidateResult result = backend.validate(script);
-          return CallToolResult.builder()
-              .addTextContent(result.getMessage())
-              .isError(!result.isSuccess())
-              .build();
-        })
+        .callHandler((exchange, request) -> handle(request, backend))
         .build();
 
     server.addTool(spec);
+  }
+
+  private static CallToolResult handle(CallToolRequest request, Backend backend) {
+    String scriptArg;
+    try {
+      scriptArg = ToolHandlers.requireString(request.arguments(), "script");
+    } catch (MissingArgument e) {
+      return ToolHandlers.errorResult(e.getMessage());
+    }
+    Path script = JoshPaths.resolve(scriptArg);
+    Backend.ValidateResult result = backend.validate(script);
+    return CallToolResult.builder()
+        .addTextContent(result.getMessage())
+        .isError(!result.isSuccess())
+        .build();
   }
 
 }
