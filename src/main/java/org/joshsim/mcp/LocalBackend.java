@@ -20,27 +20,15 @@ import org.antlr.v4.runtime.CharStreams;
 import org.antlr.v4.runtime.CommonTokenStream;
 import org.antlr.v4.runtime.tree.ParseTree;
 import org.joshsim.JoshSimCommander;
-import org.joshsim.JoshSimFacadeUtil;
 import org.joshsim.command.PreprocessUtil;
-import org.joshsim.compat.CompatibilityLayerKeeper;
-import org.joshsim.compat.JvmCompatibilityLayer;
+import org.joshsim.command.RunUtil;
 import org.joshsim.engine.config.ConfigDiscoverabilityOutputFormatter;
 import org.joshsim.engine.config.DiscoveredConfigVar;
 import org.joshsim.engine.geometry.grid.GridGeometryFactory;
-import org.joshsim.engine.value.engine.ValueSupportFactory;
 import org.joshsim.lang.antlr.JoshLangLexer;
 import org.joshsim.lang.antlr.JoshLangParser;
-import org.joshsim.lang.interpret.JoshProgram;
 import org.joshsim.lang.interpret.visitor.JoshConfigDiscoveryVisitor;
-import org.joshsim.lang.io.InputGetterStrategy;
-import org.joshsim.lang.io.InputOutputLayer;
-import org.joshsim.lang.io.JvmInputOutputLayerBuilder;
-import org.joshsim.lang.io.JvmWorkingDirInputGetter;
-import org.joshsim.precompute.JshdExternalGetter;
-import org.joshsim.precompute.JshdzExternalGetter;
-import org.joshsim.precompute.MultiFormatExternalGetter;
 import org.joshsim.util.OutputOptions;
-import org.joshsim.util.SharedRandom;
 
 
 /**
@@ -172,90 +160,32 @@ public class LocalBackend implements Backend {
       boolean serialPatches,
       Optional<Long> seed
   ) {
-    File file = script.toFile();
-
-    // Initialize shared random per-call (per forward-compatibility discipline)
-    if (seed.isPresent()) {
-      SharedRandom.initialize(seed.get());
-    } else {
-      SharedRandom.initialize(Optional.empty());
-    }
-
-    // Set up JVM compatibility layer
-    JvmCompatibilityLayer compatLayer = new JvmCompatibilityLayer();
-    CompatibilityLayerKeeper.set(compatLayer);
-
-    ValueSupportFactory valueFactory = new ValueSupportFactory();
-    GridGeometryFactory geometryFactory = new GridGeometryFactory();
-
-    InputGetterStrategy inputStrategy = new JvmWorkingDirInputGetter();
-    InputOutputLayer inputOutputLayer = new JvmInputOutputLayerBuilder()
-        .withReplicate(0)
-        .withInputStrategy(inputStrategy)
+    // Build the minimal RunOptions the MCP run_simulation tool exposes today. Every other
+    // RunCommand knob (replicateStart, csvPrecision, exportQueueSize, useFloat64, outputSteps,
+    // dataFiles, customParameters) falls through to its CLI default inside RunUtil, so an
+    // MCP-driven run behaves identically to `josh run <script> <simulation>` with the matching
+    // flags — no divergent run logic lives here.
+    //
+    // Two MCP-specific defaults, deliberately not exposed as tool arguments:
+    //   - Profiling stays disabled: evalDuration profiling is a developer feature with no MCP
+    //     surface in v1.
+    //   - MinIO uses a default MinioOptions instance, which resolves credentials from the
+    //     environment (and config file) exactly as the CLI does when no --minio-* flags are
+    //     passed. This keeps secrets out of tool arguments (and therefore out of LLM chat
+    //     history) while still letting models that export to MinIO work over MCP.
+    RunUtil.RunOptions options = RunUtil.RunOptions.builder(script.toFile(), simulation)
+        .replicates(replicates)
+        .serialPatches(serialPatches)
+        .seed(seed)
         .build();
 
-    JoshSimCommander.ProgramInitResult initResult = JoshSimCommander.getJoshProgram(
-        valueFactory,
-        geometryFactory,
-        file,
-        output,
-        inputOutputLayer
-    );
-
-    if (initResult.getFailureStep().isPresent()) {
-      SharedRandom.clear();
-      return new RunSimulationResult(false,
-          "Script validation failed at step: " + initResult.getFailureStep().get(), 0);
-    }
-
-    JoshProgram program = initResult.getProgram().orElseThrow();
-    if (!program.getSimulations().hasPrototype(simulation)) {
-      SharedRandom.clear();
-      return new RunSimulationResult(false,
-          "Could not find simulation: " + simulation, 0);
-    }
-
-    // Force serial execution when seeded for determinism
-    boolean effectiveSerial = serialPatches || seed.isPresent();
-
-    long[] stepCounter = {0};
-
     try {
-      for (int rep = 0; rep < replicates; rep++) {
-        InputOutputLayer repLayer = new JvmInputOutputLayerBuilder()
-            .withReplicate(rep)
-            .withInputStrategy(inputStrategy)
-            .withAppendMode(rep > 0)
-            .build();
-
-        MultiFormatExternalGetter externalGetter = new MultiFormatExternalGetter(
-            new JshdExternalGetter(inputStrategy, valueFactory),
-            new JshdzExternalGetter(inputStrategy, valueFactory)
-        );
-
-        JoshSimFacadeUtil.runSimulation(
-            valueFactory,
-            geometryFactory,
-            repLayer,
-            externalGetter,
-            program,
-            simulation,
-            (step) -> stepCounter[0] = step,
-            effectiveSerial,
-            Optional.empty()
-        );
-      }
+      RunUtil.RunResult result = RunUtil.run(options, output);
+      return new RunSimulationResult(
+          result.isSuccess(), result.getMessage(), result.getLastStep());
     } catch (Exception e) {
-      SharedRandom.clear();
-      return new RunSimulationResult(false,
-          "Simulation failed: " + e.getMessage(), stepCounter[0]);
+      return new RunSimulationResult(false, "Simulation failed: " + e.getMessage(), 0);
     }
-
-    SharedRandom.clear();
-    return new RunSimulationResult(true,
-        "Simulation '" + simulation + "' completed: "
-            + replicates + " replicate(s), last step " + stepCounter[0],
-        stepCounter[0]);
   }
 
 }
