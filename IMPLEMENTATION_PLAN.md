@@ -576,6 +576,11 @@ Two follow-up changes addressed code-review feedback on the Phase 1 PR:
    reimplements the run loop; it builds `RunUtil.RunOptions` and calls
    `RunUtil.run`, the same pipeline `RunCommand` now uses. This removed
    the divergence where the MCP run path skipped Earth-space grid setup,
-   metadata/progress, csv-precision, and MinIO. New test: `RunUtilTest`
-   (real end-to-end run, simulation-not-found, init-failure, seed
-   determinism). `runSimulation` is now covered end-to-end.
+   metadata/progress, csv-precision, and MinIO. Internally, `RunUtil` is
+   organized into named per-phase helpers (`buildJobs`,
+   `initializeProgram`, `extractSpatialInfo`, `executeJobs`, etc.) with
+   `GridSpatialInfo` / `ExecutionSummary` records grouping the values
+   passed between them, so the top-level `run` reads as a sequence of
+   steps. New test: `RunUtilTest` (real end-to-end run,
+   simulation-not-found, init-failure, seed determinism). `runSimulation`
+   is now covered end-to-end.
