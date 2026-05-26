@@ -26,7 +26,6 @@ java {
 }
 
 repositories {
-  mavenLocal()
   maven {
     url "https://repo.osgeo.org/repository/release/"
   }

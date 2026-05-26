@@ -52,12 +52,14 @@ public class McpCommand implements Callable<Integer> {
     try {
       mcpServer.start();
 
-      // Block the main thread until stdin is closed.
-      // The SDK handles all I/O on its own threads; we just need to stay alive.
+      // Block the main thread forever. The SDK owns stdin/stdout on its own threads;
+      // reading System.in here would race with the SDK's reader and corrupt JSON-RPC framing.
+      // When the parent process closes the pipe, the SDK shuts down its threads and the
+      // JVM exits naturally (or via signal from the parent).
       try {
-        System.in.transferTo(java.io.OutputStream.nullOutputStream());
-      } catch (Exception e) {
-        // stdin closed or interrupted — normal exit
+        Thread.currentThread().join();
+      } catch (InterruptedException e) {
+        Thread.currentThread().interrupt();
       }
     } finally {
       mcpServer.close();

@@ -527,11 +527,8 @@ the plan and the prerequisite for clean tool handlers.
 - `src/main/java/org/joshsim/command/McpCommand.java` — Picocli `mcp` subcommand.
 
 **Modified files:**
-- `build.gradle` — Added `mavenLocal()` repository and `io.modelcontextprotocol.sdk:mcp:1.1.3` dependency.
+- `build.gradle` — Added `io.modelcontextprotocol.sdk:mcp:1.1.3` dependency.
 - `src/main/java/org/joshsim/JoshSimCommander.java` — Added `McpCommand.class` to subcommands array.
-
-**Dependency workaround:**
-- `org.geotools:gt-*:33.0` and `edu.ucar:cdm-core:5.7.0` / `netcdf4:5.7.0` are unavailable from their repos (403 errors). Stub JARs are placed in `~/.m2/repository/` via `mavenLocal()` so compilation succeeds without the real libraries. The stubs provide only the method signatures needed by the source and test files; they return null/empty at runtime. The real JARs would need to be sourced from a private mirror or the team's artifact cache for production use.
 
 ### Deviations from plan
 
@@ -551,7 +548,6 @@ the plan and the prerequisite for clean tool handlers.
 
 ### Known limitations
 
-- The stub JARs in `~/.m2/repository/` are machine-local; CI/CD will need the real jars or a private mirror.
 - `runSimulation` is not tested end-to-end (would require a real simulation run); unit tests cover the result POJOs and backend wiring only.
 - The MCP server sends several `notifications/tools/list_changed` events on startup (one per `addTool` call); this is an SDK behavior and not harmful.
 - opencode MCP server config: https://opencode.ai/docs/mcp-servers/
