@@ -41,18 +41,30 @@ public final class ToolHandlers {
   /**
    * Extracts a required non-blank string argument from a tool call request's argument map.
    *
-   * <p>Returns the raw string value when present and non-blank. Throws {@link MissingArgument}
-   * (an unchecked sentinel) otherwise, so callers can wrap the call in a try/catch and convert to
-   * an error result without nesting deep argument validation logic.</p>
+   * <p>Returns the string value when present and non-blank. Numeric and boolean scalars are
+   * coerced to their string form: although the tool schemas declare these arguments as strings,
+   * clients (and the MCP Inspector CLI) sometimes send a bare number for a naturally numeric value
+   * such as a GeoTIFF band index, and rejecting that would be needlessly brittle. Throws
+   * {@link MissingArgument} (an unchecked sentinel) when the argument is absent, blank, or a
+   * non-scalar type, so callers can wrap the call in a try/catch and convert to an error result
+   * without nesting deep argument validation logic.</p>
    *
    * @param arguments the tool call's argument map (from {@code request.arguments()})
    * @param key       the argument key to extract
    * @return the string value
-   * @throws MissingArgument if the argument is absent, not a string, or blank
+   * @throws MissingArgument if the argument is absent, blank, or not a string/number/boolean
    */
   public static String requireString(Map<String, Object> arguments, String key) {
     Object value = arguments.get(key);
-    if (!(value instanceof String stringValue) || stringValue.isBlank()) {
+    String stringValue;
+    if (value instanceof String s) {
+      stringValue = s;
+    } else if (value instanceof Number || value instanceof Boolean) {
+      stringValue = String.valueOf(value);
+    } else {
+      throw new MissingArgument(key);
+    }
+    if (stringValue.isBlank()) {
       throw new MissingArgument(key);
     }
     return stringValue;
