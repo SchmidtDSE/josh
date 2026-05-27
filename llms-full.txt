@@ -583,7 +583,7 @@ steps.high = 10 count
 
 - **`grid.low` / `grid.high`** are corners, not min/max: `grid.low` is the top-left, `grid.high` the bottom-right. In Western Hemisphere geography, `grid.low` carries the more-northern latitude and more-negative longitude.
 - Each corner component must carry the word `latitude` or `longitude` (parser tags, not units); order within the pair is free.
-- **`grid.size`** — patch side length. Units: `m`, `km`, `count`, `degrees`. Meters paired with degrees triggers a Haversine conversion; `here.x` / `here.y` then reference grid space `(0,0)` top-left to `(width, height)` bottom-right.
+- **`grid.size`** — patch side length. Units: `m` (meters), `count`, or `degrees`. When positions are given in degrees, the size must be in meters, which triggers a Haversine conversion; `here.x` / `here.y` then reference grid space `(0,0)` top-left to `(width, height)` bottom-right. Other length units such as `km` are not accepted for grid size — use meters (e.g. `1000 m`, not `1 km`).
 - **`grid.patch`** — patch entity name (default `"Default"`).
 - **`grid.inputCrs` / `grid.targetCrs`** — optional EPSG codes; the CLI `--crs` flag overrides `grid.inputCrs`.
 - **`steps.low` / `steps.high`** — both endpoints inclusive (`0` to `10` runs 11 timesteps; defaults `0`, `10`).
