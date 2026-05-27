@@ -1,0 +1,10 @@
+{
+  "type": "object",
+  "properties": {
+    "script": {
+      "type": "string",
+      "description": "Path to the .josh simulation script file to validate."
+    }
+  },
+  "required": ["script"]
+}
