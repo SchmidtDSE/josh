@@ -581,7 +581,7 @@ steps.low  = 0 count
 steps.high = 10 count
 ```
 
-- **`grid.low` / `grid.high`** (geo-canonical aliases: **`grid.top_left`** / **`grid.bottom_right`**) are corners, not min/max: `grid.low` (`grid.top_left`) is the top-left / north-west corner, `grid.high` (`grid.bottom_right`) the bottom-right / south-east. In Western Hemisphere geography, `grid.low` carries the more-northern latitude and more-negative longitude. The canonical and alias names are interchangeable; if both are given, the canonical name wins.
+- **`grid.low`** (alias **`grid.top_left`**) — top-left / north-west grid corner; **`grid.high`** (alias **`grid.bottom_right`**) — bottom-right / south-east grid corner.
 - Each corner component must carry the word `latitude` or `longitude` (parser tags, not units); order within the pair is free.
 - **`grid.size`** — patch side length. Units: `m`, `km`, `count`, `degrees`. Meters paired with degrees triggers a Haversine conversion; `here.x` / `here.y` then reference grid space `(0,0)` top-left to `(width, height)` bottom-right.
 - **`grid.patch`** — patch entity name (default `"Default"`).
