@@ -235,6 +235,16 @@ public class PreprocessUtil {
     String endStr = extractor.getEndStr();
     EngineValue size = extractor.getSize();
 
+    // Validate grid size units before building the grid. An unsupported unit such as "km"
+    // would otherwise be silently treated as meters by the Earth-space patch builder,
+    // producing a grid orders of magnitude too fine and hanging preprocessing. Fail fast.
+    if (!unitsSupported(size.getUnits().toString())) {
+      throw new IllegalArgumentException(
+          "Unsupported units for grid size: " + size.getUnits()
+          + ". Grid size must be specified in meters (m); for example use \"1000 m\" "
+          + "instead of \"1 km\".");
+    }
+
     // Build bridge
     CoordinateReferenceSystem crs;
     try {
@@ -261,10 +271,7 @@ public class PreprocessUtil {
     GridFromSimFactory gridFactory = new GridFromSimFactory(bridge);
     PatchSet patchSet = gridFactory.build(simEntity, options.getCrsCode());
 
-    // Check and parse grid
-    if (!unitsSupported(size.getUnits().toString())) {
-      throw new IllegalArgumentException("Unsupported units for grid size: " + size.getUnits());
-    }
+    // Parse grid extents.
     PatchBuilderExtents extents = gridFactory.buildExtents(startStr, endStr);
     PatchKeyConverter patchKeyConverter = new PatchKeyConverter(
         extents,
