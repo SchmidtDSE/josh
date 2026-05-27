@@ -44,8 +44,8 @@ public class GridInfoExtractor {
 
     inputCrsMaybe = simulation.getAttributeValue("grid.inputCrs");
     targetCrsMaybe = simulation.getAttributeValue("grid.targetCrs");
-    startStrMaybe = simulation.getAttributeValue("grid.low");
-    endStrMaybe = simulation.getAttributeValue("grid.high");
+    startStrMaybe = getFirstPresent(simulation, "grid.low", "grid.top_left");
+    endStrMaybe = getFirstPresent(simulation, "grid.high", "grid.bottom_right");
     patchNameMaybe = simulation.getAttributeValue("grid.patch");
     sizeMaybe = simulation.getAttributeValue("grid.size");
     stepsLowMaybe = simulation.getAttributeValue("steps.low");
@@ -213,6 +213,28 @@ public class GridInfoExtractor {
     long highValue = Math.round(stepsHigh.getAsDouble());
 
     return highValue - lowValue + 1;
+  }
+
+  /**
+   * Reads the first attribute that is present among the provided names.
+   *
+   * <p>Supports geo-canonical aliases for the grid corners: {@code grid.top_left} aliases
+   * {@code grid.low} (the north-west corner) and {@code grid.bottom_right} aliases
+   * {@code grid.high} (the south-east corner). The canonical name takes precedence when both
+   * are present.</p>
+   *
+   * @param simulation the simulation entity to read attributes from
+   * @param names attribute names to try, in order of precedence
+   * @return the value of the first present attribute, or empty if none are set
+   */
+  private static Optional<EngineValue> getFirstPresent(MutableEntity simulation, String... names) {
+    for (String name : names) {
+      Optional<EngineValue> value = simulation.getAttributeValue(name);
+      if (value.isPresent()) {
+        return value;
+      }
+    }
+    return Optional.empty();
   }
 
   /**
