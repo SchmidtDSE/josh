@@ -38,30 +38,13 @@ for tool in validate_simulation discover_config preprocess_data run_simulation; 
 done
 echo "PASS: all four tools advertised"
 
-# Prepare a tiny, self-contained simulation in a temp dir.
+# Use an existing self-contained example (no external data) for validate + run.
 WORK="$(mktemp -d)"
 trap 'rm -rf "$WORK"' EXIT
-RUN_JOSH="$WORK/run.josh"
-RUN_OUT="$WORK/run_out.csv"
-cat > "$RUN_JOSH" <<JOSH
-start simulation TestSim
-  grid.size = 100 m
-  grid.low = 0 degrees latitude, 0 degrees longitude
-  grid.high = 0.1 degrees latitude, 0.1 degrees longitude
-  grid.patch = "Default"
-  steps.low = 0 count
-  steps.high = 2 count
-  exportFiles.patch = "file://$RUN_OUT"
-end simulation
-start patch Default
-  Tree.init = create 2 count of Tree
-  export.treeCount.step = count(Tree)
-end patch
-start organism Tree
-  age.init = 0 count
-  age.step = prior.age + 1 count
-end organism
-JOSH
+RUN_JOSH="examples/simulations/simple.josh"
+RUN_SIM="TestSimpleSimulation"
+RUN_OUT="/tmp/simple_josh.csv"  # export path declared inside simple.josh
+rm -f "$RUN_OUT"
 
 # 2. validate_simulation — should report a successful validation.
 echo "--- validate_simulation ---"
@@ -74,7 +57,7 @@ echo "PASS: validate_simulation"
 # 3. run_simulation — should complete and write the export CSV.
 echo "--- run_simulation ---"
 RUN=$(inspect --method tools/call --tool-name run_simulation \
-  --tool-arg script="$RUN_JOSH" --tool-arg simulation=TestSim)
+  --tool-arg script="$RUN_JOSH" --tool-arg simulation="$RUN_SIM")
 echo "$RUN"
 echo "$RUN" | grep -qi "completed" || { echo "FAIL: run_simulation did not complete"; exit 1; }
 [ -s "$RUN_OUT" ] || { echo "FAIL: run_simulation produced no CSV output"; exit 1; }

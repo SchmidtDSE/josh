@@ -11,6 +11,7 @@
 package org.joshsim.command;
 
 import java.util.concurrent.Callable;
+import java.util.concurrent.CountDownLatch;
 import org.joshsim.mcp.JoshMcpServer;
 import org.joshsim.mcp.LocalBackend;
 import org.joshsim.mcp.StderrOutputOptions;
@@ -49,20 +50,22 @@ public class McpCommand implements Callable<Integer> {
     LocalBackend backend = new LocalBackend(output);
     JoshMcpServer mcpServer = new JoshMcpServer(backend);
 
-    try {
-      mcpServer.start();
-
-      // Block the main thread forever. The SDK owns stdin/stdout on its own threads;
-      // reading System.in here would race with the SDK's reader and corrupt JSON-RPC framing.
-      // When the parent process closes the pipe, the SDK shuts down its threads and the
-      // JVM exits naturally (or via signal from the parent).
-      try {
-        Thread.currentThread().join();
-      } catch (InterruptedException e) {
-        Thread.currentThread().interrupt();
-      }
-    } finally {
+    // The SDK owns stdin/stdout on its own threads; reading System.in here would race with the
+    // SDK's reader and corrupt JSON-RPC framing. So the main thread simply parks until shutdown.
+    // The MCP client ends the session by closing the pipe and/or signalling the process, so we
+    // register a shutdown hook to close the server and release the latch — this guarantees
+    // cleanup even when the JVM exits via signal rather than a normal return.
+    CountDownLatch shutdown = new CountDownLatch(1);
+    Runtime.getRuntime().addShutdownHook(new Thread(() -> {
       mcpServer.close();
+      shutdown.countDown();
+    }, "mcp-shutdown"));
+
+    mcpServer.start();
+    try {
+      shutdown.await();
+    } catch (InterruptedException e) {
+      Thread.currentThread().interrupt();
     }
 
     return 0;

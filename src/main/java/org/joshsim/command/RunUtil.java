@@ -677,16 +677,30 @@ public final class RunUtil {
         externalGetter,
         program,
         simulation,
-        (step) -> {
-          lastStep[0] = step;
-          ProgressUpdate update = progressCalculator.updateStep(step);
-          if (update.shouldReport()) {
-            output.printInfo(update.getMessage());
-          }
-        },
+        stepCallback(progressCalculator, output, lastStep),
         serialPatches,
         parsedOutputSteps
     );
+  }
+
+  /**
+   * Builds the per-step callback: records the latest step and emits a progress message whenever the
+   * progress calculator decides one is due.
+   *
+   * @param progressCalculator the calculator that decides when to report progress
+   * @param output             the sink for progress messages
+   * @param lastStep           single-element holder updated with the most recent step number
+   * @return a callback to pass to {@code JoshSimFacadeUtil.runSimulation}
+   */
+  private static JoshSimFacadeUtil.SimulationStepCallback stepCallback(
+      ProgressCalculator progressCalculator, OutputOptions output, long[] lastStep) {
+    return (step) -> {
+      lastStep[0] = step;
+      ProgressUpdate update = progressCalculator.updateStep(step);
+      if (update.shouldReport()) {
+        output.printInfo(update.getMessage());
+      }
+    };
   }
 
   /**
