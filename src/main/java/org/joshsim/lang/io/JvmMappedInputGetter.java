@@ -7,8 +7,10 @@
 package org.joshsim.lang.io;
 
 import java.io.FileInputStream;
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.UncheckedIOException;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
@@ -76,7 +78,11 @@ public class JvmMappedInputGetter extends JvmInputGetter {
     }
 
     if (actualPath == null) {
-      throw new RuntimeException("File not found in mapped files: " + name);
+      // Surface an unmapped name as a file-not-found so callers that probe multiple candidate
+      // names (e.g. MultiFormatExternalGetter trying name.jshdz then name.jshd) can recognize the
+      // miss and fall through, exactly as they do for the working-directory input strategy.
+      throw new UncheckedIOException(
+          "File not found in mapped files: " + name, new FileNotFoundException(name));
     }
     return loadFromWorkingDir(actualPath);
   }

@@ -99,6 +99,24 @@ class JvmMappedInputGetterTest {
   }
 
   @Test
+  void testNonMappedMissCarriesFileNotFoundCause() {
+    // MultiFormatExternalGetter probes name.jshdz then name.jshd and only falls back when the
+    // first miss is recognizable as file-not-found. An unmapped name must therefore surface a
+    // FileNotFoundException in its cause chain (mirroring the working-directory getter).
+    RuntimeException exception = assertThrows(RuntimeException.class, () -> {
+      inputGetter.open("missing.jshdz");
+    });
+    boolean hasFileNotFound = false;
+    for (Throwable cursor = exception; cursor != null; cursor = cursor.getCause()) {
+      if (cursor instanceof java.io.FileNotFoundException) {
+        hasFileNotFound = true;
+        break;
+      }
+    }
+    assertTrue(hasFileNotFound, "unmapped miss should carry a FileNotFoundException cause");
+  }
+
+  @Test
   void testUriExists() {
     // URIs should always return true for exists check
     assertTrue(inputGetter.exists("http://example.com/test.txt"));
