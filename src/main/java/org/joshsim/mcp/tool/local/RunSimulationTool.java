@@ -16,6 +16,7 @@ import io.modelcontextprotocol.spec.McpSchema.CallToolRequest;
 import io.modelcontextprotocol.spec.McpSchema.CallToolResult;
 import io.modelcontextprotocol.spec.McpSchema.Tool;
 import java.nio.file.Path;
+import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Optional;
 import org.joshsim.mcp.Backend;
@@ -73,10 +74,12 @@ public final class RunSimulationTool {
     Map<String, Object> args = request.arguments();
     String scriptArg;
     String simArg;
+    Map<String, Path> dataFiles;
     try {
       scriptArg = ToolHandlers.requireString(args, "script");
       simArg = ToolHandlers.requireString(args, "simulation");
-    } catch (MissingArgument e) {
+      dataFiles = parseDataFiles(args.get("data"));
+    } catch (MissingArgument | IllegalArgumentException e) {
       return ToolHandlers.errorResult(e.getMessage());
     }
 
@@ -100,12 +103,46 @@ public final class RunSimulationTool {
 
     Path script = JoshPaths.resolve(scriptArg);
     Backend.RunSimulationResult result = backend.runSimulation(
-        script, simArg, replicates, serialPatches, seed
+        script, simArg, replicates, serialPatches, seed, dataFiles
     );
     return CallToolResult.builder()
         .addTextContent(result.getMessage())
         .isError(!result.isSuccess())
         .build();
+  }
+
+  /**
+   * Parses the optional {@code data} argument into a map of external resource name to resolved
+   * path. Each value is resolved through {@link JoshPaths#resolve(String)}; keys are left as the
+   * script-facing names. Returns an empty map when {@code data} is absent.
+   *
+   * @param dataObj the raw {@code data} argument value (expected to be an object), or null
+   * @return a map of resource name to resolved {@link Path}
+   * @throws IllegalArgumentException if {@code data} is not an object, or any entry has a blank
+   *     name or a missing/blank/non-string path
+   */
+  static Map<String, Path> parseDataFiles(Object dataObj) {
+    Map<String, Path> result = new LinkedHashMap<>();
+    if (dataObj == null) {
+      return result;
+    }
+    if (!(dataObj instanceof Map<?, ?> rawMap)) {
+      throw new IllegalArgumentException(
+          "Argument 'data' must be an object mapping names to paths");
+    }
+    for (Map.Entry<?, ?> entry : rawMap.entrySet()) {
+      String name = String.valueOf(entry.getKey()).trim();
+      if (name.isEmpty()) {
+        throw new IllegalArgumentException("data contains an entry with an empty name");
+      }
+      Object value = entry.getValue();
+      if (!(value instanceof String pathStr) || pathStr.isBlank()) {
+        throw new IllegalArgumentException(
+            "data entry '" + name + "' must have a non-empty string path");
+      }
+      result.put(name, JoshPaths.resolve(pathStr));
+    }
+    return result;
   }
 
 }

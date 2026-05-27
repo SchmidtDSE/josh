@@ -14,6 +14,7 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import org.antlr.v4.runtime.CharStreams;
@@ -158,13 +159,24 @@ public class LocalBackend implements Backend {
       String simulation,
       int replicates,
       boolean serialPatches,
-      Optional<Long> seed
+      Optional<Long> seed,
+      Map<String, Path> dataFiles
   ) {
-    // Build the minimal RunOptions the MCP run_simulation tool exposes today. Every other
-    // RunCommand knob (replicateStart, csvPrecision, exportQueueSize, useFloat64, outputSteps,
-    // dataFiles, customParameters) falls through to its CLI default inside RunUtil, so an
-    // MCP-driven run behaves identically to `josh run <script> <simulation>` with the matching
-    // flags — no divergent run logic lives here.
+    // Convert the external-data mapping into the same name=path specification the CLI's --data
+    // flag uses, so it flows through RunUtil's existing JobVariationParser path (a single job,
+    // since no grid-search commas are produced). An empty map leaves dataFiles unset, falling
+    // back to working-directory resolution.
+    String[] dataSpec;
+    try {
+      dataSpec = toDataFileSpec(dataFiles);
+    } catch (IllegalArgumentException e) {
+      return new RunSimulationResult(false, e.getMessage(), 0);
+    }
+
+    // Build the RunOptions the MCP run_simulation tool exposes today. Every other RunCommand knob
+    // (replicateStart, csvPrecision, exportQueueSize, useFloat64, outputSteps, customParameters)
+    // falls through to its CLI default inside RunUtil, so an MCP-driven run behaves identically to
+    // `josh run <script> <simulation>` with the matching flags — no divergent run logic lives here.
     //
     // Two MCP-specific defaults, deliberately not exposed as tool arguments:
     //   - Profiling stays disabled: evalDuration profiling is a developer feature with no MCP
@@ -177,6 +189,7 @@ public class LocalBackend implements Backend {
         .replicates(replicates)
         .serialPatches(serialPatches)
         .seed(seed)
+        .dataFiles(dataSpec)
         .build();
 
     try {
@@ -186,6 +199,42 @@ public class LocalBackend implements Backend {
     } catch (Exception e) {
       return new RunSimulationResult(false, "Simulation failed: " + e.getMessage(), 0);
     }
+  }
+
+  /**
+   * Serializes a resolved external-data mapping into the CLI {@code --data} mini-language
+   * ({@code name=path;name2=path2}), so the MCP run path reuses {@code JobVariationParser}.
+   *
+   * <p>Grid search is intentionally not exposed over MCP, so the single produced spec contains no
+   * commas and parses to exactly one job. Names and paths may not contain the mini-language
+   * separators, matching the CLI's own constraint.</p>
+   *
+   * @param dataFiles map of resource name to resolved path (possibly empty or null)
+   * @return a single-element array holding the spec, or an empty array when no data is supplied
+   * @throws IllegalArgumentException if a name or path contains a reserved separator character
+   */
+  private static String[] toDataFileSpec(Map<String, Path> dataFiles) {
+    if (dataFiles == null || dataFiles.isEmpty()) {
+      return new String[0];
+    }
+    StringBuilder spec = new StringBuilder();
+    for (Map.Entry<String, Path> entry : dataFiles.entrySet()) {
+      String name = entry.getKey();
+      String path = entry.getValue().toString();
+      if (name.contains(";") || name.contains(",") || name.contains("=")) {
+        throw new IllegalArgumentException(
+            "External data name '" + name + "' may not contain ';', ',', or '='");
+      }
+      if (path.contains(";") || path.contains(",")) {
+        throw new IllegalArgumentException(
+            "External data path '" + path + "' may not contain ';' or ','");
+      }
+      if (spec.length() > 0) {
+        spec.append(';');
+      }
+      spec.append(name).append('=').append(path);
+    }
+    return new String[]{spec.toString()};
   }
 
 }

@@ -23,6 +23,11 @@
     "seed": {
       "type": "integer",
       "description": "Optional random seed for reproducible simulations. When provided, all random sampling uses this seed, and serial patch processing is automatically enabled to ensure deterministic results."
+    },
+    "data": {
+      "type": "object",
+      "description": "Optional map of external data resource names to file paths. Each key is the name the .josh script references via 'external <name>', including its extension (e.g. 'temperature.jshd'). Each value is the path to that .jshd or .jshdz file; relative paths resolve against the server's working directory. Omit to resolve external data by filename from the working directory.",
+      "additionalProperties": { "type": "string" }
     }
   },
   "required": ["script", "simulation"]

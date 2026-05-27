@@ -221,6 +221,24 @@ public class LocalBackendTest {
   }
 
   /**
+   * Tests that a data mapping whose name contains a mini-language separator is rejected with a
+   * clear error before any simulation work begins.
+   */
+  @Test
+  public void testRunSimulationRejectsSeparatorInDataName() {
+    Path script = tempDir.resolve("any.josh");
+    java.util.Map<String, Path> data =
+        java.util.Map.of("bad;name.jshd", tempDir.resolve("x.jshd"));
+
+    Backend.RunSimulationResult result =
+        backend.runSimulation(script, "TestSim", 1, false, Optional.empty(), data);
+
+    assertFalse(result.isSuccess(), "Separator in data name should fail fast");
+    assertTrue(result.getMessage().contains("bad;name.jshd"),
+        "Error should name the offending key, got: " + result.getMessage());
+  }
+
+  /**
    * Tests that StderrOutputOptions does not throw when methods are called.
    */
   @Test

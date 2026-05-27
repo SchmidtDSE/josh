@@ -217,7 +217,7 @@ MCP exposes four tools, each operating on local file paths:
 - `validate_simulation`: Parse and validate a `.josh` script; returns parse errors with locations.
 - `discover_config`: List the `config`-referenced variables a script expects (i.e. what a `.jshc` file must provide).
 - `preprocess_data`: Convert a NetCDF/GeoTIFF/`.jshd` file into a grid-aligned `.jshd` (wraps the `preprocess` command).
-- `run_simulation`: Run a named simulation, writing the exports defined in the script (wraps the `run` command).
+- `run_simulation`: Run a named simulation, writing the exports defined in the script (wraps the `run` command). Accepts an optional `data` object mapping each external resource name the script references (via `external <name>`, e.g. `"temperature.jshd"`) to a `.jshd`/`.jshdz` file path — the equivalent of the CLI `--data` flag. When omitted, external data is resolved by filename from the working directory.
 
 All tools run in the local JVM and behave identically to the equivalent CLI command. MinIO credentials and any API keys are read from the environment, never passed as tool arguments (keeping secrets out of the LLM's context).
 

@@ -12,6 +12,7 @@
 package org.joshsim.mcp;
 
 import java.nio.file.Path;
+import java.util.Map;
 import java.util.Optional;
 
 /**
@@ -184,6 +185,9 @@ public interface Backend {
    * @param replicates number of replicates to run (default 1)
    * @param serialPatches if true, patches are processed serially
    * @param seed optional random seed for reproducibility
+   * @param dataFiles map of external data resource names (as referenced by {@code external
+   *     <name>} in the script, including extension) to their resolved file paths; empty to resolve
+   *     external data by filename from the working directory
    * @return run result including step count
    */
   RunSimulationResult runSimulation(
@@ -191,7 +195,8 @@ public interface Backend {
       String simulation,
       int replicates,
       boolean serialPatches,
-      Optional<Long> seed
+      Optional<Long> seed,
+      Map<String, Path> dataFiles
   );
 
   /**
