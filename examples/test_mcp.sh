@@ -79,4 +79,19 @@ echo "$PREPROCESS" | grep -qi "Successfully preprocessed" \
 [ -s "$PREP_OUT" ] || { echo "FAIL: preprocess_data produced no .jshd output"; exit 1; }
 echo "PASS: preprocess_data (.jshd written)"
 
+# 5. run_simulation with an explicit data mapping (the MCP equivalent of `--data`).
+# The .jshd from step 4 lives in a temp dir outside the working directory, and the script
+# (test_basic_preprocess.josh) references it via `external data`. With no `data.jshd` in the CWD,
+# only the data mapping can satisfy that reference — so a completed run proves the mapping is
+# used, not working-directory resolution. The object-valued arg uses the inspector's JSON form.
+echo "--- run_simulation with data mapping ---"
+RUN_DATA=$(inspect --method tools/call --tool-name run_simulation \
+  --tool-arg script=examples/test/test_basic_preprocess.josh \
+  --tool-arg simulation=Main \
+  --tool-arg "data={\"data.jshd\":\"$PREP_OUT\"}")
+echo "$RUN_DATA"
+echo "$RUN_DATA" | grep -qi "completed" \
+  || { echo "FAIL: run_simulation with data mapping"; exit 1; }
+echo "PASS: run_simulation with data mapping"
+
 echo "=== MCP Inspector CLI smoke test passed ==="
