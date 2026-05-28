@@ -8,8 +8,6 @@ package org.joshsim.engine.value.engine;
 
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
-import org.joshsim.compat.CompatibilityLayerKeeper;
-import org.joshsim.compat.CompatibleStringJoiner;
 import org.joshsim.engine.value.converter.Units;
 import org.joshsim.engine.value.type.EngineValue;
 import org.joshsim.engine.value.type.LanguageType;
@@ -240,6 +238,8 @@ public class EngineValueTuple {
     private final LanguageType first;
     private final LanguageType second;
     private final boolean areCompatible;
+    private final String rootString;
+    private final int cachedHashCode;
     // Not final for performance - allows bidirectional linking without allocation overhead
     private TypesTuple reversed;
 
@@ -256,9 +256,9 @@ public class EngineValueTuple {
     public TypesTuple(LanguageType first, LanguageType second) {
       this.first = first;
       this.second = second;
-      // Pre-compute compatibility check (called 100,000+ times per simulation)
-      // Result is deterministic and immutable for this tuple instance
       this.areCompatible = first.getRootType().equals(second.getRootType());
+      this.rootString = first.getRootType() + "," + second.getRootType();
+      this.cachedHashCode = rootString.hashCode();
     }
 
     /**
@@ -317,10 +317,7 @@ public class EngineValueTuple {
      * @returns string representation using root types.
      */
     public String toRootString() {
-      CompatibleStringJoiner joiner = CompatibilityLayerKeeper.get().createStringJoiner(",");
-      joiner.add(first.getRootType());
-      joiner.add(second.getRootType());
-      return joiner.toString();
+      return rootString;
     }
 
     /**
@@ -330,7 +327,7 @@ public class EngineValueTuple {
      * @return true if compatible (equivalent for purposes of operations) and false otherwise.
      */
     public boolean equals(TypesTuple other) {
-      return toRootString().equals(other.toRootString());
+      return rootString.equals(other.rootString);
     }
 
     @Override
@@ -340,7 +337,7 @@ public class EngineValueTuple {
 
     @Override
     public int hashCode() {
-      return toRootString().hashCode();
+      return cachedHashCode;
     }
 
   }
@@ -353,6 +350,8 @@ public class EngineValueTuple {
     private final Units first;
     private final Units second;
     private final boolean areCompatible;
+    private final String cachedString;
+    private final int cachedHashCode;
     // Not final for performance - allows bidirectional linking without allocation overhead
     private UnitsTuple reversed;
 
@@ -365,8 +364,6 @@ public class EngineValueTuple {
     public UnitsTuple(Units first, Units second) {
       this.first = first;
       this.second = second;
-      // Pre-compute compatibility check (called 100,000+ times per simulation)
-      // Result is deterministic and immutable for this tuple instance
       if (first.equals(second)) {
         this.areCompatible = true;
       } else if (first.toString().isBlank()) {
@@ -376,6 +373,8 @@ public class EngineValueTuple {
       } else {
         this.areCompatible = false;
       }
+      this.cachedString = "units: " + first + ", " + second;
+      this.cachedHashCode = cachedString.hashCode();
     }
 
     /**
@@ -428,17 +427,17 @@ public class EngineValueTuple {
 
     @Override
     public boolean equals(Object other) {
-      return toString().equals(other.toString());
+      return cachedString.equals(other.toString());
     }
 
     @Override
     public String toString() {
-      return String.format("units: %s, %s", first, second);
+      return cachedString;
     }
 
     @Override
     public int hashCode() {
-      return toString().hashCode();
+      return cachedHashCode;
     }
 
   }
