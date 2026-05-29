@@ -394,4 +394,51 @@ public class InnerEntityUpdateIntegrationTest {
 
     assertFalse(completedSteps.isEmpty(), "Simulation should have completed at least one step");
   }
+
+  /**
+   * Test the mid-simulation creation fixture under PARALLEL patch processing.
+   *
+   * <p>The patch wrapper cache that fixes the stale-here bug is a plain
+   * {@code IdentityHashMap} mutated via {@code computeIfAbsent}. Its thread safety relies on
+   * the invariant that every patch wrapper is created during the serial pre-pass in the
+   * {@code SimulationStepper} constructor, so parallel stepping only ever reads existing keys
+   * and never inserts concurrently. This test exercises that path by running the same fixture
+   * with {@code serialPatches = false}: a regression that defers wrapper creation into the
+   * parallel phase (concurrent inserts) or that lets each thread see a different wrapper would
+   * surface here as a corrupted map, a lost organism, or a failed in-{@code josh} assert.</p>
+   */
+  @Test
+  public void testOrganismCreatedMidSimulationSeesCurrentHereParallel() throws IOException {
+    String joshCode = Files.readString(ORGANISM_CREATED_MIDSIM_SCRIPT_PATH);
+
+    ParseResult parsed = JoshSimFacade.parse(joshCode);
+    assertFalse(parsed.hasErrors(),
+        "Josh code should parse without errors. Errors: " + parsed.getErrors());
+
+    EngineGeometryFactory geometryFactory = new GridGeometryFactory();
+    JvmInputOutputLayer inputOutputLayer = new JvmInputOutputLayerBuilder()
+        .withReplicate(1)
+        .build();
+
+    JoshProgram program = JoshSimFacade.interpret(geometryFactory, parsed, inputOutputLayer);
+    assertNotNull(program, "Program should be successfully interpreted");
+
+    List<Long> completedSteps = new ArrayList<>();
+
+    JoshSimFacadeUtil.SimulationStepCallback callback = (stepNumber) -> {
+      completedSteps.add(stepNumber);
+    };
+
+    JoshSimFacade.runSimulation(
+        geometryFactory,
+        program,
+        "Main",
+        callback,
+        false,
+        1,
+        true
+    );
+
+    assertFalse(completedSteps.isEmpty(), "Simulation should have completed at least one step");
+  }
 }
