@@ -27,12 +27,11 @@ start patch Default
   # Patch attribute with ONLY a .step handler (no .init).
   patchValue.step = meta.stepCount
 
-  assert.patchUpdates.step
-    :if(meta.stepCount == 3 count) = current.patchValue == 3 count
+  assert.patchUpdates.step = current.patchValue == meta.stepCount
 
-  # The bug: organism's seenValue should mirror patchValue each step.
-  assert.treeMirrorsPatch.step
-    :if(meta.stepCount == 3 count) = mean(Trees.seenValue) == 3 count
+  # The bug: organism's seenValue should mirror patchValue EVERY step.
+  # Asserting every step (not just step 3) catches any one-step lag.
+  assert.treeMirrorsPatch.step = mean(Trees.seenValue) == current.patchValue
 
   export.patchValue.step = current.patchValue
   export.treeSeenValue.step = mean(Trees.seenValue)
