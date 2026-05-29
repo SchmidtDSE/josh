@@ -48,6 +48,10 @@ public class InnerEntityUpdateIntegrationTest {
       "examples/test/test3_no_handler_for_current_state.josh"
   );
 
+  private static final Path ORGANISM_SEES_HERE_PATCH_ATTR_SCRIPT_PATH = Path.of(
+      "examples/test/test_organism_sees_stale_here_patch_attribute.josh"
+  );
+
   @Test
   public void testInnerEntitiesUpdateAcrossSteps() throws IOException {
     String joshCode = Files.readString(SCRIPT_PATH);
@@ -218,6 +222,50 @@ public class InnerEntityUpdateIntegrationTest {
   @Test
   public void testNoHandlerForCurrentStateFallsBackToBase() throws IOException {
     String joshCode = Files.readString(NO_HANDLER_FOR_STATE_SCRIPT_PATH);
+
+    ParseResult parsed = JoshSimFacade.parse(joshCode);
+    assertFalse(parsed.hasErrors(),
+        "Josh code should parse without errors. Errors: " + parsed.getErrors());
+
+    EngineGeometryFactory geometryFactory = new GridGeometryFactory();
+    JvmInputOutputLayer inputOutputLayer = new JvmInputOutputLayerBuilder()
+        .withReplicate(1)
+        .build();
+
+    JoshProgram program = JoshSimFacade.interpret(geometryFactory, parsed, inputOutputLayer);
+    assertNotNull(program, "Program should be successfully interpreted");
+
+    List<Long> completedSteps = new ArrayList<>();
+
+    JoshSimFacadeUtil.SimulationStepCallback callback = (stepNumber) -> {
+      completedSteps.add(stepNumber);
+    };
+
+    JoshSimFacade.runSimulation(
+        geometryFactory,
+        program,
+        "Main",
+        callback,
+        true,
+        1,
+        true
+    );
+
+    assertFalse(completedSteps.isEmpty(), "Simulation should have completed at least one step");
+  }
+
+  /**
+   * Test that an organism's .step handler sees the current value of a patch attribute
+   * when reading it via `here.<patch-attribute>`.
+   *
+   * <p>Reproducer for a bug isolated by the josh-llm-experiment team where
+   * `here.<patch-attribute>` from inside an organism's `.step` returns the value
+   * captured at the first step forever, even though the patch's own attribute
+   * updates correctly each step.</p>
+   */
+  @Test
+  public void testOrganismSeesCurrentPatchAttributeViaHere() throws IOException {
+    String joshCode = Files.readString(ORGANISM_SEES_HERE_PATCH_ATTR_SCRIPT_PATH);
 
     ParseResult parsed = JoshSimFacade.parse(joshCode);
     assertFalse(parsed.hasErrors(),

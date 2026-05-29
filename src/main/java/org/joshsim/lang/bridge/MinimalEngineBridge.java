@@ -6,6 +6,7 @@
 
 package org.joshsim.lang.bridge;
 
+import java.util.IdentityHashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
@@ -57,6 +58,14 @@ public class MinimalEngineBridge implements EngineBridge {
   private long absoluteStep;
   private EngineValue currentStep;
   private boolean inStep;
+
+  // Cache of per-patch ShadowingEntity wrappers. Reused across all substeps and steps so
+  // that organism `here` references (captured at organism creation) remain valid: the
+  // wrapper the organism holds is the same wrapper the simulation stepper updates each
+  // step. Without this cache, getCurrentPatches() created a fresh wrapper on every
+  // iteration, stranding the organism's `here` on a stale wrapper whose
+  // resolvedCacheByIndex never got refreshed past the init substep.
+  private final Map<MutableEntity, MutableEntity> patchWrapperCache = new IdentityHashMap<>();
 
   /**
    * Constructs an EngineBridge to manipulate the specified simulation, replicate, and converter.
@@ -342,7 +351,10 @@ public class MinimalEngineBridge implements EngineBridge {
     @Override
     public MutableEntity next() {
       MutableEntity patch = patches.next();
-      return new ShadowingEntity(engineValueFactory, patch, simulation);
+      return patchWrapperCache.computeIfAbsent(
+          patch,
+          (key) -> new ShadowingEntity(engineValueFactory, key, simulation)
+      );
     }
 
     @Override
