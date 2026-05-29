@@ -41,16 +41,11 @@ find . -name "*.josh" -exec java -jar joshsim-fat.jar validate {} \;
 
 # Preprocessing pipeline
 java -jar joshsim-fat.jar preprocess simulation.josh Main temp.nc temperature K temp.jshd
-java -jar joshsim-fat.jar preprocess simulation.josh Main precip.nc precipitation "mm/year" precip.jshd
+java -jar joshsim-fat.jar preprocess simulation.josh Main precip.nc precipitation mm precip.jshd
 java -jar joshsim-fat.jar run simulation.josh Main --data . -o results.csv
 ```
 
 Each `.jshd` produced above is read from Josh code by its filename stem (e.g. `temp.jshd` → `external temp`). See the **External Data** section for the language-side syntax.
-
-Preprocessing command structure:
-```
-java -jar joshsim.jar preprocess simulation.josh SimulationName data.nc variable units output.jshd
-```
 
 ### `run` - Execute Simulations
 Runs a specified simulation from a Josh script file with support for replicates and various output formats.
@@ -136,10 +131,10 @@ java -jar joshsim-fat.jar preprocess simulation.josh Main temperature.nc temp K 
 java -jar joshsim-fat.jar preprocess simulation.josh Main temperature.nc temp K temperature.jshdz
 
 # Preprocessing with custom coordinates
-java -jar joshsim-fat.jar preprocess simulation.josh Main precip.nc rainfall "mm/year" precipitation.jshd --x-coord longitude --y-coord latitude
+java -jar joshsim-fat.jar preprocess simulation.josh Main precip.nc rainfall mm precipitation.jshd --x-coord longitude --y-coord latitude
 
 # Parallel preprocessing for faster execution on multi-core machines
-java -jar joshsim-fat.jar preprocess simulation.josh Main precip.nc rainfall "kg / m * m * s" precip.jshd --parallel
+java -jar joshsim-fat.jar preprocess simulation.josh Main precip.nc rainfall mm precip.jshd --parallel
 ```
 
 ### `validate` - Syntax Validation
@@ -529,10 +524,12 @@ end <entity_type>
 
 Event handlers are run once per variable and may be made conditional based on values on the entity. When a variable is referenced in an expression, its value will be resolved if it is not yet evaluated, automatically creating a computational graph such that the ordering of event handlers does not matter.
 
-- **init**: Entity construction event, executed once when entity is created
-- **start**: Start of simulation step event, executed at beginning of each timestep
-- **step**: Mid-step event, executed during main simulation timestep
-- **end**: End of step or termination event, executed at end of timestep or when entity is removed
+- **init**: One-time setup event. For patches and the simulation, runs at the first timestep only, before any `start`/`step`/`end`. For organisms created mid-simulation, runs once at creation. Use it to bootstrap state that `prior.X` recurrences read, to sample fixed initial conditions, or to `create` initial organisms.
+- **start**: Runs at the beginning of every timestep (after `init` on the first one). Use it for per-step pre-processing such as culling dead entities.
+- **step**: Main per-timestep event. Most attribute updates live here.
+- **end**: Runs at the end of every timestep. Use it for per-step post-processing such as creating new organisms based on the step's results.
+
+Within a single timestep, substeps fire in the order `init` (first timestep only) → `start` → `step` → `end`. An attribute with no `.step` handler retains its last value (typically the one set by `.init`), so define handlers only for the events whose semantics you actually need.
 
 ## Language
 
@@ -648,9 +645,11 @@ end unit
 ```
 
 #### Unit Conversions
+Use `current` to refer to the value being converted. The LHS of `=` names the target unit; the RHS is the conversion expression.
+
 ```
 start unit inch
-  meter = 0.0254 meters
+  meter = current * 0.0254
 end unit
 ```
 
@@ -731,21 +730,15 @@ Built-in:
 - **mean()**: Calculate mean of collection
 - **std()**: Calculate standard deviation
 - **count()**: Count elements in collection
-- **sample()**: Sample from distribution or collection
-  ```
-  sample uniform from 0 to 10
-  sample 5 from myCollection with replacement
-  sample 5 from myCollection without replacement
-  ```
+- **sample**: Sample from a distribution or collection — see the **Sampling** subsection below for full syntax.
 - **create**: Create new entities
   ```
   create ExampleTree                    # Create single entity
   create 10 count of ExampleTree        # Create multiple entities
   ```
-- **force**: Type conversion and casting
+- **force**: Relabel a value's units without conversion (no math applied). Prefer `as <unit>` (without `force`), which routes through `start unit` conversions and catches mismatches.
   ```
-  force myValue as string               # Force conversion to string type
-  force prior.temperature as degrees    # Force unit conversion
+  force prior.temperature as degrees    # Relabel only; the number is unchanged
   ```
 
 ### Collection Operations
@@ -858,21 +851,32 @@ end state
 
 External data references let a simulation read preprocessed `.jshd` files at each patch using the `external` keyword. See the **Geospatial Data Preprocessing** section and the `preprocess` command for how `.jshd` files are produced.
 
-**Linking `.jshd` files to Josh code:** the output filename's stem is the identifier used in the script. Preprocessing `precip.nc` to `precipitation.jshd` makes it readable as `external precipitation`.
+`external <name>` is a pure lookup: each evaluation returns the value at (the calling handler's patch cell, the current step count). No stored state, no substep semantics — callable from any handler in any substep.
 
-**Minimal use:** `external` returns a value that can be used like any other Josh expression.
+**Bringing arbitrary units into Josh.** Unit names referenced from script code must be Josh identifiers (`[A-Za-z][A-Za-z0-9]*` — no spaces, dashes, or exponent notation). CF-1.8 strings like `"W m-2"` or `"kg m-2 s-1"` need an alias at preprocess time. A `start unit` block then declares the conversion to whatever working unit your model uses; `current` is the value being converted. 
+
+Example preprocessing solar radiation (CF unit `W m-2`) as the alias `wm2`, convert to `mjday`, and read it directly from the organism:
+
+```sh
+josh preprocess sim.josh Main rad.nc rsds wm2 solar.jshd
+```
 
 ```
+start unit wm2
+  mjday = current * 0.0864    # W/m² instantaneous → MJ/m²/day daily integral
+end unit
+
 start patch Default
-  precipValue.step = external precipitation
+  Grass.init = create 5 count of Grass
 end patch
+
+start organism Grass
+  height.init = 0 m
+  height.step = prior.height + map external solar from [5 mjday, 25 mjday] to [0 m, 0.05 m] sigmoid
+end organism
 ```
 
-**Composing with other operators:** for example, mapping precipitation through a sigmoid response curve.
-
-```
-growth.step = map external precipitation from [200 mm, 600 mm] to [0%, 5%] sigmoid
-```
+The `wm2 → mjday` conversion fires automatically because `map`'s `from` clause expects `mjday`. The organism reads `external solar` directly.
 
 **Timestep access:**
 
@@ -881,6 +885,24 @@ external variableName              # Current timestep
 external variableName at prior     # Previous timestep
 external variableName at N         # Timestep N (0-based)
 ```
+
+**Patch-level mediation.** Introduce a patch attribute when the computation is genuinely patch-scale: combining multiple externals into a derived variable, applying shared threshold logic, sampling once per patch per step (e.g. a stochastic disturbance affecting all organisms on the patch), or aggregating across the patch's organisms. Organisms then read it via `here.<name>`.
+
+```
+start patch Default
+  Trees.init = create 5 of Tree
+  groundLight.step = external solar * (1 count - mean(Trees.canopyShade))
+end patch
+
+start organism Tree
+  canopyShade.init = 0.1 count
+  height.init = 0 m
+  height.step = prior.height
+    + map here.groundLight from [5 mjday, 25 mjday] to [0 m, 0.05 m] sigmoid
+end organism
+```
+
+For per-organism reads of raw external data (climate the organism responds to individually), read `external X` directly from the organism, no patch attribute needed.
 
 ### Other
 

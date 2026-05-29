@@ -52,6 +52,10 @@ public class InnerEntityUpdateIntegrationTest {
       "examples/test/test_organism_sees_stale_here_patch_attribute.josh"
   );
 
+  private static final Path ORGANISM_SEES_HERE_STEP_ONLY_SCRIPT_PATH = Path.of(
+      "examples/test/test_organism_sees_stale_here_step_only.josh"
+  );
+
   @Test
   public void testInnerEntitiesUpdateAcrossSteps() throws IOException {
     String joshCode = Files.readString(SCRIPT_PATH);
@@ -256,16 +260,60 @@ public class InnerEntityUpdateIntegrationTest {
 
   /**
    * Test that an organism's .step handler sees the current value of a patch attribute
-   * when reading it via `here.<patch-attribute>`.
+   * when reading it via {@code here.<name>}.
    *
    * <p>Reproducer for a bug isolated by the josh-llm-experiment team where
-   * `here.<patch-attribute>` from inside an organism's `.step` returns the value
+   * {@code here.<name>} from inside an organism's .step returns the value
    * captured at the first step forever, even though the patch's own attribute
    * updates correctly each step.</p>
    */
   @Test
   public void testOrganismSeesCurrentPatchAttributeViaHere() throws IOException {
     String joshCode = Files.readString(ORGANISM_SEES_HERE_PATCH_ATTR_SCRIPT_PATH);
+
+    ParseResult parsed = JoshSimFacade.parse(joshCode);
+    assertFalse(parsed.hasErrors(),
+        "Josh code should parse without errors. Errors: " + parsed.getErrors());
+
+    EngineGeometryFactory geometryFactory = new GridGeometryFactory();
+    JvmInputOutputLayer inputOutputLayer = new JvmInputOutputLayerBuilder()
+        .withReplicate(1)
+        .build();
+
+    JoshProgram program = JoshSimFacade.interpret(geometryFactory, parsed, inputOutputLayer);
+    assertNotNull(program, "Program should be successfully interpreted");
+
+    List<Long> completedSteps = new ArrayList<>();
+
+    JoshSimFacadeUtil.SimulationStepCallback callback = (stepNumber) -> {
+      completedSteps.add(stepNumber);
+    };
+
+    JoshSimFacade.runSimulation(
+        geometryFactory,
+        program,
+        "Main",
+        callback,
+        true,
+        1,
+        true
+    );
+
+    assertFalse(completedSteps.isEmpty(), "Simulation should have completed at least one step");
+  }
+
+  /**
+   * Test that an organism reads the current value of a patch attribute via
+   * {@code here.<name>} even when that attribute has ONLY a .step handler (no .init).
+   *
+   * <p>The josh-llm-experiment bug report (§7) claims the wrapper-identity bug
+   * fires even with a step-only patch attribute, contradicting the "needs both
+   * .init and .step" framing. The self-checking assert in the fixture throws
+   * mid-simulation on a buggy build, which would surface here as an exception.</p>
+   */
+  @Test
+  public void testOrganismSeesCurrentPatchAttributeViaHereStepOnly() throws IOException {
+    String joshCode = Files.readString(ORGANISM_SEES_HERE_STEP_ONLY_SCRIPT_PATH);
 
     ParseResult parsed = JoshSimFacade.parse(joshCode);
     assertFalse(parsed.hasErrors(),
