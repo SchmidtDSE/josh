@@ -93,7 +93,13 @@ public class LanguageType {
    * @return cached or new LanguageType instance
    */
   public static LanguageType of(String rootType) {
-    return SIMPLE_TYPE_CACHE.computeIfAbsent(rootType, LanguageType::new);
+    LanguageType cached = SIMPLE_TYPE_CACHE.get(rootType);
+    if (cached != null) {
+      return cached;
+    }
+    LanguageType newType = new LanguageType(rootType);
+    LanguageType existing = SIMPLE_TYPE_CACHE.putIfAbsent(rootType, newType);
+    return existing != null ? existing : newType;
   }
 
   /**
