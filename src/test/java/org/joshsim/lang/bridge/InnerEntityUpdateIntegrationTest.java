@@ -56,6 +56,10 @@ public class InnerEntityUpdateIntegrationTest {
       "examples/test/test_organism_sees_stale_here_step_only.josh"
   );
 
+  private static final Path ORGANISM_CREATED_MIDSIM_SCRIPT_PATH = Path.of(
+      "examples/test/test_organism_created_midsim_sees_here.josh"
+  );
+
   @Test
   public void testInnerEntitiesUpdateAcrossSteps() throws IOException {
     String joshCode = Files.readString(SCRIPT_PATH);
@@ -314,6 +318,51 @@ public class InnerEntityUpdateIntegrationTest {
   @Test
   public void testOrganismSeesCurrentPatchAttributeViaHereStepOnly() throws IOException {
     String joshCode = Files.readString(ORGANISM_SEES_HERE_STEP_ONLY_SCRIPT_PATH);
+
+    ParseResult parsed = JoshSimFacade.parse(joshCode);
+    assertFalse(parsed.hasErrors(),
+        "Josh code should parse without errors. Errors: " + parsed.getErrors());
+
+    EngineGeometryFactory geometryFactory = new GridGeometryFactory();
+    JvmInputOutputLayer inputOutputLayer = new JvmInputOutputLayerBuilder()
+        .withReplicate(1)
+        .build();
+
+    JoshProgram program = JoshSimFacade.interpret(geometryFactory, parsed, inputOutputLayer);
+    assertNotNull(program, "Program should be successfully interpreted");
+
+    List<Long> completedSteps = new ArrayList<>();
+
+    JoshSimFacadeUtil.SimulationStepCallback callback = (stepNumber) -> {
+      completedSteps.add(stepNumber);
+    };
+
+    JoshSimFacade.runSimulation(
+        geometryFactory,
+        program,
+        "Main",
+        callback,
+        true,
+        1,
+        true
+    );
+
+    assertFalse(completedSteps.isEmpty(), "Simulation should have completed at least one step");
+  }
+
+  /**
+   * Test that an organism created mid-simulation reads the current patch attribute via
+   * {@code here.<name>} rather than a stale or year-0 value.
+   *
+   * <p>This exercises the EntityFastForwarder path: the organism is created at step 2 (not
+   * at init), so it must be fast-forwarded to the current substep for {@code here.patchValue}
+   * to resolve to the patch's current value. The fixture's self-checking asserts fire every
+   * step from creation onward, so a fast-forward gap or a one-step lag throws mid-simulation
+   * and surfaces here as an exception.</p>
+   */
+  @Test
+  public void testOrganismCreatedMidSimulationSeesCurrentHere() throws IOException {
+    String joshCode = Files.readString(ORGANISM_CREATED_MIDSIM_SCRIPT_PATH);
 
     ParseResult parsed = JoshSimFacade.parse(joshCode);
     assertFalse(parsed.hasErrors(),

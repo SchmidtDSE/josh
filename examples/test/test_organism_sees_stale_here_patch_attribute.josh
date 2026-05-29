@@ -35,13 +35,12 @@ start patch Default
 
   # Self-check: patch's own attribute updates correctly each step.
   # This should pass even on the buggy build.
-  assert.patchUpdates.step
-    :if(meta.stepCount == 3 count) = current.patchValue == 3 count
+  assert.patchUpdates.step = current.patchValue == meta.stepCount
 
-  # The bug: organism's seenValue should mirror patchValue each step.
+  # The bug: organism's seenValue should mirror patchValue EVERY step.
   # On the buggy build, mean(Trees.seenValue) stays at 0 count forever.
-  assert.treeMirrorsPatch.step
-    :if(meta.stepCount == 3 count) = mean(Trees.seenValue) == 3 count
+  # Asserting every step (not just step 3) catches any one-step lag.
+  assert.treeMirrorsPatch.step = mean(Trees.seenValue) == current.patchValue
 
   export.patchValue.step = current.patchValue
   export.treeSeenValue.step = mean(Trees.seenValue)
