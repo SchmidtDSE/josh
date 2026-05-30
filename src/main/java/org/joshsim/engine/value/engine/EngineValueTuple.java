@@ -92,25 +92,40 @@ public class EngineValueTuple {
   private static TypesTuple getOrCreateTypesTuple(
       LanguageType firstType, LanguageType secondType) {
     long key = computeTypesCacheKey(firstType, secondType);
-    TypesTuple tuple = TYPES_TUPLE_CACHE.computeIfAbsent(
-        key,
-        k -> new TypesTuple(firstType, secondType)
-    );
+    TypesTuple tuple = getOrPutTypesTuple(key, firstType, secondType);
 
     // Establish bidirectional linking for reverse() optimization
     // Check if reversed tuple needs to be created and linked
     if (tuple.getReversed() == null) {
       long reversedKey = computeTypesCacheKey(secondType, firstType);
-      TypesTuple reversedTuple = TYPES_TUPLE_CACHE.computeIfAbsent(
-          reversedKey,
-          k -> new TypesTuple(secondType, firstType)
-      );
+      TypesTuple reversedTuple = getOrPutTypesTuple(reversedKey, secondType, firstType);
 
       // Link bidirectionally (benign race: both threads compute same result)
       tuple.setReversed(reversedTuple);
       reversedTuple.setReversed(tuple);
     }
 
+    return tuple;
+  }
+
+  /**
+   * Look up a cached TypesTuple, inserting a freshly built one only on a miss.
+   *
+   * <p>Uses get-then-putIfAbsent rather than computeIfAbsent so the common cache-hit path
+   * allocates no capturing lambda; the TypesTuple is constructed only when actually absent.</p>
+   *
+   * @param key composite identity-hash key for the type pair
+   * @param first LanguageType of first operand
+   * @param second LanguageType of second operand
+   * @return the cached (or newly cached) TypesTuple for this pair
+   */
+  private static TypesTuple getOrPutTypesTuple(long key, LanguageType first, LanguageType second) {
+    TypesTuple tuple = TYPES_TUPLE_CACHE.get(key);
+    if (tuple == null) {
+      TypesTuple created = new TypesTuple(first, second);
+      TypesTuple existing = TYPES_TUPLE_CACHE.putIfAbsent(key, created);
+      tuple = existing != null ? existing : created;
+    }
     return tuple;
   }
 
@@ -124,25 +139,40 @@ public class EngineValueTuple {
   private static UnitsTuple getOrCreateUnitsTuple(
       Units firstUnits, Units secondUnits) {
     long key = computUnitsCacheKey(firstUnits, secondUnits);
-    UnitsTuple tuple = UNITS_TUPLE_CACHE.computeIfAbsent(
-        key,
-        k -> new UnitsTuple(firstUnits, secondUnits)
-    );
+    UnitsTuple tuple = getOrPutUnitsTuple(key, firstUnits, secondUnits);
 
     // Establish bidirectional linking for reverse() optimization
     // Check if reversed tuple needs to be created and linked
     if (tuple.getReversed() == null) {
       long reversedKey = computUnitsCacheKey(secondUnits, firstUnits);
-      UnitsTuple reversedTuple = UNITS_TUPLE_CACHE.computeIfAbsent(
-          reversedKey,
-          k -> new UnitsTuple(secondUnits, firstUnits)
-      );
+      UnitsTuple reversedTuple = getOrPutUnitsTuple(reversedKey, secondUnits, firstUnits);
 
       // Link bidirectionally (benign race: both threads compute same result)
       tuple.setReversed(reversedTuple);
       reversedTuple.setReversed(tuple);
     }
 
+    return tuple;
+  }
+
+  /**
+   * Look up a cached UnitsTuple, inserting a freshly built one only on a miss.
+   *
+   * <p>Uses get-then-putIfAbsent rather than computeIfAbsent so the common cache-hit path
+   * allocates no capturing lambda; the UnitsTuple is constructed only when actually absent.</p>
+   *
+   * @param key composite identity-hash key for the units pair
+   * @param first Units of first operand
+   * @param second Units of second operand
+   * @return the cached (or newly cached) UnitsTuple for this pair
+   */
+  private static UnitsTuple getOrPutUnitsTuple(long key, Units first, Units second) {
+    UnitsTuple tuple = UNITS_TUPLE_CACHE.get(key);
+    if (tuple == null) {
+      UnitsTuple created = new UnitsTuple(first, second);
+      UnitsTuple existing = UNITS_TUPLE_CACHE.putIfAbsent(key, created);
+      tuple = existing != null ? existing : created;
+    }
     return tuple;
   }
 
