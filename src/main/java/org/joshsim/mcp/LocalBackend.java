@@ -242,33 +242,21 @@ public class LocalBackend implements Backend {
    *
    * <p>Walks {@link Throwable#getCause()} to the root, joining each level's message with
    * {@code ": "} so a wrapped failure reports the underlying cause rather than only the
-   * outermost message. A level with no message contributes its simple class name, consecutive
-   * identical messages are collapsed, and the walk is bounded against self-referential chains.</p>
+   * outermost message. A level with no message contributes its simple class name.</p>
    *
    * @param thrown the throwable to describe
    * @return the joined messages of the cause chain
    */
   private static String describeFailure(Throwable thrown) {
     StringBuilder rendered = new StringBuilder();
-    String previousPart = null;
-    Throwable cursor = thrown;
-    for (int depth = 0; cursor != null && depth < 20; depth++) {
+    for (Throwable cursor = thrown; cursor != null; cursor = cursor.getCause()) {
       String message = cursor.getMessage();
-      String part = (message == null || message.isEmpty())
+      if (rendered.length() > 0) {
+        rendered.append(": ");
+      }
+      rendered.append(message == null || message.isEmpty()
           ? cursor.getClass().getSimpleName()
-          : message;
-      if (!part.equals(previousPart)) {
-        if (rendered.length() > 0) {
-          rendered.append(": ");
-        }
-        rendered.append(part);
-        previousPart = part;
-      }
-      Throwable next = cursor.getCause();
-      if (next == cursor) {
-        break;
-      }
-      cursor = next;
+          : message);
     }
     return rendered.toString();
   }
