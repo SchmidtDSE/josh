@@ -7,6 +7,7 @@
 package org.joshsim.mcp;
 
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -236,6 +237,49 @@ public class LocalBackendTest {
     assertFalse(result.isSuccess(), "Separator in data name should fail fast");
     assertTrue(result.getMessage().contains("bad;name.jshd"),
         "Error should name the offending key, got: " + result.getMessage());
+  }
+
+  /**
+   * Tests that a run failing in the async export worker surfaces the underlying cause.
+   *
+   * <p>Regression guard for the diagnosability gap that hid an export-writer I/O failure behind
+   * the opaque "Worker thread failed" wrapper: the message must render the full cause chain so an
+   * MCP client sees the unwritable target path rather than just the wrapper text.</p>
+   */
+  @Test
+  public void testRunSimulationFailureMessageIncludesRootCause() throws IOException {
+    // Point the export at a file under a directory that does not exist, so the export writer's
+    // stream open fails. The failure propagates as RuntimeException("Worker thread failed", cause)
+    // whose chained cause names this path.
+    Path missingTarget = tempDir.resolve("missing").resolve("out_{replicate}.csv");
+    String script = """
+        start simulation TestSim
+          grid.size = 100 m
+          grid.low = 0 degrees latitude, 0 degrees longitude
+          grid.high = 0.1 degrees latitude, 0.1 degrees longitude
+          grid.patch = "Default"
+          steps.low = 0 count
+          steps.high = 2 count
+          exportFiles.patch = "file://%s"
+        end simulation
+
+        start patch Default
+          export.count.step = 1 count
+        end patch
+        """.formatted(missingTarget.toString());
+    Path scriptFile = tempDir.resolve("export_fail.josh");
+    Files.writeString(scriptFile, script);
+
+    Backend.RunSimulationResult result = backend.runSimulation(
+        scriptFile, "TestSim", 1, false, Optional.empty(), java.util.Map.of());
+
+    assertFalse(result.isSuccess(), "Run with unwritable export target should fail");
+    assertNotEquals("Simulation failed: Worker thread failed", result.getMessage(),
+        "Message must not collapse to the bare wrapper text");
+    assertTrue(result.getMessage().contains("Worker thread failed"),
+        "Greppable wrapper text should be retained, got: " + result.getMessage());
+    assertTrue(result.getMessage().contains("missing"),
+        "Message should name the unwritable export target, got: " + result.getMessage());
   }
 
   /**
