@@ -128,7 +128,7 @@ public class InspectJshdCommandTest {
     assertEquals(0, result);
 
     String output = outContent.toString();
-    assertEquals("Value at (0, 0, 0): 1 meters\n", output);
+    assertEquals("Value at (0, 0, 0): 1.0 meters\n", output);
   }
 
   @Test
@@ -144,7 +144,7 @@ public class InspectJshdCommandTest {
     assertEquals(0, result);
 
     String output = outContent.toString();
-    assertEquals("Value at (1, 1, 1): 5 meters\n", output);
+    assertEquals("Value at (1, 1, 1): 5.0 meters\n", output);
   }
 
   @Test
@@ -160,7 +160,7 @@ public class InspectJshdCommandTest {
     assertEquals(0, result);
 
     String output = outContent.toString();
-    assertEquals("Value at (0, 1, 0): 0 meters\n", output);
+    assertEquals("Value at (0, 1, 0): 0.0 meters\n", output);
   }
 
   @Test
@@ -332,7 +332,7 @@ public class InspectJshdCommandTest {
     String output = outContent.toString();
     // Decimal coordinates should be truncated to integers (1.5 -> 1)
     // Since (1,1,0) has value 2.0, this should return that value
-    assertEquals("Value at (1.5, 1.5, 0): 2 meters\n", output);
+    assertEquals("Value at (1.5, 1.5, 0): 2.0 meters\n", output);
   }
 
   @Test
@@ -425,15 +425,15 @@ public class InspectJshdCommandTest {
     assertEquals("x,y,timestep,value", lines.get(0));
 
     // First data line: x=0, y=0, timestep=0, value=1
-    assertEquals("0,0,0,1", lines.get(1));
+    assertEquals("0,0,0,1.0", lines.get(1));
 
     // Check a known non-zero value: x=1, y=1, timestep=0, value=2
     // Row order: t=0, y=0: (0,0),(1,0),(2,0), y=1: (0,1),(1,1),(2,1), y=2: (0,2),(1,2),(2,2)
     // So (1,1,0) is at index 1 + 3 + 1 = 5 (0-indexed line 4)
-    assertEquals("1,1,0,2", lines.get(5));
+    assertEquals("1,1,0,2.0", lines.get(5));
 
     // Check timestep 1 value: (0,0,1) = 4.0, starts at line 10 (after 9 data lines for t=0)
-    assertEquals("0,0,1,4", lines.get(10));
+    assertEquals("0,0,1,4.0", lines.get(10));
   }
 
   @Test
@@ -493,7 +493,7 @@ public class InspectJshdCommandTest {
     assertEquals(0, result);
 
     String output = outContent.toString();
-    assertEquals("Value at (2, 2, 0): 3 meters\n", output);
+    assertEquals("Value at (2, 2, 0): 3.0 meters\n", output);
   }
 
   /**

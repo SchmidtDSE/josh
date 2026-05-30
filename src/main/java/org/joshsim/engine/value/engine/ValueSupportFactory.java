@@ -217,10 +217,27 @@ public class ValueSupportFactory {
    */
   public EngineValue buildForNumber(double number, Units units) {
     if (favorBigDecimal) {
-      return build(new BigDecimal(number), units);
+      return buildForNumberBigDecimal(number, units);
     } else {
       return build(number, units);
     }
+  }
+
+  /**
+   * Build a BigDecimal-backed EngineValue from a double.
+   *
+   * <p>Uses {@link BigDecimal#valueOf(double)} rather than {@code new BigDecimal(double)}: the
+   * latter stores the full binary expansion (for example {@code 0.1} becomes
+   * {@code 0.1000000000000000055...}), which bloats every downstream BigInteger and fabricates
+   * roughly fifty digits of false precision. {@code valueOf} yields the short round-trip decimal
+   * instead.</p>
+   *
+   * @param number The numeric value to be decorated into an EngineValue.
+   * @param units The units associated with the value.
+   * @return A BigDecimal-backed EngineValue representing the specified number and units.
+   */
+  private EngineValue buildForNumberBigDecimal(double number, Units units) {
+    return build(BigDecimal.valueOf(number), units);
   }
 
   /**
