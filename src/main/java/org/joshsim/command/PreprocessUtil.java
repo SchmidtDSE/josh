@@ -297,12 +297,18 @@ public class PreprocessUtil {
     DataGridLayer grid = StreamToPrecomputedGridUtil.streamToGrid(
         valueFactory,
         (timestepVal) -> {
+          // The data source exposes records 0-based; record i is the i-th step of the run. Map
+          // the absolute grid timestep (steps.low..steps.high) back to that 0-based source index
+          // so a non-zero steps.low - e.g. a calendar start year - lines the source up with the
+          // grid key, meta.year, and the organism-side external read instead of running off the
+          // end of the source. The forced single-timestep path keeps its legacy absolute index.
+          long sourceIndex = forcedTimestep.isPresent() ? timestepVal : timestepVal - startTimestep;
           Stream<Map.Entry<GeoKey, EngineValue>> geoStream;
           try {
             geoStream = mapper.streamVariableTimeStepToPatches(
                 dataFile,
                 variable,
-                (int) timestepVal,
+                (int) sourceIndex,
                 patchSet
             );
           } catch (IOException e) {

@@ -933,6 +933,11 @@ public class SingleThreadEventHandlerMachine implements EventHandlerMachine {
   }
 
   @Override
+  public long getCurrentTimestep() {
+    return bridge.getCurrentTimestep();
+  }
+
+  @Override
   public void pushExternal(String name, long step) {
     push(bridge.getExternal(scope.get("here").getAsEntity().getKey().orElseThrow(), name, step));
   }

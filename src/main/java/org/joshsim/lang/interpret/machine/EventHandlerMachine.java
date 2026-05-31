@@ -552,6 +552,17 @@ public interface EventHandlerMachine {
   long getStepCount();
 
   /**
+   * Get the current semantic timestep (steps.low-based), used to resolve external data reads.
+   *
+   * <p>This matches how preprocessed external grids are keyed and how {@code meta.year} is
+   * computed, so {@code external X} resolves against the same time origin as the rest of the
+   * engine. It coincides with {@link #getStepCount()} only when {@code steps.low} is zero.</p>
+   *
+   * @return The current timestep, offset by steps.low.
+   */
+  long getCurrentTimestep();
+
+  /**
    * Get a value from an external resource at a given time.
    *
    * @param name The name of the external resource.

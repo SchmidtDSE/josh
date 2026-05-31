@@ -50,12 +50,14 @@ class JoshExternalVisitorTest {
     assertNotNull(action);
 
     EventHandlerMachine mockMachine = mock(EventHandlerMachine.class);
-    when(mockMachine.getStepCount()).thenReturn(42L);
+    // External reads resolve at the semantic (steps.low-based) timestep so the lookup lines up
+    // with how the data grid is keyed and with meta.year.
+    when(mockMachine.getCurrentTimestep()).thenReturn(42L);
     org.mockito.Mockito.doNothing().when(mockMachine).pushExternal("externalVar", 42L);
 
     action.apply(mockMachine);
 
-    verify(mockMachine).getStepCount();
+    verify(mockMachine).getCurrentTimestep();
     verify(mockMachine).pushExternal("externalVar", 42L);
   }
 
