@@ -32,7 +32,6 @@ import org.joshsim.engine.value.type.EngineValue;
 import org.joshsim.engine.value.type.RealizedDistribution;
 import org.joshsim.lang.bridge.EngineBridge;
 import org.joshsim.lang.interpret.RecursiveValueResolver;
-import org.joshsim.lang.interpret.ValueResolver;
 import org.joshsim.lang.interpret.action.EventHandlerAction;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
