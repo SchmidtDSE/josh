@@ -99,10 +99,10 @@ public class LocalBackend implements Backend {
       }
       return new DiscoverConfigResult(true, formattedOutput);
     } catch (IOException e) {
-      return new DiscoverConfigResult(false, "Error reading file: " + e.getMessage());
+      return new DiscoverConfigResult(false, "Error reading file: " + describeFailure(e));
     } catch (Exception e) {
       return new DiscoverConfigResult(false,
-          "Error discovering config variables: " + e.getMessage());
+          "Error discovering config variables: " + describeFailure(e));
     }
   }
 
@@ -147,9 +147,9 @@ public class LocalBackend implements Backend {
       return new PreprocessResult(true,
           "Successfully preprocessed data to " + outputFile);
     } catch (IllegalArgumentException e) {
-      return new PreprocessResult(false, e.getMessage());
+      return new PreprocessResult(false, describeFailure(e));
     } catch (Exception e) {
-      return new PreprocessResult(false, "Preprocessing failed: " + e.getMessage());
+      return new PreprocessResult(false, "Preprocessing failed: " + describeFailure(e));
     }
   }
 
@@ -197,7 +197,7 @@ public class LocalBackend implements Backend {
       return new RunSimulationResult(
           result.isSuccess(), result.getMessage(), result.getLastStep());
     } catch (Exception e) {
-      return new RunSimulationResult(false, "Simulation failed: " + e.getMessage(), 0);
+      return new RunSimulationResult(false, "Simulation failed: " + describeFailure(e), 0);
     }
   }
 
@@ -235,6 +235,30 @@ public class LocalBackend implements Backend {
       spec.append(name).append('=').append(path);
     }
     return new String[]{spec.toString()};
+  }
+
+  /**
+   * Renders an exception's full cause chain into a single human-readable string.
+   *
+   * <p>Walks {@link Throwable#getCause()} to the root, joining each level's message with
+   * {@code ": "} so a wrapped failure reports the underlying cause rather than only the
+   * outermost message. A level with no message contributes its simple class name.</p>
+   *
+   * @param thrown the throwable to describe
+   * @return the joined messages of the cause chain
+   */
+  private static String describeFailure(Throwable thrown) {
+    StringBuilder rendered = new StringBuilder();
+    for (Throwable cursor = thrown; cursor != null; cursor = cursor.getCause()) {
+      String message = cursor.getMessage();
+      if (rendered.length() > 0) {
+        rendered.append(": ");
+      }
+      rendered.append(message == null || message.isEmpty()
+          ? cursor.getClass().getSimpleName()
+          : message);
+    }
+    return rendered.toString();
   }
 
 }
