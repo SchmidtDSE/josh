@@ -45,38 +45,70 @@ public class JvmMappedInputGetter extends JvmInputGetter {
 
   @Override
   protected boolean checkNamePathExists(String identifier) {
-    if (fileMapping.containsKey(identifier)) {
-      return true;
+    return resolveMappedPath(identifier) != null;
+  }
+
+  /**
+   * Resolve a requested name to a mapped file path, or null when there is no acceptable mapping.
+   *
+   * <p>An exact key match always wins. Otherwise, when the name carries an extension, the
+   * extension-stripped base is tried too, so a bare mapping key (e.g. {@code editor}) can satisfy
+   * an extension-qualified lookup (e.g. {@code editor.jshc} produced by config resolution).</p>
+   *
+   * <p>The stripped fallback is suppressed when it would cross the {@code .jshd}/{@code .jshdz}
+   * divide. {@link org.joshsim.precompute.MultiFormatExternalGetter} resolves a bare
+   * {@code external} reference by probing {@code name.jshdz} then {@code name.jshd}; without this
+   * guard a key mapped to a plain {@code .jshd} file would satisfy the {@code .jshdz} probe and
+   * hand the XZ reader uncompressed bytes ("Input is not in the XZ format"). Returning null for
+   * the mismatched probe lets the dispatcher fall through to the format that actually matches.</p>
+   *
+   * @param name The requested name.
+   * @return The mapped path, or null if no acceptable mapping exists.
+   */
+  private String resolveMappedPath(String name) {
+    String exact = fileMapping.get(name);
+    if (exact != null) {
+      return exact;
     }
-    // Also try without extension if the identifier has one
-    if (identifier.contains(".")) {
-      String nameWithoutExt = identifier.substring(0, identifier.lastIndexOf('.'));
-      return fileMapping.containsKey(nameWithoutExt);
+    if (name.contains(".")) {
+      String nameWithoutExt = name.substring(0, name.lastIndexOf('.'));
+      String candidate = fileMapping.get(nameWithoutExt);
+      if (candidate != null && stripFallbackAllowed(name, candidate)) {
+        return candidate;
+      }
     }
-    return false;
+    return null;
+  }
+
+  /**
+   * Whether the extension-stripped fallback may bind {@code requested} to {@code mappedPath}.
+   *
+   * <p>Only genuine {@code .jshd}/{@code .jshdz} format conflicts are suppressed; every other
+   * lookup (e.g. config {@code .jshc}, or a bare working file) keeps the permissive behavior.</p>
+   *
+   * @param requested The extension-qualified name being looked up.
+   * @param mappedPath The path the stripped base key points at.
+   * @return True if the fallback may bind, false to force a miss.
+   */
+  private static boolean stripFallbackAllowed(String requested, String mappedPath) {
+    if (requested.endsWith(".jshdz")) {
+      return mappedPath.endsWith(".jshdz");   // XZ reader expects an actually-compressed file
+    }
+    if (requested.endsWith(".jshd")) {
+      return !mappedPath.endsWith(".jshdz");  // raw reader: anything except a compressed file
+    }
+    return true;
   }
 
   /**
    * Load a file from the mapped files.
-   *
-   * <p>This method first tries to find the file using the exact name provided. If not found
-   * and the name contains an extension, it also tries looking up the name without the extension.
-   * This allows flexibility in how files are mapped via the --data flag, particularly for
-   * config files where the .jshc extension is automatically appended during lookup.</p>
    *
    * @param name The name of the file to load from the mapping.
    * @return The input stream for the file at the mapped path.
    * @throws RuntimeException raised if file not found in mapping or error in opening stream.
    */
   private InputStream loadFromMappedFiles(String name) {
-    String actualPath = fileMapping.get(name);
-
-    // If not found and name has extension, also try without extension
-    if (actualPath == null && name.contains(".")) {
-      String nameWithoutExt = name.substring(0, name.lastIndexOf('.'));
-      actualPath = fileMapping.get(nameWithoutExt);
-    }
-
+    String actualPath = resolveMappedPath(name);
     if (actualPath == null) {
       // Surface an unmapped name as a file-not-found so callers that probe multiple candidate
       // names (e.g. MultiFormatExternalGetter trying name.jshdz then name.jshd) can recognize the

@@ -213,4 +213,43 @@ class JvmMappedInputGetterTest {
     // Act & Assert - lookup without extension should NOT use fallback
     assertFalse(getter.exists("editor"));
   }
+
+  @Test
+  void testJshdzProbeDoesNotBindToJshdMapping() throws Exception {
+    // A data map keyed by the bare external name (data {"temperature": ".../t.jshd"}) is probed
+    // by MultiFormatExternalGetter as temperature.jshdz THEN temperature.jshd. The .jshdz probe
+    // must MISS so it can fall through to .jshd, rather than handing the XZ reader raw bytes.
+    File jshd = File.createTempFile("mapped-temperature", ".jshd");
+    jshd.deleteOnExit();
+    try (FileWriter writer = new FileWriter(jshd)) {
+      writer.write("raw jshd bytes");
+    }
+    Map<String, String> fileMapping = new HashMap<>();
+    fileMapping.put("temperature", jshd.getAbsolutePath());
+    JvmMappedInputGetter getter = new JvmMappedInputGetter(fileMapping);
+
+    assertFalse(getter.exists("temperature.jshdz"),
+        ".jshdz probe must not bind to a .jshd mapping");
+    assertTrue(getter.exists("temperature.jshd"),
+        ".jshd probe should bind to the .jshd mapping");
+
+    String content = new String(
+        getter.open("temperature.jshd").readAllBytes(), StandardCharsets.UTF_8);
+    assertEquals("raw jshd bytes", content);
+    assertThrows(RuntimeException.class, () -> getter.open("temperature.jshdz"));
+  }
+
+  @Test
+  void testJshdProbeDoesNotBindToJshdzMapping() {
+    // Symmetric guard: a bare key pointing at a compressed .jshdz file must not satisfy a .jshd
+    // probe (which would feed compressed bytes to the raw reader).
+    Map<String, String> fileMapping = new HashMap<>();
+    fileMapping.put("temperature", "/tmp/whatever-temperature.jshdz");
+    JvmMappedInputGetter getter = new JvmMappedInputGetter(fileMapping);
+
+    assertFalse(getter.exists("temperature.jshd"),
+        ".jshd probe must not bind to a .jshdz mapping");
+    assertTrue(getter.exists("temperature.jshdz"),
+        ".jshdz probe should bind to the .jshdz mapping");
+  }
 }
