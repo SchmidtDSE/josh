@@ -6,6 +6,7 @@
 
 package org.joshsim.precompute;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -14,12 +15,21 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import java.io.FileNotFoundException;
+import java.io.OutputStream;
+import java.math.BigDecimal;
+import java.nio.file.Files;
 import java.nio.file.NoSuchFileException;
+import java.nio.file.Path;
+import java.util.Map;
+import org.joshsim.engine.geometry.PatchBuilderExtentsBuilder;
+import org.joshsim.engine.value.converter.Units;
 import org.joshsim.engine.value.engine.ValueSupportFactory;
 import org.joshsim.lang.io.InputGetterStrategy;
+import org.joshsim.lang.io.JvmMappedInputGetter;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.jupiter.api.io.TempDir;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
@@ -147,5 +157,35 @@ class MultiFormatExternalGetterTest {
 
   private static void verifyNoInteractionsWith(InputGetterStrategy strat, String filename) {
     verify(strat, never()).open(filename);
+  }
+
+  @Test
+  void bareName_mappedToJshdFile_resolvesViaJshdFallback(@TempDir Path tempDir) throws Exception {
+    // End-to-end with a real mapped input getter: a data map keyed by the bare external name
+    // (data {"temperature": ".../t.jshd"}) must resolve. The .jshdz probe misses (the mapping
+    // points at a .jshd file) and the dispatcher falls through to .jshd, rather than failing with
+    // "Input is not in the XZ format".
+    ValueSupportFactory factory = new ValueSupportFactory();
+    PatchBuilderExtentsBuilder extentsBuilder = new PatchBuilderExtentsBuilder();
+    extentsBuilder.setTopLeftX(BigDecimal.ZERO);
+    extentsBuilder.setTopLeftY(BigDecimal.ZERO);
+    extentsBuilder.setBottomRightX(BigDecimal.TWO);
+    extentsBuilder.setBottomRightY(BigDecimal.TWO);
+    DoublePrecomputedGrid grid = new DoublePrecomputedGrid(
+        factory, extentsBuilder.build(), 0L, 2L, Units.of("meters"), new double[3][3][3]);
+
+    Path jshd = tempDir.resolve("t.jshd");
+    try (OutputStream out = Files.newOutputStream(jshd)) {
+      new BinaryGridSerializationStrategy(factory).serialize(grid, out);
+    }
+
+    JvmMappedInputGetter mapped =
+        new JvmMappedInputGetter(Map.of("temperature", jshd.toString()));
+    MultiFormatExternalGetter dispatcher = new MultiFormatExternalGetter(
+        new JshdExternalGetter(mapped, factory), new JshdzExternalGetter(mapped, factory));
+
+    DataGridLayer resolved = dispatcher.getResource("temperature");
+    assertEquals(0L, resolved.getMinTimestep());
+    assertEquals(2L, resolved.getMaxTimestep());
   }
 }
