@@ -130,7 +130,7 @@ public class SingleThreadEventHandlerMachine implements EventHandlerMachine {
       }
     }
 
-    throw new IllegalStateException("Unable to get value for " + valueResolver);
+    throw new IllegalStateException(unresolvedValueMessage(path, valueResolver));
   }
 
   @Override
@@ -656,6 +656,29 @@ public class SingleThreadEventHandlerMachine implements EventHandlerMachine {
       );
       default -> Optional.empty();
     };
+  }
+
+  /**
+   * Build an actionable message for a value reference that could not be resolved.
+   *
+   * <p>A bare name (no dot) is most often a unit written where a value is expected — e.g.
+   * {@code 300 / year} parses {@code year} as an identifier, not as a unit. Units must attach to
+   * a number, so the hint points at the working forms. Dotted paths are reported as a plain
+   * missing attribute. The resolver text is retained for greppability.</p>
+   *
+   * @param path The reference that failed to resolve.
+   * @param valueResolver The resolver, included for diagnostic continuity.
+   * @return A human-readable explanation with a fix hint where applicable.
+   */
+  private static String unresolvedValueMessage(String path, ValueResolver valueResolver) {
+    String base = "Unable to resolve '" + path + "' as a value: no attribute, variable, or "
+        + "built-in by that name is in scope here (" + valueResolver + ").";
+    if (path.contains(".")) {
+      return base;
+    }
+    return base + " If '" + path + "' is a unit, attach it to a number — e.g. '300 " + path
+        + "', a rate as '300 mm / 1 year', or a quoted compound unit '300 \"mm / year\"'. "
+        + "A bare unit name cannot be used as a value.";
   }
 
   @Override

@@ -7,7 +7,9 @@
 package org.joshsim.lang.interpret.machine;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.when;
@@ -86,6 +88,24 @@ public class SingleThreadEventHandlerMachineTest {
     // Then
     machine.end();
     assertEquals(mockValue, machine.getResult());
+  }
+
+  @Test
+  void push_unresolvedBareName_givesActionableUnitHint() {
+    // A bare unit name used as a value (e.g. `300 / year`) reaches push() as an unresolvable
+    // resolver. The message must guide the author to attach the unit to a number, not just emit
+    // the opaque resolver text.
+    RecursiveValueResolver resolver = new RecursiveValueResolver(factory, "year");
+
+    IllegalStateException ex =
+        assertThrows(IllegalStateException.class, () -> machine.push(resolver));
+
+    String message = ex.getMessage();
+    assertTrue(message.contains("year"), "should name the unresolved symbol: " + message);
+    assertTrue(message.contains("1 year") || message.contains("unit"),
+        "should hint that a bare unit must attach to a number: " + message);
+    assertNotEquals("Unable to get value for RecursiveValueResolver(year)", message,
+        "should not be the bare opaque message");
   }
 
   @Test
