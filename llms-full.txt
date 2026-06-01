@@ -602,6 +602,8 @@ Single-line comments use `#` syntax:
 33.7 degrees latitude
 ```
 
+A unit must attach to a number. Write a rate or compound unit as a value-over-value division or a quoted compound — `300 mm / 1 year` or `300 "mm / year"` — not `300 / year` (a bare unit name with no number is treated as an undefined value, not a unit).
+
 **String literals enclosed in double quotes:**
 
 ```
