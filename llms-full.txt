@@ -583,7 +583,7 @@ steps.high = 10 count
 - **`grid.size`** — patch side length. Units: `m` (meters), `count`, or `degrees`. When positions are given in degrees, the size must be in meters, which triggers a Haversine conversion; `here.x` / `here.y` then reference grid space `(0,0)` top-left to `(width, height)` bottom-right. Other length units such as `km` are not accepted for grid size — use meters (e.g. `1000 m`, not `1 km`).
 - **`grid.patch`** — patch entity name (default `"Default"`).
 - **`grid.inputCrs` / `grid.targetCrs`** — optional EPSG codes; the CLI `--crs` flag overrides `grid.inputCrs`.
-- **`steps.low` / `steps.high`** — both endpoints inclusive (`0` to `10` runs 11 timesteps; defaults `0`, `10`).
+- **`steps.low` / `steps.high`** — both endpoints inclusive (`0` to `10` runs 11 timesteps; defaults `0`, `10`). May be set to calendar years (e.g. `2024 year` to `2123 year`) so `meta.year` reads as the calendar year.
 
 ### Comments
 Single-line comments use `#` syntax:
@@ -669,8 +669,10 @@ current.height
 - **current**: Current state of entity
 - **prior**: State from previous timestep
 - **meta**: Simulation metadata and context
-  - `meta.stepCount`: Current simulation timestep (0-based)
-  - `meta.year`: Current simulation year
+  - `meta.stepCount`: Current simulation timestep, always 0-based (`0, 1, 2, …`).
+  - `meta.year`: Current timestep offset by `steps.low` (`steps.low + meta.stepCount`); set `steps.low` to a start year for calendar years.
+
+  Meta vars are ordinary expressions, so they can be exported as columns — e.g. `export.year.step = meta.year` (or `meta.stepCount + 2024 count` when `steps.low = 0`).
 
 #### Spatial Keywords
 
@@ -814,7 +816,7 @@ start patch Default
   export.averageHeight.step = mean(ExampleTree.height)
 end patch
 ```
-The identifier after `export.` (e.g. `averageAge`) becomes the column / variable name in the output, and the expression assigned can be any valid josh expression. 
+The identifier after `export.` (e.g. `averageAge`) becomes the column / variable name in the output, and the expression assigned can be any valid josh expression. Meta keywords are not auto-exported, but any of them can be added as a column for convenience — e.g. `export.year.step = meta.year`, `export.stepCount.step = meta.stepCount` (see Temporal Keywords).
 
 ### Debug Output
 
