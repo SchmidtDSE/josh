@@ -134,14 +134,6 @@ class NarrativePresenter {
       }
     });
 
-    const total = self._stepperItems.length;
-
-    // "Step N of M" label — updated by _updateStepper.
-    const label = document.createElement("div");
-    label.id = "buildup-stepper-label";
-    label.className = "stepper-label";
-    nav.appendChild(label);
-
     // One button per build-up substep.
     const list = document.createElement("ol");
     list.className = "stepper-list";
@@ -167,8 +159,8 @@ class NarrativePresenter {
   /**
    * Update stepper visual state to reflect the current step.
    *
-   * Called from _render after every navigation. Sets completed/current/upcoming classes,
-   * aria-current, and updates the "Step N of M" label.
+   * Called from _render after every navigation. Sets completed/current/upcoming classes
+   * and aria-current on each stepper pill.
    */
   _updateStepper() {
     const self = this;
@@ -176,7 +168,6 @@ class NarrativePresenter {
       return;
     }
 
-    const total = self._stepperItems.length;
     const currentStep = self._steps[self._currentIndex];
     const isBuildup = currentStep && currentStep.kind === "buildup";
 
@@ -188,16 +179,6 @@ class NarrativePresenter {
           currentLocal = localIdx;
         }
       });
-    }
-
-    // Update the label.
-    const label = document.getElementById("buildup-stepper-label");
-    if (label) {
-      if (currentLocal >= 0) {
-        label.textContent = "Step " + (currentLocal + 1) + " of " + total;
-      } else {
-        label.textContent = "Step 1 of " + total;
-      }
     }
 
     // Update each button's state class and aria attributes.
@@ -773,8 +754,11 @@ class NarrativePresenter {
     const toSnapshot = toStep.codeSnapshot;
 
     // Compute which lines in the new snapshot are genuine additions (LCS-based diff).
-    // Going backward never animates — treat all lines as unchanged.
-    const addedIndices = goingBack
+    // Going backward never animates. The initial reveal (no previous build-up step,
+    // e.g. arriving from Welcome) also does not glow — there is no prior state to
+    // diff against, so the whole skeleton would otherwise flash green and settle.
+    // Only incremental additions between build-up substeps glow.
+    const addedIndices = (goingBack || !prevStep)
       ? new Set()
       : self._lcsAddedIndices(prevSnapshot, toSnapshot);
 
