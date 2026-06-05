@@ -99,8 +99,8 @@ Created the static shell `demo.joshsim.org/{index.html, style/style.css, third_p
 #### 2. Deployment  ✅ complete
 Added a `deployDemo` job to `.github/workflows/build.yaml` modeled on `deployStatic`: `needs: [deployStatic]`, `if: refs/heads/main` only, installs `sshpass`, and SCPs the `demo` artifact to `demo.joshsim.org/` using the existing `SFTP{HOST,USER,PASSWORD}` secrets. Extended `buildWeb` to run the demo's `install_deps.sh`, minimize PublicSans, and `upload-artifact` the `demo.joshsim.org` dir as artifact `demo` (mirrors the editor/landing pattern, pinned action SHAs). Added `.gitignore` entries for `demo.joshsim.org/third_party/publicsans` and `demo.joshsim.org/war`; WASM `war/` embed, Ace/D3 deps, and `.jshd` data copy are deferred to Component 10.
 
-#### 3. Build-up start
-Create the first substep of the build-up with the JS needed to go from the welcome mat to the build up first substep. This should establish the `NarrativePresenter`.
+#### 3. Build-up start  ✅ complete
+Established the JS layer: `index.html` gains an ES-module importmap (`?v=` cache-bust) + `main()` entry, and `#phase-buildup` is populated with the two-column code/text panels + prev/next nav. New `js/main.js` constructs `NarrativePresenter` (`js/narrative.js`), which owns a flat `_steps` array (step 0 = Welcome, 1+ = build-up) with `goNext/goPrev/goTo/getCurrentIndex/getStepCount`, toggling `.active`+`aria-hidden` with the existing fade classes and reduced-motion guard. Each build-up substep stores a FULL accumulated code snapshot; `_renderBuildup` re-renders all lines and fades in only those new/changed vs the prior snapshot (robust to mid-block insertion) — Component 4 extends by appending descriptors in `_buildSteps()`. Substep 1 "Structure" shows the empty `simulation`/`patch`/`organism` skeleton; prev returns to Welcome, next disabled at the last registered step.
 
 #### 4. Build-up complete
 Finish the rest of the build up sequence and all of its substeps.

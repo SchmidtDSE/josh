@@ -104,3 +104,41 @@ footer {
   margin: 0 auto;
   padding: 40px 20px;
 }
+
+#phase-buildup.active {
+  padding: 20px;
+}
+
+.col-code {
+  background-color: #F0F0F0;
+}
+
+.col-code pre {
+  margin: 0;
+  padding: 10px;
+  font-family: monospace;
+  font-size: 14px;
+  white-space: pre;
+}
+
+.nav-buttons button.secondary {
+  background-color: #E0E0E0;
+  color: #333;
+  border-radius: 10px;
+  padding: 7px;
+  border: none;
+  cursor: pointer;
+  font-size: 15px;
+  font-family: inherit;
+}
+
+.nav-buttons button.secondary:focus,
+.nav-buttons button.secondary:hover,
+.nav-buttons button.secondary:active {
+  background-color: #C8C8C8;
+}
+
+.nav-buttons button:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}

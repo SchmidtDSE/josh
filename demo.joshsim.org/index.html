@@ -27,7 +27,19 @@
         </div>
       </section>
 
-      <section id="phase-buildup" class="phase" aria-hidden="true"></section>
+      <section id="phase-buildup" class="phase" aria-hidden="true">
+        <div class="phase-two-col">
+          <div class="col-code">
+            <pre id="buildup-code-display" aria-label="Josh code being built up"></pre>
+          </div>
+          <div class="col-text" id="buildup-text-panel">
+          </div>
+        </div>
+        <div class="nav-buttons">
+          <button type="button" id="buildup-prev-button" class="secondary">Previous</button>
+          <button type="button" id="buildup-next-button" class="primary">Next</button>
+        </div>
+      </section>
 
       <section id="phase-playground" class="phase" aria-hidden="true"></section>
 
@@ -36,6 +48,18 @@
 
     <footer id="toc-footer"></footer>
 
-    <!-- importmap and main.js will be added here in Component 3 -->
+    <script type="importmap">
+      {
+        "imports": {
+          "main":      "./js/main.js?v=0.0.1",
+          "narrative": "./js/narrative.js?v=0.0.1"
+        }
+      }
+    </script>
+
+    <script type="module">
+      import {main} from "main";
+      main();
+    </script>
   </body>
 </html>
