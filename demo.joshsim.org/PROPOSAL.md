@@ -125,8 +125,8 @@ Copied the editor's WASM stack verbatim into `demo/js/` (`wasm.js`, `wasm.worker
 #### 7. Establish visualization  ✅ complete
 Copied `summarize.js` verbatim and `viz.js` (trimmed: dropped `MapConfigPresenter` and the `results-area` scroll listener; kept `ScrubPresenter` + `GridPresenter`) from the editor, and added D3 + math.js to `install_deps.sh`/`.gitignore`/`index.html` (global scripts) with `summarize`/`viz` importmap entries. On run completion `PlaygroundPresenter` now calls `getSimulationMetadata("Main")`, builds a fixed `new DataQuery("meanHeight","mean",null,null,null)`, runs `summarizeDatasets([result], query)`, fades the running indicator out and a heatmap+scrub view in: `GridPresenter` renders `meanHeight` per patch and `ScrubPresenter` renders the per-timestep bars whose click callback re-renders the grid at the selected step (default = last). Re-running clears `#playground-results` first; no variable/metric selector, basemap, or export. The editor's visualization CSS (scrub bar/tick/hit-area + grid layers/legend) was ported into `style.css` scoped to `#playground-viz` so the scrub renders like the IDE rather than defaulting to black fill. CI D3/math/data wiring is finalized in Component 10.
 
-#### 8. Create conclusion
-Build out the conclusion as described above.
+#### 8. Create conclusion  ✅ complete
+Populated `#phase-conclusion` with an `h2` "Next steps", a short paragraph linking to the full guide at https://www.joshsim.org/guide.html (new tab, `rel=noopener`), and ONLY a Previous button (no Next, per spec) — centered like the welcome phase. Registered a `{kind:"conclusion"}` step after the playground in `_buildSteps()` (which auto-enables the playground's Next to advance into it), wired `#conclusion-prev-button`→`goPrev()` in `_setup`, and added a conclusion block to `_updateNavButtons`. No changes to `_render`/`_renderBuildup`/`_getSectionForStep`/`_updateStepper` (the stepper shows no current pill on the conclusion via the existing non-buildup path).
 
 #### 9. Add table of contents
 Add support for table of contents and jumping between steps.

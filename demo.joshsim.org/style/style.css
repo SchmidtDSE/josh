@@ -323,6 +323,14 @@ footer {
   padding: 20px;
 }
 
+#phase-conclusion.active {
+  display: flex;
+  flex-direction: column;
+  max-width: 680px;
+  margin: 0 auto;
+  padding: 40px 20px;
+}
+
 #playground-editor {
   height: 360px;
   width: 100%;

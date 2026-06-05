@@ -219,6 +219,11 @@ class NarrativePresenter {
       playgroundNext.addEventListener("click", () => self.goNext());
     }
 
+    const conclusionPrev = document.getElementById("conclusion-prev-button");
+    if (conclusionPrev) {
+      conclusionPrev.addEventListener("click", () => self.goPrev());
+    }
+
     self._buildStepper();
     self._render(null);
   }
@@ -650,6 +655,13 @@ class NarrativePresenter {
         heading: null,
         body: null,
       },
+      {
+        id: "conclusion",
+        kind: "conclusion",
+        codeSnapshot: [],
+        heading: null,
+        body: null,
+      },
     ];
   }
 
@@ -892,6 +904,11 @@ class NarrativePresenter {
         playgroundPrev.disabled = true;
         playgroundNext.disabled = true;
       }
+    }
+
+    const conclusionPrev = document.getElementById("conclusion-prev-button");
+    if (conclusionPrev) {
+      conclusionPrev.disabled = step.kind !== "conclusion";
     }
   }
 
