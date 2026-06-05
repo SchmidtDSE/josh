@@ -1,8 +1,10 @@
 start simulation Main
 
   grid.size = 16000 m
-  grid.top_left = 36.73 degrees latitude, -119.52 degrees longitude
-  grid.bottom_right = 35.80 degrees latitude, -117.98 degrees longitude
+  grid.top_left =
+    36.73 degrees latitude, -119.52 degrees longitude
+  grid.bottom_right =
+    35.80 degrees latitude, -117.98 degrees longitude
   grid.patch = "Default"
 
   steps.low = 0 count
@@ -17,7 +19,8 @@ end simulation
 
 start patch Default
 
-  ForeverTree.init = create 10 count of ForeverTree
+  ForeverTree.init =
+    create 10 count of ForeverTree
 
   export.year.step = 2024 count + meta.stepCount
   export.nTrees.step = count(ForeverTree)
@@ -45,10 +48,13 @@ start organism ForeverTree
     from [300 mm, 500 mm]
     to [meta.minPrecipImpactPct, 100%] sigmoid
 
-  stochastic.step = sample normal with mean of 100% std of 5%
+  stochastic.step =
+    sample normal
+    with mean of 100% std of 5%
 
   newGrowth.step =
     meta.maxNewGrowth * temperatureImpact * precipImpact * stochastic
+
   height.step = prior.height + newGrowth
 
 end organism
