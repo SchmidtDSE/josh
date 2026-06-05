@@ -5,10 +5,35 @@
  * collapsible configuration textarea. Ace is lazy-initialized on the first onShow() call so that
  * it never tries to size itself while the containing section is display:none.
  *
- * Components 6 and 7 extend this class by enabling the Run button and wiring the results panel.
+ * Component 6: Run button wired to execute the forevertree_wasm simulation via WASM (single
+ * replicate), with "Simulation running..." indicator shown while running. On completion stores
+ * the SimulationResult for Component 7. No heatmap yet.
  *
  * @license BSD-3-Clause
  */
+
+import {WasmLayer} from "wasm";
+
+
+/**
+ * Fetch a URL as a base64-encoded string (for binary .jshd files).
+ *
+ * @param {string} url - URL to fetch.
+ * @returns {Promise<string>} Base64 string of the binary content.
+ */
+async function fetchAsBase64(url) {
+  const response = await fetch(url);
+  if (!response.ok) {
+    throw new Error("HTTP " + response.status + " fetching " + url);
+  }
+  const buffer = await response.arrayBuffer();
+  const bytes = new Uint8Array(buffer);
+  let binary = "";
+  for (let i = 0; i < bytes.length; i++) {
+    binary += String.fromCharCode(bytes[i]);
+  }
+  return btoa(binary);
+}
 
 
 class PlaygroundPresenter {
@@ -27,6 +52,13 @@ class PlaygroundPresenter {
     this._aceInitialized = false;
     this._editor = null;
     this._configTextarea = null;
+
+    // Run handler state
+    this._wasmLayer = null;
+    this._externalDataCache = null;
+    this._isRunning = false;
+    this._lastResult = null;
+    this._runHandlerAttached = false;
   }
 
   /**
@@ -34,6 +66,7 @@ class PlaygroundPresenter {
    *
    * Lazy-initializes the Ace editor the first time, then just resizes on subsequent shows.
    * Also fetches the config file and populates the config textarea (first call only).
+   * Enables the Run button and attaches the click handler (first call only).
    */
   onShow() {
     const self = this;
@@ -79,6 +112,17 @@ class PlaygroundPresenter {
       .catch(function(err) {
         console.warn("PlaygroundPresenter: could not load config from " + self._configPath + ":", err);
       });
+
+    // Enable run button and attach handler on first show
+    const runButton = document.getElementById("playground-run-button");
+    if (runButton) {
+      runButton.removeAttribute("disabled");
+    }
+
+    if (!self._runHandlerAttached) {
+      self._attachRunHandler();
+      self._runHandlerAttached = true;
+    }
   }
 
   /**
@@ -103,6 +147,109 @@ class PlaygroundPresenter {
       return this._configTextarea.value;
     }
     return "";
+  }
+
+  /**
+   * Returns the SimulationResult from the last completed run, or null if none.
+   *
+   * @returns {SimulationResult|null} The last simulation result (for Component 7).
+   */
+  getLastResult() {
+    return this._lastResult;
+  }
+
+  /**
+   * Wire the Run button click to the WASM simulation flow.
+   */
+  _attachRunHandler() {
+    const self = this;
+    const runButton = document.getElementById("playground-run-button");
+    const resultsPanel = document.getElementById("playground-results");
+
+    if (!runButton) {
+      return;
+    }
+
+    runButton.addEventListener("click", async function() {
+      if (self._isRunning) {
+        return;
+      }
+
+      self._isRunning = true;
+      runButton.disabled = true;
+
+      // Show "Simulation running..." indicator
+      resultsPanel.innerHTML = '<div id="playground-running-indicator" class="fade-in">Simulation running...</div>';
+
+      try {
+        // Load external data (cache after first fetch)
+        if (!self._externalDataCache) {
+          self._externalDataCache = await self._loadExternalData();
+        }
+
+        // Lazily construct WasmLayer
+        if (!self._wasmLayer) {
+          self._wasmLayer = new WasmLayer();
+        }
+
+        const code = self.getCode();
+
+        const result = await self._wasmLayer.runSimulation(
+          code,
+          "Main",
+          self._externalDataCache,
+          function(n) {},
+          false,
+          ""
+        );
+
+        self._lastResult = result;
+
+        const patchCount = result.getPatchResults().length;
+        console.log("Simulation complete:", result, "Patch records:", patchCount);
+
+        // Hide indicator and show placeholder (Component 7 replaces this)
+        resultsPanel.innerHTML = '<p id="playground-done-message">Done — ' + patchCount + ' records. Visualization coming soon.</p>';
+
+      } catch (err) {
+        console.error("Simulation error:", err);
+        resultsPanel.innerHTML = '<p class="playground-error">Simulation error: ' + (err.message || String(err)) + '</p>';
+      } finally {
+        self._isRunning = false;
+        runButton.disabled = false;
+      }
+    });
+  }
+
+  /**
+   * Fetch climate data files and config, returning the externalData object for runSimulation.
+   *
+   * Binary .jshd files are fetched as base64 (ExternalDataSerializer expects this for isBinary=1
+   * files — see wire.js _isTextFile: .jshd is not .csv/.txt/.jshc/.josh so isBinary=1).
+   * The .jshc config is plain text (isBinary=0).
+   *
+   * Keys must match what the model references:
+   *   - "temperature"      -> external temperature
+   *   - "precipitation"    -> external precipitation
+   *   - "forevertree.jshc" -> config forevertree.*
+   *
+   * @returns {Promise<Object>} externalData object ready for WasmLayer.runSimulation.
+   */
+  async _loadExternalData() {
+    const self = this;
+
+    const [tempBase64, precipBase64] = await Promise.all([
+      fetchAsBase64("data/temperature.jshd"),
+      fetchAsBase64("data/precipitation.jshd")
+    ]);
+
+    const configText = self.getConfig();
+
+    return {
+      "temperature": tempBase64,
+      "precipitation": precipBase64,
+      "forevertree.jshc": configText
+    };
   }
 
 }

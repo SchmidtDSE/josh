@@ -21,3 +21,5 @@ fi
 
 mkdir -p ../data
 [ ! -e ../data/forevertree.jshc ] && cp ../../paper/forevertree/forevertree.jshc ../data/forevertree.jshc
+[ ! -e ../data/temperature.jshd ] && cp ../../paper/forevertree/data/temperature.jshd ../data/temperature.jshd
+[ ! -e ../data/precipitation.jshd ] && cp ../../paper/forevertree/data/precipitation.jshd ../data/precipitation.jshd

@@ -80,15 +80,25 @@
     <script src="third_party/theme-textmate-css.js"></script>
     <script src="js/mode-joshlang.js?v=0.0.1"></script>
 
+    <script type="text/javascript" src="js/parse.js?v=0.0.6"></script>
+
     <script type="importmap">
       {
         "imports": {
           "main":       "./js/main.js?v=0.0.1",
           "narrative":  "./js/narrative.js?v=0.0.1",
-          "playground": "./js/playground.js?v=0.0.1"
+          "playground": "./js/playground.js?v=0.0.6",
+          "wasm":       "./js/wasm.js?v=0.0.6",
+          "wire":       "./js/wire.js?v=0.0.6",
+          "model":      "./js/model.js?v=0.0.6",
+          "debug":      "./js/debug.js?v=0.0.6",
+          "util":       "./js/util.js?v=0.0.6"
         }
       }
     </script>
+
+    <!-- Resources for WASM runtime. -->
+    <script type="text/javascript" charset="utf-8" src="war/wasm-gc/JoshSim.wasm-runtime.js"></script>
 
     <script type="module">
       import {main} from "main";

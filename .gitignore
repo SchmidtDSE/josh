@@ -38,6 +38,8 @@ editor/war
 landing/publicsans
 
 *.jshd
+!paper/forevertree/data/temperature.jshd
+!paper/forevertree/data/precipitation.jshd
 *.wasm
 
 # Tutorial data files (downloaded by CI/CD)
