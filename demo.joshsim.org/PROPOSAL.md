@@ -131,8 +131,8 @@ Populated `#phase-conclusion` with an `h2` "Next steps", a short paragraph linki
 #### 9. Add table of contents  ✅ complete
 Added the WCAG second navigation method: a `#toc-open-button` in the footer opens a native `<dialog id="toc-dialog">` (`showModal()` — free focus-trapping, Esc-to-close, focus return) listing all 10 steps. `NarrativePresenter._buildTableOfContents()` builds the list once from `_steps` (labels via `_getTocLabel`: build-up `heading`s, plus a kind map for Welcome/"Try it yourself"/"Next steps" — no second hardcoded list), each item calling `goTo(index)` then closing; `_updateTableOfContents()` marks the current step `aria-current="step"` each render. The footer sits outside the phases so the ToC is reachable everywhere; no changes to `goTo`/`_render` transition logic.
 
-#### 10. Update deployment
-Return to the github actions and ensure everything is hooked up for deployment to run the demo in its entirety using only static hosting.
+#### 10. Update deployment  ✅ complete
+Completed the demo's CI so it runs entirely from static hosting: added an "Embed demo war" step to `buildWeb` (`bash demo.joshsim.org/war/get_from_jar.sh`, after `./gradlew war`, before "Upload demo") so the `demo` artifact now includes `war/{js/JoshSim.js, wasm-gc/JoshSim.wasm, wasm-gc/JoshSim.wasm-runtime.js}`, and a "Copy joshlang-prism.js to demo" step that syncs the grammar from the canonical `landing/` copy at build time. The `demo` artifact already carried `third_party/` deps + `data/` (config + `.jshd`) + `img/` (figures) via the existing `install_deps.sh` run; `deployDemo` (needs `deployStatic`, `main` only) SCPs the now-complete artifact to `demo.joshsim.org/`. (The Ace `theme-textmate-css.js` 0-byte download from `editor.joshsim.org` is inherited editor behavior, left as-is — see PR notes.)
 
 <br>
 

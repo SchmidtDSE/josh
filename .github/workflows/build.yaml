@@ -420,6 +420,10 @@ jobs:
             rm -rf publicsans
             mv publicsans-minimal publicsans
           fi
+      - name: Embed demo war
+        run: bash demo.joshsim.org/war/get_from_jar.sh
+      - name: Copy joshlang-prism.js to demo
+        run: cp landing/joshlang-prism.js demo.joshsim.org/js/joshlang-prism.js
       - name: Upload demo
         uses: actions/upload-artifact@bbbca2ddaa5d8feaa63e36b76fdaad77386f024f # v7.0.0
         with:
