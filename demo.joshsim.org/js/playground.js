@@ -5,14 +5,15 @@
  * collapsible configuration textarea. Ace is lazy-initialized on the first onShow() call so that
  * it never tries to size itself while the containing section is display:none.
  *
- * Component 6: Run button wired to execute the forevertree_wasm simulation via WASM (single
- * replicate), with "Simulation running..." indicator shown while running. On completion stores
- * the SimulationResult for Component 7. No heatmap yet.
+ * Component 7: On run completion, fades out the running indicator and fades in the meanHeight
+ * heatmap visualization (ScrubPresenter + GridPresenter) into #playground-results.
  *
  * @license BSD-3-Clause
  */
 
 import {WasmLayer} from "wasm";
+import {DataQuery, summarizeDatasets} from "summarize";
+import {GridPresenter, ScrubPresenter} from "viz";
 
 
 /**
@@ -58,6 +59,10 @@ class PlaygroundPresenter {
     this._externalDataCache = null;
     this._isRunning = false;
     this._lastResult = null;
+    this._lastMetadata = null;
+    this._scrubPresenter = null;
+    this._gridPresenter = null;
+    this._currentTimestep = null;
     this._runHandlerAttached = false;
   }
 
@@ -205,11 +210,10 @@ class PlaygroundPresenter {
 
         self._lastResult = result;
 
-        const patchCount = result.getPatchResults().length;
-        console.log("Simulation complete:", result, "Patch records:", patchCount);
+        const metadata = await self._wasmLayer.getSimulationMetadata(code, "Main");
+        self._lastMetadata = metadata;
 
-        // Hide indicator and show placeholder (Component 7 replaces this)
-        resultsPanel.innerHTML = '<p id="playground-done-message">Done — ' + patchCount + ' records. Visualization coming soon.</p>';
+        await self._showViz(result, metadata, resultsPanel);
 
       } catch (err) {
         console.error("Simulation error:", err);
@@ -219,6 +223,71 @@ class PlaygroundPresenter {
         runButton.disabled = false;
       }
     });
+  }
+
+  /**
+   * Fade out the running indicator, then inject and render the meanHeight heatmap viz.
+   *
+   * @param {SimulationResult} result - The completed simulation result.
+   * @param {SimulationMetadata} metadata - Metadata parsed from the simulation code.
+   * @param {Element} resultsPanel - The #playground-results container element.
+   */
+  async _showViz(result, metadata, resultsPanel) {
+    const self = this;
+
+    const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    const fadeDuration = reducedMotion ? 0 : 650;
+
+    // Apply fade-out to running indicator then swap in viz markup
+    const indicator = document.getElementById("playground-running-indicator");
+    if (indicator) {
+      indicator.classList.add("fade-out");
+    }
+
+    await new Promise((resolve) => setTimeout(resolve, fadeDuration));
+
+    const vizMarkup = `
+<div id="playground-viz" class="fade-in">
+  <div class="viz-holder" id="scrub-viz-holder">
+    <svg id="scrub-viz"></svg>
+  </div>
+  <div class="viz-holder" id="grid-viz-holder">
+    <div id="grid-viz-info"></div>
+    <div class="horiz-scroll-area">
+      <svg id="grid-viz"></svg>
+    </div>
+    <table id="grid-legend">
+      <tr class="label">
+        <td class="lowest"></td>
+        <td class="low"></td>
+        <td class="high"></td>
+        <td class="highest"></td>
+      </tr>
+      <tr class="color">
+        <td class="lowest"></td>
+        <td class="low"></td>
+        <td class="high"></td>
+        <td class="highest"></td>
+      </tr>
+    </table>
+  </div>
+</div>`;
+
+    resultsPanel.innerHTML = vizMarkup;
+
+    const query = new DataQuery("meanHeight", "mean", null, null, null);
+    const summarized = summarizeDatasets([result], query);
+
+    const scrubEl = document.getElementById("scrub-viz-holder");
+    const gridEl = document.getElementById("grid-viz-holder");
+
+    self._gridPresenter = new GridPresenter(gridEl);
+    self._scrubPresenter = new ScrubPresenter(scrubEl, (step) => {
+      self._currentTimestep = step;
+      self._gridPresenter.render(metadata, summarized, step, null);
+    });
+
+    self._scrubPresenter.render(summarized);
   }
 
   /**
