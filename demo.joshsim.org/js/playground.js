@@ -297,10 +297,12 @@ class PlaygroundPresenter {
    * files — see wire.js _isTextFile: .jshd is not .csv/.txt/.jshc/.josh so isBinary=1).
    * The .jshc config is plain text (isBinary=0).
    *
-   * Keys must match what the model references:
-   *   - "temperature"      -> external temperature
-   *   - "precipitation"    -> external precipitation
-   *   - "forevertree.jshc" -> config forevertree.*
+   * Keys are the VIRTUAL FILENAMES the WASM engine looks up, including extension —
+   * `external temperature` resolves to the virtual file `temperature.jshd`, and
+   * `config forevertree.*` resolves to `forevertree.jshc`:
+   *   - "temperature.jshd"   -> external temperature
+   *   - "precipitation.jshd" -> external precipitation
+   *   - "forevertree.jshc"   -> config forevertree.*
    *
    * @returns {Promise<Object>} externalData object ready for WasmLayer.runSimulation.
    */
@@ -315,8 +317,8 @@ class PlaygroundPresenter {
     const configText = self.getConfig();
 
     return {
-      "temperature": tempBase64,
-      "precipitation": precipBase64,
+      "temperature.jshd": tempBase64,
+      "precipitation.jshd": precipBase64,
       "forevertree.jshc": configText
     };
   }
