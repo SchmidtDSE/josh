@@ -70,6 +70,7 @@ run_profiler_small.sh
 
 # Demo third-party downloads and generated WASM (Component 10)
 demo.joshsim.org/third_party/publicsans
+demo.joshsim.org/third_party/prism-core.min.js
 demo.joshsim.org/war
 
 # Jotr test files

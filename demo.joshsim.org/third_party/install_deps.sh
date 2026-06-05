@@ -10,3 +10,5 @@ if [ ! -e publicsans/fonts/otf/PublicSans-Regular.otf ]; then
   unzip public-sans-v2.001.zip
   cd ..
 fi
+
+[ ! -e prism-core.min.js ] && wget https://cdnjs.cloudflare.com/ajax/libs/prism/1.30.0/components/prism-core.min.js -O prism-core.min.js

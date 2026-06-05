@@ -83,11 +83,11 @@ footer {
 }
 
 .fade-in {
-  animation: fadeIn 0.4s ease-in-out forwards;
+  animation: fadeIn 0.65s ease-in-out forwards;
 }
 
 .fade-out {
-  animation: fadeOut 0.4s ease-in-out forwards;
+  animation: fadeOut 0.65s ease-in-out forwards;
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -96,6 +96,70 @@ footer {
     animation: none;
   }
 }
+
+/* ---- code-line block rendering with line-number gutter ---- */
+
+#buildup-code-display {
+  counter-reset: line-number;
+}
+
+.code-line {
+  display: block;
+  min-height: 1.4em;
+  padding-left: 3.5em;
+  position: relative;
+  white-space: pre;
+  /* Reserve border space on ALL lines so added-line border doesn't shift layout */
+  border-left: 3px solid transparent;
+  box-sizing: border-box;
+}
+
+.code-line::before {
+  counter-increment: line-number;
+  content: counter(line-number);
+  position: absolute;
+  left: 0;
+  width: 2.8em;
+  text-align: right;
+  padding-right: 0.5em;
+  color: #aaa;
+  font-size: 0.85em;
+  line-height: 1.4em;
+  user-select: none;
+  box-sizing: border-box;
+}
+
+/* ---- "glow, then settle" animation for newly added lines ---- */
+
+@keyframes lineAdded {
+  0%   { opacity: 0; background-color: #d4f5d4; border-left-color: #3a9d3a; }
+  30%  { opacity: 1; background-color: #d4f5d4; border-left-color: #3a9d3a; }
+  55%  { opacity: 1; background-color: #d4f5d4; border-left-color: #3a9d3a; }
+  100% { opacity: 1; background-color: transparent; border-left-color: transparent; }
+}
+
+.code-line-added {
+  animation: lineAdded 1.6s ease-out forwards;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .code-line-added {
+    animation: none;
+  }
+}
+
+/* ---- Prism token colors (light editor palette, no theme file needed) ---- */
+
+.token.keyword    { color: #4040b0; font-weight: bold; }
+.token.function   { color: #0070b0; }
+.token.string     { color: #6a7a30; }
+.token.number     { color: #7040a0; }
+.token.boolean    { color: #4040b0; font-weight: bold; }
+.token.operator   { color: #333333; }
+.token.punctuation { color: #555555; }
+.token.property   { color: #225577; }
+.token.comment    { color: #888888; font-style: italic; }
+.token.variable   { color: #222222; }
 
 #phase-welcome.active {
   display: flex;

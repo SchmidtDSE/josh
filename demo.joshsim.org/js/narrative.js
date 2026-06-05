@@ -13,7 +13,7 @@
  * Manages the multi-phase introduction narrative for demo.joshsim.org.
  *
  * Each step is described by a plain-object descriptor. The presenter owns phase show/hide,
- * code-panel line-by-line diff rendering with per-line fade-in, and nav button state.
+ * code-panel line-by-line diff rendering with per-line glow-then-settle animation, and nav button state.
  */
 class NarrativePresenter {
 
@@ -513,13 +513,16 @@ class NarrativePresenter {
   /**
    * Transition from the step at fromIndex to the current _currentIndex.
    *
-   * Fades out the old phase section, fades in the new one, updates aria-hidden, renders build-up
-   * content if applicable, and updates nav button state.
+   * Cross-fades the old phase section out while fading the new one in simultaneously, using a
+   * single shared TRANSITION_MS duration so Welcome→step and step→step feel uniform (~0.65s).
+   * Updates aria-hidden, renders build-up content if applicable, and updates nav button state.
    *
    * @param {number|null} fromIndex - The step index being transitioned away from, or null on init.
    */
   _render(fromIndex) {
     const self = this;
+    const TRANSITION_MS = 650;
+
     const toStep = self._steps[self._currentIndex];
     const fromStep = fromIndex !== null ? self._steps[fromIndex] : null;
 
@@ -527,38 +530,34 @@ class NarrativePresenter {
     const fromSection = fromStep ? self._getSectionForStep(fromStep) : null;
 
     const prefersReducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-
-    if (fromSection && fromSection !== toSection) {
-      if (prefersReducedMotion) {
-        fromSection.classList.remove("active");
-        fromSection.setAttribute("aria-hidden", "true");
-      } else {
-        fromSection.classList.add("fade-out");
-        setTimeout(() => {
-          fromSection.classList.remove("active");
-          fromSection.classList.remove("fade-out");
-          fromSection.setAttribute("aria-hidden", "true");
-        }, 400);
-      }
-    }
+    const isCrossPhase = fromSection && fromSection !== toSection;
 
     if (toStep.kind === "buildup") {
       const prevStep = fromStep && fromStep.kind === "buildup" ? fromStep : null;
       self._renderBuildup(toStep, prevStep, fromIndex !== null && fromIndex > self._currentIndex);
     }
 
-    if (prefersReducedMotion) {
-      toSection.classList.add("active");
-      toSection.setAttribute("aria-hidden", "false");
-    } else {
-      setTimeout(() => {
+    if (isCrossPhase) {
+      if (prefersReducedMotion) {
+        fromSection.classList.remove("active");
+        fromSection.setAttribute("aria-hidden", "true");
+        toSection.classList.add("active");
+        toSection.setAttribute("aria-hidden", "false");
+      } else {
+        fromSection.classList.add("fade-out");
         toSection.classList.add("active");
         toSection.setAttribute("aria-hidden", "false");
         toSection.classList.add("fade-in");
         setTimeout(() => {
+          fromSection.classList.remove("active");
+          fromSection.classList.remove("fade-out");
+          fromSection.setAttribute("aria-hidden", "true");
           toSection.classList.remove("fade-in");
-        }, 400);
-      }, fromSection && fromSection !== toSection ? 400 : 0);
+        }, TRANSITION_MS);
+      }
+    } else {
+      toSection.classList.add("active");
+      toSection.setAttribute("aria-hidden", "false");
     }
 
     self._updateNavButtons();
@@ -568,7 +567,7 @@ class NarrativePresenter {
       if (focusTarget && typeof focusTarget.focus === "function") {
         focusTarget.focus();
       }
-    }, fromSection && fromSection !== toSection ? 420 : 20);
+    }, isCrossPhase ? TRANSITION_MS : 20);
   }
 
   /**
@@ -576,7 +575,7 @@ class NarrativePresenter {
    *
    * Returns a Set of indices into `toLines` that are "added" — i.e. not part of the longest
    * common subsequence with `prevLines`. Lines present in both arrays at any position (not just
-   * the same index) are considered unchanged; only genuinely new lines receive .fade-in.
+   * the same index) are considered unchanged; only genuinely new lines receive .code-line-added.
    *
    * Uses classic DP table construction followed by backtracking. Performance is O(m*n) which is
    * acceptable for the small snapshots used here (≤ 81 lines).
@@ -637,9 +636,12 @@ class NarrativePresenter {
   /**
    * Render the build-up panel for the given step descriptor.
    *
-   * Computes an LCS-based diff against the previous substep's snapshot and applies .fade-in only
-   * to lines that are genuinely new additions. Lines that shifted index position but are otherwise
-   * unchanged do not re-fade. Going backward renders the earlier snapshot without animation.
+   * Computes an LCS-based diff against the previous substep's snapshot and applies .code-line-added
+   * only to lines that are genuinely new additions (forward navigation only). Each line is rendered
+   * as a block <div class="code-line"> so lines stack vertically without explicit newline nodes.
+   * Syntax highlighting is applied per-line via Prism if available, with graceful plain-text
+   * fallback when Prism is not loaded (e.g. opening index.html without running install_deps.sh).
+   * Going backward renders the earlier snapshot without any added-line animation.
    *
    * @param {Object} toStep - The step descriptor being rendered.
    * @param {Object|null} prevStep - The previous build-up step, or null if none.
@@ -663,19 +665,30 @@ class NarrativePresenter {
       ? new Set()
       : self._lcsAddedIndices(prevSnapshot, toSnapshot);
 
+    const useHighlight = typeof window !== "undefined"
+      && window.Prism
+      && Prism.languages
+      && Prism.languages.joshlang;
+
     codeDisplay.innerHTML = "";
 
     toSnapshot.forEach((line, i) => {
-      const span = document.createElement("span");
-      span.className = "code-line";
-      span.textContent = line;
+      const div = document.createElement("div");
+      div.className = "code-line";
 
-      if (addedIndices.has(i)) {
-        span.classList.add("fade-in");
+      if (line === "") {
+        div.innerHTML = "&#8203;";
+      } else if (useHighlight) {
+        div.innerHTML = Prism.highlight(line, Prism.languages.joshlang, "joshlang");
+      } else {
+        div.textContent = line;
       }
 
-      codeDisplay.appendChild(span);
-      codeDisplay.appendChild(document.createTextNode("\n"));
+      if (addedIndices.has(i)) {
+        div.classList.add("code-line-added");
+      }
+
+      codeDisplay.appendChild(div);
     });
 
     textPanel.innerHTML = "";

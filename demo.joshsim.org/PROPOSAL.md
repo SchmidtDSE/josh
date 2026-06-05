@@ -105,6 +105,8 @@ Established the JS layer: `index.html` gains an ES-module importmap (`?v=` cache
 #### 4. Build-up complete  ✅ complete
 Appended six descriptor objects (substeps 2–7) to `_buildSteps()` in `narrative.js`, each carrying a full accumulated `codeSnapshot`; the substep-7 snapshot is byte-identical to `paper/forevertree/forevertree_wasm.josh` (81 lines, verified by diff). Upgraded `_renderBuildup` to use an LCS-based diff via a new `_lcsAddedIndices` helper so that only genuinely new lines receive `.fade-in`, meaning shifted-but-unchanged lines (e.g. the external-data block when age/height are inserted before it in substep 5) do not re-animate. No changes were made to `_render`, `_updateNavButtons`, `goNext`/`goPrev`, `_getSectionForStep`, or `index.html`; the Next button is already disabled automatically at substep 7 (last step) and re-enables when Component 5 appends the playground step.
 
+_Milestone-B refinement (user feedback):_ added read-only Prism syntax highlighting (reusing landing's `joshlang-prism.js` grammar + `prism-core` engine, self-contained light token palette) and a line-number gutter for an editor-like look; added-lines now use a "glow-then-settle" highlight (`.code-line-added`: green border/tint that fades to clean over ~1.6s); and `_render` now cross-fades phases over a single `TRANSITION_MS` (~0.65s) so Welcome↔build-up and substep↔substep pacing is uniform and deliberate. Rendering falls back to plain text without Prism; all reduced-motion paths preserved.
+
 
 #### 5. Establish non-running editor
 Create the editor section with the Ace editor and config editor. The buttons do not need to do anything at this stage. However, the config and code editors should have the example code loaded.
