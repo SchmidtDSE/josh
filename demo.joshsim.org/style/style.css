@@ -281,6 +281,36 @@ footer {
   margin-top: 16px;
 }
 
+/* ---- External-data figures (build-up substep 4) ---- */
+
+.ext-figures {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 12px;
+  margin: 16px 0 8px;
+}
+
+.ext-figures figure {
+  margin: 0;
+  padding: 6px;
+  background-color: #FFFFFF;
+  border: 1px solid #E0E0E0;
+  border-radius: 6px;
+}
+
+.ext-figures img {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+
+.ext-figures-caption {
+  font-size: 0.85em;
+  color: #666;
+  font-style: italic;
+  margin: 0;
+}
+
 /* ---- Playground phase ---- */
 
 #phase-playground.active {

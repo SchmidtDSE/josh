@@ -27,3 +27,10 @@ mkdir -p ../data
 [ ! -e ../data/forevertree.jshc ] && cp ../../paper/forevertree/forevertree.jshc ../data/forevertree.jshc
 [ ! -e ../data/temperature.jshd ] && cp ../../paper/forevertree/data/temperature.jshd ../data/temperature.jshd
 [ ! -e ../data/precipitation.jshd ] && cp ../../paper/forevertree/data/precipitation.jshd ../data/precipitation.jshd
+
+# Build-up External-Data figures (canonical source: paper/forevertree/figures)
+mkdir -p ../img
+cp ../../paper/forevertree/figures/eco_temp_spatial.png ../img/eco_temp_spatial.png
+cp ../../paper/forevertree/figures/eco_temp_domain.png ../img/eco_temp_domain.png
+cp ../../paper/forevertree/figures/eco_precip_spatial.png ../img/eco_precip_spatial.png
+cp ../../paper/forevertree/figures/eco_precip_domain.png ../img/eco_precip_domain.png
