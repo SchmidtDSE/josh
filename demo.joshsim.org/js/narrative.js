@@ -107,7 +107,119 @@ class NarrativePresenter {
       buildupNext.addEventListener("click", () => self.goNext());
     }
 
+    self._buildStepper();
     self._render(null);
+  }
+
+  /**
+   * Build the stepper nav DOM once, wiring click handlers to goTo(globalIndex).
+   *
+   * Derives step titles from the heading fields of all buildup-kind steps in _steps.
+   * The stepper is a <nav> containing a "Step N of M" label followed by one <button>
+   * per build-up substep. Click handlers are attached once here; state (active/completed/
+   * upcoming classes and aria-current) is updated by _updateStepper() on each render.
+   */
+  _buildStepper() {
+    const self = this;
+    const nav = document.getElementById("buildup-stepper");
+    if (!nav) {
+      return;
+    }
+
+    // Collect build-up steps and their global indices.
+    self._stepperItems = [];
+    self._steps.forEach((step, globalIndex) => {
+      if (step.kind === "buildup") {
+        self._stepperItems.push({ globalIndex, heading: step.heading });
+      }
+    });
+
+    const total = self._stepperItems.length;
+
+    // "Step N of M" label — updated by _updateStepper.
+    const label = document.createElement("div");
+    label.id = "buildup-stepper-label";
+    label.className = "stepper-label";
+    nav.appendChild(label);
+
+    // One button per build-up substep.
+    const list = document.createElement("ol");
+    list.className = "stepper-list";
+    self._stepperItems.forEach((item, localIdx) => {
+      const li = document.createElement("li");
+      li.className = "stepper-item";
+
+      const btn = document.createElement("button");
+      btn.type = "button";
+      btn.className = "stepper-btn";
+      btn.textContent = item.heading;
+      btn.dataset.globalIndex = String(item.globalIndex);
+      btn.addEventListener("click", () => self.goTo(item.globalIndex));
+
+      li.appendChild(btn);
+      list.appendChild(li);
+      item.button = btn;
+      item.li = li;
+    });
+    nav.appendChild(list);
+  }
+
+  /**
+   * Update stepper visual state to reflect the current step.
+   *
+   * Called from _render after every navigation. Sets completed/current/upcoming classes,
+   * aria-current, and updates the "Step N of M" label.
+   */
+  _updateStepper() {
+    const self = this;
+    if (!self._stepperItems || self._stepperItems.length === 0) {
+      return;
+    }
+
+    const total = self._stepperItems.length;
+    const currentStep = self._steps[self._currentIndex];
+    const isBuildup = currentStep && currentStep.kind === "buildup";
+
+    // Find local index of current step in stepper (or -1 if not a buildup step).
+    let currentLocal = -1;
+    if (isBuildup) {
+      self._stepperItems.forEach((item, localIdx) => {
+        if (item.globalIndex === self._currentIndex) {
+          currentLocal = localIdx;
+        }
+      });
+    }
+
+    // Update the label.
+    const label = document.getElementById("buildup-stepper-label");
+    if (label) {
+      if (currentLocal >= 0) {
+        label.textContent = "Step " + (currentLocal + 1) + " of " + total;
+      } else {
+        label.textContent = "Step 1 of " + total;
+      }
+    }
+
+    // Update each button's state class and aria attributes.
+    self._stepperItems.forEach((item, localIdx) => {
+      const btn = item.button;
+      if (!btn) {
+        return;
+      }
+      btn.classList.remove("stepper-btn--current", "stepper-btn--completed", "stepper-btn--upcoming");
+      btn.removeAttribute("aria-current");
+
+      if (currentLocal < 0) {
+        btn.classList.add("stepper-btn--upcoming");
+      } else if (localIdx < currentLocal) {
+        btn.classList.add("stepper-btn--completed");
+      } else if (localIdx === currentLocal) {
+        btn.classList.add("stepper-btn--current");
+        btn.setAttribute("aria-current", "step");
+      } else {
+        btn.classList.add("stepper-btn--upcoming");
+      }
+    });
   }
 
   /**
@@ -561,6 +673,7 @@ class NarrativePresenter {
     }
 
     self._updateNavButtons();
+    self._updateStepper();
 
     setTimeout(() => {
       const focusTarget = toSection.querySelector("button, [tabindex]") || toSection;

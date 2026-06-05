@@ -109,6 +109,8 @@ _Milestone-B refinement (user feedback):_ added read-only Prism syntax highlight
 
 _Grammar single-source + Ace color match:_ rather than fork a demo-local grammar, the canonical `landing/joshlang-prism.js` was upgraded once (added a `variable-language` token for `meta`/`prior`/`current`/`here`; removed the `property` token so dotted suffixes like `.step`/`.init` highlight as keywords) to match the Ace IDE mode's tokenization — both the landing guides and the demo use it. The demo's `js/joshlang-prism.js` is a byte-identical copy (Component 10's CI will `cp` it from landing to enforce sync). The demo's token COLORS (in `style.css`) are matched exactly to the Ace `textmate` theme used by `editor.joshsim.org` (keyword `#0000ff`, string `#036a07`, number `#0000cd`, function `#3c4c72`, operator `#687687`, comment `#4c886b`, variable-language `#318495`, identifiers black). The guides keep their dark `prism-tomorrow` theme; `landing.css` gets a cyan `variable-language` rule so they don't regress.
 
+_Build-up nav UX:_ moved the Prev/Next buttons into the text column (below the description) instead of full-width under the code panel, and added a clickable stepper `<nav id="buildup-stepper">` at the top of the text column — a "Step N of 7" label plus one pill per substep (titles derived from the build-up step headings, not hardcoded), with completed/current/upcoming states and `aria-current`; clicking a pill jumps via `goTo()`. Built once in `_buildStepper()`, refreshed by `_updateStepper()` each render.
+
 
 #### 5. Establish non-running editor
 Create the editor section with the Ace editor and config editor. The buttons do not need to do anything at this stage. However, the config and code editors should have the example code loaded.

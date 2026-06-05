@@ -208,3 +208,84 @@ footer {
   opacity: 0.4;
   cursor: not-allowed;
 }
+
+/* ---- Build-up stepper (mini progress nav in .col-text) ---- */
+
+#buildup-stepper {
+  margin-bottom: 16px;
+  padding: 10px 12px;
+  background-color: #F0F0F8;
+  border-radius: 8px;
+  border: 1px solid #C8C8E8;
+}
+
+.stepper-label {
+  font-size: 0.8em;
+  color: #7070C0;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  margin-bottom: 8px;
+}
+
+.stepper-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.stepper-item {
+  margin: 0;
+  padding: 0;
+}
+
+.stepper-btn {
+  border: 1px solid transparent;
+  border-radius: 6px;
+  padding: 3px 10px;
+  font-size: 0.85em;
+  font-family: inherit;
+  cursor: pointer;
+  transition: background-color 0.15s, color 0.15s, border-color 0.15s;
+  white-space: nowrap;
+}
+
+.stepper-btn--current {
+  background-color: #7070C0;
+  color: #fff;
+  border-color: #5050A0;
+  cursor: default;
+}
+
+.stepper-btn--completed {
+  background-color: #D4D4F0;
+  color: #3030A0;
+  border-color: #A0A0D8;
+}
+
+.stepper-btn--completed:hover,
+.stepper-btn--completed:focus {
+  background-color: #B8B8E8;
+  border-color: #7070C0;
+}
+
+.stepper-btn--upcoming {
+  background-color: transparent;
+  color: #999;
+  border-color: #CCC;
+}
+
+.stepper-btn--upcoming:hover,
+.stepper-btn--upcoming:focus {
+  background-color: #E8E8F8;
+  color: #5050C0;
+  border-color: #A0A0D8;
+}
+
+/* When nav-buttons lives inside .col-text, reduce its top margin slightly */
+.col-text .nav-buttons {
+  margin-top: 16px;
+}
