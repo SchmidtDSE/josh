@@ -148,18 +148,20 @@ footer {
   }
 }
 
-/* ---- Prism token colors (light editor palette, no theme file needed) ---- */
+/* ---- Prism token colors: matched to the Ace "textmate" theme used by the
+   IDE editor (editor.joshsim.org), for visual consistency. Hexes are the
+   exact ace-tm token colors. ---- */
 
-.token.keyword    { color: #4040b0; font-weight: bold; }
-.token.function   { color: #0070b0; }
-.token.string     { color: #6a7a30; }
-.token.number     { color: #7040a0; }
-.token.boolean    { color: #4040b0; font-weight: bold; }
-.token.operator   { color: #333333; }
-.token.punctuation { color: #555555; }
-.token.property   { color: #225577; }
-.token.comment    { color: #888888; font-style: italic; }
-.token.variable   { color: #222222; }
+.token.keyword           { color: #0000ff; }              /* ace_keyword (blue) */
+.token.boolean           { color: #0000ff; }              /* true/false render as keyword in Ace */
+.token.function          { color: #3c4c72; }              /* ace_support.ace_function */
+.token.string            { color: #036a07; }              /* ace_string */
+.token.number            { color: #0000cd; }              /* ace_constant.ace_numeric */
+.token.operator          { color: #687687; }              /* ace_keyword.ace_operator */
+.token.comment           { color: #4c886b; font-style: italic; } /* ace_comment */
+.token.variable-language { color: #318495; }              /* ace_variable (meta/prior/current/here) */
+.token.punctuation       { color: #000000; }              /* Ace default foreground */
+.token.variable          { color: #000000; }              /* identifier text is black in Ace */
 
 #phase-welcome.active {
   display: flex;

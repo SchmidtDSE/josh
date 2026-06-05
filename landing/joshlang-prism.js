@@ -14,6 +14,10 @@
       pattern: /"[^"]*"/,
       greedy: true
     },
+    // meta/prior/current/here are intrinsic references; the Ace joshlang mode
+    // (editor/js/mode-joshlang.js) tags them as variable.language. Match that here,
+    // before 'keyword', so highlighting is consistent with the IDE editor.
+    'variable-language': /\b(?:meta|prior|current|here)\b/,
     'keyword': /\b(?:start|end|simulation|patch|organism|disturbance|external|management|unit|state|agent|alias|all|and|as|assert|at|config|const|create|current|elif|else|export|exportFiles|false|force|from|grid|here|if|import|init|latitude|limit|longitude|map|mean|normal|of|or|prior|radial|replacement|return|sample|std|step|steps|to|true|uniform|with|within|without|xor)\b/,
     'function': /\b(?:mean|std|sample|create|limit|map)\b/,
     'boolean': /\b(?:true|false)\b/,
@@ -28,13 +32,10 @@
       }
     ],
     'operator': /\+|-|\*|\/|\^|==|!=|<=|>=|<|>|=|\||#/,
+    // No 'property' token: the Ace joshlang mode highlights dotted names
+    // segment-by-segment (e.g. age.step -> 'age' identifier, 'step' keyword), so we
+    // let each segment fall through to keyword/variable and color '.' as punctuation.
     'punctuation': /[{}[\](),.;:]/,
-    'property': {
-      pattern: /\b[a-zA-Z_]\w*(?:\.[a-zA-Z_]\w*)+/,
-      inside: {
-        'punctuation': /\./
-      }
-    },
     'variable': /\b[a-zA-Z_]\w*\b/
   };
 

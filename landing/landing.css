@@ -188,3 +188,11 @@ pre {
 .skip-link:focus {
   transform: translateY(0%);
 }
+
+/* The joshlang Prism grammar emits a 'variable-language' token for
+   meta/prior/current/here (matching the Ace IDE mode). The prism-tomorrow theme
+   has no rule for it, so give it a cyan that fits the dark theme. */
+code[class*="language-joshlang"] .token.variable-language,
+pre[class*="language-joshlang"] .token.variable-language {
+  color: #67cdcc;
+}
