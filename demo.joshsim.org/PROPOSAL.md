@@ -102,8 +102,9 @@ Added a `deployDemo` job to `.github/workflows/build.yaml` modeled on `deploySta
 #### 3. Build-up start  ✅ complete
 Established the JS layer: `index.html` gains an ES-module importmap (`?v=` cache-bust) + `main()` entry, and `#phase-buildup` is populated with the two-column code/text panels + prev/next nav. New `js/main.js` constructs `NarrativePresenter` (`js/narrative.js`), which owns a flat `_steps` array (step 0 = Welcome, 1+ = build-up) with `goNext/goPrev/goTo/getCurrentIndex/getStepCount`, toggling `.active`+`aria-hidden` with the existing fade classes and reduced-motion guard. Each build-up substep stores a FULL accumulated code snapshot; `_renderBuildup` re-renders all lines and fades in only those new/changed vs the prior snapshot (robust to mid-block insertion) — Component 4 extends by appending descriptors in `_buildSteps()`. Substep 1 "Structure" shows the empty `simulation`/`patch`/`organism` skeleton; prev returns to Welcome, next disabled at the last registered step.
 
-#### 4. Build-up complete
-Finish the rest of the build up sequence and all of its substeps.
+#### 4. Build-up complete  ✅ complete
+Appended six descriptor objects (substeps 2–7) to `_buildSteps()` in `narrative.js`, each carrying a full accumulated `codeSnapshot`; the substep-7 snapshot is byte-identical to `paper/forevertree/forevertree_wasm.josh` (81 lines, verified by diff). Upgraded `_renderBuildup` to use an LCS-based diff via a new `_lcsAddedIndices` helper so that only genuinely new lines receive `.fade-in`, meaning shifted-but-unchanged lines (e.g. the external-data block when age/height are inserted before it in substep 5) do not re-animate. No changes were made to `_render`, `_updateNavButtons`, `goNext`/`goPrev`, `_getSectionForStep`, or `index.html`; the Next button is already disabled automatically at substep 7 (last step) and re-enables when Component 5 appends the playground step.
+
 
 #### 5. Establish non-running editor
 Create the editor section with the Ace editor and config editor. The buttons do not need to do anything at this stage. However, the config and code editors should have the example code loaded.

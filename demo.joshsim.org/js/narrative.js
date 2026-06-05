@@ -159,6 +159,354 @@ class NarrativePresenter {
           + " an individual living within a patch. Here we define the skeleton for the ForeverTree"
           + " simulation — three empty blocks we will fill in over the next steps.",
       },
+      {
+        id: "buildup-2-geography",
+        kind: "buildup",
+        codeSnapshot: [
+          "start simulation Main",
+          "",
+          "  grid.size = 16000 m",
+          "  grid.top_left =",
+          "    36.73 degrees latitude, -119.52 degrees longitude",
+          "  grid.bottom_right =",
+          "    35.80 degrees latitude, -117.98 degrees longitude",
+          "  grid.patch = \"Default\"",
+          "",
+          "end simulation",
+          "",
+          "start patch Default",
+          "",
+          "end patch",
+          "",
+          "start organism ForeverTree",
+          "",
+          "end organism",
+        ],
+        heading: "Geography",
+        body: "Every Josh simulation runs on a spatial grid. The <code>grid.size</code> sets the"
+          + " resolution of each patch — here 16 km × 16 km cells. <code>grid.top_left</code> and"
+          + " <code>grid.bottom_right</code> define the bounding box in latitude/longitude, placing"
+          + " our forest in the Sierra Nevada. <code>grid.patch</code> names the patch type that"
+          + " fills every cell in the grid.",
+      },
+      {
+        id: "buildup-3-initialization",
+        kind: "buildup",
+        codeSnapshot: [
+          "start simulation Main",
+          "",
+          "  grid.size = 16000 m",
+          "  grid.top_left =",
+          "    36.73 degrees latitude, -119.52 degrees longitude",
+          "  grid.bottom_right =",
+          "    35.80 degrees latitude, -117.98 degrees longitude",
+          "  grid.patch = \"Default\"",
+          "",
+          "end simulation",
+          "",
+          "start patch Default",
+          "",
+          "  ForeverTree.init =",
+          "    create 10 count of ForeverTree",
+          "",
+          "end patch",
+          "",
+          "start organism ForeverTree",
+          "",
+          "end organism",
+        ],
+        heading: "Initialization",
+        body: "Patches come to life through initialization. The <code>ForeverTree.init</code>"
+          + " attribute is evaluated once at the start of the simulation; here it creates 10"
+          + " ForeverTree organisms in every patch. Josh handles the bookkeeping — each created"
+          + " organism is tracked and updated independently across every time step.",
+      },
+      {
+        id: "buildup-4-external-data",
+        kind: "buildup",
+        codeSnapshot: [
+          "start simulation Main",
+          "",
+          "  grid.size = 16000 m",
+          "  grid.top_left =",
+          "    36.73 degrees latitude, -119.52 degrees longitude",
+          "  grid.bottom_right =",
+          "    35.80 degrees latitude, -117.98 degrees longitude",
+          "  grid.patch = \"Default\"",
+          "",
+          "end simulation",
+          "",
+          "start patch Default",
+          "",
+          "  ForeverTree.init =",
+          "    create 10 count of ForeverTree",
+          "",
+          "end patch",
+          "",
+          "start organism ForeverTree",
+          "",
+          "  clampedTemp.step =",
+          "    limit (external temperature)",
+          "    to [270 K, 330 K]",
+          "",
+          "  temperatureImpact.step =",
+          "    map clampedTemp",
+          "    from [270 K, 330 K]",
+          "    to [0%, 100%] quadratic(true)",
+          "",
+          "  precipImpact.step =",
+          "    map (external precipitation as mm)",
+          "    from [300 mm, 500 mm]",
+          "    to [meta.minPrecipImpactPct, 100%] sigmoid",
+          "",
+          "end organism",
+        ],
+        heading: "External Data",
+        body: "Real simulations respond to real-world conditions. Josh can read geospatial data"
+          + " files aligned to the simulation grid. Here we pull in gridded temperature and"
+          + " precipitation rasters. <code>clampedTemp</code> bounds the temperature to a"
+          + " physiologically meaningful range. <code>temperatureImpact</code> maps that clamped"
+          + " value to a growth modifier using a quadratic curve, while <code>precipImpact</code>"
+          + " uses a sigmoid to translate precipitation into a fractional growth effect.",
+      },
+      {
+        id: "buildup-5-forevertree",
+        kind: "buildup",
+        codeSnapshot: [
+          "start simulation Main",
+          "",
+          "  grid.size = 16000 m",
+          "  grid.top_left =",
+          "    36.73 degrees latitude, -119.52 degrees longitude",
+          "  grid.bottom_right =",
+          "    35.80 degrees latitude, -117.98 degrees longitude",
+          "  grid.patch = \"Default\"",
+          "",
+          "end simulation",
+          "",
+          "start patch Default",
+          "",
+          "  ForeverTree.init =",
+          "    create 10 count of ForeverTree",
+          "",
+          "end patch",
+          "",
+          "start organism ForeverTree",
+          "",
+          "  age.init = 0 year",
+          "  age.step = prior.age + 1 year",
+          "  height.init = 0 m",
+          "",
+          "  clampedTemp.step =",
+          "    limit (external temperature)",
+          "    to [270 K, 330 K]",
+          "",
+          "  temperatureImpact.step =",
+          "    map clampedTemp",
+          "    from [270 K, 330 K]",
+          "    to [0%, 100%] quadratic(true)",
+          "",
+          "  precipImpact.step =",
+          "    map (external precipitation as mm)",
+          "    from [300 mm, 500 mm]",
+          "    to [meta.minPrecipImpactPct, 100%] sigmoid",
+          "",
+          "  stochastic.step =",
+          "    sample normal",
+          "    with mean of 100% std of 5%",
+          "",
+          "  newGrowth.step =",
+          "    meta.maxNewGrowth * temperatureImpact * precipImpact * stochastic",
+          "",
+          "  height.step = prior.height + newGrowth",
+          "",
+          "end organism",
+        ],
+        heading: "ForeverTree",
+        body: "With climate drivers in place, we can define how a ForeverTree actually grows."
+          + " Each organism tracks its <code>age</code> and <code>height</code> across time steps."
+          + " A <code>stochastic</code> term samples a normal distribution each step, introducing"
+          + " natural variability. <code>newGrowth</code> multiplies the maximum possible growth"
+          + " rate by the temperature impact, precipitation impact, and stochastic factors."
+          + " Finally, <code>height.step</code> accumulates growth from the prior step onward.",
+      },
+      {
+        id: "buildup-6-units",
+        kind: "buildup",
+        codeSnapshot: [
+          "start simulation Main",
+          "",
+          "  grid.size = 16000 m",
+          "  grid.top_left =",
+          "    36.73 degrees latitude, -119.52 degrees longitude",
+          "  grid.bottom_right =",
+          "    35.80 degrees latitude, -117.98 degrees longitude",
+          "  grid.patch = \"Default\"",
+          "",
+          "end simulation",
+          "",
+          "start patch Default",
+          "",
+          "  ForeverTree.init =",
+          "    create 10 count of ForeverTree",
+          "",
+          "end patch",
+          "",
+          "start organism ForeverTree",
+          "",
+          "  age.init = 0 year",
+          "  age.step = prior.age + 1 year",
+          "  height.init = 0 m",
+          "",
+          "  clampedTemp.step =",
+          "    limit (external temperature)",
+          "    to [270 K, 330 K]",
+          "",
+          "  temperatureImpact.step =",
+          "    map clampedTemp",
+          "    from [270 K, 330 K]",
+          "    to [0%, 100%] quadratic(true)",
+          "",
+          "  precipImpact.step =",
+          "    map (external precipitation as mm)",
+          "    from [300 mm, 500 mm]",
+          "    to [meta.minPrecipImpactPct, 100%] sigmoid",
+          "",
+          "  stochastic.step =",
+          "    sample normal",
+          "    with mean of 100% std of 5%",
+          "",
+          "  newGrowth.step =",
+          "    meta.maxNewGrowth * temperatureImpact * precipImpact * stochastic",
+          "",
+          "  height.step = prior.height + newGrowth",
+          "",
+          "end organism",
+          "",
+          "start unit kgm2s",
+          "",
+          "  mm = current * 31536000",
+          "",
+          "end unit",
+          "",
+          "start unit mm",
+          "",
+          "  alias millimeter",
+          "  alias millimeters",
+          "  m = current / 1000",
+          "",
+          "end unit",
+          "",
+          "start unit K",
+          "",
+          "  alias Kelvin",
+          "  alias Kelvins",
+          "",
+          "end unit",
+        ],
+        heading: "Units",
+        body: "Josh has a built-in unit system. Rather than tracking unit conversions by hand,"
+          + " you declare conversion rules in <code>start unit</code> blocks. Here we define that"
+          + " <code>kgm2s</code> (the SI unit for precipitation flux from the climate data)"
+          + " converts to <code>mm</code> per year, and that <code>mm</code> converts to"
+          + " <code>m</code>. Josh applies these automatically whenever a value is used in a"
+          + " context requiring a different unit.",
+      },
+      {
+        id: "buildup-7-export",
+        kind: "buildup",
+        codeSnapshot: [
+          "start simulation Main",
+          "",
+          "  grid.size = 16000 m",
+          "  grid.top_left =",
+          "    36.73 degrees latitude, -119.52 degrees longitude",
+          "  grid.bottom_right =",
+          "    35.80 degrees latitude, -117.98 degrees longitude",
+          "  grid.patch = \"Default\"",
+          "",
+          "  steps.low = 0 count",
+          "  steps.high = 10 count",
+          "",
+          "  minPrecipImpactPct.init = config forevertree.minPrecipImpactPct",
+          "  maxNewGrowth.init = config forevertree.maxNewGrowth",
+          "",
+          "  exportFiles.patch = \"memory://editor/patches\"",
+          "",
+          "end simulation",
+          "",
+          "start patch Default",
+          "",
+          "  ForeverTree.init =",
+          "    create 10 count of ForeverTree",
+          "",
+          "  export.year.step = 2024 count + meta.stepCount",
+          "  export.nTrees.step = count(ForeverTree)",
+          "  export.meanHeight.step = mean(ForeverTree.height)",
+          "",
+          "end patch",
+          "",
+          "start organism ForeverTree",
+          "",
+          "  age.init = 0 year",
+          "  age.step = prior.age + 1 year",
+          "  height.init = 0 m",
+          "",
+          "  clampedTemp.step =",
+          "    limit (external temperature)",
+          "    to [270 K, 330 K]",
+          "",
+          "  temperatureImpact.step =",
+          "    map clampedTemp",
+          "    from [270 K, 330 K]",
+          "    to [0%, 100%] quadratic(true)",
+          "",
+          "  precipImpact.step =",
+          "    map (external precipitation as mm)",
+          "    from [300 mm, 500 mm]",
+          "    to [meta.minPrecipImpactPct, 100%] sigmoid",
+          "",
+          "  stochastic.step =",
+          "    sample normal",
+          "    with mean of 100% std of 5%",
+          "",
+          "  newGrowth.step =",
+          "    meta.maxNewGrowth * temperatureImpact * precipImpact * stochastic",
+          "",
+          "  height.step = prior.height + newGrowth",
+          "",
+          "end organism",
+          "",
+          "start unit kgm2s",
+          "",
+          "  mm = current * 31536000",
+          "",
+          "end unit",
+          "",
+          "start unit mm",
+          "",
+          "  alias millimeter",
+          "  alias millimeters",
+          "  m = current / 1000",
+          "",
+          "end unit",
+          "",
+          "start unit K",
+          "",
+          "  alias Kelvin",
+          "  alias Kelvins",
+          "",
+          "end unit",
+        ],
+        heading: "Export & Config",
+        body: "The final pieces wire the simulation to the outside world."
+          + " <code>steps.low</code> and <code>steps.high</code> define the time range (here"
+          + " years 0–10). The <code>config</code> keyword pulls tunable parameters from a"
+          + " <code>.jshc</code> configuration file, keeping the model code clean."
+          + " <code>exportFiles.patch</code> names the in-memory destination for results, and the"
+          + " three <code>export.*</code> lines in the patch record the year, tree count, and mean"
+          + " height at every step — the data we will visualise next.",
+      },
     ];
   }
 
@@ -224,10 +572,74 @@ class NarrativePresenter {
   }
 
   /**
+   * Compute an LCS-based diff between two line arrays.
+   *
+   * Returns a Set of indices into `toLines` that are "added" — i.e. not part of the longest
+   * common subsequence with `prevLines`. Lines present in both arrays at any position (not just
+   * the same index) are considered unchanged; only genuinely new lines receive .fade-in.
+   *
+   * Uses classic DP table construction followed by backtracking. Performance is O(m*n) which is
+   * acceptable for the small snapshots used here (≤ 81 lines).
+   *
+   * Blank lines and duplicate content lines are handled correctly by the LCS algorithm — a blank
+   * line shared between both snapshots counts as a common element at that position in the LCS.
+   *
+   * @param {string[]} prevLines - The previous snapshot lines.
+   * @param {string[]} toLines - The new snapshot lines.
+   * @returns {Set<number>} Set of indices in `toLines` that are additions (not in LCS).
+   */
+  _lcsAddedIndices(prevLines, toLines) {
+    const m = prevLines.length;
+    const n = toLines.length;
+
+    // Build DP table: dp[i][j] = LCS length of prevLines[0..i-1] and toLines[0..j-1].
+    const dp = [];
+    for (let i = 0; i <= m; i++) {
+      dp.push(new Array(n + 1).fill(0));
+    }
+    for (let i = 1; i <= m; i++) {
+      for (let j = 1; j <= n; j++) {
+        if (prevLines[i - 1] === toLines[j - 1]) {
+          dp[i][j] = dp[i - 1][j - 1] + 1;
+        } else {
+          dp[i][j] = Math.max(dp[i - 1][j], dp[i][j - 1]);
+        }
+      }
+    }
+
+    // Backtrack to find which indices in toLines are part of the LCS (i.e. unchanged).
+    const inLcs = new Set();
+    let i = m;
+    let j = n;
+    while (i > 0 && j > 0) {
+      if (prevLines[i - 1] === toLines[j - 1]) {
+        // This toLines[j-1] is part of the LCS — not an addition.
+        inLcs.add(j - 1);
+        i--;
+        j--;
+      } else if (dp[i - 1][j] >= dp[i][j - 1]) {
+        i--;
+      } else {
+        j--;
+      }
+    }
+
+    // Every toLines index NOT in the LCS is an added line.
+    const added = new Set();
+    for (let k = 0; k < n; k++) {
+      if (!inLcs.has(k)) {
+        added.add(k);
+      }
+    }
+    return added;
+  }
+
+  /**
    * Render the build-up panel for the given step descriptor.
    *
-   * Computes a line-by-line diff against the previous substep's snapshot and applies .fade-in only
-   * to newly added or changed lines. Going backward renders the earlier snapshot without animation.
+   * Computes an LCS-based diff against the previous substep's snapshot and applies .fade-in only
+   * to lines that are genuinely new additions. Lines that shifted index position but are otherwise
+   * unchanged do not re-fade. Going backward renders the earlier snapshot without animation.
    *
    * @param {Object} toStep - The step descriptor being rendered.
    * @param {Object|null} prevStep - The previous build-up step, or null if none.
@@ -245,6 +657,12 @@ class NarrativePresenter {
     const prevSnapshot = prevStep ? prevStep.codeSnapshot : [];
     const toSnapshot = toStep.codeSnapshot;
 
+    // Compute which lines in the new snapshot are genuine additions (LCS-based diff).
+    // Going backward never animates — treat all lines as unchanged.
+    const addedIndices = goingBack
+      ? new Set()
+      : self._lcsAddedIndices(prevSnapshot, toSnapshot);
+
     codeDisplay.innerHTML = "";
 
     toSnapshot.forEach((line, i) => {
@@ -252,11 +670,7 @@ class NarrativePresenter {
       span.className = "code-line";
       span.textContent = line;
 
-      const isNew = goingBack
-        ? false
-        : (i >= prevSnapshot.length || prevSnapshot[i] !== line);
-
-      if (isNew) {
+      if (addedIndices.has(i)) {
         span.classList.add("fade-in");
       }
 
