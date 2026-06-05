@@ -454,7 +454,12 @@ class NarrativePresenter {
           + " which defines global settings and the simulation grid; a <strong>patch</strong>, which"
           + " represents a location on that grid; and an <strong>organism</strong>, which represents"
           + " an individual living within a patch. Here we define the skeleton for the ForeverTree"
-          + " simulation — three empty blocks we will fill in over the next steps.",
+          + " simulation — three empty blocks we will fill in over the next steps."
+          + " In Josh, <strong>simulation</strong> defines the spatial extent, temporal range,"
+          + " export targets, and landscape-level logic; <strong>patch</strong> describes a grid"
+          + " cell, an initialization of organisms, per-step computations, and exported summary"
+          + " statistics; and <strong>organism</strong> defines the attributes and per-step behavior"
+          + " of an individual organism (“agent”), optionally including state transitions.",
       },
       {
         id: "buildup-2-geography",
@@ -484,7 +489,8 @@ class NarrativePresenter {
           + " resolution of each patch — here 16 km × 16 km cells. <code>grid.top_left</code> and"
           + " <code>grid.bottom_right</code> define the bounding box in latitude/longitude, placing"
           + " our forest in the Sierra Nevada. <code>grid.patch</code> names the patch type that"
-          + " fills every cell in the grid.",
+          + " fills every cell in the grid. Concretely, this lays out 16 km square patches over a"
+          + " fixed lat/lon bounding box (36.73, -119.52 to 35.80, -117.98 degrees).",
       },
       {
         id: "buildup-3-initialization",
@@ -516,7 +522,8 @@ class NarrativePresenter {
         body: "Patches come to life through initialization. The <code>ForeverTree.init</code>"
           + " attribute is evaluated once at the start of the simulation; here it creates 10"
           + " ForeverTree organisms in every patch. Josh handles the bookkeeping — each created"
-          + " organism is tracked and updated independently across every time step.",
+          + " organism is tracked and updated independently across every time step. There are ten"
+          + " ForeverTree agents per patch at t0 (no mortality, so the count is constant).",
       },
       {
         id: "buildup-4-external-data",
@@ -565,6 +572,9 @@ class NarrativePresenter {
           + " physiologically meaningful range. <code>temperatureImpact</code> maps that clamped"
           + " value to a growth modifier using a quadratic curve, while <code>precipImpact</code>"
           + " uses a sigmoid to translate precipitation into a fractional growth effect."
+          + " Climate rasters (geotiff/COG, NetCDF) are preprocessed once into grid-aligned"
+          + " <code>.jshd</code> layers, so at runtime <code>external</code> is a plain per-patch"
+          + " read; the user never writes alignment or interpolation logic."
           + "<div class=\"ext-figures\">"
           + "<figure><img src=\"img/eco_temp_spatial.png\""
           + " alt=\"Map of input temperature in Kelvin across the simulation grid, warmer to the south\"></figure>"
@@ -638,7 +648,11 @@ class NarrativePresenter {
           + " A <code>stochastic</code> term samples a normal distribution each step, introducing"
           + " natural variability. <code>newGrowth</code> multiplies the maximum possible growth"
           + " rate by the temperature impact, precipitation impact, and stochastic factors."
-          + " Finally, <code>height.step</code> accumulates growth from the prior step onward.",
+          + " Finally, <code>height.step</code> accumulates growth from the prior step onward."
+          + " The annual increment combines three unitless factors — a unimodal temperature impact"
+          + " that peaks mid-window and is zero at the edges, a saturating precipitation impact, and"
+          + " a multiplicative noise term — so growth is choked off whenever either climate driver"
+          + " is unfavorable.",
       },
       {
         id: "buildup-6-units",
@@ -720,7 +734,10 @@ class NarrativePresenter {
           + " <code>kgm2s</code> (the SI unit for precipitation flux from the climate data)"
           + " converts to <code>mm</code> per year, and that <code>mm</code> converts to"
           + " <code>m</code>. Josh applies these automatically whenever a value is used in a"
-          + " context requiring a different unit.",
+          + " context requiring a different unit — built-in support for automatic unit conversions"
+          + " between compatible types (like Fahrenheit to Celsius). The <code>as mm</code> cast"
+          + " invokes the registered conversion — kg m⁻²s⁻¹ × 31536000 → mm yr⁻¹ — applied"
+          + " automatically wherever a target unit is named.",
       },
       {
         id: "buildup-7-export",
@@ -733,7 +750,11 @@ class NarrativePresenter {
           + " <code>.jshc</code> configuration file, keeping the model code clean."
           + " <code>exportFiles.patch</code> names the in-memory destination for results, and the"
           + " three <code>export.*</code> lines in the patch record the year, tree count, and mean"
-          + " height at every step — the data we will visualise next.",
+          + " height at every step — the data we will visualise next. The run covers 10 simulated"
+          + " years (steps 0–10); stochastic replicates share the same climate forcing and initial"
+          + " conditions, with one row per (patch, year, replicate) recording year, nTrees, and"
+          + " meanHeight. The <code>config</code> reads pull <code>minPrecipImpactPct</code> and"
+          + " <code>maxNewGrowth</code> from a companion <code>forevertree.jshc</code>.",
       },
       {
         id: "playground",
