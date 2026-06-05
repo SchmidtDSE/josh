@@ -285,9 +285,26 @@ class GridPresenter {
       }
     }
 
-    const values = cells.map(d => d.value);
+    // Demo-specific divergence from the editor's GridPresenter: fix the color
+    // domain across ALL timesteps (not just the current one) so the heatmap is
+    // comparable as the user scrubs through years — early years read light and
+    // later years dark, making growth visible. (Editor rescales per timestep.)
+    const allValues = [];
+    const minTimestep = summarized.getMinTimestep();
+    const maxTimestep = summarized.getMaxTimestep();
+    for (let t = minTimestep; t <= maxTimestep; t += 1) {
+      for (let x = metadata.getStartX(); x < endXPad; x += patchSize) {
+        for (let y = metadata.getStartY(); y < endYPad; y += patchSize) {
+          const v = summarized.getGridValue(t, x + patchSizeHalf, y + patchSizeHalf);
+          if (v !== null) {
+            allValues.push(v);
+          }
+        }
+      }
+    }
+
     const colorScale = d3.scaleSequential()
-      .domain([Math.min(...values), Math.max(...values)])
+      .domain([Math.min(...allValues), Math.max(...allValues)])
       .interpolator(d3.interpolateBlues);
 
     const xScale = d3.scaleLinear()
