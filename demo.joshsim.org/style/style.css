@@ -280,3 +280,39 @@ footer {
 .col-text .nav-buttons {
   margin-top: 16px;
 }
+
+/* ---- Playground phase ---- */
+
+#phase-playground.active {
+  padding: 20px;
+}
+
+#playground-editor {
+  height: 360px;
+  width: 100%;
+}
+
+#playground-config-details {
+  margin-top: 12px;
+}
+
+#playground-config {
+  width: 100%;
+  box-sizing: border-box;
+  font-family: monospace;
+  font-size: 13px;
+  resize: vertical;
+}
+
+#playground-results {
+  min-height: 200px;
+}
+
+.col-results {
+  padding: 10px;
+}
+
+/* When nav-buttons lives inside .col-code--playground, use same spacing as .col-text */
+.col-code--playground .nav-buttons {
+  margin-top: 16px;
+}

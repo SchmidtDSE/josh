@@ -1,12 +1,14 @@
 /**
  * Main entry point for the Josh introduction demo at demo.joshsim.org.
  *
- * Constructs and returns a NarrativePresenter which owns the full narrative flow.
+ * Constructs a NarrativePresenter and a PlaygroundPresenter, wires them together, and starts
+ * the narrative flow.
  *
  * @license BSD-3-Clause
  */
 
-import {NarrativePresenter} from "narrative";
+import {NarrativePresenter, FOREVERTREE_WASM_SNAPSHOT} from "narrative";
+import {PlaygroundPresenter} from "playground";
 
 
 /**
@@ -15,7 +17,18 @@ import {NarrativePresenter} from "narrative";
  * @returns {NarrativePresenter} The presenter instance owning the narrative state.
  */
 function main() {
-  return new NarrativePresenter("narrative");
+  const narrativePresenter = new NarrativePresenter("narrative");
+
+  const playgroundPresenter = new PlaygroundPresenter(
+    "playground-editor",
+    "playground-config",
+    FOREVERTREE_WASM_SNAPSHOT,
+    "data/forevertree.jshc"
+  );
+
+  narrativePresenter.setPlaygroundPresenter(playgroundPresenter);
+
+  return narrativePresenter;
 }
 
 

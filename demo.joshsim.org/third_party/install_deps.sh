@@ -12,3 +12,12 @@ if [ ! -e publicsans/fonts/otf/PublicSans-Regular.otf ]; then
 fi
 
 [ ! -e prism-core.min.js ] && wget https://cdnjs.cloudflare.com/ajax/libs/prism/1.30.0/components/prism-core.min.js -O prism-core.min.js
+
+[ ! -e ace.min.js ] && wget https://editor.joshsim.org/third_party/ace.min.js -O ace.min.js
+
+[ ! -e theme-textmate.js ] && wget https://editor.joshsim.org/third_party/theme-textmate.js -O theme-textmate.js
+
+[ ! -e theme-textmate-css.js ] && wget https://editor.joshsim.org/third_party/theme-textmate-css.js -O theme-textmate-css.js
+
+mkdir -p ../data
+[ ! -e ../data/forevertree.jshc ] && cp ../../paper/forevertree/forevertree.jshc ../data/forevertree.jshc

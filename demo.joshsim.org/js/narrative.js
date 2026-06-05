@@ -10,6 +10,97 @@
 
 
 /**
+ * Full accumulated code snapshot for the forevertree_wasm.josh model.
+ *
+ * Defined once here and referenced by both the substep-7 descriptor and the PlaygroundPresenter
+ * so the model text has a single source of truth within this demo.
+ */
+const FOREVERTREE_WASM_SNAPSHOT = [
+  "start simulation Main",
+  "",
+  "  grid.size = 16000 m",
+  "  grid.top_left =",
+  "    36.73 degrees latitude, -119.52 degrees longitude",
+  "  grid.bottom_right =",
+  "    35.80 degrees latitude, -117.98 degrees longitude",
+  "  grid.patch = \"Default\"",
+  "",
+  "  steps.low = 0 count",
+  "  steps.high = 10 count",
+  "",
+  "  minPrecipImpactPct.init = config forevertree.minPrecipImpactPct",
+  "  maxNewGrowth.init = config forevertree.maxNewGrowth",
+  "",
+  "  exportFiles.patch = \"memory://editor/patches\"",
+  "",
+  "end simulation",
+  "",
+  "start patch Default",
+  "",
+  "  ForeverTree.init =",
+  "    create 10 count of ForeverTree",
+  "",
+  "  export.year.step = 2024 count + meta.stepCount",
+  "  export.nTrees.step = count(ForeverTree)",
+  "  export.meanHeight.step = mean(ForeverTree.height)",
+  "",
+  "end patch",
+  "",
+  "start organism ForeverTree",
+  "",
+  "  age.init = 0 year",
+  "  age.step = prior.age + 1 year",
+  "  height.init = 0 m",
+  "",
+  "  clampedTemp.step =",
+  "    limit (external temperature)",
+  "    to [270 K, 330 K]",
+  "",
+  "  temperatureImpact.step =",
+  "    map clampedTemp",
+  "    from [270 K, 330 K]",
+  "    to [0%, 100%] quadratic(true)",
+  "",
+  "  precipImpact.step =",
+  "    map (external precipitation as mm)",
+  "    from [300 mm, 500 mm]",
+  "    to [meta.minPrecipImpactPct, 100%] sigmoid",
+  "",
+  "  stochastic.step =",
+  "    sample normal",
+  "    with mean of 100% std of 5%",
+  "",
+  "  newGrowth.step =",
+  "    meta.maxNewGrowth * temperatureImpact * precipImpact * stochastic",
+  "",
+  "  height.step = prior.height + newGrowth",
+  "",
+  "end organism",
+  "",
+  "start unit kgm2s",
+  "",
+  "  mm = current * 31536000",
+  "",
+  "end unit",
+  "",
+  "start unit mm",
+  "",
+  "  alias millimeter",
+  "  alias millimeters",
+  "  m = current / 1000",
+  "",
+  "end unit",
+  "",
+  "start unit K",
+  "",
+  "  alias Kelvin",
+  "  alias Kelvins",
+  "",
+  "end unit",
+];
+
+
+/**
  * Manages the multi-phase introduction narrative for demo.joshsim.org.
  *
  * Each step is described by a plain-object descriptor. The presenter owns phase show/hide,
@@ -87,6 +178,17 @@ class NarrativePresenter {
   }
 
   /**
+   * Provide the PlaygroundPresenter instance so NarrativePresenter can call onShow().
+   *
+   * Must be called after construction but before the user navigates to the playground step.
+   *
+   * @param {PlaygroundPresenter} presenter - The playground presenter instance.
+   */
+  setPlaygroundPresenter(presenter) {
+    this._playgroundPresenter = presenter;
+  }
+
+  /**
    * Wire button event listeners, build initial step list, and render the initial step.
    */
   _setup() {
@@ -105,6 +207,16 @@ class NarrativePresenter {
     const buildupNext = document.getElementById("buildup-next-button");
     if (buildupNext) {
       buildupNext.addEventListener("click", () => self.goNext());
+    }
+
+    const playgroundPrev = document.getElementById("playground-prev-button");
+    if (playgroundPrev) {
+      playgroundPrev.addEventListener("click", () => self.goPrev());
+    }
+
+    const playgroundNext = document.getElementById("playground-next-button");
+    if (playgroundNext) {
+      playgroundNext.addEventListener("click", () => self.goNext());
     }
 
     self._buildStepper();
@@ -508,89 +620,7 @@ class NarrativePresenter {
       {
         id: "buildup-7-export",
         kind: "buildup",
-        codeSnapshot: [
-          "start simulation Main",
-          "",
-          "  grid.size = 16000 m",
-          "  grid.top_left =",
-          "    36.73 degrees latitude, -119.52 degrees longitude",
-          "  grid.bottom_right =",
-          "    35.80 degrees latitude, -117.98 degrees longitude",
-          "  grid.patch = \"Default\"",
-          "",
-          "  steps.low = 0 count",
-          "  steps.high = 10 count",
-          "",
-          "  minPrecipImpactPct.init = config forevertree.minPrecipImpactPct",
-          "  maxNewGrowth.init = config forevertree.maxNewGrowth",
-          "",
-          "  exportFiles.patch = \"memory://editor/patches\"",
-          "",
-          "end simulation",
-          "",
-          "start patch Default",
-          "",
-          "  ForeverTree.init =",
-          "    create 10 count of ForeverTree",
-          "",
-          "  export.year.step = 2024 count + meta.stepCount",
-          "  export.nTrees.step = count(ForeverTree)",
-          "  export.meanHeight.step = mean(ForeverTree.height)",
-          "",
-          "end patch",
-          "",
-          "start organism ForeverTree",
-          "",
-          "  age.init = 0 year",
-          "  age.step = prior.age + 1 year",
-          "  height.init = 0 m",
-          "",
-          "  clampedTemp.step =",
-          "    limit (external temperature)",
-          "    to [270 K, 330 K]",
-          "",
-          "  temperatureImpact.step =",
-          "    map clampedTemp",
-          "    from [270 K, 330 K]",
-          "    to [0%, 100%] quadratic(true)",
-          "",
-          "  precipImpact.step =",
-          "    map (external precipitation as mm)",
-          "    from [300 mm, 500 mm]",
-          "    to [meta.minPrecipImpactPct, 100%] sigmoid",
-          "",
-          "  stochastic.step =",
-          "    sample normal",
-          "    with mean of 100% std of 5%",
-          "",
-          "  newGrowth.step =",
-          "    meta.maxNewGrowth * temperatureImpact * precipImpact * stochastic",
-          "",
-          "  height.step = prior.height + newGrowth",
-          "",
-          "end organism",
-          "",
-          "start unit kgm2s",
-          "",
-          "  mm = current * 31536000",
-          "",
-          "end unit",
-          "",
-          "start unit mm",
-          "",
-          "  alias millimeter",
-          "  alias millimeters",
-          "  m = current / 1000",
-          "",
-          "end unit",
-          "",
-          "start unit K",
-          "",
-          "  alias Kelvin",
-          "  alias Kelvins",
-          "",
-          "end unit",
-        ],
+        codeSnapshot: FOREVERTREE_WASM_SNAPSHOT,
         heading: "Export & Config",
         body: "The final pieces wire the simulation to the outside world."
           + " <code>steps.low</code> and <code>steps.high</code> define the time range (here"
@@ -599,6 +629,13 @@ class NarrativePresenter {
           + " <code>exportFiles.patch</code> names the in-memory destination for results, and the"
           + " three <code>export.*</code> lines in the patch record the year, tree count, and mean"
           + " height at every step — the data we will visualise next.",
+      },
+      {
+        id: "playground",
+        kind: "playground",
+        codeSnapshot: [],
+        heading: null,
+        body: null,
       },
     ];
   }
@@ -636,6 +673,9 @@ class NarrativePresenter {
         fromSection.setAttribute("aria-hidden", "true");
         toSection.classList.add("active");
         toSection.setAttribute("aria-hidden", "false");
+        if (toStep.kind === "playground" && self._playgroundPresenter) {
+          self._playgroundPresenter.onShow();
+        }
       } else {
         fromSection.classList.add("fade-out");
         toSection.classList.add("active");
@@ -646,6 +686,9 @@ class NarrativePresenter {
           fromSection.classList.remove("fade-out");
           fromSection.setAttribute("aria-hidden", "true");
           toSection.classList.remove("fade-in");
+          if (toStep.kind === "playground" && self._playgroundPresenter) {
+            self._playgroundPresenter.onShow();
+          }
         }, TRANSITION_MS);
       }
     } else {
@@ -806,6 +849,7 @@ class NarrativePresenter {
    *
    * The welcome step has no prev/next buttons of its own (it has its own next button wired
    * separately). For build-up steps the nav buttons inside #phase-buildup are managed here.
+   * For the playground step the nav buttons inside #phase-playground are managed here.
    */
   _updateNavButtons() {
     const self = this;
@@ -814,16 +858,27 @@ class NarrativePresenter {
     const buildupPrev = document.getElementById("buildup-prev-button");
     const buildupNext = document.getElementById("buildup-next-button");
 
-    if (!buildupPrev || !buildupNext) {
-      return;
+    if (buildupPrev && buildupNext) {
+      if (step.kind === "buildup") {
+        buildupPrev.disabled = false;
+        buildupNext.disabled = self._currentIndex >= self._steps.length - 1;
+      } else {
+        buildupPrev.disabled = true;
+        buildupNext.disabled = false;
+      }
     }
 
-    if (step.kind === "buildup") {
-      buildupPrev.disabled = false;
-      buildupNext.disabled = self._currentIndex >= self._steps.length - 1;
-    } else {
-      buildupPrev.disabled = true;
-      buildupNext.disabled = false;
+    const playgroundPrev = document.getElementById("playground-prev-button");
+    const playgroundNext = document.getElementById("playground-next-button");
+
+    if (playgroundPrev && playgroundNext) {
+      if (step.kind === "playground") {
+        playgroundPrev.disabled = self._currentIndex <= 0;
+        playgroundNext.disabled = self._currentIndex >= self._steps.length - 1;
+      } else {
+        playgroundPrev.disabled = true;
+        playgroundNext.disabled = true;
+      }
     }
   }
 
@@ -846,4 +901,4 @@ class NarrativePresenter {
 }
 
 
-export {NarrativePresenter};
+export {NarrativePresenter, FOREVERTREE_WASM_SNAPSHOT};

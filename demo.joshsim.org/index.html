@@ -43,7 +43,29 @@
         </div>
       </section>
 
-      <section id="phase-playground" class="phase" aria-hidden="true"></section>
+      <section id="phase-playground" class="phase" aria-hidden="true" aria-labelledby="playground-heading">
+        <div class="phase-two-col">
+          <div class="col-code col-code--playground">
+            <h2 id="playground-heading">Try it yourself</h2>
+            <p>Now that we have built up the simulation, give it a run yourself. This will execute
+               on your computer in your browser. Make modifications to the code and then click
+               the run button.</p>
+            <div id="playground-editor"></div>
+            <details id="playground-config-details">
+              <summary>Configuration</summary>
+              <textarea id="playground-config" rows="6" spellcheck="false"></textarea>
+            </details>
+            <div class="nav-buttons">
+              <button type="button" id="playground-prev-button" class="secondary">Previous</button>
+              <button type="button" id="playground-run-button" class="primary" disabled>Run</button>
+              <button type="button" id="playground-next-button" class="primary">Next</button>
+            </div>
+          </div>
+          <div class="col-results">
+            <div id="playground-results"></div>
+          </div>
+        </div>
+      </section>
 
       <section id="phase-conclusion" class="phase" aria-hidden="true"></section>
     </main>
@@ -53,11 +75,17 @@
     <script src="third_party/prism-core.min.js"></script>
     <script src="js/joshlang-prism.js?v=0.0.1"></script>
 
+    <script src="third_party/ace.min.js"></script>
+    <script src="third_party/theme-textmate.js"></script>
+    <script src="third_party/theme-textmate-css.js"></script>
+    <script src="js/mode-joshlang.js?v=0.0.1"></script>
+
     <script type="importmap">
       {
         "imports": {
-          "main":      "./js/main.js?v=0.0.1",
-          "narrative": "./js/narrative.js?v=0.0.1"
+          "main":       "./js/main.js?v=0.0.1",
+          "narrative":  "./js/narrative.js?v=0.0.1",
+          "playground": "./js/playground.js?v=0.0.1"
         }
       }
     </script>

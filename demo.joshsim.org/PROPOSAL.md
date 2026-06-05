@@ -114,8 +114,8 @@ _Build-up nav UX:_ moved the Prev/Next buttons into the text column (below the d
 _Deferred (future authoring):_ to let substep text be authored in Markdown without a runtime dependency, render `.md` → HTML **at build time using Pandoc**, which is already installed in CI (it builds the spec PDF). The landing guides are hand-authored HTML (not md-generated), so there is no existing pipeline to inherit; this would be a new, small CI step. Not built yet (low priority).
 
 
-#### 5. Establish non-running editor
-Create the editor section with the Ace editor and config editor. The buttons do not need to do anything at this stage. However, the config and code editors should have the example code loaded.
+#### 5. Establish non-running editor  ✅ complete
+Populated `#phase-playground` with the Ace editor (`#playground-editor`, joshlang mode + textmate theme), a `<details>` config `<textarea>`, and Prev/Run(disabled)/Next buttons on the left, plus a "Try it yourself" heading + empty `#playground-results` on the right; new `js/playground.js` (`PlaygroundPresenter`) lazy-inits Ace in `onShow()` (called by `NarrativePresenter._render` after the fade so Ace isn't built while hidden) and fetches the config from `data/forevertree.jshc`. The model code has a single source of truth: `narrative.js` defines `FOREVERTREE_WASM_SNAPSHOT` once (used by both substep 7 and the playground) and exports it. A playground step is registered after substep 7 (so Next there advances into it); Ace + textmate deps were added to `install_deps.sh`/`.gitignore`, and `install_deps.sh` copies the canonical `forevertree.jshc` into the gitignored `demo/data/`. Run/WASM is Component 6, visualization Component 7.
 
 #### 6. Establish running editor
 Pull down the external data and read from the text area / Ace editor to run the simulation. This should show the running indicator but not yet the visualization.
