@@ -8,6 +8,9 @@ start simulation Main
   steps.low = 0 count
   steps.high = 10 count
 
+  minPrecipImpactPct.init = config forevertree.minPrecipImpactPct
+  maxNewGrowth.init = config forevertree.maxNewGrowth
+
   exportFiles.patch = "memory://editor/patches"
 
 end simulation
@@ -40,12 +43,12 @@ start organism ForeverTree
   precipImpact.step =
     map (external precipitation as mm)
     from [300 mm, 500 mm]
-    to [config forevertree.minPrecipImpactPct, 100%] sigmoid
+    to [meta.minPrecipImpactPct, 100%] sigmoid
 
   stochastic.step = sample normal with mean of 100% std of 5%
 
   newGrowth.step =
-    config forevertree.maxNewGrowth * temperatureImpact * precipImpact * stochastic
+    meta.maxNewGrowth * temperatureImpact * precipImpact * stochastic
   height.step = prior.height + newGrowth
 
 end organism
