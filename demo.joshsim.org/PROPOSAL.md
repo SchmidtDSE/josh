@@ -96,8 +96,8 @@ This will be completed as a series of components with a git commit between each.
 #### 1. Scaffolding  ✅ complete
 Created the static shell `demo.joshsim.org/{index.html, style/style.css, third_party/install_deps.sh}`, mirroring the `editor/` app conventions (PublicSans `@font-face`, `?v=` cache-bust, no bundler). `index.html` holds a `<main id="narrative">` with four phase `<section>`s — only `#phase-welcome` (active in HTML, renders with no JS) carries the "Hello from Josh" `h1`, the verbatim description, and a no-op Next button — plus an empty `<footer id="toc-footer">`. CSS provides `.phase`/`.phase.active` show-hide, a `.phase-two-col` grid skeleton, and fade `@keyframes` with a `prefers-reduced-motion` guard; no JS/importmap yet (deferred to Component 3).
 
-#### 2. Deployment
-Build out the initial github actions required to deploy the scaffolding.
+#### 2. Deployment  ✅ complete
+Added a `deployDemo` job to `.github/workflows/build.yaml` modeled on `deployStatic`: `needs: [deployStatic]`, `if: refs/heads/main` only, installs `sshpass`, and SCPs the `demo` artifact to `demo.joshsim.org/` using the existing `SFTP{HOST,USER,PASSWORD}` secrets. Extended `buildWeb` to run the demo's `install_deps.sh`, minimize PublicSans, and `upload-artifact` the `demo.joshsim.org` dir as artifact `demo` (mirrors the editor/landing pattern, pinned action SHAs). Added `.gitignore` entries for `demo.joshsim.org/third_party/publicsans` and `demo.joshsim.org/war`; WASM `war/` embed, Ace/D3 deps, and `.jshd` data copy are deferred to Component 10.
 
 #### 3. Build-up start
 Create the first substep of the build-up with the JS needed to go from the welcome mat to the build up first substep. This should establish the `NarrativePresenter`.

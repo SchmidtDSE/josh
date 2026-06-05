@@ -68,6 +68,10 @@ run_profiler_small.sh
 
 .claude/settings.local.json
 
+# Demo third-party downloads and generated WASM (Component 10)
+demo.joshsim.org/third_party/publicsans
+demo.joshsim.org/war
+
 # Jotr test files
 jotr
 
