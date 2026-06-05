@@ -54,7 +54,10 @@ start organism ForeverTree
     with mean of 100% std of 5%
 
   newGrowth.step =
-    meta.maxNewGrowth * temperatureImpact * precipImpact * stochastic
+    meta.maxNewGrowth 
+    * temperatureImpact 
+    * precipImpact 
+    * stochastic
 
   height.step = prior.height + newGrowth
 

@@ -1,15 +1,7 @@
-# ForeverTree tunable parameters.
-#
-# Slide minPrecipImpactPct to explore how strongly precipitation gates growth
-# in the temperature/precipitation interaction this model demonstrates.
-
-# Precipitation impact floor: the precip impact applied at/below the low bound
-# of the precipitation response. It is the bottom of the sigmoid's output range.
-#   0%   -> precipitation fully gates growth (strong precip dependence; the
-#           temperature signal is suppressed where it is dry)
-#   100% -> precipitation has no effect (growth is driven by temperature alone)
-minPrecipImpactPct = 0 %
-
-# Maximum new growth per year, realized when both temperature and precipitation
-# impacts are at 100%.
+# Maximum ForeverTree growth in 1 year
 maxNewGrowth = 1 m
+
+# Lower bound for precipitation impact on growth
+#  at 0%, drought fully prevents growth
+#  at 100%, no effect on growth
+minPrecipImpactPct = 0 %
