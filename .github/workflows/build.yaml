@@ -358,6 +358,8 @@ jobs:
         run: bash examples/test_data_option.sh
       - name: Test job configuration template functionality
         run: bash examples/test_job_config.sh
+      - name: Test ForeverTree example (paper model)
+        run: bash paper/forevertree/test.sh
       - name: Test profiler off local (expect zero timings)
         run: bash .github/scripts/run_profiler_local.sh 1 off
       - name: Test profiler on local (expect non-zero timings)
