@@ -311,6 +311,12 @@ footer {
   margin: 0;
 }
 
+.ext-figures-heading {
+  font-size: 1em;
+  margin: 24px 0 8px;
+  color: #333;
+}
+
 /* ---- Playground phase ---- */
 
 #phase-playground.active {
