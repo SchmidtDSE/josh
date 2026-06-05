@@ -288,6 +288,7 @@ footer {
   grid-template-columns: 1fr 1fr;
   gap: 12px;
   margin: 16px 0 8px;
+  max-width: 460px;
 }
 
 @media (max-width: 500px) {
@@ -338,7 +339,7 @@ footer {
 }
 
 #playground-editor {
-  height: 360px;
+  height: 480px;
   width: 100%;
 }
 
