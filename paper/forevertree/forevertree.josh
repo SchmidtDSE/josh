@@ -1,8 +1,8 @@
 start simulation Main
 
   grid.size = 16000 m
-  grid.low = 36.73 degrees latitude, -119.52 degrees longitude
-  grid.high = 35.80 degrees latitude, -117.98 degrees longitude
+  grid.top_left = 36.73 degrees latitude, -119.52 degrees longitude
+  grid.bottom_right = 35.80 degrees latitude, -117.98 degrees longitude
   grid.patch = "Default"
 
   steps.low = 0 count

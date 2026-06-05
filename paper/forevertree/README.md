@@ -61,8 +61,9 @@ end unit
   box 36.73°/−119.52° NW → 35.80°/−117.98° SE).
 - Write grid size in **meters** (`16000 m`), not `km` — with degree corners,
   meters trigger the Haversine conversion; `km` parses but fails at run.
-- `grid.low` is the **north-west** corner, so its latitude must be the **larger**
-  value.
+- `grid.top_left` (alias of `grid.low`) is the **north-west** corner, so its
+  latitude must be the **larger** value; `grid.bottom_right` (alias of
+  `grid.high`) is the south-east corner.
 - `exportFiles.patch` must be an absolute `file:///…` URL — relative `file://`
   paths are misparsed (the path after `file://` is read as the URI authority).
   That's why `forevertree.josh` carries an absolute output path and there's a
