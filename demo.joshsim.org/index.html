@@ -89,7 +89,15 @@
       </section>
     </main>
 
-    <footer id="toc-footer"></footer>
+    <footer id="toc-footer">
+      <button type="button" id="toc-open-button">Table of contents</button>
+    </footer>
+
+    <dialog id="toc-dialog" aria-labelledby="toc-dialog-title">
+      <h2 id="toc-dialog-title">Table of contents</h2>
+      <ol id="toc-list"></ol>
+      <button type="button" id="toc-close-button">Close</button>
+    </dialog>
 
     <script src="third_party/prism-core.min.js"></script>
     <script src="js/joshlang-prism.js?v=0.0.1"></script>

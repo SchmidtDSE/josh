@@ -128,8 +128,8 @@ Copied `summarize.js` verbatim and `viz.js` (trimmed: dropped `MapConfigPresente
 #### 8. Create conclusion  ✅ complete
 Populated `#phase-conclusion` with an `h2` "Next steps", a short paragraph linking to the full guide at https://www.joshsim.org/guide.html (new tab, `rel=noopener`), and ONLY a Previous button (no Next, per spec) — centered like the welcome phase. Registered a `{kind:"conclusion"}` step after the playground in `_buildSteps()` (which auto-enables the playground's Next to advance into it), wired `#conclusion-prev-button`→`goPrev()` in `_setup`, and added a conclusion block to `_updateNavButtons`. No changes to `_render`/`_renderBuildup`/`_getSectionForStep`/`_updateStepper` (the stepper shows no current pill on the conclusion via the existing non-buildup path).
 
-#### 9. Add table of contents
-Add support for table of contents and jumping between steps.
+#### 9. Add table of contents  ✅ complete
+Added the WCAG second navigation method: a `#toc-open-button` in the footer opens a native `<dialog id="toc-dialog">` (`showModal()` — free focus-trapping, Esc-to-close, focus return) listing all 10 steps. `NarrativePresenter._buildTableOfContents()` builds the list once from `_steps` (labels via `_getTocLabel`: build-up `heading`s, plus a kind map for Welcome/"Try it yourself"/"Next steps" — no second hardcoded list), each item calling `goTo(index)` then closing; `_updateTableOfContents()` marks the current step `aria-current="step"` each render. The footer sits outside the phases so the ToC is reachable everywhere; no changes to `goTo`/`_render` transition logic.
 
 #### 10. Update deployment
 Return to the github actions and ensure everything is hooked up for deployment to run the demo in its entirety using only static hosting.

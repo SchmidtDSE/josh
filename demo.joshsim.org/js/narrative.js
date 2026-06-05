@@ -225,6 +225,7 @@ class NarrativePresenter {
     }
 
     self._buildStepper();
+    self._buildTableOfContents();
     self._render(null);
   }
 
@@ -316,6 +317,92 @@ class NarrativePresenter {
         btn.setAttribute("aria-current", "step");
       } else {
         btn.classList.add("stepper-btn--upcoming");
+      }
+    });
+  }
+
+  /**
+   * Derive a human-readable label for a step for use in the table of contents.
+   *
+   * Build-up steps reuse their heading field (the canonical name authored in _buildSteps).
+   * Non-buildup steps fall back to a small kind-to-label map.
+   *
+   * @param {Object} step - A step descriptor from _steps.
+   * @returns {string} The ToC label for this step.
+   */
+  _getTocLabel(step) {
+    if (step.heading) {
+      return step.heading;
+    }
+    const kindLabels = {
+      welcome: "Welcome",
+      playground: "Try it yourself",
+      conclusion: "Next steps",
+    };
+    return kindLabels[step.kind] || step.id;
+  }
+
+  /**
+   * Build the table of contents dialog DOM once, wiring click handlers and open/close controls.
+   *
+   * Called once from _setup() after _buildStepper(). Populates #toc-list with one <li>/<button>
+   * per step. Stores button references in self._tocItems for use by _updateTableOfContents().
+   * Wires #toc-open-button to dialog.showModal() and #toc-close-button to dialog.close().
+   * Native <dialog> provides focus-trapping, Esc-to-close, and focus-return-to-trigger for free.
+   */
+  _buildTableOfContents() {
+    const self = this;
+
+    const openButton = document.getElementById("toc-open-button");
+    const dialog = document.getElementById("toc-dialog");
+    const list = document.getElementById("toc-list");
+    const closeButton = document.getElementById("toc-close-button");
+
+    if (!openButton || !dialog || !list || !closeButton) {
+      return;
+    }
+
+    openButton.addEventListener("click", () => dialog.showModal());
+    closeButton.addEventListener("click", () => dialog.close());
+
+    self._tocItems = [];
+
+    self._steps.forEach((step, index) => {
+      const li = document.createElement("li");
+
+      const btn = document.createElement("button");
+      btn.type = "button";
+      btn.className = "toc-item-btn";
+      btn.textContent = self._getTocLabel(step);
+      btn.addEventListener("click", () => {
+        self.goTo(index);
+        dialog.close();
+      });
+
+      li.appendChild(btn);
+      list.appendChild(li);
+
+      self._tocItems.push({ button: btn, index });
+    });
+  }
+
+  /**
+   * Update table of contents visual state to reflect the current step.
+   *
+   * Called from _render() after every navigation. Sets aria-current="step" on the active
+   * step's button and removes it from all other buttons.
+   */
+  _updateTableOfContents() {
+    const self = this;
+    if (!self._tocItems || self._tocItems.length === 0) {
+      return;
+    }
+
+    self._tocItems.forEach((item) => {
+      if (item.index === self._currentIndex) {
+        item.button.setAttribute("aria-current", "step");
+      } else {
+        item.button.removeAttribute("aria-current");
       }
     });
   }
@@ -723,6 +810,7 @@ class NarrativePresenter {
 
     self._updateNavButtons();
     self._updateStepper();
+    self._updateTableOfContents();
 
     setTimeout(() => {
       const focusTarget = toSection.querySelector("button, [tabindex]") || toSection;
