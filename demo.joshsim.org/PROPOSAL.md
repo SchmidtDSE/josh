@@ -131,3 +131,11 @@ Add support for table of contents and jumping between steps.
 
 #### 10. Update deployment
 Return to the github actions and ensure everything is hooked up for deployment to run the demo in its entirety using only static hosting.
+
+<br>
+
+## PR notes (follow-ups to raise when opening the PR)
+
+- **Viz CSS is duplicated, not shared (DRY debt).** Component 7's "port editor scrub/grid CSS" commit (`9bf33f2b`) hand-copied ~25 rules (~70 lines) from `editor/style/style.css` (`#results …`) into `demo.joshsim.org/style/style.css`, re-scoped to `#playground-viz`. The colours/rules now live in two places and can drift. Proper fix (mirrors the Prism-grammar approach): extract a shared `viz.css` scoped to a common wrapper class (e.g. `.josh-viz`), add that class to both the editor's `#results` viz area and the demo's `#playground-viz`, and load it from both sites. Deferred because it touches the editor (production) HTML+CSS; decide in review.
+- **Other carryovers from the editor are verbatim copies** (`wasm.js`, `wasm.worker.js`, `wire.js`, `model.js`, `debug.js`, `util.js`, `parse.js`, `viz.js`, `summarize.js`, `mode-joshlang.js`) per the proposal's "copy files where possible" decision — duplication, but byte-identical and easy to re-sync. The `joshlang-prism.js` grammar IS unified (single canonical copy in `landing/`, demo byte-identical, CI copies it). Consider whether any of these warrant a shared build step.
+- **Possible enhancement — "difference vs last run" plot** (not yet built): render the same heatmap/scrub but as (current run − previous run) per patch/timestep. Valuable because the model is stochastic, so it vividly shows run-to-run variability and the spatial effect of config edits. Moderate lift: storing the previous result and subtracting is easy, but it needs a diverging colour scale centred at 0 (the copied `GridPresenter` hard-codes `d3.interpolateBlues` + a min..max domain), so it requires extending/forking `GridPresenter` to accept a colour scale + centred domain, plus a toggle and legend. ~half-day.

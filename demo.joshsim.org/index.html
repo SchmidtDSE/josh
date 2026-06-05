@@ -52,13 +52,15 @@
                the run button.</p>
             <div id="playground-editor"></div>
             <details id="playground-config-details">
-              <summary>Configuration</summary>
+              <summary title="The simulation's configuration values">Configuration</summary>
               <textarea id="playground-config" rows="6" spellcheck="false"></textarea>
+              <p class="playground-hint">Change these values and click Run to see how drought limits and the yearly growth cap reshape the forest.</p>
             </details>
             <div class="nav-buttons">
               <button type="button" id="playground-prev-button" class="secondary">Previous</button>
-              <button type="button" id="playground-run-button" class="primary" disabled>Run</button>
-              <button type="button" id="playground-next-button" class="primary">Next</button>
+              <button type="button" id="playground-run-button" class="primary" disabled title="Run the simulation in your browser">Run</button>
+              <button type="button" id="playground-reset-button" class="secondary" title="Restore the original code and configuration">Reset</button>
+              <button type="button" id="playground-next-button" class="primary" title="Continue to the next section">Next</button>
             </div>
           </div>
           <div class="col-results">

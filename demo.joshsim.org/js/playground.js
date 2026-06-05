@@ -56,7 +56,8 @@ class PlaygroundPresenter {
 
     // Run handler state
     this._wasmLayer = null;
-    this._externalDataCache = null;
+    this._jshdCache = null;
+    this._originalConfig = null;
     this._isRunning = false;
     this._lastResult = null;
     this._lastMetadata = null;
@@ -110,6 +111,7 @@ class PlaygroundPresenter {
         return r.text();
       })
       .then(function(text) {
+        self._originalConfig = text;
         if (self._configTextarea) {
           self._configTextarea.value = text;
         }
@@ -164,15 +166,34 @@ class PlaygroundPresenter {
   }
 
   /**
-   * Wire the Run button click to the WASM simulation flow.
+   * Wire the Run and Reset button clicks.
    */
   _attachRunHandler() {
     const self = this;
     const runButton = document.getElementById("playground-run-button");
+    const resetButton = document.getElementById("playground-reset-button");
     const resultsPanel = document.getElementById("playground-results");
 
     if (!runButton) {
       return;
+    }
+
+    // Reset handler: restore original code + config, clear results
+    if (resetButton) {
+      resetButton.addEventListener("click", function() {
+        if (self._isRunning) {
+          return;
+        }
+        if (self._editor) {
+          self._editor.setValue(self._codeLines.join("\n"), 1);
+        }
+        if (self._configTextarea && self._originalConfig !== null) {
+          self._configTextarea.value = self._originalConfig;
+        }
+        if (resultsPanel) {
+          resultsPanel.innerHTML = "";
+        }
+      });
     }
 
     runButton.addEventListener("click", async function() {
@@ -187,10 +208,16 @@ class PlaygroundPresenter {
       resultsPanel.innerHTML = '<div id="playground-running-indicator" class="fade-in">Simulation running...</div>';
 
       try {
-        // Load external data (cache after first fetch)
-        if (!self._externalDataCache) {
-          self._externalDataCache = await self._loadExternalData();
+        // Fetch and cache the binary .jshd files once; re-read config on every run
+        if (!self._jshdCache) {
+          self._jshdCache = await self._loadJshd();
         }
+
+        // Build externalData fresh each run so config edits take effect
+        const externalData = {
+          ...self._jshdCache,
+          "forevertree.jshc": self.getConfig()
+        };
 
         // Lazily construct WasmLayer
         if (!self._wasmLayer) {
@@ -202,7 +229,7 @@ class PlaygroundPresenter {
         const result = await self._wasmLayer.runSimulation(
           code,
           "Main",
-          self._externalDataCache,
+          externalData,
           function(n) {},
           false,
           ""
@@ -248,10 +275,11 @@ class PlaygroundPresenter {
 
     const vizMarkup = `
 <div id="playground-viz" class="fade-in">
-  <div class="viz-holder" id="scrub-viz-holder">
+  <div class="viz-holder" id="scrub-viz-holder" title="Timeline — mean tree height per year">
+    <p class="playground-hint">Each bar is one year — click a bar to update the map below for that year.</p>
     <svg id="scrub-viz"></svg>
   </div>
-  <div class="viz-holder" id="grid-viz-holder">
+  <div class="viz-holder" id="grid-viz-holder" title="Spatial heatmap of mean tree height for the selected year">
     <div id="grid-viz-info"></div>
     <div class="horiz-scroll-area">
       <svg id="grid-viz"></svg>
@@ -291,35 +319,30 @@ class PlaygroundPresenter {
   }
 
   /**
-   * Fetch climate data files and config, returning the externalData object for runSimulation.
+   * Fetch the binary climate .jshd files and return them as a base64 map.
+   *
+   * These files never change during a session so the result is cached in
+   * `this._jshdCache`. The .jshc config is NOT included here — it is merged
+   * in on each run so that edits take effect immediately.
    *
    * Binary .jshd files are fetched as base64 (ExternalDataSerializer expects this for isBinary=1
    * files — see wire.js _isTextFile: .jshd is not .csv/.txt/.jshc/.josh so isBinary=1).
-   * The .jshc config is plain text (isBinary=0).
    *
-   * Keys are the VIRTUAL FILENAMES the WASM engine looks up, including extension —
-   * `external temperature` resolves to the virtual file `temperature.jshd`, and
-   * `config forevertree.*` resolves to `forevertree.jshc`:
+   * Keys are the VIRTUAL FILENAMES the WASM engine looks up, including extension:
    *   - "temperature.jshd"   -> external temperature
    *   - "precipitation.jshd" -> external precipitation
-   *   - "forevertree.jshc"   -> config forevertree.*
    *
-   * @returns {Promise<Object>} externalData object ready for WasmLayer.runSimulation.
+   * @returns {Promise<Object>} Partial externalData map containing only the .jshd entries.
    */
-  async _loadExternalData() {
-    const self = this;
-
+  async _loadJshd() {
     const [tempBase64, precipBase64] = await Promise.all([
       fetchAsBase64("data/temperature.jshd"),
       fetchAsBase64("data/precipitation.jshd")
     ]);
 
-    const configText = self.getConfig();
-
     return {
       "temperature.jshd": tempBase64,
-      "precipitation.jshd": precipBase64,
-      "forevertree.jshc": configText
+      "precipitation.jshd": precipBase64
     };
   }
 

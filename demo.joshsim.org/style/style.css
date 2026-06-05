@@ -346,6 +346,15 @@ footer {
   padding: 20px;
 }
 
+/* ---- Playground hint text ---- */
+
+.playground-hint {
+  margin: 6px 0 2px;
+  font-size: 0.85em;
+  color: #888;
+  font-style: italic;
+}
+
 /* ---- Visualization (heatmap + scrub) ----
    Layout helpers plus the editor's SVG styling, ported from
    editor/style/style.css (scoped from #results to #playground-viz) so the
