@@ -346,42 +346,134 @@ footer {
   padding: 20px;
 }
 
-/* ---- Visualization containers ---- */
+/* ---- Visualization (heatmap + scrub) ----
+   Layout helpers plus the editor's SVG styling, ported from
+   editor/style/style.css (scoped from #results to #playground-viz) so the
+   scrub bars/ticks/hit-areas render like the IDE instead of defaulting to
+   black fill. Internal ids/classes come from the shared viz.js. */
 
 .viz-holder {
   margin: 10px 0;
-  overflow: hidden;
-}
-
-#scrub-viz {
-  width: 100%;
-  height: 100px;
-  display: block;
-}
-
-#grid-viz-info {
-  font-size: 0.9em;
-  color: #555;
-  min-height: 1.4em;
-  padding: 4px 0;
 }
 
 .horiz-scroll-area {
   overflow-x: auto;
 }
 
-#grid-legend {
-  border-collapse: collapse;
-  margin: 6px 0;
-  font-size: 0.8em;
-}
-
-#grid-legend .color td {
-  width: 40px;
-  height: 14px;
-}
-
-#grid-legend .label td {
+#playground-viz #grid-viz-holder {
+  width: 100%;
   text-align: center;
-  padding: 2px 4px;
+}
+
+#playground-viz #grid-legend {
+  margin: 20px auto;
+  border-collapse: separate;
+  border-spacing: 5px;
+}
+
+#playground-viz #grid-legend .color td {
+  height: 10px;
+  min-width: 40px;
+}
+
+#playground-viz #grid-legend .label td {
+  text-align: center;
+}
+
+#playground-viz #grid-viz {
+  width: 100%;
+  margin: 0 auto;
+}
+
+#playground-viz #grid-viz .base-layer {
+  opacity: 0.75;
+}
+
+#playground-viz #grid-viz .glyphs-layer.overlay {
+  opacity: 0.65;
+}
+
+#playground-viz #grid-viz .grid-patch-foreground:hover {
+  stroke: #333333;
+  stroke-weight: 2;
+}
+
+#playground-viz #grid-viz-info {
+  margin-top: 20px;
+  margin-bottom: 20px;
+  color: #555;
+  min-height: 1.4em;
+}
+
+#playground-viz #scrub-viz {
+  width: 100%;
+  height: 100px;
+  display: block;
+}
+
+#playground-viz #scrub-viz .horizontal-tick {
+  text-anchor: middle;
+  dominant-baseline: hanging;
+  font-size: 13px;
+  fill: #757575;
+}
+
+#playground-viz #scrub-viz .scrub-group .display-bar {
+  fill: #00B0D0;
+}
+
+#playground-viz #scrub-viz .scrub-group .horizontal-embed-tick {
+  visibility: hidden;
+}
+
+#playground-viz #scrub-viz .scrub-group .pointer-target {
+  fill-opacity: 0;
+  stroke-opacity: 0;
+}
+
+#playground-viz #scrub-viz .scrub-group:hover {
+  cursor: pointer;
+}
+
+#playground-viz #scrub-viz .scrub-group:hover .display-bar {
+  fill: #0080A0;
+}
+
+#playground-viz #scrub-viz .scrub-group:hover .pointer-target {
+  stroke-opacity: 1;
+  stroke-width: 1;
+  stroke: #C0C0C0;
+}
+
+#playground-viz #scrub-viz .scrub-group.active .display-bar {
+  fill: #0080A0;
+}
+
+#playground-viz #scrub-viz .scrub-group.active .horizontal-embed-tick {
+  fill: #333333;
+  font-size: 13px;
+  visibility: visible;
+  text-anchor: middle;
+  dominant-baseline: hanging;
+  font-weight: bold;
+}
+
+#playground-viz #scrub-viz .selected-value-display {
+  visibility: hidden;
+}
+
+#playground-viz #scrub-viz .selected-value-display.active {
+  fill: #333333;
+  font-weight: bold;
+  dominant-baseline: auto;
+  text-anchor: middle;
+  font-size: 11px;
+  visibility: visible;
+}
+
+#playground-viz #scrub-viz .vertical-tick {
+  text-anchor: left;
+  dominant-baseline: middle;
+  font-size: 13px;
+  fill: #757575;
 }
