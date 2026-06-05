@@ -285,9 +285,15 @@ footer {
 
 .ext-figures {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  grid-template-columns: 1fr 1fr;
   gap: 12px;
   margin: 16px 0 8px;
+}
+
+@media (max-width: 500px) {
+  .ext-figures {
+    grid-template-columns: 1fr;
+  }
 }
 
 .ext-figures figure {
