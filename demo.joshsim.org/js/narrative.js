@@ -762,16 +762,25 @@ class NarrativePresenter {
         lede: "Finally, choose how long to run, expose the knobs, and say what to record.",
         body: [
           "<code>steps.low</code> and <code>steps.high</code> set the time range (years 0–10),"
-            + " <code>config</code> pulls tunable parameters from a <code>.jshc</code> file to keep"
-            + " the model clean, <code>exportFiles.patch</code> names where results go, and the three"
+            + " <code>exportFiles.patch</code> names where results go, and the three"
             + " <code>export.*</code> lines record the year, tree count, and mean height at every"
-            + " step — the data we visualize next.",
-          "The run covers 10 simulated years (steps 0–10); stochastic replicates share the same"
-            + " climate forcing and initial conditions, with one row per (patch, year, replicate)"
-            + " recording year, nTrees, and meanHeight. The <code>config</code> reads pull"
-            + " <code>minPrecipImpactPct</code> and <code>maxNewGrowth</code> from a companion"
-            + " <code>forevertree.jshc</code>."
+            + " step — the data we visualize next. Stochastic replicates share the same climate"
+            + " forcing and initial conditions, writing one row per (patch, year, replicate).",
+          "The <code>config</code> keyword keeps the tunable knobs out of the model and in a"
+            + " companion <code>.jshc</code> file, so collaborators can re-run with new values"
+            + " without touching the code. Here it supplies <code>minPrecipImpactPct</code> and"
+            + " <code>maxNewGrowth</code>:"
         ],
+        figuresHtml: "<div class=\"config-example\">"
+          + "<div class=\"config-example-label\">forevertree.jshc</div>"
+          + "<pre><code class=\"language-joshlang\"># Maximum ForeverTree growth in 1 year\n"
+          + "maxNewGrowth = 1 m\n"
+          + "\n"
+          + "# Lower bound for precipitation impact on growth\n"
+          + "#  at 0%, drought fully prevents growth\n"
+          + "#  at 100%, no effect on growth\n"
+          + "minPrecipImpactPct = 0 %</code></pre>"
+          + "</div>",
       },
       {
         id: "playground",
@@ -1005,11 +1014,15 @@ class NarrativePresenter {
         textPanel.appendChild(p);
       });
     }
-    // Optional raw-HTML block (e.g. the External-Data figure grid) appended after the prose.
+    // Optional raw-HTML block (e.g. the External-Data figure grid or a config example)
+    // appended after the prose. Any `language-joshlang` code inside is Prism-highlighted.
     if (toStep.figuresHtml) {
       const wrapper = document.createElement("div");
       wrapper.innerHTML = toStep.figuresHtml;
       textPanel.appendChild(wrapper);
+      if (typeof window !== "undefined" && window.Prism && Prism.highlightAllUnder) {
+        Prism.highlightAllUnder(wrapper);
+      }
     }
   }
 

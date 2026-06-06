@@ -217,6 +217,33 @@ footer {
   margin: 0 0 14px;
 }
 
+/* Prominent example config (.jshc) card shown in the Export & Config substep. */
+.config-example {
+  margin: 14px 0;
+  border: 1px solid #C8C8E8;
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.config-example-label {
+  background-color: #F0F0F8;
+  color: #5050C0;
+  font-family: monospace;
+  font-size: 0.8em;
+  padding: 5px 10px;
+  border-bottom: 1px solid #C8C8E8;
+}
+
+.config-example pre {
+  margin: 0;
+  padding: 10px;
+  background-color: #F0F0F0;
+  font-family: monospace;
+  font-size: 13px;
+  white-space: pre;
+  overflow-x: auto;
+}
+
 /* ---- Build-up stepper (mini progress nav in .col-text) ---- */
 
 #buildup-stepper {
