@@ -186,7 +186,9 @@ header .header-intro {
   position: relative;
 }
 
-.phase.leaving {
+.phase.leaving,
+#phase-welcome.phase.leaving,
+#phase-conclusion.phase.leaving {
   position: absolute;
   top: 0;
   left: 0;
@@ -241,6 +243,26 @@ header .header-intro {
     1px -1px 0 #000,
     -1px  1px 0 #000,
     1px  1px 0 #000;
+}
+
+/* Links in the hero box: light + underlined so they read on the dark panel. */
+#phase-welcome .phase-hero-inner a,
+#phase-welcome .phase-hero-inner a:link,
+#phase-welcome .phase-hero-inner a:visited,
+#phase-conclusion .phase-hero-inner a,
+#phase-conclusion .phase-hero-inner a:link,
+#phase-conclusion .phase-hero-inner a:visited {
+  color: #cfe3ff;
+  text-decoration: underline;
+}
+
+#phase-welcome .phase-hero-inner a:hover,
+#phase-welcome .phase-hero-inner a:focus,
+#phase-welcome .phase-hero-inner a:active,
+#phase-conclusion .phase-hero-inner a:hover,
+#phase-conclusion .phase-hero-inner a:focus,
+#phase-conclusion .phase-hero-inner a:active {
+  color: #ffffff;
 }
 
 #phase-buildup.active {
