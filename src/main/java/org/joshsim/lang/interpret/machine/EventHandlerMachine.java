@@ -349,6 +349,17 @@ public interface EventHandlerMachine {
   EventHandlerMachine randNorm();
 
   /**
+   * Draw a single integer from a binomial distribution.
+   *
+   * <p>Draw a single integer randomly from a binomial distribution Binomial(n, p), pushing the
+   * value drawn to the top of the stack. Prior to pushing the result, first the probability p
+   * will be popped followed by the number of trials n.</p>
+   *
+   * @return Reference to this machine for chaining.
+   */
+  EventHandlerMachine randBinomial();
+
+  /**
    * Calculate the absolute value of a number.
    *
    * <p>Pop a value from the top of the stack, calculate its absolute value, and push the result
@@ -539,6 +550,17 @@ public interface EventHandlerMachine {
    * @return The number of steps completed.
    */
   long getStepCount();
+
+  /**
+   * Get the current semantic timestep (steps.low-based), used to resolve external data reads.
+   *
+   * <p>This matches how preprocessed external grids are keyed and how {@code meta.year} is
+   * computed, so {@code external X} resolves against the same time origin as the rest of the
+   * engine. It coincides with {@link #getStepCount()} only when {@code steps.low} is zero.</p>
+   *
+   * @return The current timestep, offset by steps.low.
+   */
+  long getCurrentTimestep();
 
   /**
    * Get a value from an external resource at a given time.

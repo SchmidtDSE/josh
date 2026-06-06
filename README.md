@@ -70,57 +70,13 @@ Available commands include:
 
 Run the jar without any command specified to get further help documentation.
 
-#### Artifact Upload Options
+For explicit uploads to MinIO or S3-compatible storage, use the `stageToMinio` command:
 
-When using MinIO or S3-compatible storage for simulation outputs, you can optionally upload source artifacts after simulation completion. This is useful for reproducibility and sharing complete simulation setups.
-
-**Available Options:**
-- `--upload-source` - Upload the source `.josh` file
-- `--upload-config` - Upload configuration files (`.jshc`) used in the simulation
-- `--upload-data` - Upload data files (`.jshd`) used in the simulation
-
-These files are uploaded to the same MinIO bucket under the `run/` directory alongside simulation results.
-
-**BREAKING CHANGE:** Previous versions automatically uploaded the `.josh` file when MinIO was configured. You must now explicitly use `--upload-source` to upload the source file.
-
-**Examples:**
-
-Upload all artifacts with local execution:
 ```bash
-$ java -jar joshsim.jar run simulation.josh MySimulation \
-  --minio-endpoint=https://s3.amazonaws.com \
-  --minio-bucket=my-bucket \
-  --upload-source \
-  --upload-config \
-  --upload-data
+$ java -jar joshsim.jar stageToMinio --input-dir=./sim/ --prefix=batch-jobs/abc/inputs/ \
+  --minio-endpoint=https://s3.amazonaws.com --minio-bucket=my-bucket
 ```
 
-Upload all artifacts with remote execution:
-```bash
-$ java -jar joshsim.jar runRemote simulation.josh MySimulation \
-  --api-key=YOUR_API_KEY \
-  --minio-endpoint=https://s3.amazonaws.com \
-  --minio-bucket=my-bucket \
-  --upload-source \
-  --upload-config \
-  --upload-data
-```
-
-Upload only specific artifacts:
-```bash
-# Upload only the source file
-$ java -jar joshsim.jar run simulation.josh MySimulation \
-  --minio-endpoint=https://s3.amazonaws.com \
-  --minio-bucket=my-bucket \
-  --upload-source
-
-# Upload source and config files
-$ java -jar joshsim.jar run simulation.josh MySimulation \
-  --minio-endpoint=https://s3.amazonaws.com \
-  --minio-bucket=my-bucket \
-  --upload-source \
-  --upload-config
-```
 ### Local UI
 You can run the local UI through [joshsim](https://language.joshsim.org/download.html). Execute:
 
@@ -149,6 +105,32 @@ $ java -jar joshsim.jar server --worker-url your-server-url.com/runReplicate
 ```
 
 See also our [example Dockerfile](https://github.com/SchmidtDSE/josh/blob/main/cloud-img/Dockerfile.prod).
+
+### Batch execution on your own infrastructure
+For large-scale runs on your own Kubernetes cluster or server, Josh provides the `batchRemote` command. This stages simulation files to S3-compatible storage (MinIO, GCS, AWS S3), dispatches execution to a configured target, and polls for completion. Results are written back to storage via `minio://` export paths.
+
+```
+$ java -jar joshsim.jar stageToMinio --input-dir=./sim/ --prefix=batch-jobs/my-run/inputs/
+$ java -jar joshsim.jar batchRemote Main --target=nautilus \
+    --minio-prefix=batch-jobs/my-run/inputs/ \
+    --require-prestaged --replicates=50
+```
+
+Stage inputs once with `stageToMinio` and dispatch any number of times against the shared prefix (useful when joshpy drives multiple simulations against the same data). Pass `--require-prestaged` to fail fast if the `.josh-staged.json` sentinel isn't present, or omit it to just warn on manual uploads.
+
+Targets are defined as JSON profiles at `~/.josh/targets/<name>.json`. Two target types are supported:
+
+- **HTTP targets** — dispatch to any joshsim server (Cloud Run, self-hosted). The server runs all replicates in-process.
+- **Kubernetes targets** — create an indexed K8s Job where each pod runs one replicate. Supports GKE, [Nautilus/NRP](https://nrp.ai), EKS, and self-hosted clusters.
+
+MinIO credentials are resolved from environment variables, the profile JSON, or CLI flags — secrets do not need to live in the profile file. See `llms-full.txt` for the full target profile specification and credential resolution details.
+
+The batch worker container image is built from `cloud-img/Dockerfile.batch`. Staging commands (`stageToMinio`, `stageFromMinio`) are also available for manual workflows:
+
+```
+$ java -jar joshsim.jar stageToMinio --input-dir=./sim/ --prefix=batch-jobs/abc/inputs/ \
+  --minio-endpoint=https://s3.amazonaws.com --minio-bucket=my-bucket
+```
 
 ## Security
 When running in server mode, some additional security mechanisms are in place.

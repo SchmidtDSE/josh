@@ -46,6 +46,7 @@ ALL_: 'all';
 AND_: 'and';
 AS_: 'as';
 ASSERT_: 'assert';
+BINOMIAL_: 'binomial';
 AT_: 'at';
 CONFIG_: 'config';
 CONST_: 'const';
@@ -70,10 +71,12 @@ LONGITUDE_: 'longitude';
 MANAGEMENT_: 'management';
 MAP_: 'map';
 MEAN_: 'mean';
+N_: 'n';
 NORMAL_: 'normal';
 OF_: 'of';
 OR_: 'or';
 ORGANISM_: 'organism';
+P_: 'p';
 PATCH_: 'patch';
 PRIOR_: 'prior';
 RADIAL_: 'radial';
@@ -101,7 +104,7 @@ IDENTIFIER_: [A-Za-z][A-Za-z0-9_]*;
 WHITE_SPACE: [ \u000B\t\r\n] -> channel(HIDDEN);
 
 // Identifiers
-nakedIdentifier: (IDENTIFIER_|DEBUG_|INIT_|START_|STEP_|END_|HERE_|CURRENT_|PRIOR_|STATE_|ASSERT_|PATCH_|SIMULATION_|AGENT_|ORGANISM_);
+nakedIdentifier: (IDENTIFIER_|DEBUG_|INIT_|START_|STEP_|END_|HERE_|CURRENT_|PRIOR_|STATE_|ASSERT_|PATCH_|SIMULATION_|AGENT_|ORGANISM_|N_|P_);
 identifier: nakedIdentifier (DOT_ (nakedIdentifier))*;
 
 // Values
@@ -174,6 +177,7 @@ bool: (TRUE_ | FALSE_);
 
 distributionDescription: UNIFORM_ FROM_ low=expression TO_ high=expression # uniformSample
   | NORMAL_ WITH_ MEAN_ OF_ mean=expression STD_ OF_ stdev=expression # normalSample
+  | BINOMIAL_ WITH_ N_ OF_ n=expression P_ OF_ p=expression # binomialSample
   ;
 
 // Callables

@@ -1,0 +1,155 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width" />
+    <title>Josh Introduction</title>
+    <style>
+      body {
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol";
+      }
+    </style>
+    <link href="style/style.css?v=0.0.1" rel="stylesheet" type="text/css" />
+  </head>
+
+  <body>
+    <header>
+      <svg class="header-intro"></svg>
+      <nav id="top-nav" aria-label="Site">
+        <button type="button" id="toc-open-button">&#9776; Josh Interactive Demo</button>
+        <span class="nav-links">
+          <span class="nav-option"><a href="https://www.joshsim.org/">Home</a></span>
+          <span class="nav-option"><a href="https://www.joshsim.org/purpose.html">Purpose</a></span>
+          <span class="nav-option"><a href="https://www.joshsim.org/use.html">Use</a></span>
+          <span class="nav-option"><a href="https://www.joshsim.org/guide.html">Guide</a></span>
+          <span class="nav-option"><a href="https://www.joshsim.org/community.html">Community</a></span>
+        </span>
+      </nav>
+    </header>
+
+    <main id="narrative">
+      <section id="phase-welcome" class="phase active" aria-labelledby="welcome-heading">
+        <svg class="phase-intro"></svg>
+        <div class="phase-hero-inner">
+          <h1 id="welcome-heading">Hello from Josh</h1>
+          <p>Josh is a friendly programming language co-designed by research software engineers,
+             ecologists, mathematicians, and land managers for vegetation-focused ecological modeling.
+             This short tutorial introduces you to the basics of Josh. Here, you can try out a
+             simulation on your computer using just your browser.</p>
+          <div class="nav-buttons">
+            <button type="button" id="welcome-next-button" class="primary">Next</button>
+          </div>
+        </div>
+      </section>
+
+      <section id="phase-buildup" class="phase" aria-hidden="true">
+        <div class="phase-two-col">
+          <div class="col-code">
+            <pre id="buildup-code-display" aria-label="Josh code being built up"></pre>
+          </div>
+          <div class="col-text">
+            <nav id="buildup-stepper" aria-label="Tutorial steps"></nav>
+            <div id="buildup-text-panel"></div>
+            <div class="nav-buttons">
+              <button type="button" id="buildup-prev-button" class="secondary">Previous</button>
+              <button type="button" id="buildup-next-button" class="primary">Next</button>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section id="phase-playground" class="phase" aria-hidden="true" aria-labelledby="playground-heading">
+        <div class="phase-two-col">
+          <div class="col-code col-code--playground">
+            <h2 id="playground-heading">Try it yourself</h2>
+            <p>Now that we have built up the simulation, give it a run yourself. This will execute
+               on your computer in your browser. Make modifications to the code and then click
+               the run button.</p>
+            <div id="playground-editor"></div>
+            <details id="playground-config-details" open>
+              <summary title="The simulation's configuration values">Configuration</summary>
+              <textarea id="playground-config" rows="9" spellcheck="false"></textarea>
+              <p class="playground-hint">Change these values and click Run to see how drought limits and the yearly growth cap reshape the forest.</p>
+            </details>
+            <div class="nav-buttons">
+              <button type="button" id="playground-prev-button" class="secondary">Previous</button>
+              <button type="button" id="playground-run-button" class="primary" disabled title="Run the simulation in your browser">Run</button>
+              <button type="button" id="playground-reset-button" class="secondary" title="Restore the original code and configuration">Reset</button>
+              <button type="button" id="playground-next-button" class="primary" title="Continue to the next section">Next</button>
+            </div>
+          </div>
+          <div class="col-results">
+            <div id="playground-results"></div>
+            <h3 class="ext-figures-heading">Climate inputs driving this simulation</h3>
+            <div class="ext-figures">
+              <figure><img src="img/eco_temp_spatial.png" alt="Map of input temperature in Kelvin across the simulation grid, warmer to the south"></figure>
+              <figure><img src="img/eco_temp_domain.png" alt="Temperature growth response: a quadratic curve peaking near 300 K and zero outside 270 to 330 K"></figure>
+              <figure><img src="img/eco_precip_spatial.png" alt="Map of input precipitation in millimeters per year across the grid, wetter to the west"></figure>
+              <figure><img src="img/eco_precip_domain.png" alt="Precipitation growth response: a sigmoid rising with precipitation between 300 and 500 mm"></figure>
+            </div>
+            <p class="ext-figures-caption">Compare the height map above against these inputs: warmer mid-range and wetter patches should grow taller.</p>
+          </div>
+        </div>
+      </section>
+
+      <section id="phase-conclusion" class="phase" aria-hidden="true" aria-labelledby="conclusion-heading">
+        <svg class="phase-intro"></svg>
+        <div class="phase-hero-inner">
+          <h2 id="conclusion-heading">Next steps</h2>
+          <p>You have just run a real ecological simulation — entirely in your browser. To go further,
+             visit the <a href="https://www.joshsim.org/guide.html" target="_blank"
+             rel="noopener noreferrer">full Josh guide</a> where you can explore more simulations,
+             work with real geospatial data, and run Josh on your own machine.</p>
+          <div class="nav-buttons">
+            <button type="button" id="conclusion-prev-button" class="secondary">Previous</button>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <dialog id="toc-dialog" aria-labelledby="toc-dialog-title">
+      <h2 id="toc-dialog-title">Table of contents</h2>
+      <ol id="toc-list"></ol>
+      <button type="button" id="toc-close-button">Close</button>
+    </dialog>
+
+    <script src="third_party/prism-core.min.js"></script>
+    <script src="js/joshlang-prism.js?v=0.0.1"></script>
+
+    <script src="third_party/ace.min.js"></script>
+    <script src="third_party/theme-textmate.js"></script>
+    <script src="third_party/theme-textmate-css.js"></script>
+    <script src="js/mode-joshlang.js?v=0.0.1"></script>
+
+    <script type="text/javascript" src="third_party/d3.min.js"></script>
+    <script type="text/javascript" src="js/intro_animation.js?v=0.0.1"></script>
+    <script type="text/javascript" src="third_party/math.min.js"></script>
+
+    <script type="text/javascript" src="js/parse.js?v=0.0.6"></script>
+
+    <script type="importmap">
+      {
+        "imports": {
+          "main":       "./js/main.js?v=0.0.1",
+          "narrative":  "./js/narrative.js?v=0.0.1",
+          "playground": "./js/playground.js?v=0.0.6",
+          "wasm":       "./js/wasm.js?v=0.0.6",
+          "wire":       "./js/wire.js?v=0.0.6",
+          "model":      "./js/model.js?v=0.0.6",
+          "debug":      "./js/debug.js?v=0.0.6",
+          "util":       "./js/util.js?v=0.0.6",
+          "summarize":  "./js/summarize.js?v=0.0.7",
+          "viz":        "./js/viz.js?v=0.0.7"
+        }
+      }
+    </script>
+
+    <!-- Resources for WASM runtime. -->
+    <script type="text/javascript" charset="utf-8" src="war/wasm-gc/JoshSim.wasm-runtime.js"></script>
+
+    <script type="module">
+      import {main} from "main";
+      main();
+    </script>
+  </body>
+</html>

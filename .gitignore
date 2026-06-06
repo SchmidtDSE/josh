@@ -38,6 +38,8 @@ editor/war
 landing/publicsans
 
 *.jshd
+!paper/forevertree/data/temperature.jshd
+!paper/forevertree/data/precipitation.jshd
 *.wasm
 
 # Tutorial data files (downloaded by CI/CD)
@@ -68,8 +70,24 @@ run_profiler_small.sh
 
 .claude/settings.local.json
 
+# Demo third-party downloads and generated WASM (Component 10)
+demo.joshsim.org/third_party/publicsans
+demo.joshsim.org/third_party/prism-core.min.js
+demo.joshsim.org/third_party/ace.min.js
+demo.joshsim.org/third_party/theme-textmate.js
+demo.joshsim.org/third_party/theme-textmate-css.js
+demo.joshsim.org/third_party/d3.min.js
+demo.joshsim.org/third_party/math.min.js
+demo.joshsim.org/data/
+demo.joshsim.org/img/
+demo.joshsim.org/war
+
+# Build-up prose rendered from content/*.md by content/render.sh (pandoc).
+demo.joshsim.org/content/*.html
+
 # Jotr test files
 jotr
 
 # Joshpy bottles (compressed archives and extracted debug sessions)
 joshpy-bottles/
+!joshpy-bottles/README.md

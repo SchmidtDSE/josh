@@ -7,7 +7,9 @@
 package org.joshsim.lang.interpret.machine;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.when;
@@ -32,7 +34,6 @@ import org.joshsim.engine.value.type.EngineValue;
 import org.joshsim.engine.value.type.RealizedDistribution;
 import org.joshsim.lang.bridge.EngineBridge;
 import org.joshsim.lang.interpret.RecursiveValueResolver;
-import org.joshsim.lang.interpret.ValueResolver;
 import org.joshsim.lang.interpret.action.EventHandlerAction;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -87,6 +88,24 @@ public class SingleThreadEventHandlerMachineTest {
     // Then
     machine.end();
     assertEquals(mockValue, machine.getResult());
+  }
+
+  @Test
+  void push_unresolvedBareName_givesActionableUnitHint() {
+    // A bare unit name used as a value (e.g. `300 / year`) reaches push() as an unresolvable
+    // resolver. The message must guide the author to attach the unit to a number, not just emit
+    // the opaque resolver text.
+    RecursiveValueResolver resolver = new RecursiveValueResolver(factory, "year");
+
+    IllegalStateException ex =
+        assertThrows(IllegalStateException.class, () -> machine.push(resolver));
+
+    String message = ex.getMessage();
+    assertTrue(message.contains("year"), "should name the unresolved symbol: " + message);
+    assertTrue(message.contains("1 year") || message.contains("unit"),
+        "should hint that a bare unit must attach to a number: " + message);
+    assertNotEquals("Unable to get value for RecursiveValueResolver(year)", message,
+        "should not be the bare opaque message");
   }
 
   @Test
@@ -776,6 +795,27 @@ public class SingleThreadEventHandlerMachineTest {
     // Most values in a normal distribution fall within 3 standard deviations
     assertTrue(value.compareTo(new BigDecimal("2.5")) >= 0);
     assertTrue(value.compareTo(new BigDecimal("8.5")) <= 0);
+  }
+
+  @Test
+  void randBinomial_shouldGenerateIntegerWithinRange() {
+    // Given
+    EngineValue n = makeIntScalar(100L);
+    EngineValue p = makeDecimalScalar(new BigDecimal("0.5"));
+
+    // When
+    machine.push(n);
+    machine.push(p);
+    machine.randBinomial();
+
+    // Then
+    machine.end();
+    DecimalScalar result = (DecimalScalar) machine.getResult();
+    BigDecimal value = result.getAsDecimal();
+
+    assertTrue(value.compareTo(BigDecimal.ZERO) >= 0);
+    assertTrue(value.compareTo(new BigDecimal("100")) <= 0);
+    assertTrue(value.stripTrailingZeros().scale() <= 0);
   }
 
   @Test

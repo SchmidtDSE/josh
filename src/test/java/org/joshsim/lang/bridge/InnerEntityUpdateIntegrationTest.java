@@ -48,6 +48,18 @@ public class InnerEntityUpdateIntegrationTest {
       "examples/test/test3_no_handler_for_current_state.josh"
   );
 
+  private static final Path ORGANISM_SEES_HERE_PATCH_ATTR_SCRIPT_PATH = Path.of(
+      "examples/test/test_organism_sees_stale_here_patch_attribute.josh"
+  );
+
+  private static final Path ORGANISM_SEES_HERE_STEP_ONLY_SCRIPT_PATH = Path.of(
+      "examples/test/test_organism_sees_stale_here_step_only.josh"
+  );
+
+  private static final Path ORGANISM_CREATED_MIDSIM_SCRIPT_PATH = Path.of(
+      "examples/test/test_organism_created_midsim_sees_here.josh"
+  );
+
   @Test
   public void testInnerEntitiesUpdateAcrossSteps() throws IOException {
     String joshCode = Files.readString(SCRIPT_PATH);
@@ -243,6 +255,186 @@ public class InnerEntityUpdateIntegrationTest {
         "Main",
         callback,
         true,
+        1,
+        true
+    );
+
+    assertFalse(completedSteps.isEmpty(), "Simulation should have completed at least one step");
+  }
+
+  /**
+   * Test that an organism's .step handler sees the current value of a patch attribute
+   * when reading it via {@code here.<name>}.
+   *
+   * <p>Reproducer for a bug isolated by the josh-llm-experiment team where
+   * {@code here.<name>} from inside an organism's .step returns the value
+   * captured at the first step forever, even though the patch's own attribute
+   * updates correctly each step.</p>
+   */
+  @Test
+  public void testOrganismSeesCurrentPatchAttributeViaHere() throws IOException {
+    String joshCode = Files.readString(ORGANISM_SEES_HERE_PATCH_ATTR_SCRIPT_PATH);
+
+    ParseResult parsed = JoshSimFacade.parse(joshCode);
+    assertFalse(parsed.hasErrors(),
+        "Josh code should parse without errors. Errors: " + parsed.getErrors());
+
+    EngineGeometryFactory geometryFactory = new GridGeometryFactory();
+    JvmInputOutputLayer inputOutputLayer = new JvmInputOutputLayerBuilder()
+        .withReplicate(1)
+        .build();
+
+    JoshProgram program = JoshSimFacade.interpret(geometryFactory, parsed, inputOutputLayer);
+    assertNotNull(program, "Program should be successfully interpreted");
+
+    List<Long> completedSteps = new ArrayList<>();
+
+    JoshSimFacadeUtil.SimulationStepCallback callback = (stepNumber) -> {
+      completedSteps.add(stepNumber);
+    };
+
+    JoshSimFacade.runSimulation(
+        geometryFactory,
+        program,
+        "Main",
+        callback,
+        true,
+        1,
+        true
+    );
+
+    assertFalse(completedSteps.isEmpty(), "Simulation should have completed at least one step");
+  }
+
+  /**
+   * Test that an organism reads the current value of a patch attribute via
+   * {@code here.<name>} even when that attribute has ONLY a .step handler (no .init).
+   *
+   * <p>The josh-llm-experiment bug report (§7) claims the wrapper-identity bug
+   * fires even with a step-only patch attribute, contradicting the "needs both
+   * .init and .step" framing. The self-checking assert in the fixture throws
+   * mid-simulation on a buggy build, which would surface here as an exception.</p>
+   */
+  @Test
+  public void testOrganismSeesCurrentPatchAttributeViaHereStepOnly() throws IOException {
+    String joshCode = Files.readString(ORGANISM_SEES_HERE_STEP_ONLY_SCRIPT_PATH);
+
+    ParseResult parsed = JoshSimFacade.parse(joshCode);
+    assertFalse(parsed.hasErrors(),
+        "Josh code should parse without errors. Errors: " + parsed.getErrors());
+
+    EngineGeometryFactory geometryFactory = new GridGeometryFactory();
+    JvmInputOutputLayer inputOutputLayer = new JvmInputOutputLayerBuilder()
+        .withReplicate(1)
+        .build();
+
+    JoshProgram program = JoshSimFacade.interpret(geometryFactory, parsed, inputOutputLayer);
+    assertNotNull(program, "Program should be successfully interpreted");
+
+    List<Long> completedSteps = new ArrayList<>();
+
+    JoshSimFacadeUtil.SimulationStepCallback callback = (stepNumber) -> {
+      completedSteps.add(stepNumber);
+    };
+
+    JoshSimFacade.runSimulation(
+        geometryFactory,
+        program,
+        "Main",
+        callback,
+        true,
+        1,
+        true
+    );
+
+    assertFalse(completedSteps.isEmpty(), "Simulation should have completed at least one step");
+  }
+
+  /**
+   * Test that an organism created mid-simulation reads the current patch attribute via
+   * {@code here.<name>} rather than a stale or year-0 value.
+   *
+   * <p>This exercises the EntityFastForwarder path: the organism is created at step 2 (not
+   * at init), so it must be fast-forwarded to the current substep for {@code here.patchValue}
+   * to resolve to the patch's current value. The fixture's self-checking asserts fire every
+   * step from creation onward, so a fast-forward gap or a one-step lag throws mid-simulation
+   * and surfaces here as an exception.</p>
+   */
+  @Test
+  public void testOrganismCreatedMidSimulationSeesCurrentHere() throws IOException {
+    String joshCode = Files.readString(ORGANISM_CREATED_MIDSIM_SCRIPT_PATH);
+
+    ParseResult parsed = JoshSimFacade.parse(joshCode);
+    assertFalse(parsed.hasErrors(),
+        "Josh code should parse without errors. Errors: " + parsed.getErrors());
+
+    EngineGeometryFactory geometryFactory = new GridGeometryFactory();
+    JvmInputOutputLayer inputOutputLayer = new JvmInputOutputLayerBuilder()
+        .withReplicate(1)
+        .build();
+
+    JoshProgram program = JoshSimFacade.interpret(geometryFactory, parsed, inputOutputLayer);
+    assertNotNull(program, "Program should be successfully interpreted");
+
+    List<Long> completedSteps = new ArrayList<>();
+
+    JoshSimFacadeUtil.SimulationStepCallback callback = (stepNumber) -> {
+      completedSteps.add(stepNumber);
+    };
+
+    JoshSimFacade.runSimulation(
+        geometryFactory,
+        program,
+        "Main",
+        callback,
+        true,
+        1,
+        true
+    );
+
+    assertFalse(completedSteps.isEmpty(), "Simulation should have completed at least one step");
+  }
+
+  /**
+   * Test the mid-simulation creation fixture under PARALLEL patch processing.
+   *
+   * <p>The patch wrapper cache that fixes the stale-here bug is a plain
+   * {@code IdentityHashMap} mutated via {@code computeIfAbsent}. Its thread safety relies on
+   * the invariant that every patch wrapper is created during the serial pre-pass in the
+   * {@code SimulationStepper} constructor, so parallel stepping only ever reads existing keys
+   * and never inserts concurrently. This test exercises that path by running the same fixture
+   * with {@code serialPatches = false}: a regression that defers wrapper creation into the
+   * parallel phase (concurrent inserts) or that lets each thread see a different wrapper would
+   * surface here as a corrupted map, a lost organism, or a failed in-{@code josh} assert.</p>
+   */
+  @Test
+  public void testOrganismCreatedMidSimulationSeesCurrentHereParallel() throws IOException {
+    String joshCode = Files.readString(ORGANISM_CREATED_MIDSIM_SCRIPT_PATH);
+
+    ParseResult parsed = JoshSimFacade.parse(joshCode);
+    assertFalse(parsed.hasErrors(),
+        "Josh code should parse without errors. Errors: " + parsed.getErrors());
+
+    EngineGeometryFactory geometryFactory = new GridGeometryFactory();
+    JvmInputOutputLayer inputOutputLayer = new JvmInputOutputLayerBuilder()
+        .withReplicate(1)
+        .build();
+
+    JoshProgram program = JoshSimFacade.interpret(geometryFactory, parsed, inputOutputLayer);
+    assertNotNull(program, "Program should be successfully interpreted");
+
+    List<Long> completedSteps = new ArrayList<>();
+
+    JoshSimFacadeUtil.SimulationStepCallback callback = (stepNumber) -> {
+      completedSteps.add(stepNumber);
+    };
+
+    JoshSimFacade.runSimulation(
+        geometryFactory,
+        program,
+        "Main",
+        callback,
+        false,
         1,
         true
     );

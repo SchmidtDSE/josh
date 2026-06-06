@@ -162,6 +162,20 @@ public class JoshSimLeaderHandler implements HttpHandler {
     String outputStepsStr = formData.contains("outputSteps")
         ? formData.getFirst("outputSteps").getValue() : "";
 
+    int replicateStart = 0;
+    if (formData.contains("replicateStart")) {
+      try {
+        replicateStart = Integer.parseInt(formData.getFirst("replicateStart").getValue());
+      } catch (NumberFormatException e) {
+        httpServerExchange.setStatusCode(400);
+        return Optional.of(apiKey);
+      }
+      if (replicateStart < 0) {
+        httpServerExchange.setStatusCode(400);
+        return Optional.of(apiKey);
+      }
+    }
+
     // Prepare tasks for parallel execution
     List<WorkerTask> tasks = new ArrayList<>();
     for (int i = 0; i < replicates; i++) {
@@ -171,8 +185,9 @@ public class JoshSimLeaderHandler implements HttpHandler {
           apiKey,
           externalData,
           favorBigDecimal,
-          i,
-          outputStepsStr
+          replicateStart + i,
+          outputStepsStr,
+          false
       );
       tasks.add(task);
     }

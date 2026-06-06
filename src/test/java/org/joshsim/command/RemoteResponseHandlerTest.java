@@ -2,6 +2,7 @@ package org.joshsim.command;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertInstanceOf;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
@@ -154,7 +155,7 @@ public class RemoteResponseHandlerTest {
   @Test
   public void testProcessDatumResponse() {
     // Arrange
-    String datumLine = "[0] TestEntity:x=1\ty=2";
+    String datumLine = "[0] TestEntity:x=1\ty=2\tstep=5";
 
     // Act
     Optional<org.joshsim.wire.WireResponse> result =
@@ -173,8 +174,8 @@ public class RemoteResponseHandlerTest {
   @Test
   public void testProcessDatumResponseReusesFacade() {
     // Arrange
-    String datumLine1 = "[0] TestEntity:x=1\ty=2";
-    String datumLine2 = "[0] TestEntity:x=3\ty=4";
+    String datumLine1 = "[0] TestEntity:x=1\ty=2\tstep=5";
+    String datumLine2 = "[0] TestEntity:x=3\ty=4\tstep=5";
 
     // Act
     handler.processResponseLine(datumLine1, 0, null);
@@ -195,8 +196,8 @@ public class RemoteResponseHandlerTest {
         .thenReturn(exportFacade)  // First call
         .thenReturn(exportFacade2); // Second call
 
-    String datumLine1 = "[0] Entity1:x=1\ty=2";
-    String datumLine2 = "[0] Entity2:a=3\tb=4";
+    String datumLine1 = "[0] Entity1:x=1\ty=2\tstep=5";
+    String datumLine2 = "[0] Entity2:a=3\tb=4\tstep=5";
 
     // Act
     handler.processResponseLine(datumLine1, 0, null);
@@ -307,8 +308,8 @@ public class RemoteResponseHandlerTest {
   @Test
   public void testCloseExportFacades() throws Exception {
     // Arrange
-    String datumLine1 = "[0] Entity1:x=1\ty=2";
-    String datumLine2 = "[0] Entity2:a=3\tb=4";
+    String datumLine1 = "[0] Entity1:x=1\ty=2\tstep=5";
+    String datumLine2 = "[0] Entity2:a=3\tb=4\tstep=5";
 
     ExportFacade exportFacade2 = mock(ExportFacade.class);
     when(exportFactory.build(any(ExportTarget.class)))
@@ -330,7 +331,7 @@ public class RemoteResponseHandlerTest {
   @Test
   public void testCloseExportFacadesWithException() throws Exception {
     // Arrange
-    String datumLine = "[0] Entity1:x=1\ty=2";
+    String datumLine = "[0] Entity1:x=1\ty=2\tstep=5";
     handler.processResponseLine(datumLine, 0, null);
 
     doThrow(new RuntimeException("Join failed")).when(exportFacade).join();
@@ -359,7 +360,7 @@ public class RemoteResponseHandlerTest {
     // Process some responses to change state
     handler.processResponseLine("[progress 25]", 0, null);
     handler.processResponseLine("[end 0]", 0, null);
-    handler.processResponseLine("[0] TestEntity:x=1\ty=2", 0, null);
+    handler.processResponseLine("[0] TestEntity:x=1\ty=2\tstep=5", 0, null);
 
     // Verify state changes
     assertEquals(25, handler.getCurrentStep().get());
@@ -386,13 +387,25 @@ public class RemoteResponseHandlerTest {
   @Test
   public void testDatumResponsePassesReplicateNumber() {
     // Arrange
-    String datumLine = "[0] TestEntity:x=1\ty=2";
+    String datumLine = "[0] TestEntity:x=1\ty=2\tstep=5";
     int replicateNumber = 7;
 
     // Act
     handler.processResponseLine(datumLine, replicateNumber, null);
 
     // Assert - verify the 3-arg write is called with the correct replicate number
-    verify(exportFacade).write(any(org.joshsim.wire.NamedMap.class), eq(0L), eq(7));
+    verify(exportFacade).write(any(org.joshsim.wire.NamedMap.class), eq(5L), eq(7));
+  }
+
+  @Test
+  public void testDatumResponseMissingStepThrows() {
+    String datumLine = "[0] TestEntity:x=1\ty=2";
+
+    RuntimeException exception = assertThrows(RuntimeException.class, () -> {
+      handler.processResponseLine(datumLine, 0, null);
+    });
+
+    assertInstanceOf(IllegalStateException.class, exception.getCause());
+    assertTrue(exception.getCause().getMessage().contains("missing required 'step' field"));
   }
 }

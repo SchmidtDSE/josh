@@ -142,6 +142,72 @@ jobs:
         run: mkdir -p build/libs; mv joshsim-fat.jar build/libs/joshsim-fat.jar
       - name: Validate examples
         run: bash examples/validate.sh
+  testMcp:
+    needs: buildJava
+    environment: Build
+    runs-on: ubuntu-latest
+    name: Test MCP Server
+    steps:
+      - name: Checkout
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+      - name: Setup Java
+        uses: actions/setup-java@be666c2fcd27ec809703dec50e508c2fdc7f6654 # v5.2.0
+        with:
+          distribution: 'temurin'
+          java-version: '21'
+      # node/npm are preinstalled on ubuntu-latest runners; npx fetches the inspector.
+      - name: Update apt
+        run: sudo apt-get update
+      - name: Setup netCDF
+        run: sudo apt-get install -y libnetcdf-dev
+      - name: Download fat jar
+        uses: actions/download-artifact@70fc10c6e5e1ce46ad2ea6f2b72d43f7d47b13c3 # v8.0.0
+        with:
+          name: fatJar
+      - name: Move artifact
+        run: mkdir -p build/libs; mv joshsim-fat.jar build/libs/joshsim-fat.jar
+      - name: MCP inspector smoke test
+        run: bash examples/test_mcp.sh
+  testRemote:
+    needs: [buildJava]
+    environment: Build
+    runs-on: ubuntu-latest
+    name: Test Remote
+    steps:
+      - name: Checkout
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+      - name: Setup Java
+        uses: actions/setup-java@be666c2fcd27ec809703dec50e508c2fdc7f6654 # v5.2.0
+        with:
+          distribution: 'temurin'
+          java-version: '21'
+      - name: Download fat jar
+        uses: actions/download-artifact@70fc10c6e5e1ce46ad2ea6f2b72d43f7d47b13c3 # v8.0.0
+        with:
+          name: fatJar
+      - name: Move artifact
+        run: mkdir -p build/libs; mv joshsim-fat.jar build/libs/joshsim-fat.jar
+      - name: Start local server
+        run: java -Xmx2g -jar build/libs/joshsim-fat.jar server > /tmp/josh_server.log 2>&1 &
+      - name: Wait for server ready
+        run: bash .github/scripts/wait_for_server.sh /tmp/josh_server.log
+      - name: Run remote simulation and check step labeling
+        run: bash .github/scripts/run_remote_step_check.sh
+      - name: Test profiler on remote (client --enable-profiler, expect non-zero timings)
+        run: bash .github/scripts/run_profiler_remote.sh on --enable-profiler
+      - name: Test profiler mismatch remote (client --enable-profiler, server honors field, expect non-zero timings)
+        run: bash .github/scripts/run_profiler_remote.sh on --enable-profiler
+      - name: Stop server before profiler server
+        run: pkill -f joshsim-fat.jar || true
+      - name: Start profiler server
+        run: java -Xmx2g -jar build/libs/joshsim-fat.jar server --enable-profiler > /tmp/josh_profiler_server.log 2>&1 &
+      - name: Wait for profiler server ready
+        run: bash .github/scripts/wait_for_server.sh /tmp/josh_profiler_server.log
+      - name: Test server-global profiler flag (client without --enable-profiler)
+        run: bash .github/scripts/run_profiler_remote.sh on
+      - name: Stop server
+        if: always()
+        run: pkill -f joshsim-fat.jar || true
   testOutputFormatCSV:
     needs: [validateExamples, testPreprocessing]
     environment: Build
@@ -162,18 +228,7 @@ jobs:
       - name: Move artifact
         run: mkdir -p build/libs; mv joshsim-fat.jar build/libs/joshsim-fat.jar
       - name: Test CSV output
-        run: |
-          echo "Testing CSV output..."
-          rm -f /tmp/simple_josh.csv
-          java -Xmx6g -jar build/libs/joshsim-fat.jar run --replicates=1 examples/simulations/simple.josh TestSimpleSimulation || exit 1
-          [ -f "/tmp/simple_josh.csv" ] || exit 2
-          [ -s "/tmp/simple_josh.csv" ] || exit 3
-          echo "Testing CSV with Earth-space output..."
-          rm -f /tmp/simple_seki_josh.csv
-          java -Xmx6g -jar build/libs/joshsim-fat.jar run --replicates=2 examples/simulations/simple_seki.josh TestSimpleSimulation || exit 4
-          [ -f "/tmp/simple_seki_josh.csv" ] || exit 5
-          [ -s "/tmp/simple_seki_josh.csv" ] || exit 6
-          echo "✓ CSV output format tests passed!"
+        run: bash .github/scripts/test_csv_output.sh
   testOutputFormatNetCDF:
     needs: [validateExamples, testPreprocessing]
     environment: Build
@@ -198,15 +253,7 @@ jobs:
       - name: Move artifact
         run: mkdir -p build/libs; mv joshsim-fat.jar build/libs/joshsim-fat.jar
       - name: Test netCDF output
-        run: |
-          echo "Testing netCDF output..."
-          rm -f /tmp/simple_josh_*.nc
-          java -Xmx6g -jar build/libs/joshsim-fat.jar run --replicates=2 examples/simulations/simple_netcdf.josh TestSimpleSimulation || exit 7
-          [ -f "/tmp/simple_josh_0.nc" ] || exit 8
-          [ -f "/tmp/simple_josh_1.nc" ] || exit 9
-          [ -s "/tmp/simple_josh_0.nc" ] || exit 10
-          [ -s "/tmp/simple_josh_1.nc" ] || exit 11
-          echo "✓ NetCDF output format tests passed!"
+        run: bash .github/scripts/test_netcdf_output.sh
   testOutputFormatGeoTIFF:
     needs: [validateExamples, testPreprocessing]
     environment: Build
@@ -227,15 +274,7 @@ jobs:
       - name: Move artifact
         run: mkdir -p build/libs; mv joshsim-fat.jar build/libs/joshsim-fat.jar
       - name: Test geotiff output
-        run: |
-          echo "Testing geotiff output..."
-          rm -f /tmp/simple_josh_*.tiff
-          java -Xmx6g -jar build/libs/joshsim-fat.jar run --replicates=2 examples/simulations/simple_geotiff.josh TestSimpleSimulation || exit 12
-          [ -f "/tmp/simple_josh_averageAge_0_0.tiff" ] || exit 13
-          [ -s "/tmp/simple_josh_averageAge_0_0.tiff" ] || exit 14
-          [ -f "/tmp/simple_josh_averageHeight_1_1.tiff" ] || exit 15
-          [ -s "/tmp/simple_josh_averageHeight_1_1.tiff" ] || exit 16
-          echo "✓ GeoTIFF output format tests passed!"
+        run: bash .github/scripts/test_geotiff_output.sh
   testGuideExamples:
     needs: [validateExamples, testPreprocessing]
     environment: Build
@@ -319,9 +358,17 @@ jobs:
         run: bash examples/test_data_option.sh
       - name: Test job configuration template functionality
         run: bash examples/test_job_config.sh
+      - name: Test ForeverTree example (paper model)
+        run: bash paper/forevertree/test.sh
+      - name: Test profiler off local (expect zero timings)
+        run: bash .github/scripts/run_profiler_local.sh 1 off
+      - name: Test profiler on local (expect non-zero timings)
+        run: bash .github/scripts/run_profiler_local.sh 1 on --enable-profiler
+      - name: Test profiler on local with 5 replicates (expect non-zero timings)
+        run: bash .github/scripts/run_profiler_local.sh 5 on --enable-profiler
   buildWeb:
     environment: Build
-    needs: [ checkJava, buildJava, testJava, validateExamples, testOutputFormatCSV, testOutputFormatNetCDF, testOutputFormatGeoTIFF, testGuideExamples, testConfiguration, testAdditionalFeatures, testPreprocessing ]
+    needs: [ checkJava, buildJava, testJava, validateExamples, testRemote, testOutputFormatCSV, testOutputFormatNetCDF, testOutputFormatGeoTIFF, testGuideExamples, testConfiguration, testAdditionalFeatures, testPreprocessing ]
     if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/dev'
     runs-on: ubuntu-latest
     name: Build for Browser
@@ -362,6 +409,34 @@ jobs:
             rm -rf publicsans
             mv publicsans-minimal publicsans
           fi
+      - name: Install demo deps
+        run: cd demo.joshsim.org/third_party; bash install_deps.sh
+      - name: Optimize demo publicsans deployment
+        run: |
+          cd demo.joshsim.org/third_party
+          if [ -d "publicsans/fonts/otf" ]; then
+            mkdir -p publicsans-minimal/fonts/otf
+            cp publicsans/fonts/otf/PublicSans-Regular.otf publicsans-minimal/fonts/otf/
+            rm -rf publicsans
+            mv publicsans-minimal publicsans
+          fi
+      - name: Embed demo war
+        run: bash demo.joshsim.org/war/get_from_jar.sh
+      - name: Copy joshlang-prism.js to demo
+        run: cp landing/joshlang-prism.js demo.joshsim.org/js/joshlang-prism.js
+      - name: Copy intro_animation.js to demo
+        run: cp landing/intro_animation.js demo.joshsim.org/js/intro_animation.js
+      - name: Download Pandoc
+        run: wget https://github.com/jgm/pandoc/releases/download/3.1.10/pandoc-3.1.10-1-amd64.deb
+      - name: Install Pandoc
+        run: sudo dpkg -i pandoc-3.1.10-1-amd64.deb
+      - name: Render demo narrative content
+        run: bash demo.joshsim.org/content/render.sh
+      - name: Upload demo
+        uses: actions/upload-artifact@bbbca2ddaa5d8feaa63e36b76fdaad77386f024f # v7.0.0
+        with:
+          name: demo
+          path: demo.joshsim.org
       - name: Copy guide examples to landing
         run: |
           mkdir -p landing/examples/guide
@@ -496,6 +571,33 @@ jobs:
           sshpass -e scp -r -P 22 -o StrictHostKeyChecking=no \
             ./landing-build/* \
             ${{ secrets.SFTPUSER }}@${{ secrets.SFTPHOST }}:${{ env.LANDING_DIRECTORY }}/
+  deployDemo:
+    environment: Deploy
+    runs-on: ubuntu-latest
+    name: Deploy Demo to SFTP
+    needs: [deployStatic]
+    if: github.ref == 'refs/heads/main'
+    steps:
+      - name: Install SSH client and sshpass
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y openssh-client sshpass
+      - name: Setup SSH known hosts
+        run: |
+          mkdir -p ~/.ssh
+          ssh-keyscan -H -p 22 ${{ secrets.SFTPHOST }} >> ~/.ssh/known_hosts
+      - name: Download demo artifact
+        uses: actions/download-artifact@70fc10c6e5e1ce46ad2ea6f2b72d43f7d47b13c3 # v8.0.0
+        with:
+          name: demo
+          path: ./demo-build
+      - name: Upload demo via SCP
+        env:
+          SSHPASS: ${{ secrets.SFTPPASSWORD }}
+        run: |
+          sshpass -e scp -r -P 22 -o StrictHostKeyChecking=no \
+            ./demo-build/* \
+            ${{ secrets.SFTPUSER }}@${{ secrets.SFTPHOST }}:demo.joshsim.org/
   deployCloud:
     name: Deploy to Cloud
     environment: Deploy
@@ -505,13 +607,25 @@ jobs:
     steps:
       - name: Set environment variables based on branch
         run: |
+          # EXTRA_SECRETS is appended to --set-secrets below (note the leading comma).
+          # Dev-only until prod Secret Manager entries (josh-prod-minio-key / -secret)
+          # and runtime SA IAM bindings exist. BEFORE MERGING TO MAIN: create those
+          # secrets, grant the prod runtime SA secretmanager.secretAccessor on them,
+          # then populate EXTRA_SECRETS for the main branch below (or drop the
+          # branching entirely once both envs are aligned).
+          #
+          # This is smelly but we can avoid the branching when prod is ready, and it keeps
+          # all the env var logic in one place instead of spreading it across multiple steps / partial deployments.
+
           if [[ $GITHUB_REF == refs/heads/main ]]; then
             echo "SERVICE_NAME=josh-executor-prod" >> $GITHUB_ENV
             echo "DOCKERFILE=Dockerfile.prod" >> $GITHUB_ENV
+            echo "EXTRA_SECRETS=" >> $GITHUB_ENV  # TODO: add MinIO secrets once prod secrets exist
             echo "Deploying to Production environment"
           else
             echo "SERVICE_NAME=josh-executor-dev" >> $GITHUB_ENV
             echo "DOCKERFILE=Dockerfile.dev" >> $GITHUB_ENV
+            echo "EXTRA_SECRETS=,MINIO_ACCESS_KEY=josh-dev-minio-key:latest,MINIO_SECRET_KEY=josh-dev-minio-secret:latest" >> $GITHUB_ENV
             echo "Deploying to Development environment"
           fi
       - name: Checkout code
@@ -552,7 +666,43 @@ jobs:
             --max-instances=100 \
             --port=8085 \
             --allow-unauthenticated \
-            --set-secrets="JOSH_API_KEYS=${{ secrets.SECRET_NAME }}" \
+            --set-secrets="JOSH_API_KEYS=${{ secrets.SECRET_NAME }}${{ env.EXTRA_SECRETS }}" \
             --use-http2 \
+            --no-cpu-throttling \
             --concurrency=1 \
             --timeout=3600s
+  buildBatchImage:
+    name: Build Batch Worker Image
+    environment: Build
+    runs-on: ubuntu-latest
+    needs: [ checkJava, testJava, buildJava ]
+    if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/dev' || github.ref == 'refs/heads/feat/k8s-batch'
+    permissions:
+      contents: read
+      packages: write
+    steps:
+      - name: Checkout
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+      - name: Download fatJar artifact
+        uses: actions/download-artifact@70fc10c6e5e1ce46ad2ea6f2b72d43f7d47b13c3 # v8.0.0
+        with:
+          name: fatJar
+      - name: Stage fat jar for Docker build
+        run: |
+          mkdir -p build/libs
+          mv joshsim-fat.jar build/libs/joshsim-fat.jar
+      - name: Log in to GHCR
+        uses: docker/login-action@74a5d142397b4f367a81961eba4e8cd7edddf772 # v3.4.0
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - name: Build and push batch worker image
+        run: |
+          IMAGE=ghcr.io/schmidtdse/josh/joshsim-batch
+          docker build -f cloud-img/Dockerfile.batch \
+            -t ${IMAGE}:${{ github.sha }} \
+            -t ${IMAGE}:latest \
+            .
+          docker push ${IMAGE}:${{ github.sha }}
+          docker push ${IMAGE}:latest

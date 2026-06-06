@@ -35,7 +35,8 @@ public class ParallelWorkerHandlerTest {
         "external-data",
         true,
         5,
-        "5,10,15"
+        "5,10,15",
+        false
     );
 
     assertEquals("simulation code", task.getCode());
@@ -56,7 +57,8 @@ public class ParallelWorkerHandlerTest {
         "",
         false,
         0,
-        ""
+        "",
+        false
     );
 
     assertEquals("code", task.getCode());

@@ -218,6 +218,72 @@ class RunCommandReplicatesTest {
   }
 
   @Test
+  void testReplicateStartValidationNegative(@TempDir Path tempDir) throws Exception {
+    Path joshFile = tempDir.resolve("test.josh");
+    Files.writeString(joshFile, JoshTestFixtures.MINIMAL_SIMULATION_NO_EXPORT);
+
+    setupBasicFields(runCommand, joshFile);
+    setFieldValue(runCommand, "simulation", "TestSim");
+    setFieldValue(runCommand, "replicateStart", -1);
+
+    Integer result = runCommand.call();
+
+    assertEquals(1, result, "Negative replicate-start should fail validation");
+  }
+
+  @Test
+  void testReplicateStartIndexMutex(@TempDir Path tempDir) throws Exception {
+    Path joshFile = tempDir.resolve("test.josh");
+    Files.writeString(joshFile, JoshTestFixtures.MINIMAL_SIMULATION_NO_EXPORT);
+
+    setupBasicFields(runCommand, joshFile);
+    setFieldValue(runCommand, "simulation", "TestSim");
+    setFieldValue(runCommand, "replicateStart", 5);
+    setFieldValue(runCommand, "replicateIndex", Integer.valueOf(2));
+
+    Integer result = runCommand.call();
+
+    assertEquals(1, result, "--replicate-start with --replicate-index should fail validation");
+  }
+
+  @Test
+  void testReplicateStartShiftsAbsoluteIndices(@TempDir Path tempDir) throws Exception {
+    Path joshFile = tempDir.resolve("test.josh");
+    Path outputFile = tempDir.resolve("output.csv");
+    Files.writeString(joshFile,
+        JoshTestFixtures.minimalSimulationWithExport(outputFile.toString()));
+
+    setupBasicFields(runCommand, joshFile);
+    setFieldValue(runCommand, "simulation", "TestSim");
+    setFieldValue(runCommand, "replicates", 2);
+    setFieldValue(runCommand, "replicateStart", 5);
+
+    Integer result = runCommand.call();
+
+    assertEquals(0, result, "Replicate-start with replicates should succeed");
+    assertTrue(Files.exists(outputFile), "Output CSV file should be created");
+
+    String csvContent = Files.readString(outputFile);
+    // Replicate column is the last CSV column. Inspect the parsed last column of each
+    // data row directly to avoid line-ending ambiguity.
+    java.util.Set<String> replicateValues = csvContent.lines()
+        .skip(1)
+        .filter(line -> !line.isBlank())
+        .map(line -> {
+          int lastComma = line.lastIndexOf(',');
+          return lastComma >= 0 ? line.substring(lastComma + 1).trim() : "";
+        })
+        .collect(java.util.stream.Collectors.toSet());
+    assertTrue(replicateValues.contains("5"),
+        "CSV replicate column should contain 5; values were: " + replicateValues);
+    assertTrue(replicateValues.contains("6"),
+        "CSV replicate column should contain 6; values were: " + replicateValues);
+    assertTrue(!replicateValues.contains("0"),
+        "CSV replicate column should NOT contain 0 when start=5; values were: "
+            + replicateValues);
+  }
+
+  @Test
   void testSimulationNotFound(@TempDir Path tempDir) throws Exception {
     // Arrange - create real Josh file but request nonexistent simulation
     Path joshFile = tempDir.resolve("test.josh");

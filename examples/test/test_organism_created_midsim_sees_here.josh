@@ -1,0 +1,54 @@
+# Test: Organism Created Mid-Simulation Sees Current here.<patch-attribute>
+#
+# Companion to test_organism_sees_stale_here_patch_attribute.josh. That
+# fixture creates the organism at init (step 0); this one creates it
+# mid-simulation (step 2) to exercise the EntityFastForwarder path:
+# a freshly created organism must be fast-forwarded so that here.<attr>
+# reads the patch's CURRENT value, not a year-0 / stale value.
+#
+# Expected behavior: from the step the organism is created onward, its
+# seenValue mirrors the patch's patchValue every step. This validates both
+# fast-forward at creation (step 2) and wrapper-identity persistence across
+# the subsequent steps (3, 4, 5) where the organism carries forward via prior.
+
+start simulation Main
+
+  grid.size = 10 m
+  grid.low.x = 0 m
+  grid.low.y = 0 m
+  grid.high.x = 30 m
+  grid.high.y = 30 m
+
+  steps.low = 0 count
+  steps.high = 5 count
+
+end simulation
+
+start patch Default
+
+  # No trees until step 2; then create exactly one mid-simulation. On the
+  # steps where the conditional does not match, Trees resolves from prior,
+  # carrying the existing organism forward.
+  Trees.step :if(meta.stepCount == 2 count) = create 1 of Tree
+
+  patchValue.init = meta.stepCount
+  patchValue.step = meta.stepCount
+
+  # Self-check: patch's own attribute updates correctly each step.
+  assert.patchUpdates.step = current.patchValue == meta.stepCount
+
+  # From step 2 onward (once the organism exists) it must mirror patchValue.
+  # A fast-forward gap would strand seenValue at its init value (0 count).
+  assert.treeMirrorsPatch.step
+    :if(meta.stepCount > 1 count) = mean(Trees.seenValue) == current.patchValue
+
+  export.patchValue.step = current.patchValue
+
+end patch
+
+start organism Tree
+
+  seenValue.init = 0 count
+  seenValue.step = here.patchValue
+
+end organism

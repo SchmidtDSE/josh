@@ -21,6 +21,7 @@ import org.joshsim.engine.geometry.EngineGeometryFactory;
 import org.joshsim.engine.geometry.grid.GridGeometryFactory;
 import org.joshsim.engine.value.engine.ValueSupportFactory;
 import org.joshsim.lang.interpret.JoshProgram;
+import org.joshsim.lang.interpret.TimedRecursiveValueResolverFactory;
 import org.joshsim.lang.io.InputOutputLayer;
 import org.joshsim.lang.io.SandboxExportCallback;
 import org.joshsim.lang.io.SandboxInputOutputLayer;
@@ -37,6 +38,7 @@ public class JoshSimWorkerHandler implements HttpHandler {
   private final CloudApiDataLayer apiDataLayer;
   private final EngineGeometryFactory geometryFactory;
   private final boolean useSerial;
+  private final boolean enableProfiler;
 
 
   /**
@@ -48,12 +50,15 @@ public class JoshSimWorkerHandler implements HttpHandler {
    *     given, will use grid-space.
    * @param useSerial If true, patch processing will be done serially or, otherwise, parallel
    *     processing will be used.
+   * @param enableProfiler If true, profiling is forced on for all requests regardless of the
+   *     per-request form field.
    * @throws RuntimeException if not in sandboxed mode or if there is an error decoding the CRS.
    */
   public JoshSimWorkerHandler(CloudApiDataLayer apiInternalLayer, boolean sandboxed,
-        Optional<String> crs, boolean useSerial) {
+        Optional<String> crs, boolean useSerial, boolean enableProfiler) {
     this.apiDataLayer = apiInternalLayer;
     this.useSerial = useSerial;
+    this.enableProfiler = enableProfiler;
 
     if (!sandboxed) {
       throw new RuntimeException("Only sandboxed mode is supported at this time.");
@@ -148,9 +153,9 @@ public class JoshSimWorkerHandler implements HttpHandler {
     boolean favorBigDecimal = Boolean.parseBoolean(
         formData.getFirst("favorBigDecimal").getValue()
     );
-    String outputStepsStr = formData.contains("outputSteps")
-        ? formData.getFirst("outputSteps").getValue() : "";
-    final Optional<Set<Integer>> outputSteps = parseOutputSteps(outputStepsStr);
+    final Optional<Set<Integer>> outputSteps = getOutputSteps(formData);
+
+    boolean useProfiler = this.enableProfiler || getProfilerEnabled(formData);
 
     ParseResult result = JoshSimFacadeUtil.parse(code);
     if (result.hasErrors()) {
@@ -161,7 +166,7 @@ public class JoshSimWorkerHandler implements HttpHandler {
     }
 
     InputOutputLayer inputOutputLayer = getLayer(httpServerExchange, externalData);
-    ValueSupportFactory valueFactory = new ValueSupportFactory(favorBigDecimal);
+    ValueSupportFactory valueFactory = buildValueFactory(favorBigDecimal, useProfiler);
 
     // Execute interpretation securely
     Optional<JoshProgram> programResult = executeInterpretation(
@@ -190,15 +195,50 @@ public class JoshSimWorkerHandler implements HttpHandler {
   }
 
   /**
-   * Parses the output-steps parameter using the OutputStepsParser utility.
+   * Build a ValueSupportFactory configured for optional profiling.
    *
-   * @param outputSteps Comma-separated string of step numbers to export
-   * @return Optional containing the set of steps to export, or empty if all steps
-   *     should be exported
-   * @throws RuntimeException if the output-steps format is invalid
+   * @param favorBigDecimal Flag indicating if decimal values should favor BigDecimal.
+   * @param useProfiler If true, the factory will use TimedRecursiveValueResolverFactory so that
+   *     evaluation durations are captured; otherwise uses the default
+   *     RecursiveValueResolverFactory.
+   * @return A ValueSupportFactory configured according to the given flags.
    */
-  private static Optional<Set<Integer>> parseOutputSteps(String outputSteps) {
-    return OutputStepsParser.parseForWasmOrRemote(outputSteps);
+  ValueSupportFactory buildValueFactory(boolean favorBigDecimal, boolean useProfiler) {
+    if (useProfiler) {
+      return new ValueSupportFactory(favorBigDecimal, new TimedRecursiveValueResolverFactory());
+    } else {
+      return new ValueSupportFactory(favorBigDecimal);
+    }
+  }
+
+  /**
+   * Parse the output-steps form field from the request.
+   *
+   * @param formData The form data submitted with the request.
+   * @return Optional set of step numbers to export, or empty if all steps should be exported.
+   */
+  private Optional<Set<Integer>> getOutputSteps(FormData formData) {
+    if (!formData.contains("outputSteps")) {
+      return OutputStepsParser.parseForWasmOrRemote("");
+    } else {
+      String outputStepsStr = formData.getFirst("outputSteps").getValue();
+      return OutputStepsParser.parseForWasmOrRemote(outputStepsStr);
+    }
+  }
+
+  /**
+   * Determine whether the per-request enableProfiler form field is set to true.
+   *
+   * @param formData The form data submitted with the request.
+   * @return True if the enableProfiler field is present and equal to "true", false otherwise.
+   */
+  private boolean getProfilerEnabled(FormData formData) {
+    if (!formData.contains("enableProfiler")) {
+      return false;
+    } else {
+      String value = formData.getFirst("enableProfiler").getValue();
+      return "true".equals(value);
+    }
   }
 
   private Optional<JoshProgram> executeInterpretation(ValueSupportFactory valueFactory,

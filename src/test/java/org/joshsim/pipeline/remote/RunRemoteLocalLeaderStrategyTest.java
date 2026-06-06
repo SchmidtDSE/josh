@@ -69,7 +69,7 @@ public class RunRemoteLocalLeaderStrategyTest {
         endpointUri, apiKey, job,
         joshCode, externalDataSerialized,
         metadata, progressCalculator,
-        outputOptions, minioOptions, maxConcurrentWorkers
+        outputOptions, minioOptions, maxConcurrentWorkers, false
     );
   }
 
@@ -165,7 +165,7 @@ public class RunRemoteLocalLeaderStrategyTest {
         testContext.getJoshCode(), testContext.getExternalDataSerialized(),
         testContext.getMetadata(), testContext.getProgressCalculator(),
         testContext.getOutputOptions(), testContext.getMinioOptions(),
-        testContext.getMaxConcurrentWorkers()
+        testContext.getMaxConcurrentWorkers(), false
     );
 
     Method method = RunRemoteLocalLeaderStrategy.class.getDeclaredMethod(
@@ -196,7 +196,7 @@ public class RunRemoteLocalLeaderStrategyTest {
         testContext.getJoshCode(), testContext.getExternalDataSerialized(),
         testContext.getMetadata(), testContext.getProgressCalculator(),
         testContext.getOutputOptions(), testContext.getMinioOptions(),
-        testContext.getMaxConcurrentWorkers()
+        testContext.getMaxConcurrentWorkers(), false
     );
 
     Method method = RunRemoteLocalLeaderStrategy.class.getDeclaredMethod(
@@ -318,7 +318,7 @@ public class RunRemoteLocalLeaderStrategyTest {
         testContext.getJoshCode(), testContext.getExternalDataSerialized(),
         testContext.getMetadata(), testContext.getProgressCalculator(),
         testContext.getOutputOptions(), testContext.getMinioOptions(),
-        testContext.getMaxConcurrentWorkers()
+        testContext.getMaxConcurrentWorkers(), false
     );
 
     Method method = RunRemoteLocalLeaderStrategy.class.getDeclaredMethod(
@@ -352,7 +352,7 @@ public class RunRemoteLocalLeaderStrategyTest {
         testContext.getJoshCode(), testContext.getExternalDataSerialized(),
         testContext.getMetadata(), testContext.getProgressCalculator(),
         testContext.getOutputOptions(), testContext.getMinioOptions(),
-        testContext.getMaxConcurrentWorkers()
+        testContext.getMaxConcurrentWorkers(), false
     );
 
     Method method = RunRemoteLocalLeaderStrategy.class.getDeclaredMethod(

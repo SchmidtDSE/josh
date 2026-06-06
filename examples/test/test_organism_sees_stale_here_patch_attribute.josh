@@ -1,0 +1,55 @@
+# Test: Organism Sees Stale here.<patch-attribute> Across Steps
+#
+# Reproduces a runtime bug isolated by the josh-llm-experiment team:
+# an organism's .step handler that reads `here.<patch-attribute>` returns
+# the value captured at the first step forever, even when the patch's
+# attribute updates correctly each step.
+#
+# Expected behavior: organism's seenValue mirrors patchValue each step.
+# Buggy behavior: seenValue stays at the year-0 value (0 count) forever.
+#
+# Uses meta.stepCount as the per-step driver so the fixture is
+# self-contained (no external climate data needed). The bug is about how
+# `here.X` resolves from organism scope, not about `external` specifically.
+
+start simulation Main
+
+  grid.size = 10 m
+  grid.low.x = 0 m
+  grid.low.y = 0 m
+  grid.high.x = 30 m
+  grid.high.y = 30 m
+
+  steps.low = 0 count
+  steps.high = 5 count
+
+end simulation
+
+start patch Default
+
+  Trees.init = create 1 of Tree
+
+  # Patch attribute that updates each step.
+  patchValue.init = meta.stepCount
+  patchValue.step = meta.stepCount
+
+  # Self-check: patch's own attribute updates correctly each step.
+  # This should pass even on the buggy build.
+  assert.patchUpdates.step = current.patchValue == meta.stepCount
+
+  # The bug: organism's seenValue should mirror patchValue EVERY step.
+  # On the buggy build, mean(Trees.seenValue) stays at 0 count forever.
+  # Asserting every step (not just step 3) catches any one-step lag.
+  assert.treeMirrorsPatch.step = mean(Trees.seenValue) == current.patchValue
+
+  export.patchValue.step = current.patchValue
+  export.treeSeenValue.step = mean(Trees.seenValue)
+
+end patch
+
+start organism Tree
+
+  seenValue.init = 0 count
+  seenValue.step = here.patchValue
+
+end organism
