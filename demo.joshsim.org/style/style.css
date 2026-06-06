@@ -573,11 +573,20 @@ footer {
   fill: #757575;
 }
 
-/* ---- Table of contents footer and dialog ---- */
+/* ---- Top navbar (brand + table-of-contents) and ToC dialog ---- */
 
-#toc-footer {
-  text-align: center;
-  padding: 10px 0 20px;
+#top-nav {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 16px;
+  border-bottom: 1px solid #E0E0E0;
+}
+
+#top-nav-brand {
+  font-weight: 700;
+  color: #5050C0;
+  font-size: 1.1em;
 }
 
 #toc-open-button {
