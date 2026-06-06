@@ -591,13 +591,22 @@ jobs:
         with:
           name: demo
           path: ./demo-build
+      - name: Ensure remote demo directory exists
+        env:
+          SSHPASS: ${{ secrets.SFTPPASSWORD }}
+        run: |
+          # Served under the landing site at joshsim.org/demo until the
+          # demo.joshsim.org subdomain is configured on the host.
+          sshpass -e ssh -p 22 -o StrictHostKeyChecking=no \
+            ${{ secrets.SFTPUSER }}@${{ secrets.SFTPHOST }} \
+            "mkdir -p joshsim.org/demo"
       - name: Upload demo via SCP
         env:
           SSHPASS: ${{ secrets.SFTPPASSWORD }}
         run: |
           sshpass -e scp -r -P 22 -o StrictHostKeyChecking=no \
             ./demo-build/* \
-            ${{ secrets.SFTPUSER }}@${{ secrets.SFTPHOST }}:demo.joshsim.org/
+            ${{ secrets.SFTPUSER }}@${{ secrets.SFTPHOST }}:joshsim.org/demo/
   deployCloud:
     name: Deploy to Cloud
     environment: Deploy
