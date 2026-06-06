@@ -773,12 +773,14 @@ class NarrativePresenter {
         ],
         figuresHtml: "<div class=\"config-example\">"
           + "<div class=\"config-example-label\">forevertree.jshc</div>"
-          + "<pre><code class=\"language-joshlang\"># Maximum ForeverTree growth in 1 year\n"
+          + "<pre><code class=\"language-joshlang\"># How much can a ForeverTree grow\n"
+          + "# in one year?\n"
           + "maxNewGrowth = 1 m\n"
           + "\n"
-          + "# Lower bound for precipitation impact on growth\n"
-          + "#  at 0%, drought fully prevents growth\n"
-          + "#  at 100%, no effect on growth\n"
+          + "# How much is growth rate reduced\n"
+          + "# by drought in a given year?\n"
+          + "#  (at 0%, drought halts growth)\n"
+          + "#  (at 100%, no effect on growth)\n"
           + "minPrecipImpactPct = 0 %</code></pre>"
           + "</div>",
       },
