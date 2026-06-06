@@ -209,6 +209,14 @@ footer {
   cursor: not-allowed;
 }
 
+/* Plain-language "what & why" lede above the detailed build-up prose. */
+#buildup-text-panel .buildup-lede {
+  font-size: 1.2em;
+  line-height: 1.4;
+  color: #222;
+  margin: 0 0 14px;
+}
+
 /* ---- Build-up stepper (mini progress nav in .col-text) ---- */
 
 #buildup-stepper {

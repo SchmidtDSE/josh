@@ -450,16 +450,18 @@ class NarrativePresenter {
           "end organism",
         ],
         heading: "Structure",
-        body: "A Josh simulation is composed of three kinds of entities: a <strong>simulation</strong>,"
-          + " which defines global settings and the simulation grid; a <strong>patch</strong>, which"
-          + " represents a location on that grid; and an <strong>organism</strong>, which represents"
-          + " an individual living within a patch. Here we define the skeleton for the ForeverTree"
-          + " simulation — three empty blocks we will fill in over the next steps."
-          + " In Josh, <strong>simulation</strong> defines the spatial extent, temporal range,"
-          + " export targets, and landscape-level logic; <strong>patch</strong> describes a grid"
-          + " cell, an initialization of organisms, per-step computations, and exported summary"
-          + " statistics; and <strong>organism</strong> defines the attributes and per-step behavior"
-          + " of an individual organism (“agent”), optionally including state transitions.",
+        lede: "Every Josh model is built from a few labeled blocks. Before adding behavior, we sketch the empty shell.",
+        body: [
+          "A Josh model has three kinds of entities: a <strong>simulation</strong> (global settings and"
+            + " the grid), a <strong>patch</strong> (a location on that grid), and an"
+            + " <strong>organism</strong> (something that lives there — here, a ForeverTree). We start"
+            + " with three empty blocks and fill them in over the next steps.",
+          "More precisely: <strong>simulation</strong> defines the spatial extent, temporal range,"
+            + " export targets, and landscape-level logic; <strong>patch</strong> describes a grid"
+            + " cell, an initialization of organisms, per-step computations, and exported summary"
+            + " statistics; and <strong>organism</strong> defines the attributes and per-step behavior"
+            + " of an individual organism (“agent”), optionally including state transitions."
+        ],
       },
       {
         id: "buildup-2-geography",
@@ -485,12 +487,16 @@ class NarrativePresenter {
           "end organism",
         ],
         heading: "Geography",
-        body: "Every Josh simulation runs on a spatial grid. The <code>grid.size</code> sets the"
-          + " resolution of each patch — here 16 km × 16 km cells. <code>grid.top_left</code> and"
-          + " <code>grid.bottom_right</code> define the bounding box in latitude/longitude, placing"
-          + " our forest in the Sierra Nevada. <code>grid.patch</code> names the patch type that"
-          + " fills every cell in the grid. Concretely, this lays out 16 km square patches over a"
-          + " fixed lat/lon bounding box (36.73, -119.52 to 35.80, -117.98 degrees).",
+        lede: "First, tell Josh where in the world the model lives — and how finely to slice it up.",
+        body: [
+          "Every Josh simulation runs on a spatial grid. <code>grid.size</code> sets the resolution of"
+            + " each patch (here 16 km × 16 km cells), <code>grid.top_left</code> and"
+            + " <code>grid.bottom_right</code> place the bounding box on a real map — our forest sits"
+            + " in the Sierra Nevada — and <code>grid.patch</code> names the patch type that fills"
+            + " every cell.",
+          "Concretely, this lays out 16 km square patches over a fixed lat/lon bounding box (36.73,"
+            + " -119.52 to 35.80, -117.98 degrees)."
+        ],
       },
       {
         id: "buildup-3-initialization",
@@ -519,11 +525,14 @@ class NarrativePresenter {
           "end organism",
         ],
         heading: "Initialization",
-        body: "Patches come to life through initialization. The <code>ForeverTree.init</code>"
-          + " attribute is evaluated once at the start of the simulation; here it creates 10"
-          + " ForeverTree organisms in every patch. Josh handles the bookkeeping — each created"
-          + " organism is tracked and updated independently across every time step. There are ten"
-          + " ForeverTree agents per patch at t0 (no mortality, so the count is constant).",
+        lede: "Now populate the landscape — every patch starts with a small stand of trees.",
+        body: [
+          "Patches come to life through initialization. <code>ForeverTree.init</code> is evaluated once"
+            + " at the start and creates 10 ForeverTree organisms in every patch; Josh then tracks and"
+            + " updates each one independently across every time step.",
+          "In other words, there are ten ForeverTree agents per patch at t0 (no mortality, so the"
+            + " count stays constant)."
+        ],
       },
       {
         id: "buildup-4-external-data",
@@ -566,16 +575,17 @@ class NarrativePresenter {
           "end organism",
         ],
         heading: "External Data",
-        body: "Real simulations respond to real-world conditions. Josh can read geospatial data"
-          + " files aligned to the simulation grid. Here we pull in gridded temperature and"
-          + " precipitation rasters. <code>clampedTemp</code> bounds the temperature to a"
-          + " physiologically meaningful range. <code>temperatureImpact</code> maps that clamped"
-          + " value to a growth modifier using a quadratic curve, while <code>precipImpact</code>"
-          + " uses a sigmoid to translate precipitation into a fractional growth effect."
-          + " Climate rasters (geotiff/COG, NetCDF) are preprocessed once into grid-aligned"
-          + " <code>.jshd</code> layers, so at runtime <code>external</code> is a plain per-patch"
-          + " read; the user never writes alignment or interpolation logic."
-          + "<div class=\"ext-figures\">"
+        lede: "Real forests respond to real weather — so we feed in actual temperature and rainfall maps.",
+        body: [
+          "Josh reads gridded climate rasters aligned to the model. <code>clampedTemp</code> keeps"
+            + " temperature within a survivable range, <code>temperatureImpact</code> turns that into"
+            + " a growth multiplier with a quadratic curve, and <code>precipImpact</code> does the"
+            + " same for rainfall with a smooth (sigmoid) curve.",
+          "Under the hood, climate rasters (geotiff/COG, NetCDF) are preprocessed once into"
+            + " grid-aligned <code>.jshd</code> layers, so at runtime <code>external</code> is a plain"
+            + " per-patch read; the user never writes alignment or interpolation logic."
+        ],
+        figuresHtml: "<div class=\"ext-figures\">"
           + "<figure><img src=\"img/eco_temp_spatial.png\""
           + " alt=\"Map of input temperature in Kelvin across the simulation grid, warmer to the south\"></figure>"
           + "<figure><img src=\"img/eco_temp_domain.png\""
@@ -643,16 +653,18 @@ class NarrativePresenter {
           "end organism",
         ],
         heading: "ForeverTree",
-        body: "With climate drivers in place, we can define how a ForeverTree actually grows."
-          + " Each organism tracks its <code>age</code> and <code>height</code> across time steps."
-          + " A <code>stochastic</code> term samples a normal distribution each step, introducing"
-          + " natural variability. <code>newGrowth</code> multiplies the maximum possible growth"
-          + " rate by the temperature impact, precipitation impact, and stochastic factors."
-          + " Finally, <code>height.step</code> accumulates growth from the prior step onward."
-          + " The annual increment combines three unitless factors — a unimodal temperature impact"
-          + " that peaks mid-window and is zero at the edges, a saturating precipitation impact, and"
-          + " a multiplicative noise term — so growth is choked off whenever either climate driver"
-          + " is unfavorable.",
+        lede: "With the climate drivers in place, define how a ForeverTree actually grows each year.",
+        body: [
+          "Each organism tracks its <code>age</code> and <code>height</code> over time. A"
+            + " <code>stochastic</code> term samples a normal distribution each step for natural"
+            + " variability, <code>newGrowth</code> multiplies the maximum growth rate by the"
+            + " temperature, precipitation, and stochastic factors, and <code>height.step</code>"
+            + " accumulates that growth from the prior step onward.",
+          "So the annual increment combines three unitless factors — a unimodal temperature impact"
+            + " that peaks mid-window and is zero at the edges, a saturating precipitation impact, and"
+            + " a multiplicative noise term — and growth is choked off whenever either climate driver"
+            + " is unfavorable."
+        ],
       },
       {
         id: "buildup-6-units",
@@ -729,32 +741,37 @@ class NarrativePresenter {
           "end unit",
         ],
         heading: "Units",
-        body: "Josh has a built-in unit system. Rather than tracking unit conversions by hand,"
-          + " you declare conversion rules in <code>start unit</code> blocks. Here we define that"
-          + " <code>kgm2s</code> (the SI unit for precipitation flux from the climate data)"
-          + " converts to <code>mm</code> per year, and that <code>mm</code> converts to"
-          + " <code>m</code>. Josh applies these automatically whenever a value is used in a"
-          + " context requiring a different unit — built-in support for automatic unit conversions"
-          + " between compatible types (like Fahrenheit to Celsius). The <code>as mm</code> cast"
-          + " invokes the registered conversion — kg m⁻²s⁻¹ × 31536000 → mm yr⁻¹ — applied"
-          + " automatically wherever a target unit is named.",
+        lede: "Mixing meters, millimeters, and Kelvin? Josh handles the unit conversions for you.",
+        body: [
+          "Rather than tracking conversions by hand, you declare rules in <code>start unit</code>"
+            + " blocks. Here <code>kgm2s</code> (the climate data's precipitation-flux unit) converts"
+            + " to <code>mm</code> per year, and <code>mm</code> converts to <code>m</code>; Josh"
+            + " applies these automatically whenever a value is used where a different unit is"
+            + " expected.",
+          "This is built-in support for automatic unit conversions between compatible types (like"
+            + " Fahrenheit to Celsius). The <code>as mm</code> cast invokes the registered"
+            + " conversion — kg m⁻²s⁻¹ × 31536000 → mm yr⁻¹ — applied automatically wherever a target"
+            + " unit is named."
+        ],
       },
       {
         id: "buildup-7-export",
         kind: "buildup",
         codeSnapshot: FOREVERTREE_WASM_SNAPSHOT,
         heading: "Export & Config",
-        body: "The final pieces wire the simulation to the outside world."
-          + " <code>steps.low</code> and <code>steps.high</code> define the time range (here"
-          + " years 0–10). The <code>config</code> keyword pulls tunable parameters from a"
-          + " <code>.jshc</code> configuration file, keeping the model code clean."
-          + " <code>exportFiles.patch</code> names the in-memory destination for results, and the"
-          + " three <code>export.*</code> lines in the patch record the year, tree count, and mean"
-          + " height at every step — the data we will visualise next. The run covers 10 simulated"
-          + " years (steps 0–10); stochastic replicates share the same climate forcing and initial"
-          + " conditions, with one row per (patch, year, replicate) recording year, nTrees, and"
-          + " meanHeight. The <code>config</code> reads pull <code>minPrecipImpactPct</code> and"
-          + " <code>maxNewGrowth</code> from a companion <code>forevertree.jshc</code>.",
+        lede: "Finally, choose how long to run, expose the knobs, and say what to record.",
+        body: [
+          "<code>steps.low</code> and <code>steps.high</code> set the time range (years 0–10),"
+            + " <code>config</code> pulls tunable parameters from a <code>.jshc</code> file to keep"
+            + " the model clean, <code>exportFiles.patch</code> names where results go, and the three"
+            + " <code>export.*</code> lines record the year, tree count, and mean height at every"
+            + " step — the data we visualize next.",
+          "The run covers 10 simulated years (steps 0–10); stochastic replicates share the same"
+            + " climate forcing and initial conditions, with one row per (patch, year, replicate)"
+            + " recording year, nTrees, and meanHeight. The <code>config</code> reads pull"
+            + " <code>minPrecipImpactPct</code> and <code>maxNewGrowth</code> from a companion"
+            + " <code>forevertree.jshc</code>."
+        ],
       },
       {
         id: "playground",
@@ -971,10 +988,28 @@ class NarrativePresenter {
       h2.textContent = toStep.heading;
       textPanel.appendChild(h2);
     }
+    // Plain-language "what is this / why care" lede, rendered larger than the body.
+    if (toStep.lede) {
+      const lede = document.createElement("p");
+      lede.className = "buildup-lede";
+      lede.innerHTML = toStep.lede;
+      textPanel.appendChild(lede);
+    }
+    // Body is an array of paragraph HTML strings (each its own <p>); a plain string
+    // is also accepted for backwards compatibility.
     if (toStep.body) {
-      const p = document.createElement("p");
-      p.innerHTML = toStep.body;
-      textPanel.appendChild(p);
+      const paragraphs = Array.isArray(toStep.body) ? toStep.body : [toStep.body];
+      paragraphs.forEach((para) => {
+        const p = document.createElement("p");
+        p.innerHTML = para;
+        textPanel.appendChild(p);
+      });
+    }
+    // Optional raw-HTML block (e.g. the External-Data figure grid) appended after the prose.
+    if (toStep.figuresHtml) {
+      const wrapper = document.createElement("div");
+      wrapper.innerHTML = toStep.figuresHtml;
+      textPanel.appendChild(wrapper);
     }
   }
 
