@@ -171,6 +171,16 @@ pre {
   z-index: 1;
 }
 
+/* Black outline so the white text stays legible over the tile texture. */
+.demo-callout h2,
+.demo-callout p {
+  text-shadow:
+    -1px -1px 0 #000,
+    1px -1px 0 #000,
+    -1px 1px 0 #000,
+    1px 1px 0 #000;
+}
+
 .demo-callout h2 {
   margin-top: 0;
   color: white;
