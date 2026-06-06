@@ -138,8 +138,10 @@ pre {
   background-color: #5050C0;
 }
 
-/* Loud call-out box promoting the interactive in-browser demo. */
-.demo-callout {
+/* Loud call-out box promoting the interactive in-browser demo.
+   Selector is scoped under .landing to outrank the `.landing section`
+   white-background rule. */
+.landing section.demo-callout {
   background-color: #7070C0;
   color: white;
   border-radius: 10px;
