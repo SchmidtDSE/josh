@@ -17,12 +17,28 @@ a:hover, a:active {
   color: #202070;
 }
 
+/* Header / top navbar — reuses the landing site's green animated banner
+   (palette and .header-intro animation from landing; see intro_animation.js). */
 header {
-  margin-bottom: 40px;
+  position: relative;
+  overflow: hidden;
+  color: black;
+  background-color: #E0F0E0;
+  padding: 12px 16px;
+  border: 1px solid #A0A0A0;
+  border-radius: 10px;
+  box-shadow: 5px 5px 10px rgba(10, 10, 10, 0.2);
+  margin-bottom: 30px;
 }
 
-footer {
-  margin-bottom: 20px;
+header .header-intro {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 0;
+  pointer-events: none;
 }
 
 .phase {
@@ -573,37 +589,53 @@ footer {
   fill: #757575;
 }
 
-/* ---- Top navbar (brand + table-of-contents) and ToC dialog ---- */
+/* ---- Top navbar (brand + site nav pills + table-of-contents) and ToC dialog ---- */
 
 #top-nav {
+  position: relative;
+  z-index: 1;
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 10px 16px;
-  border-bottom: 1px solid #E0E0E0;
+  flex-wrap: wrap;
+  gap: 10px;
 }
 
 #top-nav-brand {
   font-weight: 700;
-  color: #5050C0;
-  font-size: 1.1em;
+  color: #333333;
+  font-size: 1.2em;
 }
 
-#toc-open-button {
-  background: none;
-  border: 1px solid #C8C8E8;
-  border-radius: 6px;
-  padding: 5px 14px;
-  font-size: 0.85em;
-  font-family: inherit;
-  color: #5050C0;
+.nav-links {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+}
+
+/* Pill links/button reuse the landing site's nav-option palette. */
+.nav-option a,
+.nav-option a:link,
+.nav-option a:visited,
+.nav-option button {
+  background-color: #708070;
+  color: white;
+  border-radius: 10px;
+  padding: 7px 12px;
+  text-decoration: none;
+  border: none;
   cursor: pointer;
+  font-size: 0.95em;
+  font-family: inherit;
 }
 
-#toc-open-button:hover,
-#toc-open-button:focus {
-  background-color: #E8E8F8;
-  border-color: #7070C0;
+.nav-option a:hover,
+.nav-option a:focus,
+.nav-option a:active,
+.nav-option button:hover,
+.nav-option button:focus {
+  background-color: #507050;
 }
 
 #toc-dialog {

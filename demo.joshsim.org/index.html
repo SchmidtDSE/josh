@@ -14,9 +14,17 @@
 
   <body>
     <header>
+      <svg class="header-intro"></svg>
       <nav id="top-nav" aria-label="Site">
         <span id="top-nav-brand">Josh</span>
-        <button type="button" id="toc-open-button">Table of contents</button>
+        <span class="nav-links">
+          <span class="nav-option"><a href="https://www.joshsim.org/">Home</a></span>
+          <span class="nav-option"><a href="https://www.joshsim.org/purpose.html">Purpose</a></span>
+          <span class="nav-option"><a href="https://www.joshsim.org/use.html">Use</a></span>
+          <span class="nav-option"><a href="https://www.joshsim.org/guide.html">Guide</a></span>
+          <span class="nav-option"><a href="https://www.joshsim.org/community.html">Community</a></span>
+          <span class="nav-option"><button type="button" id="toc-open-button">Table of contents</button></span>
+        </span>
       </nav>
     </header>
 
@@ -109,6 +117,7 @@
     <script src="js/mode-joshlang.js?v=0.0.1"></script>
 
     <script type="text/javascript" src="third_party/d3.min.js"></script>
+    <script type="text/javascript" src="js/intro_animation.js?v=0.0.1"></script>
     <script type="text/javascript" src="third_party/math.min.js"></script>
 
     <script type="text/javascript" src="js/parse.js?v=0.0.6"></script>
