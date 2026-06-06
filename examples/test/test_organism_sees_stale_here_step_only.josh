@@ -1,0 +1,46 @@
+# Test: Organism Sees Stale here.<patch-attribute> — STEP-ONLY variant
+#
+# The josh-llm-experiment bug report (§7) claims the wrapper-identity bug
+# fires even when the patch attribute has ONLY a .step handler (no .init),
+# which contradicts the "needs both .init and .step" framing. This fixture
+# isolates that path: patchValue has no .init handler.
+#
+# Expected behavior: organism's seenValue mirrors patchValue each step.
+
+start simulation Main
+
+  grid.size = 10 m
+  grid.low.x = 0 m
+  grid.low.y = 0 m
+  grid.high.x = 30 m
+  grid.high.y = 30 m
+
+  steps.low = 0 count
+  steps.high = 5 count
+
+end simulation
+
+start patch Default
+
+  Trees.init = create 1 of Tree
+
+  # Patch attribute with ONLY a .step handler (no .init).
+  patchValue.step = meta.stepCount
+
+  assert.patchUpdates.step = current.patchValue == meta.stepCount
+
+  # The bug: organism's seenValue should mirror patchValue EVERY step.
+  # Asserting every step (not just step 3) catches any one-step lag.
+  assert.treeMirrorsPatch.step = mean(Trees.seenValue) == current.patchValue
+
+  export.patchValue.step = current.patchValue
+  export.treeSeenValue.step = mean(Trees.seenValue)
+
+end patch
+
+start organism Tree
+
+  seenValue.init = 0 count
+  seenValue.step = here.patchValue
+
+end organism

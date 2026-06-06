@@ -56,6 +56,9 @@ public class RunRemoteContext {
   // Execution parameters for local leader mode
   private final int maxConcurrentWorkers;
 
+  // Profiler flag
+  private final boolean enableProfiler;
+
   /**
    * Creates a new RunRemoteContext with all necessary parameters.
    *
@@ -72,13 +75,14 @@ public class RunRemoteContext {
    * @param outputOptions The output options for logging
    * @param minioOptions The MinIO options for cloud storage
    * @param maxConcurrentWorkers Maximum concurrent workers for local leader mode
+   * @param enableProfiler Whether to enable per-request profiling
    */
   public RunRemoteContext(File file, String simulation, boolean useFloat64,
       URI endpointUri, String apiKey, JoshJob job,
       String joshCode, String externalDataSerialized,
       SimulationMetadata metadata, ProgressCalculator progressCalculator,
       OutputOptions outputOptions, MinioOptions minioOptions,
-      int maxConcurrentWorkers) {
+      int maxConcurrentWorkers, boolean enableProfiler) {
     this.file = file;
     this.simulation = simulation;
     this.useFloat64 = useFloat64;
@@ -92,6 +96,7 @@ public class RunRemoteContext {
     this.outputOptions = outputOptions;
     this.minioOptions = minioOptions;
     this.maxConcurrentWorkers = maxConcurrentWorkers;
+    this.enableProfiler = enableProfiler;
   }
 
   /**
@@ -247,5 +252,14 @@ public class RunRemoteContext {
    */
   public int getMaxConcurrentWorkers() {
     return maxConcurrentWorkers;
+  }
+
+  /**
+   * Checks whether per-request profiling should be enabled.
+   *
+   * @return true if profiling should be enabled for this request, false otherwise
+   */
+  public boolean isEnableProfiler() {
+    return enableProfiler;
   }
 }

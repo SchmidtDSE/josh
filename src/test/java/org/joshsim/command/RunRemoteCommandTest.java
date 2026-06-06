@@ -417,6 +417,33 @@ public class RunRemoteCommandTest {
   }
 
   @Test
+  public void testEnableProfilerDefaultValue() throws Exception {
+    java.lang.reflect.Field field = RunRemoteCommand.class.getDeclaredField("enableProfiler");
+    field.setAccessible(true);
+    boolean defaultValue = (Boolean) field.get(command);
+
+    assertEquals(false, defaultValue);
+  }
+
+  @Test
+  public void testEnableProfilerFieldAccess() throws Exception {
+    java.lang.reflect.Field field = RunRemoteCommand.class.getDeclaredField("enableProfiler");
+    field.setAccessible(true);
+    field.set(command, true);
+
+    boolean value = (Boolean) field.get(command);
+    assertEquals(true, value);
+  }
+
+  @Test
+  public void testWorkerTaskEnableProfiler() {
+    org.joshsim.pipeline.remote.WorkerTask task =
+        new org.joshsim.pipeline.remote.WorkerTask(
+            "code", "sim", "key", "", false, 0, "", true);
+    assertEquals(true, task.isEnableProfiler());
+  }
+
+  @Test
   public void testStrategyPatternIntegration() throws Exception {
     // Test that the command properly integrates with strategy pattern
     Method selectMethod = RunRemoteCommand.class.getDeclaredMethod("selectExecutionStrategy");

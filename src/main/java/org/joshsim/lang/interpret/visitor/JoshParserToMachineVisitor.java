@@ -211,6 +211,10 @@ public class JoshParserToMachineVisitor extends JoshLangBaseVisitor<JoshFragment
     return distributionVisitor.visitNormalSample(ctx);
   }
 
+  public JoshFragment visitBinomialSample(JoshLangParser.BinomialSampleContext ctx) {
+    return distributionVisitor.visitBinomialSample(ctx);
+  }
+
   public JoshFragment visitCast(JoshLangParser.CastContext ctx) {
     return typesUnitsVisitor.visitCast(ctx);
   }

@@ -160,6 +160,26 @@ jobs:
             exit 5
           fi
 
+      - name: Test large CSV export to MinIO (multipart upload)
+        run: |
+          echo "Testing large export forcing multipart upload (>10MB)..."
+          java -Xmx2g -jar build/libs/joshsim-fat.jar run \
+            --replicates=1 \
+            examples/test/minio/large_export.josh \
+            MinioLargeTest \
+            --minio-endpoint=http://localhost:9000 \
+            --minio-access-key=minioadmin \
+            --minio-secret-key=minioadmin
+
+          echo "Verifying large file exists and exceeds 10MB..."
+          SIZE=$(./mc stat testminio/josh-test-bucket/results/large_test.csv --json | grep -o '"size":[0-9]*' | cut -d':' -f2)
+          if [ "$SIZE" -gt 10485760 ]; then
+            echo "✓ Large export test passed: $SIZE bytes (multipart path exercised)"
+          else
+            echo "✗ Large export too small: $SIZE bytes (expected >10MB)"
+            exit 8
+          fi
+
       - name: Test queue backpressure with small queue
         run: |
           echo "Testing queue backpressure with small queue size..."
@@ -180,25 +200,160 @@ jobs:
 
           echo "✓ Queue backpressure test passed"
 
+      - name: Test large payload upload (multipart)
+        run: |
+          echo "Testing large payload upload to exercise multipart upload path..."
+
+          # Run simulation that generates >10MB of entity-level CSV data
+          # 1500 organisms * 100 steps * 3 fields = ~15MB CSV
+          java -Xmx2g -jar build/libs/joshsim-fat.jar run \
+            --replicates=1 \
+            examples/test/minio/large_payload.josh \
+            LargePayloadTest \
+            --minio-endpoint=http://localhost:9000 \
+            --minio-access-key=minioadmin \
+            --minio-secret-key=minioadmin \
+            --export-queue-size=10000 \
+            --output-steps=100
+
+          # Verify file was uploaded
+          ./mc stat testminio/josh-test-bucket/results/large_payload_0.csv
+
+          # Verify file size exceeds 10MB multipart threshold
+          SIZE_BYTES=$(./mc stat testminio/josh-test-bucket/results/large_payload_0.csv --json | grep -o '"size":[0-9]*' | cut -d':' -f2)
+          echo "  Large payload size: $SIZE_BYTES bytes"
+
+          if [ "$SIZE_BYTES" -gt 10485760 ]; then
+            echo "✓ Large payload test passed (${SIZE_BYTES} bytes > 10MB multipart threshold)"
+          else
+            echo "✗ Large payload test failed: expected >10MB but got ${SIZE_BYTES} bytes"
+            exit 7
+          fi
+
       - name: Test error handling - missing credentials
         run: |
           echo "Testing error handling with missing credentials..."
 
-          # This should fail with clear error message
-          # Use --upload-source to trigger MinIO client initialization
-          if java -Xmx2g -jar build/libs/joshsim-fat.jar run \
-            --replicates=1 \
-            examples/test/minio/csv_export.josh \
-            MinioCSVTest \
+          # stageToMinio validates credentials eagerly via MinioHandler constructor.
+          # Without access keys, it should fail with a clear error message.
+          if java -Xmx2g -jar build/libs/joshsim-fat.jar stageToMinio \
+            --input-dir=examples/test/minio \
+            --prefix=should-not-exist/ \
             --minio-endpoint=http://localhost:9000 \
-            --upload-source \
-            --output-steps=5 \
+            --minio-bucket=josh-test-bucket \
             2>&1 | grep -q "minio_access_key.*not found"; then
             echo "✓ Error handling test passed - detected missing credentials"
           else
             echo "✗ Error handling test failed - should have detected missing credentials"
             exit 6
           fi
+
+      - name: Test MinioPollingStrategy integration
+        env:
+          MINIO_ENDPOINT: http://localhost:9000
+          MINIO_ACCESS_KEY: minioadmin
+          MINIO_SECRET_KEY: minioadmin
+          MINIO_BUCKET: josh-test-bucket
+        run: |
+          echo "Testing MinioPollingStrategy against local MinIO..."
+          ./gradlew testMinioPolling
+          echo "✓ MinioPollingStrategy integration tests passed"
+
+      - name: Test batchRemote end-to-end
+        env:
+          MINIO_ENDPOINT: http://localhost:9000
+          MINIO_ACCESS_KEY: minioadmin
+          MINIO_SECRET_KEY: minioadmin
+          MINIO_BUCKET: josh-test-bucket
+        run: |
+          echo "Testing batchRemote end-to-end against local server + MinIO..."
+
+          # Start local joshsim server
+          java -Xmx2g -jar build/libs/joshsim-fat.jar server > /tmp/josh_batch_server.log 2>&1 &
+          SERVER_PID=$!
+
+          # Wait for server ready
+          for i in $(seq 1 30); do
+            if curl -s --max-time 1 http://localhost:8085/health > /dev/null 2>&1; then
+              echo "Server ready after ${i}s"
+              break
+            fi
+            if [ $i -eq 30 ]; then
+              echo "Server failed to start. Log:"
+              cat /tmp/josh_batch_server.log
+              exit 1
+            fi
+            sleep 1
+          done
+
+          # Create target profile
+          mkdir -p ~/.josh/targets
+          cat > ~/.josh/targets/ci-local.json << 'PROFILE'
+          {
+            "type": "http",
+            "http": {
+              "endpoint": "http://localhost:8085",
+              "apiKey": "testkey"
+            },
+            "minio_endpoint": "http://localhost:9000",
+            "minio_access_key": "minioadmin",
+            "minio_secret_key": "minioadmin",
+            "minio_bucket": "josh-test-bucket"
+          }
+          PROFILE
+
+          # Create test simulation with MinIO export
+          mkdir -p /tmp/batch-e2e-test
+          cat > /tmp/batch-e2e-test/e2e_test.josh << 'JOSH'
+          start simulation E2ETest
+            grid.size = 100 m
+            grid.low = 0 degrees latitude, 0 degrees longitude
+            grid.high = 0.01 degrees latitude, 0.01 degrees longitude
+            grid.patch = "Default"
+            steps.low = 0 count
+            steps.high = 2 count
+            exportFiles.patch = "minio://josh-test-bucket/batch-e2e-results/results.csv"
+          end simulation
+
+          start patch Default
+            Tree.init = create 3 count of Tree
+            export.treeCount.step = count(Tree)
+          end patch
+
+          start organism Tree
+            age.init = 0 count
+            age.step = prior.age + 1 count
+          end organism
+          JOSH
+
+          # Stage inputs first, then dispatch
+          java -jar build/libs/joshsim-fat.jar stageToMinio \
+            --input-dir=/tmp/batch-e2e-test \
+            --prefix=batch-jobs/http-e2e/inputs/
+
+          java -jar build/libs/joshsim-fat.jar batchRemote E2ETest \
+            --target=ci-local \
+            --minio-prefix=batch-jobs/http-e2e/inputs/ \
+            --require-prestaged \
+            --replicates=1 \
+            --poll-interval=2 \
+            --timeout=120
+
+          echo "✓ batchRemote completed successfully"
+
+          # Verify results landed in MinIO
+          echo "Verifying results in MinIO..."
+          ./mc stat testminio/josh-test-bucket/batch-e2e-results/results.csv
+          SIZE=$(./mc stat testminio/josh-test-bucket/batch-e2e-results/results.csv --json | grep -o '"size":[0-9]*' | cut -d':' -f2)
+          if [ "$SIZE" -gt 0 ]; then
+            echo "✓ Results CSV found in MinIO ($SIZE bytes)"
+          else
+            echo "✗ Results CSV empty or missing"
+            exit 7
+          fi
+
+          # Cleanup server
+          kill $SERVER_PID 2>/dev/null || true
 
       - name: Upload test artifacts
         uses: actions/upload-artifact@bbbca2ddaa5d8feaa63e36b76fdaad77386f024f # v7.0.0
@@ -219,8 +374,12 @@ jobs:
           echo "✓ NetCDF export to MinIO"
           echo "✓ Mixed MinIO and local exports"
           echo "✓ File upload verification"
+          echo "✓ Large CSV export (>10MB multipart upload)"
           echo "✓ Queue backpressure handling"
+          echo "✓ Large payload multipart upload"
           echo "✓ Error handling validation"
+          echo "✓ MinioPollingStrategy integration"
+          echo "✓ batchRemote end-to-end (server + MinIO)"
           echo "================================================"
           echo "All MinIO integration tests completed!"
           echo "================================================"

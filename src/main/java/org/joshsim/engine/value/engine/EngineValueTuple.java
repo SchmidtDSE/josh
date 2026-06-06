@@ -8,8 +8,6 @@ package org.joshsim.engine.value.engine;
 
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
-import org.joshsim.compat.CompatibilityLayerKeeper;
-import org.joshsim.compat.CompatibleStringJoiner;
 import org.joshsim.engine.value.converter.Units;
 import org.joshsim.engine.value.type.EngineValue;
 import org.joshsim.engine.value.type.LanguageType;
@@ -94,25 +92,40 @@ public class EngineValueTuple {
   private static TypesTuple getOrCreateTypesTuple(
       LanguageType firstType, LanguageType secondType) {
     long key = computeTypesCacheKey(firstType, secondType);
-    TypesTuple tuple = TYPES_TUPLE_CACHE.computeIfAbsent(
-        key,
-        k -> new TypesTuple(firstType, secondType)
-    );
+    TypesTuple tuple = getOrPutTypesTuple(key, firstType, secondType);
 
     // Establish bidirectional linking for reverse() optimization
     // Check if reversed tuple needs to be created and linked
     if (tuple.getReversed() == null) {
       long reversedKey = computeTypesCacheKey(secondType, firstType);
-      TypesTuple reversedTuple = TYPES_TUPLE_CACHE.computeIfAbsent(
-          reversedKey,
-          k -> new TypesTuple(secondType, firstType)
-      );
+      TypesTuple reversedTuple = getOrPutTypesTuple(reversedKey, secondType, firstType);
 
       // Link bidirectionally (benign race: both threads compute same result)
       tuple.setReversed(reversedTuple);
       reversedTuple.setReversed(tuple);
     }
 
+    return tuple;
+  }
+
+  /**
+   * Look up a cached TypesTuple, inserting a freshly built one only on a miss.
+   *
+   * <p>Uses get-then-putIfAbsent rather than computeIfAbsent so the common cache-hit path
+   * allocates no capturing lambda; the TypesTuple is constructed only when actually absent.</p>
+   *
+   * @param key composite identity-hash key for the type pair
+   * @param first LanguageType of first operand
+   * @param second LanguageType of second operand
+   * @return the cached (or newly cached) TypesTuple for this pair
+   */
+  private static TypesTuple getOrPutTypesTuple(long key, LanguageType first, LanguageType second) {
+    TypesTuple tuple = TYPES_TUPLE_CACHE.get(key);
+    if (tuple == null) {
+      TypesTuple created = new TypesTuple(first, second);
+      TypesTuple existing = TYPES_TUPLE_CACHE.putIfAbsent(key, created);
+      tuple = existing != null ? existing : created;
+    }
     return tuple;
   }
 
@@ -126,25 +139,40 @@ public class EngineValueTuple {
   private static UnitsTuple getOrCreateUnitsTuple(
       Units firstUnits, Units secondUnits) {
     long key = computUnitsCacheKey(firstUnits, secondUnits);
-    UnitsTuple tuple = UNITS_TUPLE_CACHE.computeIfAbsent(
-        key,
-        k -> new UnitsTuple(firstUnits, secondUnits)
-    );
+    UnitsTuple tuple = getOrPutUnitsTuple(key, firstUnits, secondUnits);
 
     // Establish bidirectional linking for reverse() optimization
     // Check if reversed tuple needs to be created and linked
     if (tuple.getReversed() == null) {
       long reversedKey = computUnitsCacheKey(secondUnits, firstUnits);
-      UnitsTuple reversedTuple = UNITS_TUPLE_CACHE.computeIfAbsent(
-          reversedKey,
-          k -> new UnitsTuple(secondUnits, firstUnits)
-      );
+      UnitsTuple reversedTuple = getOrPutUnitsTuple(reversedKey, secondUnits, firstUnits);
 
       // Link bidirectionally (benign race: both threads compute same result)
       tuple.setReversed(reversedTuple);
       reversedTuple.setReversed(tuple);
     }
 
+    return tuple;
+  }
+
+  /**
+   * Look up a cached UnitsTuple, inserting a freshly built one only on a miss.
+   *
+   * <p>Uses get-then-putIfAbsent rather than computeIfAbsent so the common cache-hit path
+   * allocates no capturing lambda; the UnitsTuple is constructed only when actually absent.</p>
+   *
+   * @param key composite identity-hash key for the units pair
+   * @param first Units of first operand
+   * @param second Units of second operand
+   * @return the cached (or newly cached) UnitsTuple for this pair
+   */
+  private static UnitsTuple getOrPutUnitsTuple(long key, Units first, Units second) {
+    UnitsTuple tuple = UNITS_TUPLE_CACHE.get(key);
+    if (tuple == null) {
+      UnitsTuple created = new UnitsTuple(first, second);
+      UnitsTuple existing = UNITS_TUPLE_CACHE.putIfAbsent(key, created);
+      tuple = existing != null ? existing : created;
+    }
     return tuple;
   }
 
@@ -240,6 +268,8 @@ public class EngineValueTuple {
     private final LanguageType first;
     private final LanguageType second;
     private final boolean areCompatible;
+    private final String rootString;
+    private final int cachedHashCode;
     // Not final for performance - allows bidirectional linking without allocation overhead
     private TypesTuple reversed;
 
@@ -256,9 +286,9 @@ public class EngineValueTuple {
     public TypesTuple(LanguageType first, LanguageType second) {
       this.first = first;
       this.second = second;
-      // Pre-compute compatibility check (called 100,000+ times per simulation)
-      // Result is deterministic and immutable for this tuple instance
       this.areCompatible = first.getRootType().equals(second.getRootType());
+      this.rootString = first.getRootType() + "," + second.getRootType();
+      this.cachedHashCode = rootString.hashCode();
     }
 
     /**
@@ -317,10 +347,7 @@ public class EngineValueTuple {
      * @returns string representation using root types.
      */
     public String toRootString() {
-      CompatibleStringJoiner joiner = CompatibilityLayerKeeper.get().createStringJoiner(",");
-      joiner.add(first.getRootType());
-      joiner.add(second.getRootType());
-      return joiner.toString();
+      return rootString;
     }
 
     /**
@@ -330,7 +357,7 @@ public class EngineValueTuple {
      * @return true if compatible (equivalent for purposes of operations) and false otherwise.
      */
     public boolean equals(TypesTuple other) {
-      return toRootString().equals(other.toRootString());
+      return rootString.equals(other.rootString);
     }
 
     @Override
@@ -340,7 +367,7 @@ public class EngineValueTuple {
 
     @Override
     public int hashCode() {
-      return toRootString().hashCode();
+      return cachedHashCode;
     }
 
   }
@@ -353,6 +380,8 @@ public class EngineValueTuple {
     private final Units first;
     private final Units second;
     private final boolean areCompatible;
+    private final String cachedString;
+    private final int cachedHashCode;
     // Not final for performance - allows bidirectional linking without allocation overhead
     private UnitsTuple reversed;
 
@@ -365,8 +394,6 @@ public class EngineValueTuple {
     public UnitsTuple(Units first, Units second) {
       this.first = first;
       this.second = second;
-      // Pre-compute compatibility check (called 100,000+ times per simulation)
-      // Result is deterministic and immutable for this tuple instance
       if (first.equals(second)) {
         this.areCompatible = true;
       } else if (first.toString().isBlank()) {
@@ -376,6 +403,8 @@ public class EngineValueTuple {
       } else {
         this.areCompatible = false;
       }
+      this.cachedString = "units: " + first + ", " + second;
+      this.cachedHashCode = cachedString.hashCode();
     }
 
     /**
@@ -428,17 +457,17 @@ public class EngineValueTuple {
 
     @Override
     public boolean equals(Object other) {
-      return toString().equals(other.toString());
+      return cachedString.equals(other.toString());
     }
 
     @Override
     public String toString() {
-      return String.format("units: %s, %s", first, second);
+      return cachedString;
     }
 
     @Override
     public int hashCode() {
-      return toString().hashCode();
+      return cachedHashCode;
     }
 
   }

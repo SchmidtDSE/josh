@@ -10,21 +10,23 @@
 
 package org.joshsim;
 
-import io.minio.BucketExistsArgs;
-import io.minio.MakeBucketArgs;
-import io.minio.MinioClient;
-import io.minio.UploadObjectArgs;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.util.Optional;
+import org.joshsim.command.BatchRemoteCommand;
 import org.joshsim.command.DiscoverConfigCommand;
 import org.joshsim.command.InspectExportsCommand;
 import org.joshsim.command.InspectJshdCommand;
+import org.joshsim.command.McpCommand;
+import org.joshsim.command.PollBatchCommand;
+import org.joshsim.command.PreprocessBatchCommand;
 import org.joshsim.command.PreprocessCommand;
 import org.joshsim.command.RunCommand;
 import org.joshsim.command.RunRemoteCommand;
 import org.joshsim.command.ServerCommand;
+import org.joshsim.command.StageFromMinioCommand;
+import org.joshsim.command.StageToMinioCommand;
 import org.joshsim.command.ValidateCommand;
 import org.joshsim.engine.geometry.EngineGeometryFactory;
 import org.joshsim.engine.value.engine.ValueSupportFactory;
@@ -33,7 +35,6 @@ import org.joshsim.lang.io.InputOutputLayer;
 import org.joshsim.lang.io.JvmInputOutputLayerBuilder;
 import org.joshsim.lang.parse.ParseError;
 import org.joshsim.lang.parse.ParseResult;
-import org.joshsim.util.MinioOptions;
 import org.joshsim.util.OutputOptions;
 import picocli.CommandLine;
 
@@ -65,13 +66,16 @@ import picocli.CommandLine;
         PreprocessCommand.class,
         DiscoverConfigCommand.class,
         InspectJshdCommand.class,
-        InspectExportsCommand.class
+        InspectExportsCommand.class,
+        StageToMinioCommand.class,
+        StageFromMinioCommand.class,
+        BatchRemoteCommand.class,
+        PollBatchCommand.class,
+        PreprocessBatchCommand.class,
+        McpCommand.class
     }
 )
 public class JoshSimCommander {
-
-  private static final int MINIO_ERROR_CODE = 100;
-  private static final int UNKNOWN_ERROR_CODE = 404;
 
   /**
    * Enumeration of possible execution steps in the Josh simulation process.
@@ -232,60 +236,6 @@ public class JoshSimCommander {
     assert program != null;
 
     return new ProgramInitResult(program);
-  }
-
-  /**
-   * Saves a file to Minio storage.
-   *
-   * @param subDirectories The subdirectory path in the Minio bucket
-   * @param file The file to upload
-   * @param minioOptions Configuration options for Minio connection
-   * @param output Options for handling output messages
-   * @return true if the upload was successful, false otherwise
-   */
-  public static boolean saveToMinio(
-      String subDirectories,
-      File file,
-      MinioOptions minioOptions,
-      OutputOptions output
-  ) {
-    try {
-      MinioClient minioClient = minioOptions.getMinioClient();
-      String bucketName = minioOptions.getBucketName();
-
-      // If bucket name is not configured, skip the upload silently
-      // (bucket may only be specified in export URLs, not in MinioOptions)
-      if (bucketName == null || bucketName.isEmpty()) {
-        return true;
-      }
-
-      String objectName = minioOptions.getObjectName(subDirectories, file.getName());
-
-      boolean bucketExists = minioClient.bucketExists(
-          BucketExistsArgs.builder().bucket(bucketName).build()
-      );
-
-      if (!bucketExists) {
-        minioClient.makeBucket(MakeBucketArgs.builder().bucket(bucketName).build());
-        output.printInfo("Created bucket: " + bucketName);
-      }
-
-      minioClient.uploadObject(
-          UploadObjectArgs.builder()
-            .bucket(bucketName)
-            .object(objectName)
-            .filename(file.getAbsolutePath())
-            .build()
-      );
-
-      String path = "minio://" + bucketName + "/" + objectName;
-      String message = "Successfully uploaded " + file.getName() + " to " + path;
-      output.printInfo(message);
-      return true;
-    } catch (Exception e) {
-      output.printError("Failed to upload to Minio: " + e.getMessage());
-      return false;
-    }
   }
 
   /**

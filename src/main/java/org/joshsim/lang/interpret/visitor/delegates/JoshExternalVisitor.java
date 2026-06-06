@@ -38,8 +38,11 @@ public class JoshExternalVisitor implements JoshVisitorDelegate {
   public JoshFragment visitExternalValue(JoshLangParser.ExternalValueContext ctx) {
     String name = ctx.name.getText();
     EventHandlerAction action = (machine) -> {
-      long stepCount = machine.getStepCount();
-      machine.pushExternal(name, stepCount);
+      // Resolve against the semantic (steps.low-based) timestep so external data lines up with
+      // how its grid is keyed and with meta.year; getStepCount()'s 0-based value only matches
+      // the grid when steps.low is zero.
+      long step = machine.getCurrentTimestep();
+      machine.pushExternal(name, step);
       return machine;
     };
     return new ActionFragment(action);

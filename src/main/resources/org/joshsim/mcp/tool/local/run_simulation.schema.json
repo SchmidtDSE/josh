@@ -1,0 +1,34 @@
+{
+  "type": "object",
+  "properties": {
+    "script": {
+      "type": "string",
+      "description": "Path to the .josh simulation script file."
+    },
+    "simulation": {
+      "type": "string",
+      "description": "Name of the simulation block to run, exactly as it appears after 'start simulation' in the .josh file (e.g. 'Main')."
+    },
+    "replicates": {
+      "type": "integer",
+      "description": "Number of independent simulation replicates to run. Each replicate uses a different random seed unless seed is specified. Defaults to 1.",
+      "default": 1,
+      "minimum": 1
+    },
+    "serialPatches": {
+      "type": "boolean",
+      "description": "If true, patches are processed one at a time rather than in parallel. Serial mode is slower but required for reproducibility when using a fixed seed. Automatically set to true when seed is supplied. Defaults to false.",
+      "default": false
+    },
+    "seed": {
+      "type": "integer",
+      "description": "Optional random seed for reproducible simulations. When provided, all random sampling uses this seed, and serial patch processing is automatically enabled to ensure deterministic results."
+    },
+    "data": {
+      "type": "object",
+      "description": "Optional map of external data resource names to file paths. Each key is the name the .josh script references via 'external <name>', including its extension (e.g. 'temperature.jshd'). Each value is the path to that .jshd or .jshdz file; relative paths resolve against the server's working directory. Omit to resolve external data by filename from the working directory.",
+      "additionalProperties": { "type": "string" }
+    }
+  },
+  "required": ["script", "simulation"]
+}

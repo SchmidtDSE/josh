@@ -1,0 +1,808 @@
+@font-face {
+  font-family: PublicSans;
+  src: url("../third_party/publicsans/fonts/otf/PublicSans-Regular.otf") format("opentype");
+}
+
+html {
+  background-color: #F9F9F9;
+  font-family: PublicSans, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  font-size: 15px;
+}
+
+a, a:link, a:visited {
+  color: #5050C0;
+}
+
+a:hover, a:active {
+  color: #202070;
+}
+
+/* Header / top navbar — reuses the landing site's green animated banner
+   (palette and .header-intro animation from landing; see intro_animation.js). */
+header {
+  position: relative;
+  overflow: hidden;
+  color: black;
+  background-color: #E0F0E0;
+  padding: 12px 16px;
+  border: 1px solid #A0A0A0;
+  border-radius: 10px;
+  box-shadow: 5px 5px 10px rgba(10, 10, 10, 0.2);
+  margin-bottom: 30px;
+}
+
+header .header-intro {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 0;
+  pointer-events: none;
+}
+
+.phase {
+  display: none;
+}
+
+.phase.active {
+  display: block;
+}
+
+.nav-buttons {
+  margin-top: 20px;
+}
+
+.nav-buttons button.primary {
+  background-color: #7070C0;
+  color: white;
+  border-radius: 10px;
+  padding: 7px;
+  border: none;
+  cursor: pointer;
+  font-size: 15px;
+  font-family: inherit;
+}
+
+.nav-buttons button.primary:focus,
+.nav-buttons button.primary:hover,
+.nav-buttons button.primary:active {
+  background-color: #5050C0;
+}
+
+.phase-two-col .col-code,
+.phase-two-col .col-text {
+  padding: 10px;
+}
+
+@media (max-width: 999px) {
+  .phase-two-col {
+    display: block;
+  }
+}
+
+@media (min-width: 1000px) {
+  .phase-two-col {
+    display: grid;
+    grid-template-columns: 50% 50%;
+  }
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+@keyframes fadeOut {
+  from { opacity: 1; }
+  to   { opacity: 0; }
+}
+
+.fade-in {
+  animation: fadeIn 0.65s ease-in-out forwards;
+}
+
+.fade-out {
+  animation: fadeOut 0.65s ease-in-out forwards;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .fade-in,
+  .fade-out {
+    animation: none;
+  }
+}
+
+/* ---- code-line block rendering with line-number gutter ---- */
+
+#buildup-code-display {
+  counter-reset: line-number;
+}
+
+.code-line {
+  display: block;
+  min-height: 1.4em;
+  padding-left: 3.5em;
+  position: relative;
+  white-space: pre;
+  /* Reserve border space on ALL lines so added-line border doesn't shift layout */
+  border-left: 3px solid transparent;
+  box-sizing: border-box;
+}
+
+.code-line::before {
+  counter-increment: line-number;
+  content: counter(line-number);
+  position: absolute;
+  left: 0;
+  width: 2.8em;
+  text-align: right;
+  padding-right: 0.5em;
+  color: #aaa;
+  font-size: 0.85em;
+  line-height: 1.4em;
+  user-select: none;
+  box-sizing: border-box;
+}
+
+/* ---- "glow, then settle" animation for newly added lines ---- */
+
+@keyframes lineAdded {
+  0%   { opacity: 0; background-color: #d4f5d4; border-left-color: #3a9d3a; }
+  30%  { opacity: 1; background-color: #d4f5d4; border-left-color: #3a9d3a; }
+  55%  { opacity: 1; background-color: #d4f5d4; border-left-color: #3a9d3a; }
+  100% { opacity: 1; background-color: transparent; border-left-color: transparent; }
+}
+
+.code-line-added {
+  animation: lineAdded 1.6s ease-out forwards;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .code-line-added {
+    animation: none;
+  }
+}
+
+/* ---- Prism token colors: matched to the Ace "textmate" theme used by the
+   IDE editor (editor.joshsim.org), for visual consistency. Hexes are the
+   exact ace-tm token colors. ---- */
+
+.token.keyword           { color: #0000ff; }              /* ace_keyword (blue) */
+.token.boolean           { color: #0000ff; }              /* true/false render as keyword in Ace */
+.token.function          { color: #3c4c72; }              /* ace_support.ace_function */
+.token.string            { color: #036a07; }              /* ace_string */
+.token.number            { color: #0000cd; }              /* ace_constant.ace_numeric */
+.token.operator          { color: #687687; }              /* ace_keyword.ace_operator */
+.token.comment           { color: #4c886b; font-style: italic; } /* ace_comment */
+.token.variable-language { color: #318495; }              /* ace_variable (meta/prior/current/here) */
+.token.punctuation       { color: #000000; }              /* Ace default foreground */
+.token.variable          { color: #000000; }              /* identifier text is black in Ace */
+
+/* ---- Phase transition overlay fix (Task B) ----
+   The outgoing section is lifted out of normal flow during the fade so
+   the incoming section stays at the top rather than rendering below. */
+#narrative {
+  position: relative;
+}
+
+.phase.leaving,
+#phase-welcome.phase.leaving,
+#phase-conclusion.phase.leaving {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+}
+
+/* ---- Welcome and Conclusion hero treatment (Task C) ---- */
+
+#phase-welcome.active,
+#phase-conclusion.active {
+  position: relative;
+  overflow: hidden;
+  background-color: #8080B0;
+  border-radius: 10px;
+  box-shadow: 5px 5px 10px rgba(10, 10, 10, 0.2);
+  padding: 56px 20px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+}
+
+.phase-intro {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 0;
+  pointer-events: none;
+}
+
+.phase-hero-inner {
+  position: relative;
+  z-index: 1;
+  max-width: 680px;
+  background-color: rgba(40, 40, 70, 0.45);
+  padding: 28px 32px;
+  border-radius: 12px;
+}
+
+/* White text with black outline so headings/paragraphs read over the tile texture. */
+#phase-welcome .phase-hero-inner h1,
+#phase-welcome .phase-hero-inner h2,
+#phase-welcome .phase-hero-inner p,
+#phase-conclusion .phase-hero-inner h1,
+#phase-conclusion .phase-hero-inner h2,
+#phase-conclusion .phase-hero-inner p {
+  color: white;
+  text-shadow:
+    -1px -1px 0 #000,
+    1px -1px 0 #000,
+    -1px  1px 0 #000,
+    1px  1px 0 #000;
+}
+
+/* Links in the hero box: light + underlined so they read on the dark panel. */
+#phase-welcome .phase-hero-inner a,
+#phase-welcome .phase-hero-inner a:link,
+#phase-welcome .phase-hero-inner a:visited,
+#phase-conclusion .phase-hero-inner a,
+#phase-conclusion .phase-hero-inner a:link,
+#phase-conclusion .phase-hero-inner a:visited {
+  color: #cfe3ff;
+  text-decoration: underline;
+}
+
+#phase-welcome .phase-hero-inner a:hover,
+#phase-welcome .phase-hero-inner a:focus,
+#phase-welcome .phase-hero-inner a:active,
+#phase-conclusion .phase-hero-inner a:hover,
+#phase-conclusion .phase-hero-inner a:focus,
+#phase-conclusion .phase-hero-inner a:active {
+  color: #ffffff;
+}
+
+#phase-buildup.active {
+  padding: 20px;
+}
+
+.col-code {
+  background-color: #F0F0F0;
+}
+
+.col-code pre {
+  margin: 0;
+  padding: 10px;
+  font-family: monospace;
+  font-size: 14px;
+  white-space: pre;
+}
+
+.nav-buttons button.secondary {
+  background-color: #E0E0E0;
+  color: #333;
+  border-radius: 10px;
+  padding: 7px;
+  border: none;
+  cursor: pointer;
+  font-size: 15px;
+  font-family: inherit;
+}
+
+.nav-buttons button.secondary:focus,
+.nav-buttons button.secondary:hover,
+.nav-buttons button.secondary:active {
+  background-color: #C8C8C8;
+}
+
+.nav-buttons button:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+/* Plain-language "what & why" lede above the detailed build-up prose.
+   Authored as a pandoc fenced div, so it renders as <div class="buildup-lede"><p>…</p></div>. */
+#buildup-text-panel .buildup-lede,
+#buildup-text-panel .buildup-lede p {
+  font-size: 1.2em;
+  line-height: 1.4;
+  color: #222;
+}
+
+#buildup-text-panel .buildup-lede {
+  margin: 0 0 14px;
+}
+
+#buildup-text-panel .buildup-lede p {
+  margin: 0;
+}
+
+/* Prominent example config (.jshc) card shown in the Export & Config substep. */
+.config-example {
+  margin: 14px 0;
+  border: 1px solid #C8C8E8;
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.config-example-label {
+  background-color: #F0F0F8;
+  color: #5050C0;
+  font-family: monospace;
+  font-size: 0.8em;
+  padding: 5px 10px;
+  border-bottom: 1px solid #C8C8E8;
+}
+
+.config-example pre {
+  margin: 0;
+  padding: 10px;
+  background-color: #F0F0F0;
+  font-family: monospace;
+  font-size: 13px;
+  white-space: pre;
+  overflow-x: auto;
+}
+
+/* ---- Build-up stepper (mini progress nav in .col-text) ---- */
+
+#buildup-stepper {
+  margin-bottom: 16px;
+  padding: 10px 12px;
+  background-color: #F0F0F8;
+  border-radius: 8px;
+  border: 1px solid #C8C8E8;
+}
+
+.stepper-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.stepper-item {
+  margin: 0;
+  padding: 0;
+}
+
+.stepper-btn {
+  border: 1px solid transparent;
+  border-radius: 6px;
+  padding: 3px 10px;
+  font-size: 0.85em;
+  font-family: inherit;
+  cursor: pointer;
+  transition: background-color 0.15s, color 0.15s, border-color 0.15s;
+  white-space: nowrap;
+}
+
+.stepper-btn--current {
+  background-color: #7070C0;
+  color: #fff;
+  border-color: #5050A0;
+  cursor: default;
+}
+
+.stepper-btn--completed {
+  background-color: #D4D4F0;
+  color: #3030A0;
+  border-color: #A0A0D8;
+}
+
+.stepper-btn--completed:hover,
+.stepper-btn--completed:focus {
+  background-color: #B8B8E8;
+  border-color: #7070C0;
+}
+
+.stepper-btn--upcoming {
+  background-color: transparent;
+  color: #999;
+  border-color: #CCC;
+}
+
+.stepper-btn--upcoming:hover,
+.stepper-btn--upcoming:focus {
+  background-color: #E8E8F8;
+  color: #5050C0;
+  border-color: #A0A0D8;
+}
+
+/* When nav-buttons lives inside .col-text, reduce its top margin slightly */
+.col-text .nav-buttons {
+  margin-top: 16px;
+}
+
+/* ---- External-data figures (build-up substep 4) ---- */
+
+.ext-figures {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+  margin: 16px 0 8px;
+  max-width: 460px;
+}
+
+@media (max-width: 500px) {
+  .ext-figures {
+    grid-template-columns: 1fr;
+  }
+}
+
+.ext-figures figure {
+  margin: 0;
+  padding: 6px;
+  background-color: #FFFFFF;
+  border: 1px solid #E0E0E0;
+  border-radius: 6px;
+}
+
+.ext-figures img {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+
+.ext-figures-caption {
+  font-size: 0.85em;
+  color: #666;
+  font-style: italic;
+  margin: 0;
+}
+
+.ext-figures-heading {
+  font-size: 1em;
+  margin: 24px 0 8px;
+  color: #333;
+}
+
+/* ---- Playground phase ---- */
+
+#phase-playground.active {
+  padding: 20px;
+}
+
+/* #phase-conclusion.active is handled by the hero rules above. */
+
+#playground-editor {
+  height: 480px;
+  width: 100%;
+}
+
+#playground-config-details {
+  margin-top: 12px;
+}
+
+#playground-config {
+  width: 100%;
+  box-sizing: border-box;
+  font-family: monospace;
+  font-size: 13px;
+  resize: vertical;
+}
+
+#playground-results {
+  min-height: 200px;
+}
+
+.col-results {
+  padding: 10px;
+}
+
+/* When nav-buttons lives inside .col-code--playground, use same spacing as .col-text */
+.col-code--playground .nav-buttons {
+  margin-top: 16px;
+}
+
+/* ---- Playground run indicator and error display ---- */
+
+#playground-running-indicator {
+  color: #666;
+  font-style: italic;
+  padding: 20px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  #playground-running-indicator {
+    animation: none;
+    opacity: 1;
+  }
+}
+
+.playground-error {
+  color: #c0392b;
+  padding: 10px;
+  background-color: #fdecea;
+  border-radius: 6px;
+  border-left: 3px solid #c0392b;
+}
+
+#playground-done-message {
+  color: #666;
+  font-style: italic;
+  padding: 20px;
+}
+
+/* ---- Playground hint text ---- */
+
+.playground-hint {
+  margin: 6px 0 2px;
+  font-size: 0.85em;
+  color: #888;
+  font-style: italic;
+}
+
+/* ---- Visualization (heatmap + scrub) ----
+   Layout helpers plus the editor's SVG styling, ported from
+   editor/style/style.css (scoped from #results to #playground-viz) so the
+   scrub bars/ticks/hit-areas render like the IDE instead of defaulting to
+   black fill. Internal ids/classes come from the shared viz.js. */
+
+.viz-holder {
+  margin: 10px 0;
+}
+
+.horiz-scroll-area {
+  overflow-x: auto;
+}
+
+#playground-viz #grid-viz-holder {
+  width: 100%;
+  text-align: center;
+}
+
+#playground-viz #grid-legend {
+  margin: 20px auto;
+  border-collapse: separate;
+  border-spacing: 5px;
+}
+
+#playground-viz #grid-legend .color td {
+  height: 10px;
+  min-width: 40px;
+}
+
+#playground-viz #grid-legend .label td {
+  text-align: center;
+}
+
+#playground-viz #grid-viz {
+  width: 100%;
+  margin: 0 auto;
+}
+
+#playground-viz #grid-viz .base-layer {
+  opacity: 0.75;
+}
+
+#playground-viz #grid-viz .glyphs-layer.overlay {
+  opacity: 0.65;
+}
+
+#playground-viz #grid-viz .grid-patch-foreground:hover {
+  stroke: #333333;
+  stroke-weight: 2;
+}
+
+#playground-viz #grid-viz-info {
+  margin-top: 20px;
+  margin-bottom: 20px;
+  color: #555;
+  min-height: 1.4em;
+}
+
+#playground-viz #scrub-viz {
+  width: 100%;
+  height: 100px;
+  display: block;
+}
+
+#playground-viz #scrub-viz .horizontal-tick {
+  text-anchor: middle;
+  dominant-baseline: hanging;
+  font-size: 13px;
+  fill: #757575;
+}
+
+#playground-viz #scrub-viz .scrub-group .display-bar {
+  fill: #00B0D0;
+}
+
+#playground-viz #scrub-viz .scrub-group .horizontal-embed-tick {
+  visibility: hidden;
+}
+
+#playground-viz #scrub-viz .scrub-group .pointer-target {
+  fill-opacity: 0;
+  stroke-opacity: 0;
+}
+
+#playground-viz #scrub-viz .scrub-group:hover {
+  cursor: pointer;
+}
+
+#playground-viz #scrub-viz .scrub-group:hover .display-bar {
+  fill: #0080A0;
+}
+
+#playground-viz #scrub-viz .scrub-group:hover .pointer-target {
+  stroke-opacity: 1;
+  stroke-width: 1;
+  stroke: #C0C0C0;
+}
+
+#playground-viz #scrub-viz .scrub-group.active .display-bar {
+  fill: #0080A0;
+}
+
+#playground-viz #scrub-viz .scrub-group.active .horizontal-embed-tick {
+  fill: #333333;
+  font-size: 13px;
+  visibility: visible;
+  text-anchor: middle;
+  dominant-baseline: hanging;
+  font-weight: bold;
+}
+
+#playground-viz #scrub-viz .selected-value-display {
+  visibility: hidden;
+}
+
+#playground-viz #scrub-viz .selected-value-display.active {
+  fill: #333333;
+  font-weight: bold;
+  dominant-baseline: auto;
+  text-anchor: middle;
+  font-size: 11px;
+  visibility: visible;
+}
+
+#playground-viz #scrub-viz .vertical-tick {
+  text-anchor: left;
+  dominant-baseline: middle;
+  font-size: 13px;
+  fill: #757575;
+}
+
+/* ---- Top navbar (brand + site nav pills + table-of-contents) and ToC dialog ---- */
+
+#top-nav {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+/* #toc-open-button is the demo title/menu control on the left of the navbar. */
+#toc-open-button {
+  font-weight: 700;
+  font-size: 1.1em;
+  font-family: inherit;
+  color: #333333;
+  background: transparent;
+  border: 1px solid rgba(0, 0, 0, 0.25);
+  border-radius: 8px;
+  padding: 5px 12px;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+#toc-open-button:hover,
+#toc-open-button:focus {
+  background-color: rgba(0, 0, 0, 0.08);
+  border-color: rgba(0, 0, 0, 0.4);
+}
+
+.nav-links {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+}
+
+/* Pill links/button reuse the landing site's nav-option palette. */
+.nav-option a,
+.nav-option a:link,
+.nav-option a:visited,
+.nav-option button {
+  background-color: #708070;
+  color: white;
+  border-radius: 10px;
+  padding: 7px 12px;
+  text-decoration: none;
+  border: none;
+  cursor: pointer;
+  font-size: 0.95em;
+  font-family: inherit;
+}
+
+.nav-option a:hover,
+.nav-option a:focus,
+.nav-option a:active,
+.nav-option button:hover,
+.nav-option button:focus {
+  background-color: #507050;
+}
+
+#toc-dialog {
+  border: 1px solid #C8C8E8;
+  border-radius: 10px;
+  padding: 24px;
+  max-width: 360px;
+  width: 90vw;
+  box-shadow: 0 4px 24px rgba(0,0,0,0.18);
+}
+
+#toc-dialog::backdrop {
+  background: rgba(0,0,0,0.35);
+}
+
+#toc-dialog h2 {
+  margin: 0 0 16px;
+  font-size: 1.1em;
+  color: #333;
+}
+
+#toc-list {
+  list-style: none;
+  margin: 0 0 16px;
+  padding: 0;
+}
+
+#toc-list li {
+  margin: 0;
+  padding: 0;
+}
+
+.toc-item-btn {
+  display: block;
+  width: 100%;
+  text-align: left;
+  background: none;
+  border: none;
+  border-radius: 6px;
+  padding: 7px 10px;
+  font-size: 0.95em;
+  font-family: inherit;
+  color: #333;
+  cursor: pointer;
+}
+
+.toc-item-btn:hover,
+.toc-item-btn:focus {
+  background-color: #E8E8F8;
+  color: #5050C0;
+}
+
+.toc-item-btn[aria-current="step"] {
+  background-color: #D4D4F0;
+  color: #3030A0;
+  font-weight: bold;
+}
+
+#toc-close-button {
+  display: block;
+  margin-left: auto;
+  background-color: #E0E0E0;
+  color: #333;
+  border: none;
+  border-radius: 6px;
+  padding: 6px 16px;
+  font-size: 0.9em;
+  font-family: inherit;
+  cursor: pointer;
+}
+
+#toc-close-button:hover,
+#toc-close-button:focus {
+  background-color: #C8C8C8;
+}

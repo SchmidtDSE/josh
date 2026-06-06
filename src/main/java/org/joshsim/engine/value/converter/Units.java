@@ -58,6 +58,7 @@ public class Units {
   private final String description;
   private final Map<String, Long> numeratorUnits;
   private final Map<String, Long> denominatorUnits;
+  private final Map<Units, Units> multiplyCache = new ConcurrentHashMap<>(4);
 
   /**
    * Constructs Units from a description string.
@@ -182,7 +183,7 @@ public class Units {
    * @returns inverted copy of these units.
    */
   public Units invert() {
-    return new Units(denominatorUnits, numeratorUnits);
+    return Units.of(denominatorUnits, numeratorUnits);
   }
 
   /**
@@ -192,9 +193,7 @@ public class Units {
    * @return a new Units instance representing the multiplication of the current and other units.
    */
   public Units multiply(Units other) {
-    String cacheKey = toString() + "\t*\t" + other.toString();
-
-    Units cached = UNITS_CACHE.get(cacheKey);
+    Units cached = multiplyCache.get(other);
     if (cached != null) {
       return cached;
     }
@@ -220,10 +219,8 @@ public class Units {
 
     Units result = Units.of(newNumeratorUnits, newDenominatorUnits);
 
-    // Cache the result for future lookups
-    UNITS_CACHE.put(cacheKey, result);
-
-    return result;
+    Units existing = multiplyCache.putIfAbsent(other, result);
+    return existing != null ? existing : result;
   }
 
   /**
@@ -233,19 +230,7 @@ public class Units {
    * @return a new Units instance representing the division of the current and other units.
    */
   public Units divide(Units other) {
-    String cacheKey = toString() + "\t/\t" + other.toString();
-
-    Units cached = UNITS_CACHE.get(cacheKey);
-    if (cached != null) {
-      return cached;
-    }
-
-    Units result = multiply(other.invert());
-
-    // Cache the result for future lookups
-    UNITS_CACHE.put(cacheKey, result);
-
-    return result;
+    return multiply(other.invert());
   }
 
   /**

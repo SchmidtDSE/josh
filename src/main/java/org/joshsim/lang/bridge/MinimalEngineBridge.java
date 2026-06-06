@@ -6,6 +6,7 @@
 
 package org.joshsim.lang.bridge;
 
+import java.util.IdentityHashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
@@ -57,6 +58,8 @@ public class MinimalEngineBridge implements EngineBridge {
   private long absoluteStep;
   private EngineValue currentStep;
   private boolean inStep;
+
+  private final Map<MutableEntity, MutableEntity> patchWrapperCache = new IdentityHashMap<>();
 
   /**
    * Constructs an EngineBridge to manipulate the specified simulation, replicate, and converter.
@@ -192,9 +195,8 @@ public class MinimalEngineBridge implements EngineBridge {
 
   @Override
   public EngineValue getExternal(GeoKey key, String name, long step) {
-    String fileName = name.endsWith(".jshd") ? name : name + ".jshd";
     DataGridLayer layer = externalData.computeIfAbsent(name,
-        k -> externalResourceGetter.getResource(fileName));
+        k -> externalResourceGetter.getResource(name));
     return layer.getAt(key, step);
   }
 
@@ -343,7 +345,10 @@ public class MinimalEngineBridge implements EngineBridge {
     @Override
     public MutableEntity next() {
       MutableEntity patch = patches.next();
-      return new ShadowingEntity(engineValueFactory, patch, simulation);
+      return patchWrapperCache.computeIfAbsent(
+          patch,
+          (key) -> new ShadowingEntity(engineValueFactory, key, simulation)
+      );
     }
 
     @Override

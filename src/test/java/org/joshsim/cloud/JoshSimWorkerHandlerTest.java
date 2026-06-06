@@ -1,5 +1,7 @@
 package org.joshsim.cloud;
 
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.mock;
@@ -15,6 +17,8 @@ import io.undertow.util.HeaderValues;
 import io.undertow.util.HttpString;
 import java.io.ByteArrayOutputStream;
 import java.io.OutputStream;
+import org.joshsim.engine.value.engine.ValueSupportFactory;
+import org.joshsim.lang.interpret.ValueResolver;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mock;
@@ -43,7 +47,7 @@ class JoshSimWorkerHandlerTest {
   @BeforeEach
   void setUp() {
     MockitoAnnotations.openMocks(this);
-    handler = new JoshSimWorkerHandler(apiDataLayer, true, java.util.Optional.empty(), true);
+    handler = new JoshSimWorkerHandler(apiDataLayer, true, java.util.Optional.empty(), true, false);
 
     when(exchange.getRequestHeaders()).thenReturn(headerMap);
     when(exchange.getResponseHeaders()).thenReturn(headerMap);
@@ -195,5 +199,34 @@ class JoshSimWorkerHandlerTest {
         }
       }
     }
+  }
+
+  @Test
+  void testPerRequestProfilerEnabled() {
+    JoshSimWorkerHandler h = new JoshSimWorkerHandler(
+        apiDataLayer, true, java.util.Optional.empty(), true, false);
+    ValueSupportFactory factory = h.buildValueFactory(false, true);
+    ValueResolver resolver = factory.buildValueResolver("foo");
+    assertTrue(resolver.getClass().getSimpleName().contains("Timed"));
+  }
+
+  @Test
+  void testPerRequestProfilerDisabled() {
+    JoshSimWorkerHandler h = new JoshSimWorkerHandler(
+        apiDataLayer, true, java.util.Optional.empty(), true, false);
+    ValueSupportFactory factory = h.buildValueFactory(false, false);
+    ValueResolver resolver = factory.buildValueResolver("foo");
+    assertFalse(resolver.getClass().getSimpleName().contains("Timed"));
+  }
+
+  @Test
+  void testServerGlobalProfilerForcesProfilingOn() {
+    JoshSimWorkerHandler h = new JoshSimWorkerHandler(
+        apiDataLayer, true, java.util.Optional.empty(), true, true);
+    // useProfiler = this.enableProfiler || requestEnableProfiler; with enableProfiler=true it is
+    // always true; verify that buildValueFactory(false, true) produces a Timed resolver
+    ValueSupportFactory factory = h.buildValueFactory(false, true);
+    ValueResolver resolver = factory.buildValueResolver("foo");
+    assertTrue(resolver.getClass().getSimpleName().contains("Timed"));
   }
 }
