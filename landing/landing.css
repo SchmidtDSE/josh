@@ -138,6 +138,49 @@ pre {
   background-color: #5050C0;
 }
 
+/* Loud call-out box promoting the interactive in-browser demo. */
+.demo-callout {
+  background-color: #7070C0;
+  color: white;
+  border-radius: 10px;
+  padding: 24px 28px;
+  margin-bottom: 30px;
+  text-align: center;
+  box-shadow: 5px 5px 10px rgba(10, 10, 10, 0.2);
+}
+
+.demo-callout h2 {
+  margin-top: 0;
+  color: white;
+  font-size: 1.6em;
+}
+
+.demo-callout p {
+  font-size: 1.1em;
+  margin: 8px auto 18px;
+  max-width: 640px;
+}
+
+.demo-callout a.demo-callout-button,
+.demo-callout a.demo-callout-button:link,
+.demo-callout a.demo-callout-button:visited {
+  display: inline-block;
+  background-color: white;
+  color: #5050C0;
+  font-weight: 700;
+  font-size: 1.1em;
+  padding: 12px 22px;
+  border-radius: 10px;
+  text-decoration: none;
+}
+
+.demo-callout a.demo-callout-button:focus,
+.demo-callout a.demo-callout-button:hover,
+.demo-callout a.demo-callout-button:active {
+  background-color: #E8E8F8;
+  color: #3030A0;
+}
+
 .guide {
   margin: 20px 30px;
   padding: 20px;
