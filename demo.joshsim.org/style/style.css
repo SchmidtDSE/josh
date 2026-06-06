@@ -303,12 +303,21 @@ header .header-intro {
   cursor: not-allowed;
 }
 
-/* Plain-language "what & why" lede above the detailed build-up prose. */
-#buildup-text-panel .buildup-lede {
+/* Plain-language "what & why" lede above the detailed build-up prose.
+   Authored as a pandoc fenced div, so it renders as <div class="buildup-lede"><p>…</p></div>. */
+#buildup-text-panel .buildup-lede,
+#buildup-text-panel .buildup-lede p {
   font-size: 1.2em;
   line-height: 1.4;
   color: #222;
+}
+
+#buildup-text-panel .buildup-lede {
   margin: 0 0 14px;
+}
+
+#buildup-text-panel .buildup-lede p {
+  margin: 0;
 }
 
 /* Prominent example config (.jshc) card shown in the Export & Config substep. */

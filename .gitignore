@@ -82,6 +82,9 @@ demo.joshsim.org/data/
 demo.joshsim.org/img/
 demo.joshsim.org/war
 
+# Build-up prose rendered from content/*.md by content/render.sh (pandoc).
+demo.joshsim.org/content/*.html
+
 # Jotr test files
 jotr
 
