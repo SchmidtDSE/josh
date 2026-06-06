@@ -164,11 +164,14 @@ pre {
   pointer-events: none;
 }
 
-.demo-callout h2,
-.demo-callout p,
-.demo-callout a.demo-callout-button {
+/* Semi-transparent backing panel so the text reads cleanly over the tiles. */
+.demo-callout .demo-callout-inner {
   position: relative;
   z-index: 1;
+  display: inline-block;
+  background-color: rgba(40, 40, 70, 0.45);
+  padding: 18px 28px;
+  border-radius: 12px;
 }
 
 /* Black outline so the white text stays legible over the tile texture. */
