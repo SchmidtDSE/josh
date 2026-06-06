@@ -27,6 +27,8 @@ function tileBackground(selector) {
     return;
   }
 
+  svg.selectAll("rect").remove();
+
   svg.attr("width", width)
      .attr("height", height);
 

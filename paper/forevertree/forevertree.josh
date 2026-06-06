@@ -2,19 +2,22 @@ start simulation Main
 
   grid.size = 16000 m
   grid.top_left =
-    36.73 degrees latitude, -119.52 degrees longitude
+    36.73 degrees latitude,
+    -119.52 degrees longitude
   grid.bottom_right =
-    35.80 degrees latitude, -117.98 degrees longitude
+    35.80 degrees latitude,
+    -117.98 degrees longitude
   grid.patch = "Default"
 
   steps.low = 0 count
   steps.high = 10 count
 
-  minPrecipImpactPct.init = config forevertree.minPrecipImpactPct
-  maxNewGrowth.init = config forevertree.maxNewGrowth
+  minPrecipImpactPct.init =
+    config forevertree.minPrecipImpactPct
+  maxNewGrowth.init =
+    config forevertree.maxNewGrowth
 
-  exportFiles.patch = 
-    "file:///tmp/forevertree_results_{replicate}.csv"
+  exportFiles.patch = "file:///tmp/forevertree_results_{replicate}.csv"
 
 end simulation
 
@@ -54,9 +57,9 @@ start organism ForeverTree
     with mean of 100% std of 5%
 
   newGrowth.step =
-    meta.maxNewGrowth 
-    * temperatureImpact 
-    * precipImpact 
+    meta.maxNewGrowth
+    * temperatureImpact
+    * precipImpact
     * stochastic
 
   height.step = prior.height + newGrowth

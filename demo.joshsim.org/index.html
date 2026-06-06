@@ -16,27 +16,29 @@
     <header>
       <svg class="header-intro"></svg>
       <nav id="top-nav" aria-label="Site">
-        <span id="top-nav-brand">Josh</span>
+        <button type="button" id="toc-open-button">&#9776; Josh Interactive Demo</button>
         <span class="nav-links">
           <span class="nav-option"><a href="https://www.joshsim.org/">Home</a></span>
           <span class="nav-option"><a href="https://www.joshsim.org/purpose.html">Purpose</a></span>
           <span class="nav-option"><a href="https://www.joshsim.org/use.html">Use</a></span>
           <span class="nav-option"><a href="https://www.joshsim.org/guide.html">Guide</a></span>
           <span class="nav-option"><a href="https://www.joshsim.org/community.html">Community</a></span>
-          <span class="nav-option"><button type="button" id="toc-open-button">Table of contents</button></span>
         </span>
       </nav>
     </header>
 
     <main id="narrative">
       <section id="phase-welcome" class="phase active" aria-labelledby="welcome-heading">
-        <h1 id="welcome-heading">Hello from Josh</h1>
-        <p>Josh is a friendly programming language co-designed by research software engineers,
-           ecologists, mathematicians, and land managers for vegetation-focused ecological modeling.
-           This short tutorial introduces you to the basics of Josh. Here, you can try out a
-           simulation on your computer using just your browser.</p>
-        <div class="nav-buttons">
-          <button type="button" id="welcome-next-button" class="primary">Next</button>
+        <svg class="phase-intro"></svg>
+        <div class="phase-hero-inner">
+          <h1 id="welcome-heading">Hello from Josh</h1>
+          <p>Josh is a friendly programming language co-designed by research software engineers,
+             ecologists, mathematicians, and land managers for vegetation-focused ecological modeling.
+             This short tutorial introduces you to the basics of Josh. Here, you can try out a
+             simulation on your computer using just your browser.</p>
+          <div class="nav-buttons">
+            <button type="button" id="welcome-next-button" class="primary">Next</button>
+          </div>
         </div>
       </section>
 
@@ -91,13 +93,16 @@
       </section>
 
       <section id="phase-conclusion" class="phase" aria-hidden="true" aria-labelledby="conclusion-heading">
-        <h2 id="conclusion-heading">Next steps</h2>
-        <p>You have just run a real ecological simulation — entirely in your browser. To go further,
-           visit the <a href="https://www.joshsim.org/guide.html" target="_blank"
-           rel="noopener noreferrer">full Josh guide</a> where you can explore more simulations,
-           work with real geospatial data, and run Josh on your own machine.</p>
-        <div class="nav-buttons">
-          <button type="button" id="conclusion-prev-button" class="secondary">Previous</button>
+        <svg class="phase-intro"></svg>
+        <div class="phase-hero-inner">
+          <h2 id="conclusion-heading">Next steps</h2>
+          <p>You have just run a real ecological simulation — entirely in your browser. To go further,
+             visit the <a href="https://www.joshsim.org/guide.html" target="_blank"
+             rel="noopener noreferrer">full Josh guide</a> where you can explore more simulations,
+             work with real geospatial data, and run Josh on your own machine.</p>
+          <div class="nav-buttons">
+            <button type="button" id="conclusion-prev-button" class="secondary">Previous</button>
+          </div>
         </div>
       </section>
     </main>

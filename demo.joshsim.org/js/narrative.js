@@ -20,16 +20,20 @@ const FOREVERTREE_WASM_SNAPSHOT = [
   "",
   "  grid.size = 16000 m",
   "  grid.top_left =",
-  "    36.73 degrees latitude, -119.52 degrees longitude",
+  "    36.73 degrees latitude,",
+  "    -119.52 degrees longitude",
   "  grid.bottom_right =",
-  "    35.80 degrees latitude, -117.98 degrees longitude",
+  "    35.80 degrees latitude,",
+  "    -117.98 degrees longitude",
   "  grid.patch = \"Default\"",
   "",
   "  steps.low = 0 count",
   "  steps.high = 10 count",
   "",
-  "  minPrecipImpactPct.init = config forevertree.minPrecipImpactPct",
-  "  maxNewGrowth.init = config forevertree.maxNewGrowth",
+  "  minPrecipImpactPct.init =",
+  "    config forevertree.minPrecipImpactPct",
+  "  maxNewGrowth.init =",
+  "    config forevertree.maxNewGrowth",
   "",
   "  exportFiles.patch = \"memory://editor/patches\"",
   "",
@@ -71,7 +75,10 @@ const FOREVERTREE_WASM_SNAPSHOT = [
   "    with mean of 100% std of 5%",
   "",
   "  newGrowth.step =",
-  "    meta.maxNewGrowth * temperatureImpact * precipImpact * stochastic",
+  "    meta.maxNewGrowth",
+  "    * temperatureImpact",
+  "    * precipImpact",
+  "    * stochastic",
   "",
   "  height.step = prior.height + newGrowth",
   "",
@@ -471,9 +478,11 @@ class NarrativePresenter {
           "",
           "  grid.size = 16000 m",
           "  grid.top_left =",
-          "    36.73 degrees latitude, -119.52 degrees longitude",
+          "    36.73 degrees latitude,",
+          "    -119.52 degrees longitude",
           "  grid.bottom_right =",
-          "    35.80 degrees latitude, -117.98 degrees longitude",
+          "    35.80 degrees latitude,",
+          "    -117.98 degrees longitude",
           "  grid.patch = \"Default\"",
           "",
           "end simulation",
@@ -506,9 +515,11 @@ class NarrativePresenter {
           "",
           "  grid.size = 16000 m",
           "  grid.top_left =",
-          "    36.73 degrees latitude, -119.52 degrees longitude",
+          "    36.73 degrees latitude,",
+          "    -119.52 degrees longitude",
           "  grid.bottom_right =",
-          "    35.80 degrees latitude, -117.98 degrees longitude",
+          "    35.80 degrees latitude,",
+          "    -117.98 degrees longitude",
           "  grid.patch = \"Default\"",
           "",
           "end simulation",
@@ -542,9 +553,11 @@ class NarrativePresenter {
           "",
           "  grid.size = 16000 m",
           "  grid.top_left =",
-          "    36.73 degrees latitude, -119.52 degrees longitude",
+          "    36.73 degrees latitude,",
+          "    -119.52 degrees longitude",
           "  grid.bottom_right =",
-          "    35.80 degrees latitude, -117.98 degrees longitude",
+          "    35.80 degrees latitude,",
+          "    -117.98 degrees longitude",
           "  grid.patch = \"Default\"",
           "",
           "end simulation",
@@ -607,9 +620,11 @@ class NarrativePresenter {
           "",
           "  grid.size = 16000 m",
           "  grid.top_left =",
-          "    36.73 degrees latitude, -119.52 degrees longitude",
+          "    36.73 degrees latitude,",
+          "    -119.52 degrees longitude",
           "  grid.bottom_right =",
-          "    35.80 degrees latitude, -117.98 degrees longitude",
+          "    35.80 degrees latitude,",
+          "    -117.98 degrees longitude",
           "  grid.patch = \"Default\"",
           "",
           "end simulation",
@@ -646,7 +661,10 @@ class NarrativePresenter {
           "    with mean of 100% std of 5%",
           "",
           "  newGrowth.step =",
-          "    meta.maxNewGrowth * temperatureImpact * precipImpact * stochastic",
+          "    meta.maxNewGrowth",
+          "    * temperatureImpact",
+          "    * precipImpact",
+          "    * stochastic",
           "",
           "  height.step = prior.height + newGrowth",
           "",
@@ -674,9 +692,11 @@ class NarrativePresenter {
           "",
           "  grid.size = 16000 m",
           "  grid.top_left =",
-          "    36.73 degrees latitude, -119.52 degrees longitude",
+          "    36.73 degrees latitude,",
+          "    -119.52 degrees longitude",
           "  grid.bottom_right =",
-          "    35.80 degrees latitude, -117.98 degrees longitude",
+          "    35.80 degrees latitude,",
+          "    -117.98 degrees longitude",
           "  grid.patch = \"Default\"",
           "",
           "end simulation",
@@ -713,7 +733,10 @@ class NarrativePresenter {
           "    with mean of 100% std of 5%",
           "",
           "  newGrowth.step =",
-          "    meta.maxNewGrowth * temperatureImpact * precipImpact * stochastic",
+          "    meta.maxNewGrowth",
+          "    * temperatureImpact",
+          "    * precipImpact",
+          "    * stochastic",
           "",
           "  height.step = prior.height + newGrowth",
           "",
@@ -837,24 +860,32 @@ class NarrativePresenter {
         if (toStep.kind === "playground" && self._playgroundPresenter) {
           self._playgroundPresenter.onShow();
         }
+        if (toSection.querySelector(".phase-intro") && typeof window.tileBackground === "function") {
+          window.tileBackground("#" + toSection.id + " .phase-intro");
+        }
       } else {
-        fromSection.classList.add("fade-out");
         toSection.classList.add("active");
         toSection.setAttribute("aria-hidden", "false");
         toSection.classList.add("fade-in");
+        fromSection.classList.add("leaving", "fade-out");
+        if (toStep.kind === "playground" && self._playgroundPresenter) {
+          self._playgroundPresenter.onShow();
+        }
+        if (toSection.querySelector(".phase-intro") && typeof window.tileBackground === "function") {
+          window.tileBackground("#" + toSection.id + " .phase-intro");
+        }
         setTimeout(() => {
-          fromSection.classList.remove("active");
-          fromSection.classList.remove("fade-out");
+          fromSection.classList.remove("active", "leaving", "fade-out");
           fromSection.setAttribute("aria-hidden", "true");
           toSection.classList.remove("fade-in");
-          if (toStep.kind === "playground" && self._playgroundPresenter) {
-            self._playgroundPresenter.onShow();
-          }
         }, TRANSITION_MS);
       }
     } else {
       toSection.classList.add("active");
       toSection.setAttribute("aria-hidden", "false");
+      if (toSection.querySelector(".phase-intro") && typeof window.tileBackground === "function") {
+        setTimeout(() => window.tileBackground("#" + toSection.id + " .phase-intro"), 100);
+      }
     }
 
     self._updateNavButtons();

@@ -179,12 +179,68 @@ header .header-intro {
 .token.punctuation       { color: #000000; }              /* Ace default foreground */
 .token.variable          { color: #000000; }              /* identifier text is black in Ace */
 
-#phase-welcome.active {
+/* ---- Phase transition overlay fix (Task B) ----
+   The outgoing section is lifted out of normal flow during the fade so
+   the incoming section stays at the top rather than rendering below. */
+#narrative {
+  position: relative;
+}
+
+.phase.leaving {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+}
+
+/* ---- Welcome and Conclusion hero treatment (Task C) ---- */
+
+#phase-welcome.active,
+#phase-conclusion.active {
+  position: relative;
+  overflow: hidden;
+  background-color: #8080B0;
+  border-radius: 10px;
+  box-shadow: 5px 5px 10px rgba(10, 10, 10, 0.2);
+  padding: 56px 20px;
   display: flex;
   flex-direction: column;
+  align-items: center;
+  text-align: center;
+}
+
+.phase-intro {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 0;
+  pointer-events: none;
+}
+
+.phase-hero-inner {
+  position: relative;
+  z-index: 1;
   max-width: 680px;
-  margin: 0 auto;
-  padding: 40px 20px;
+  background-color: rgba(40, 40, 70, 0.45);
+  padding: 28px 32px;
+  border-radius: 12px;
+}
+
+/* White text with black outline so headings/paragraphs read over the tile texture. */
+#phase-welcome .phase-hero-inner h1,
+#phase-welcome .phase-hero-inner h2,
+#phase-welcome .phase-hero-inner p,
+#phase-conclusion .phase-hero-inner h1,
+#phase-conclusion .phase-hero-inner h2,
+#phase-conclusion .phase-hero-inner p {
+  color: white;
+  text-shadow:
+    -1px -1px 0 #000,
+    1px -1px 0 #000,
+    -1px  1px 0 #000,
+    1px  1px 0 #000;
 }
 
 #phase-buildup.active {
@@ -381,13 +437,7 @@ header .header-intro {
   padding: 20px;
 }
 
-#phase-conclusion.active {
-  display: flex;
-  flex-direction: column;
-  max-width: 680px;
-  margin: 0 auto;
-  padding: 40px 20px;
-}
+/* #phase-conclusion.active is handled by the hero rules above. */
 
 #playground-editor {
   height: 480px;
@@ -601,10 +651,24 @@ header .header-intro {
   gap: 10px;
 }
 
-#top-nav-brand {
+/* #toc-open-button is the demo title/menu control on the left of the navbar. */
+#toc-open-button {
   font-weight: 700;
+  font-size: 1.1em;
+  font-family: inherit;
   color: #333333;
-  font-size: 1.2em;
+  background: transparent;
+  border: 1px solid rgba(0, 0, 0, 0.25);
+  border-radius: 8px;
+  padding: 5px 12px;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+#toc-open-button:hover,
+#toc-open-button:focus {
+  background-color: rgba(0, 0, 0, 0.08);
+  border-color: rgba(0, 0, 0, 0.4);
 }
 
 .nav-links {
