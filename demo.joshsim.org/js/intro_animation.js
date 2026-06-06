@@ -6,26 +6,34 @@
 
 
 /**
- * Animate the header.
+ * Animate a tiled background into an svg.
  *
- * Animate the svg in the header such that there is a grid of squares created with 1000 squares
- * wide. The size of the square depends on the size of the header. Each square is given a color of
- * white but an opacity of 0. Then, in a transition with a random delay between 0 to 2 seconds with
- * a duration of 1 second, the opacity is set randomly between 0% and 20%.
+ * Fills the svg with a grid of squares (~50 columns wide) sized to the svg's parent element. Each
+ * square starts white at 0 opacity, then transitions (random 0–5s delay, 1s duration) to a random
+ * opacity between 0% and 40%, giving a subtle shimmering tile texture behind the content.
+ *
+ * @param {string} selector - CSS selector for the svg to fill. No-op if it is not present.
  */
-function runIntroAnimation() {
-  const svg = d3.select(".header-intro");
-  const header = document.querySelector("header");
-  const width = header.offsetWidth;
-  const height = header.offsetHeight;
-  
+function tileBackground(selector) {
+  const svg = d3.select(selector);
+  if (svg.empty()) {
+    return;
+  }
+
+  const container = svg.node().parentNode;
+  const width = container.offsetWidth;
+  const height = container.offsetHeight;
+  if (!width || !height) {
+    return;
+  }
+
   svg.attr("width", width)
      .attr("height", height);
 
   const squareSize = width / 50;
   const numRows = Math.ceil(height / squareSize);
   const numCols = Math.ceil(width / squareSize);
-  
+
   const squares = [];
   for (let row = 0; row < numRows; row++) {
     for (let col = 0; col < numCols; col++) {
@@ -53,11 +61,26 @@ function runIntroAnimation() {
      .attr("opacity", () => Math.random() * 0.4);
 }
 
+
 /**
- * Run page introductory commands and setup
+ * Animate the header tile background (kept for backwards compatibility).
+ */
+function runIntroAnimation() {
+  tileBackground(".header-intro");
+}
+
+
+/**
+ * Run page introductory commands and setup.
+ *
+ * Tiles the header banner and, where present, the demo call-out box. Selectors that match nothing
+ * are skipped, so this is safe on pages that have only one (or neither).
  */
 function main() {
-  setTimeout(() => runIntroAnimation(), 500);
+  setTimeout(() => {
+    tileBackground(".header-intro");
+    tileBackground(".demo-callout-intro");
+  }, 500);
 }
 
 
