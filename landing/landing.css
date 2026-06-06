@@ -142,7 +142,7 @@ pre {
    Selector is scoped under .landing to outrank the `.landing section`
    white-background rule. */
 .landing section.demo-callout {
-  background-color: #7070C0;
+  background-color: #8080B0;
   color: white;
   border-radius: 10px;
   padding: 24px 28px;
