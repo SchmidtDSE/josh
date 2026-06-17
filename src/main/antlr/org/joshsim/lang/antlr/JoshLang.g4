@@ -53,6 +53,7 @@ CONST_: 'const';
 CREATE_: 'create';
 CURRENT_: 'current';
 DEBUG_: 'debug';
+DISCRETE_: 'discrete';
 DISTURBANCE_: 'disturbance';
 ELIF_: 'elif';
 ELSE_: 'else';
@@ -84,6 +85,8 @@ REPLACEMENT_: 'replacement';
 RETURN_: 'return';
 SAMPLE_: 'sample';
 SIMULATION_: 'simulation';
+SPINDOWN_: 'spindown';
+SPINUP_: 'spinup';
 START_: 'start';
 STATE_: 'state';
 STD_: 'std';
@@ -104,7 +107,7 @@ IDENTIFIER_: [A-Za-z][A-Za-z0-9_]*;
 WHITE_SPACE: [ \u000B\t\r\n] -> channel(HIDDEN);
 
 // Identifiers
-nakedIdentifier: (IDENTIFIER_|DEBUG_|INIT_|START_|STEP_|END_|HERE_|CURRENT_|PRIOR_|STATE_|ASSERT_|PATCH_|SIMULATION_|AGENT_|ORGANISM_|N_|P_);
+nakedIdentifier: (IDENTIFIER_|DEBUG_|INIT_|START_|STEP_|END_|HERE_|CURRENT_|PRIOR_|STATE_|ASSERT_|PATCH_|SIMULATION_|AGENT_|ORGANISM_|N_|P_|DISCRETE_|SPINUP_|SPINDOWN_);
 identifier: nakedIdentifier (DOT_ (nakedIdentifier))*;
 
 // Values
@@ -175,7 +178,7 @@ statement: (assignment | return | fullConditional);
 
 bool: (TRUE_ | FALSE_);
 
-distributionDescription: UNIFORM_ FROM_ low=expression TO_ high=expression # uniformSample
+distributionDescription: DISCRETE_? UNIFORM_ FROM_ low=expression TO_ high=expression # uniformSample
   | NORMAL_ WITH_ MEAN_ OF_ mean=expression STD_ OF_ stdev=expression # normalSample
   | BINOMIAL_ WITH_ N_ OF_ n=expression P_ OF_ p=expression # binomialSample
   ;
@@ -207,9 +210,17 @@ eventHandlerGeneral: eventHandlerGroup;
 // Regular stanzas
 stateStanza: START_ STATE_ STR_ eventHandlerGeneral* END_ STATE_;
 
+// Spin-up / spin-down phase stanzas (valid only inside a simulation; enforced in the visitor).
+// The body is a set of named properties (`name = expression`), reusing the event-handler form:
+// `year` (resampled each step to pick which data year's forcing is felt) and `duration` (the
+// phase length). Reads like the rest of the language and leaves room for future properties.
+phaseType: (SPINUP_ | SPINDOWN_);
+
+phaseStanza: START_ phaseType eventHandlerGeneral* END_ phaseType;
+
 entityStanzaType: (DISTURBANCE_ | EXTERNAL_ | ORGANISM_ | MANAGEMENT_ | PATCH_ | SIMULATION_);
 
-entityStanza: START_ entityStanzaType identifier (eventHandlerGeneral | stateStanza)* END_ entityStanzaType;
+entityStanza: START_ entityStanzaType identifier (eventHandlerGeneral | stateStanza | phaseStanza)* END_ entityStanzaType;
 
 // Unit definitions
 unitConversion: ALIAS_ identifier # noopConversion

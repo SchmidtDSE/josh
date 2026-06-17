@@ -152,11 +152,16 @@ public class JoshDistributionVisitor implements JoshVisitorDelegate {
   public JoshFragment visitUniformSample(JoshLangParser.UniformSampleContext ctx) {
     EventHandlerAction lowAction = ctx.low.accept(parent).getCurrentAction();
     EventHandlerAction highAction = ctx.high.accept(parent).getCurrentAction();
+    boolean discrete = ctx.DISCRETE_() != null;
 
     EventHandlerAction action = (machine) -> {
       lowAction.apply(machine);
       highAction.apply(machine);
-      machine.randUniform();
+      if (discrete) {
+        machine.randUniformDiscrete();
+      } else {
+        machine.randUniform();
+      }
       return machine;
     };
 

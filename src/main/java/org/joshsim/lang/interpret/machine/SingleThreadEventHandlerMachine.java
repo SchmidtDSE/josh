@@ -617,10 +617,17 @@ public class SingleThreadEventHandlerMachine implements EventHandlerMachine {
   private Optional<EngineValue> getBuiltinMetaAttribute(String name) {
     return switch (name) {
       case "stepCount" -> Optional.of(
-          valueFactory.build(bridge.getAbsoluteTimestep(), COUNT_UNITS)
+          // Anchored at the observed period: 0 is the first observed step, spin-up is negative.
+          // For a run without spin-up this equals the old absolute step count.
+          valueFactory.build(
+              bridge.getCurrentTimestep() - bridge.getStartTimestep(), COUNT_UNITS)
       );
       case "year" -> Optional.of(
-          valueFactory.build(bridge.getCurrentTimestep(), Units.of("years"))
+          // The data year felt this step (resampled during spin-up/spin-down).
+          valueFactory.build(bridge.getDataTimestep(), Units.of("years"))
+      );
+      case "phase" -> Optional.of(
+          valueFactory.build(bridge.getPhase(), Units.EMPTY)
       );
       default -> Optional.empty();
     };
@@ -700,6 +707,25 @@ public class SingleThreadEventHandlerMachine implements EventHandlerMachine {
 
     EngineValue decoratedResult = valueFactory.buildForNumber(doubleResult, min.getUnits());
     memory.push(decoratedResult);
+
+    return this;
+  }
+
+  @Override
+  public EventHandlerMachine randUniformDiscrete() {
+    startConversionGroup();
+    EngineValue max = pop();
+    EngineValue min = pop();
+    endConversionGroup();
+
+    // `discrete uniform` draws an actual integer uniformly over the inclusive range [low, high]
+    // (no coercion), reusing the uniform distribution. This is opt-in, so a plain `uniform`
+    // remains continuous and the random sequence of existing seeded models is unchanged.
+    long low = min.getAsInt();
+    long high = max.getAsInt();
+    long span = high - low + 1;
+    long drawn = span <= 1 ? low : low + SharedRandom.nextInt((int) span);
+    memory.push(valueFactory.build(drawn, min.getUnits()));
 
     return this;
   }
@@ -958,6 +984,11 @@ public class SingleThreadEventHandlerMachine implements EventHandlerMachine {
   @Override
   public long getCurrentTimestep() {
     return bridge.getCurrentTimestep();
+  }
+
+  @Override
+  public long getDataTimestep() {
+    return bridge.getDataTimestep();
   }
 
   @Override
