@@ -54,9 +54,35 @@ if [ -z "$SCRIPT" ]; then
 fi
 
 # JOB_COMPLETION_INDEX is set by K8s for indexed Jobs (0, 1, 2, ...).
-# JOSH_REPLICATE_OFFSET (default 0) shifts the absolute index for pool/resume
-# workflows where indices need to be stable across re-dispatch.
-REPLICATE_INDEX=$(( ${JOB_COMPLETION_INDEX:-0} + ${JOSH_REPLICATE_OFFSET:-0} ))
+# Two ways to map a pod's completion index to an absolute replicate index:
+#   - JOSH_REPLICATE_INDICES (comma-separated, e.g. "3,7,8"): pick the
+#     JOB_COMPLETION_INDEX-th entry. Used to backfill a specific, possibly
+#     non-contiguous set of replicates.
+#   - JOSH_REPLICATE_OFFSET (default 0): shift the completion index by a fixed
+#     offset for contiguous pool/resume ranges.
+# JOSH_REPLICATE_INDICES takes precedence when set.
+if [ -n "${JOSH_REPLICATE_INDICES:-}" ]; then
+  target_pos=${JOB_COMPLETION_INDEX:-0}
+  pos=0
+  REPLICATE_INDEX=""
+  OLD_IFS=$IFS
+  IFS=,
+  for idx in $JOSH_REPLICATE_INDICES; do
+    if [ "$pos" -eq "$target_pos" ]; then
+      REPLICATE_INDEX=$idx
+      break
+    fi
+    pos=$((pos + 1))
+  done
+  IFS=$OLD_IFS
+  if [ -z "$REPLICATE_INDEX" ]; then
+    echo "ERROR: JOB_COMPLETION_INDEX $target_pos out of range for" \
+      "JOSH_REPLICATE_INDICES=$JOSH_REPLICATE_INDICES" >&2
+    exit 1
+  fi
+else
+  REPLICATE_INDEX=$(( ${JOB_COMPLETION_INDEX:-0} + ${JOSH_REPLICATE_OFFSET:-0} ))
+fi
 
 # JOSH_CUSTOM_TAGS holds newline-delimited key=value entries. One
 # --custom-tag flag per non-empty line. Newline-delimited (vs JSON)

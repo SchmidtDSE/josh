@@ -6,6 +6,7 @@
 
 package org.joshsim.pipeline.target;
 
+import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 import org.joshsim.util.MinioHandler;
@@ -71,18 +72,24 @@ public class BatchJobStrategy {
    * @param customTags Custom template parameters resolvable as {@code {key}} placeholders
    *     in {@code exportFiles} paths. Empty map means none.
    * @param replicateStart Starting replicate index for the half-open range
-   *     {@code [start, start+replicates)}. {@code 0} preserves prior behavior.
+   *     {@code [start, start+replicates)}. {@code 0} preserves prior behavior. Ignored when
+   *     {@code replicateIndices} is non-empty.
+   * @param replicateIndices Explicit, possibly non-contiguous replicate indices to run; empty
+   *     selects the range and preserves prior behavior.
    * @return The final job status.
    * @throws Exception If dispatch or polling fails.
    */
   public JobStatus execute(String minioPrefix, String simulation, int replicates,
-      Map<String, String> customTags, int replicateStart) throws Exception {
+      Map<String, String> customTags, int replicateStart, List<Integer> replicateIndices)
+      throws Exception {
     String jobId = UUID.randomUUID().toString();
     String prefix = MinioHandler.normalizePrefix(minioPrefix);
 
-    output.printInfo("Dispatching to target (" + replicates + " replicates) against "
+    int effectiveReplicates = replicateIndices.isEmpty() ? replicates : replicateIndices.size();
+    output.printInfo("Dispatching to target (" + effectiveReplicates + " replicates) against "
         + prefix + "...");
-    target.dispatch(jobId, prefix, simulation, replicates, customTags, replicateStart);
+    target.dispatch(jobId, prefix, simulation, replicates, customTags, replicateStart,
+        replicateIndices);
     output.printInfo("Dispatched. Polling for completion...");
 
     return pollUntilTerminal(jobId);
@@ -96,17 +103,21 @@ public class BatchJobStrategy {
    * @param replicates Number of replicates to execute.
    * @param customTags Custom template parameters; same semantics as {@link #execute}.
    * @param replicateStart Starting replicate index; same semantics as {@link #execute}.
+   * @param replicateIndices Explicit replicate indices; same semantics as {@link #execute}.
    * @return The jobId for manual status tracking.
    * @throws Exception If dispatch fails.
    */
   public String executeNoWait(String minioPrefix, String simulation, int replicates,
-      Map<String, String> customTags, int replicateStart) throws Exception {
+      Map<String, String> customTags, int replicateStart, List<Integer> replicateIndices)
+      throws Exception {
     String jobId = UUID.randomUUID().toString();
     String prefix = MinioHandler.normalizePrefix(minioPrefix);
 
-    output.printInfo("Dispatching to target (" + replicates + " replicates) against "
+    int effectiveReplicates = replicateIndices.isEmpty() ? replicates : replicateIndices.size();
+    output.printInfo("Dispatching to target (" + effectiveReplicates + " replicates) against "
         + prefix + "...");
-    target.dispatch(jobId, prefix, simulation, replicates, customTags, replicateStart);
+    target.dispatch(jobId, prefix, simulation, replicates, customTags, replicateStart,
+        replicateIndices);
     output.printInfo("Dispatched. Status path: batch-status/" + jobId + "/status.json");
 
     return jobId;

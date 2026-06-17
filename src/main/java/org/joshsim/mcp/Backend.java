@@ -12,6 +12,7 @@
 package org.joshsim.mcp;
 
 import java.nio.file.Path;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
@@ -183,6 +184,9 @@ public interface Backend {
    * @param script path to the {@code .josh} script file
    * @param simulation name of the simulation to run
    * @param replicates number of replicates to run (default 1)
+   * @param replicateIndices an explicit, ordered list of replicate indices to run (e.g. 3,7,8),
+   *     or empty to run the {@code [0, replicates)} range; mutually exclusive with a
+   *     {@code replicates} greater than 1
    * @param serialPatches if true, patches are processed serially
    * @param seed optional random seed for reproducibility
    * @param dataFiles map of external data resource names (as referenced by {@code external
@@ -194,6 +198,7 @@ public interface Backend {
       Path script,
       String simulation,
       int replicates,
+      Optional<List<Integer>> replicateIndices,
       boolean serialPatches,
       Optional<Long> seed,
       Map<String, Path> dataFiles

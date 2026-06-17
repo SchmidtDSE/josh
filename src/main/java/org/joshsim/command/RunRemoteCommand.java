@@ -21,6 +21,7 @@ import java.util.Base64;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.concurrent.Callable;
 import org.joshsim.compat.CompatibilityLayerKeeper;
 import org.joshsim.compat.JvmCompatibilityLayer;
@@ -36,6 +37,7 @@ import org.joshsim.pipeline.remote.RunRemoteStrategy;
 import org.joshsim.util.MinioOptions;
 import org.joshsim.util.OutputOptions;
 import org.joshsim.util.ProgressCalculator;
+import org.joshsim.util.ReplicateSelection;
 import org.joshsim.util.SimulationMetadata;
 import org.joshsim.util.SimulationMetadataExtractor;
 import picocli.CommandLine.Command;
@@ -157,6 +159,17 @@ public class RunRemoteCommand implements Callable<Integer> {
   )
   private int replicateStart = 0;
 
+  @Option(
+      names = "--replicate-indices",
+      description = "Explicit, possibly non-contiguous list of replicate indices to run "
+          + "(e.g. 3,7,8) instead of the [start, start+count) range. Use to backfill specific "
+          + "missing replicates. Mutually exclusive with --replicates and --replicate-start."
+  )
+  private String replicateIndices;
+
+  /** Parsed form of {@link #replicateIndices}; empty means use the [start, start+count) range. */
+  private Optional<List<Integer>> parsedReplicateIndices = Optional.empty();
+
   /**
    * Parses custom parameter command-line options.
    *
@@ -194,6 +207,21 @@ public class RunRemoteCommand implements Callable<Integer> {
     }
     if (replicateStart < 0) {
       output.printError("--replicate-start must be >= 0");
+      return SERIALIZATION_ERROR_CODE;
+    }
+    boolean indicesGiven = replicateIndices != null && !replicateIndices.trim().isEmpty();
+    if (indicesGiven && replicates > 1) {
+      output.printError("--replicate-indices and --replicates are mutually exclusive");
+      return SERIALIZATION_ERROR_CODE;
+    }
+    if (indicesGiven && replicateStart != 0) {
+      output.printError("--replicate-indices and --replicate-start are mutually exclusive");
+      return SERIALIZATION_ERROR_CODE;
+    }
+    try {
+      parsedReplicateIndices = ReplicateSelection.parse(replicateIndices);
+    } catch (IllegalArgumentException e) {
+      output.printError(e.getMessage());
       return SERIALIZATION_ERROR_CODE;
     }
     try {
@@ -306,10 +334,18 @@ public class RunRemoteCommand implements Callable<Integer> {
         .map(JoshJobBuilder::build)
         .toList();
 
+    // When explicit indices are given, they (not --replicates) determine how many replicates run.
+    int effectiveReplicates = parsedReplicateIndices.map(List::size).orElse(replicates);
+
     // Report grid search information
-    output.printInfo("Grid search will execute " + jobs.size() + " job combination(s) "
-        + "with " + replicates + " replicate(s) each");
-    output.printInfo("Total simulations to run: " + (jobs.size() * replicates));
+    if (parsedReplicateIndices.isPresent()) {
+      output.printInfo("Grid search will execute " + jobs.size() + " job combination(s) "
+          + "with replicate indices " + ReplicateSelection.toCsv(parsedReplicateIndices.get()));
+    } else {
+      output.printInfo("Grid search will execute " + jobs.size() + " job combination(s) "
+          + "with " + replicates + " replicate(s) each");
+    }
+    output.printInfo("Total simulations to run: " + (jobs.size() * effectiveReplicates));
     output.printInfo("");
 
     // Read Josh simulation code
@@ -333,7 +369,7 @@ public class RunRemoteCommand implements Callable<Integer> {
       // Create a new progress calculator for THIS job combination
       // This ensures replicate numbers are 1/N for each simulation, not cumulative
       ProgressCalculator progressCalculator = new ProgressCalculator(
-          metadata.getTotalSteps(), replicates
+          metadata.getTotalSteps(), effectiveReplicates
       );
 
       // Create execution context for this job combination
@@ -352,6 +388,7 @@ public class RunRemoteCommand implements Callable<Integer> {
           .withMinioOptions(minioOptions)
           .withMaxConcurrentWorkers(concurrentWorkers)
           .withReplicateNumber(replicateStart)
+          .withReplicateIndices(parsedReplicateIndices)
           .withEnableProfiler(enableProfiler)
           .build();
 

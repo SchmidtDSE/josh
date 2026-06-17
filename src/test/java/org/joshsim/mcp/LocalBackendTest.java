@@ -232,7 +232,8 @@ public class LocalBackendTest {
         java.util.Map.of("bad;name.jshd", tempDir.resolve("x.jshd"));
 
     Backend.RunSimulationResult result =
-        backend.runSimulation(script, "TestSim", 1, false, Optional.empty(), data);
+        backend.runSimulation(script, "TestSim", 1, Optional.empty(), false, Optional.empty(),
+            data);
 
     assertFalse(result.isSuccess(), "Separator in data name should fail fast");
     assertTrue(result.getMessage().contains("bad;name.jshd"),
@@ -271,7 +272,7 @@ public class LocalBackendTest {
     Files.writeString(scriptFile, script);
 
     Backend.RunSimulationResult result = backend.runSimulation(
-        scriptFile, "TestSim", 1, false, Optional.empty(), java.util.Map.of());
+        scriptFile, "TestSim", 1, Optional.empty(), false, Optional.empty(), java.util.Map.of());
 
     assertFalse(result.isSuccess(), "Run with unwritable export target should fail");
     assertNotEquals("Simulation failed: Worker thread failed", result.getMessage(),

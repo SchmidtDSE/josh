@@ -26,6 +26,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import org.joshsim.util.MinioOptions;
+import org.joshsim.util.ReplicateSelection;
 
 
 /**
@@ -93,11 +94,17 @@ public class KubernetesTarget implements RemoteBatchTarget {
       String simulation,
       int replicates,
       Map<String, String> customTags,
-      int replicateStart
+      int replicateStart,
+      List<Integer> replicateIndices
   ) throws Exception {
     String secretName = SECRET_NAME_PREFIX + jobId;
 
     createSecret(secretName);
+
+    // An explicit index list sets the pod count to that list's size; each pod maps its
+    // JOB_COMPLETION_INDEX to an absolute replicate index via JOSH_REPLICATE_INDICES. Otherwise
+    // the Indexed Job runs `replicates` pods over the [start, start+count) range.
+    int completions = replicateIndices.isEmpty() ? replicates : replicateIndices.size();
 
     JobBuilder jobBuilder = new JobBuilder()
         .withNewMetadata()
@@ -108,9 +115,9 @@ public class KubernetesTarget implements RemoteBatchTarget {
         .endMetadata()
         .withNewSpec()
             .withCompletionMode("Indexed")
-            .withCompletions(replicates)
+            .withCompletions(completions)
             .withParallelism(
-                Math.min(config.getParallelism(), replicates)
+                Math.min(config.getParallelism(), completions)
             )
             .withBackoffLimit(BACKOFF_LIMIT)
             .withActiveDeadlineSeconds(
@@ -131,7 +138,7 @@ public class KubernetesTarget implements RemoteBatchTarget {
                         .withEnv(buildEnvVars(
                             secretName, jobId,
                             minioPrefix, simulation,
-                            customTags, replicateStart
+                            customTags, replicateStart, replicateIndices
                         ))
                         .withCommand(
                             ENTRYPOINT,
@@ -215,7 +222,8 @@ public class KubernetesTarget implements RemoteBatchTarget {
       String minioPrefix,
       String simulation,
       Map<String, String> customTags,
-      int replicateStart
+      int replicateStart,
+      List<Integer> replicateIndices
   ) {
     List<EnvVar> envVars = new ArrayList<>();
     envVars.add(secretEnvVar(
@@ -238,7 +246,12 @@ public class KubernetesTarget implements RemoteBatchTarget {
           "JOSH_CUSTOM_TAGS", BatchArgUtil.encodeCustomTags(customTags)
       ));
     }
-    if (replicateStart != 0) {
+    if (!replicateIndices.isEmpty()) {
+      // Each pod reads its JOB_COMPLETION_INDEX-th entry from this list as its replicate index.
+      envVars.add(plainEnvVar(
+          "JOSH_REPLICATE_INDICES", ReplicateSelection.toCsv(replicateIndices)
+      ));
+    } else if (replicateStart != 0) {
       envVars.add(plainEnvVar(
           "JOSH_REPLICATE_OFFSET", String.valueOf(replicateStart)
       ));

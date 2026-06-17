@@ -12,11 +12,14 @@ package org.joshsim.pipeline.remote;
 
 import java.io.File;
 import java.net.URI;
+import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import org.joshsim.pipeline.job.JoshJob;
 import org.joshsim.util.MinioOptions;
 import org.joshsim.util.OutputOptions;
 import org.joshsim.util.ProgressCalculator;
+import org.joshsim.util.ReplicateSelection;
 import org.joshsim.util.SimulationMetadata;
 
 /**
@@ -56,11 +59,58 @@ public class RunRemoteContext {
   // Execution parameters for local leader mode
   private final int maxConcurrentWorkers;
 
+  // Resolved, ordered absolute replicate indices to compute
+  private final List<Integer> replicateIndices;
+
   // Profiler flag
   private final boolean enableProfiler;
 
   /**
    * Creates a new RunRemoteContext with all necessary parameters.
+   *
+   * @param file The Josh simulation file
+   * @param simulation The simulation name to execute
+   * @param useFloat64 Whether to use double precision instead of BigDecimal
+   * @param endpointUri The validated endpoint URI
+   * @param apiKey The API key for authentication
+   * @param job The JoshJob containing file mappings and replicate configuration
+   * @param joshCode The Josh simulation code content
+   * @param externalDataSerialized The serialized external data
+   * @param metadata The simulation metadata for progress tracking
+   * @param progressCalculator The progress calculator instance
+   * @param outputOptions The output options for logging
+   * @param minioOptions The MinIO options for cloud storage
+   * @param maxConcurrentWorkers Maximum concurrent workers for local leader mode
+   * @param replicateIndices The resolved, ordered absolute replicate indices to compute
+   * @param enableProfiler Whether to enable per-request profiling
+   */
+  public RunRemoteContext(File file, String simulation, boolean useFloat64,
+      URI endpointUri, String apiKey, JoshJob job,
+      String joshCode, String externalDataSerialized,
+      SimulationMetadata metadata, ProgressCalculator progressCalculator,
+      OutputOptions outputOptions, MinioOptions minioOptions,
+      int maxConcurrentWorkers, List<Integer> replicateIndices, boolean enableProfiler) {
+    this.file = file;
+    this.simulation = simulation;
+    this.useFloat64 = useFloat64;
+    this.endpointUri = endpointUri;
+    this.apiKey = apiKey;
+    this.job = job;
+    this.joshCode = joshCode;
+    this.externalDataSerialized = externalDataSerialized;
+    this.metadata = metadata;
+    this.progressCalculator = progressCalculator;
+    this.outputOptions = outputOptions;
+    this.minioOptions = minioOptions;
+    this.maxConcurrentWorkers = maxConcurrentWorkers;
+    this.replicateIndices = replicateIndices;
+    this.enableProfiler = enableProfiler;
+  }
+
+  /**
+   * Creates a context whose replicate selection is the default dense range
+   * {@code [0, job.getReplicates())}. Convenience overload for callers that do not set an explicit
+   * index list or start offset; behaves exactly as before that selection existed.
    *
    * @param file The Josh simulation file
    * @param simulation The simulation name to execute
@@ -83,20 +133,9 @@ public class RunRemoteContext {
       SimulationMetadata metadata, ProgressCalculator progressCalculator,
       OutputOptions outputOptions, MinioOptions minioOptions,
       int maxConcurrentWorkers, boolean enableProfiler) {
-    this.file = file;
-    this.simulation = simulation;
-    this.useFloat64 = useFloat64;
-    this.endpointUri = endpointUri;
-    this.apiKey = apiKey;
-    this.job = job;
-    this.joshCode = joshCode;
-    this.externalDataSerialized = externalDataSerialized;
-    this.metadata = metadata;
-    this.progressCalculator = progressCalculator;
-    this.outputOptions = outputOptions;
-    this.minioOptions = minioOptions;
-    this.maxConcurrentWorkers = maxConcurrentWorkers;
-    this.enableProfiler = enableProfiler;
+    this(file, simulation, useFloat64, endpointUri, apiKey, job, joshCode, externalDataSerialized,
+        metadata, progressCalculator, outputOptions, minioOptions, maxConcurrentWorkers,
+        ReplicateSelection.resolve(Optional.empty(), 0, job.getReplicates()), enableProfiler);
   }
 
   /**
@@ -118,21 +157,31 @@ public class RunRemoteContext {
   }
 
   /**
-   * Gets the replicate number for this execution.
+   * Gets the first (lowest-position) replicate index, used as the representative index when
+   * building the initial template/output layer.
    *
-   * @return The replicate number (always 0 for job-based execution)
+   * @return The first resolved replicate index, or 0 if none
    */
   public int getReplicateNumber() {
-    return 0;
+    return replicateIndices.isEmpty() ? 0 : replicateIndices.get(0);
+  }
+
+  /**
+   * Gets the resolved, ordered list of absolute replicate indices to compute.
+   *
+   * @return The replicate indices (the {@code [0, count)} range by default, or an explicit set)
+   */
+  public List<Integer> getReplicateIndices() {
+    return replicateIndices;
   }
 
   /**
    * Gets the number of replicates to run.
    *
-   * @return The number of replicates from the job
+   * @return The number of resolved replicate indices
    */
   public int getReplicates() {
-    return job.getReplicates();
+    return replicateIndices.size();
   }
 
   /**

@@ -10,6 +10,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import java.io.IOException;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.Callable;
@@ -27,6 +28,7 @@ import org.joshsim.util.MinioHandler;
 import org.joshsim.util.MinioHandler.StagedState;
 import org.joshsim.util.MinioHandler.StagedStatus;
 import org.joshsim.util.OutputOptions;
+import org.joshsim.util.ReplicateSelection;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Mixin;
 import picocli.CommandLine.Option;
@@ -101,6 +103,14 @@ public class BatchRemoteCommand implements Callable<Integer> {
   private int replicateStart = 0;
 
   @Option(
+      names = "--replicate-indices",
+      description = "Explicit, possibly non-contiguous list of replicate indices to run "
+          + "(e.g. 3,7,8) instead of the [start, start+count) range. Use to backfill specific "
+          + "missing replicates. Mutually exclusive with --replicates and --replicate-start."
+  )
+  private String replicateIndices;
+
+  @Option(
       names = "--custom-tag",
       description = "Custom template parameters (format: name=value). Can be specified "
           + "multiple times. Resolvable as {name} in exportFiles paths."
@@ -138,6 +148,17 @@ public class BatchRemoteCommand implements Callable<Integer> {
         output.printError("--replicate-start must be >= 0");
         return DISPATCH_ERROR_CODE;
       }
+      boolean indicesGiven = replicateIndices != null && !replicateIndices.trim().isEmpty();
+      if (indicesGiven && replicates > 1) {
+        output.printError("--replicate-indices and --replicates are mutually exclusive");
+        return DISPATCH_ERROR_CODE;
+      }
+      if (indicesGiven && replicateStart != 0) {
+        output.printError("--replicate-indices and --replicate-start are mutually exclusive");
+        return DISPATCH_ERROR_CODE;
+      }
+      final List<Integer> parsedReplicateIndices =
+          ReplicateSelection.parse(replicateIndices).orElse(List.of());
       final Map<String, String> parsedCustomTags = parseCustomTags();
 
       output.printInfo("Loading target profile: " + targetName);
@@ -178,7 +199,8 @@ public class BatchRemoteCommand implements Callable<Integer> {
 
       if (noWait) {
         String jobId = strategy.executeNoWait(
-            normalizedPrefix, simulation, replicates, parsedCustomTags, replicateStart
+            normalizedPrefix, simulation, replicates, parsedCustomTags, replicateStart,
+            parsedReplicateIndices
         );
         ObjectNode node = MAPPER.createObjectNode();
         node.put("jobId", jobId);
@@ -189,7 +211,8 @@ public class BatchRemoteCommand implements Callable<Integer> {
       }
 
       JobStatus finalStatus = strategy.execute(
-          normalizedPrefix, simulation, replicates, parsedCustomTags, replicateStart
+          normalizedPrefix, simulation, replicates, parsedCustomTags, replicateStart,
+          parsedReplicateIndices
       );
 
       if (finalStatus.getState() == JobStatus.State.COMPLETE) {

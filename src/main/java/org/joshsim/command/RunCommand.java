@@ -13,6 +13,7 @@ package org.joshsim.command;
 
 import java.io.File;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
@@ -22,6 +23,7 @@ import org.joshsim.lang.io.MapSerializeStrategy;
 import org.joshsim.util.MinioOptions;
 import org.joshsim.util.OutputOptions;
 import org.joshsim.util.OutputStepsParser;
+import org.joshsim.util.ReplicateSelection;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Mixin;
 import picocli.CommandLine.Option;
@@ -68,6 +70,15 @@ public class RunCommand implements Callable<Integer> {
       defaultValue = "0"
   )
   private int replicateStart = 0;
+
+  @Option(
+      names = "--replicate-indices",
+      description = "Explicit, possibly non-contiguous list of replicate indices to run "
+          + "(e.g. 3,7,8). Runs exactly these indices; output filenames use the index in the "
+          + "{replicate} slot. Mutually exclusive with --replicates, --replicate-index, and "
+          + "--replicate-start."
+  )
+  private String replicateIndices;
 
   @Option(
       names = "--use-float-64",
@@ -201,15 +212,36 @@ public class RunCommand implements Callable<Integer> {
       output.printError("Number of replicates must be at least 1");
       return 1;
     }
+    boolean indicesGiven = replicateIndices != null && !replicateIndices.trim().isEmpty();
+    if (indicesGiven && replicates > 1) {
+      output.printError("--replicate-indices and --replicates are mutually exclusive");
+      return 1;
+    }
+    if (indicesGiven && replicateIndex != null) {
+      output.printError("--replicate-indices and --replicate-index are mutually exclusive");
+      return 1;
+    }
+    if (indicesGiven && replicateStart != 0) {
+      output.printError("--replicate-indices and --replicate-start are mutually exclusive");
+      return 1;
+    }
 
     // Parse CLI-shaped inputs up front for fail-fast validation.
     Map<String, String> customParameters = parseCustomParameters();
     Optional<Set<Integer>> parsedOutputSteps = parseOutputSteps();
+    Optional<List<Integer>> parsedReplicateIndices;
+    try {
+      parsedReplicateIndices = ReplicateSelection.parse(replicateIndices);
+    } catch (IllegalArgumentException e) {
+      output.printError(e.getMessage());
+      return 1;
+    }
 
     RunUtil.RunOptions options = RunUtil.RunOptions.builder(file, simulation)
         .replicates(replicates)
         .replicateIndex(replicateIndex)
         .replicateStart(replicateStart)
+        .replicateIndices(parsedReplicateIndices)
         .serialPatches(serialPatches)
         .seed(Optional.ofNullable(seed))
         .useFloat64(useFloat64)

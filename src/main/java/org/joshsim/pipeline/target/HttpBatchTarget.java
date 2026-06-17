@@ -14,8 +14,10 @@ import java.net.http.HttpResponse;
 import java.nio.charset.StandardCharsets;
 import java.time.Duration;
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
+import org.joshsim.util.ReplicateSelection;
 
 
 /**
@@ -74,7 +76,8 @@ public class HttpBatchTarget implements RemoteBatchTarget {
 
   @Override
   public void dispatch(String jobId, String minioPrefix, String simulation, int replicates,
-      Map<String, String> customTags, int replicateStart) throws Exception {
+      Map<String, String> customTags, int replicateStart, List<Integer> replicateIndices)
+      throws Exception {
     Map<String, String> formFields = new LinkedHashMap<>();
     formFields.put("apiKey", apiKey);
     formFields.put("jobId", jobId);
@@ -86,7 +89,11 @@ public class HttpBatchTarget implements RemoteBatchTarget {
     if (customTags != null && !customTags.isEmpty()) {
       formFields.put("customTags", BatchArgUtil.encodeCustomTags(customTags));
     }
-    if (replicateStart != 0) {
+    // An explicit index list supersedes the start offset; only one is ever sent, and neither
+    // when the default range is used (byte-for-byte identical to prior requests).
+    if (!replicateIndices.isEmpty()) {
+      formFields.put("replicateIndices", ReplicateSelection.toCsv(replicateIndices));
+    } else if (replicateStart != 0) {
       formFields.put("replicateStart", String.valueOf(replicateStart));
     }
 
