@@ -174,3 +174,4 @@ assert_run examples/simulations/profiler_multi.josh ProfilerMultiExample --enabl
 
 # Test spin-up / spin-down: phase-anchored clock and resampled discrete years, asserted in-model
 assert_run examples/features/spinup.josh SpinupExample --seed 42 || exit 52
+assert_run examples/features/spinup.josh SpinupExample --seed 42 --output-phases observed || exit 53

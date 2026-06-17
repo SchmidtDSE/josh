@@ -87,11 +87,15 @@ public class JoshSimFacadeUtil {
    * @param outputSteps Optional set of step numbers to export. If empty, all steps are exported.
    *     If present, only steps contained in the set will have their output written to export files.
    *     All steps continue to execute for simulation state continuity regardless of this filter.
+   * @param outputPhases Optional set of phase names to export (spinup, observed, spindown). If
+   *     empty, all phases are exported. If present, only steps whose phase is contained in the set
+   *     will have their output written. ANDed with outputSteps.
    */
   public static void runSimulation(ValueSupportFactory valueFactory,
         EngineGeometryFactory geometryFactory, InputOutputLayer inputOutputLayer,
         JoshProgram program, String simulationName, SimulationStepCallback callback,
-        boolean serialPatches, Optional<Set<Integer>> outputSteps) {
+        boolean serialPatches, Optional<Set<Integer>> outputSteps,
+        Optional<Set<String>> outputPhases) {
     runSimulation(
         valueFactory,
         geometryFactory,
@@ -101,7 +105,8 @@ public class JoshSimFacadeUtil {
         simulationName,
         callback,
         serialPatches,
-        outputSteps
+        outputSteps,
+        outputPhases
     );
   }
 
@@ -122,12 +127,15 @@ public class JoshSimFacadeUtil {
    * @param callback A callback invoked after each simulation step.
    * @param serialPatches If true, patches are processed serially; otherwise in parallel.
    * @param outputSteps Optional set of step numbers to export.
+   * @param outputPhases Optional set of phase names to export (spinup, observed, spindown). ANDed
+   *     with outputSteps.
    */
   public static void runSimulation(ValueSupportFactory valueFactory,
         EngineGeometryFactory geometryFactory, InputOutputLayer inputOutputLayer,
         ExternalResourceGetter externalResourceGetter,
         JoshProgram program, String simulationName, SimulationStepCallback callback,
-        boolean serialPatches, Optional<Set<Integer>> outputSteps) {
+        boolean serialPatches, Optional<Set<Integer>> outputSteps,
+        Optional<Set<String>> outputPhases) {
 
     MutableEntity simEntityRaw = program.getSimulations().getProtoype(simulationName).build();
     MutableEntity simEntity = new ShadowingEntity(valueFactory, simEntityRaw, simEntityRaw);
@@ -178,7 +186,11 @@ public class JoshSimFacadeUtil {
     while (!bridge.isComplete()) {
       long completedStep = stepper.perform(serialPatches);
 
-      if (outputSteps.isEmpty() || outputSteps.get().contains((int) completedStep)) {
+      boolean stepIncluded = outputSteps.isEmpty()
+          || outputSteps.get().contains((int) completedStep);
+      boolean phaseIncluded = outputPhases.isEmpty()
+          || outputPhases.get().contains(bridge.getPhase(completedStep));
+      if (stepIncluded && phaseIncluded) {
         TimeStep completedTimeStep = bridge.getReplicate()
             .getTimeStep(completedStep)
             .orElseThrow();
@@ -228,7 +240,7 @@ public class JoshSimFacadeUtil {
         JoshProgram program, String simulationName, SimulationStepCallback callback,
         boolean serialPatches) {
     runSimulation(valueFactory, geometryFactory, inputOutputLayer, program,
-        simulationName, callback, serialPatches, Optional.empty());
+        simulationName, callback, serialPatches, Optional.empty(), Optional.empty());
   }
 
   /**

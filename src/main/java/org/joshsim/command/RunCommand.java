@@ -22,6 +22,7 @@ import org.joshsim.JoshSimCommander;
 import org.joshsim.lang.io.MapSerializeStrategy;
 import org.joshsim.util.MinioOptions;
 import org.joshsim.util.OutputOptions;
+import org.joshsim.util.OutputPhasesParser;
 import org.joshsim.util.OutputStepsParser;
 import org.joshsim.util.ReplicateSelection;
 import picocli.CommandLine.Command;
@@ -121,6 +122,13 @@ public class RunCommand implements Callable<Integer> {
   private String outputSteps = "";
 
   @Option(
+      names = "--output-phases",
+      description = "Comma-separated list of phases to export (spinup,observed,spindown). "
+                  + "If not specified, all phases are exported."
+  )
+  private String outputPhases = "";
+
+  @Option(
       names = "--export-queue-size",
       description = "Maximum number of records to buffer before applying backpressure "
                   + "(default: 1000000)",
@@ -189,6 +197,17 @@ public class RunCommand implements Callable<Integer> {
     return OutputStepsParser.parseForCli(outputSteps);
   }
 
+  /**
+   * Parses the output-phases command line option using the OutputPhasesParser utility.
+   *
+   * @return Optional containing the set of phases to export, or empty if all phases should
+   *     be exported
+   * @throws IllegalArgumentException if the output-phases format is invalid
+   */
+  private Optional<Set<String>> parseOutputPhases() {
+    return OutputPhasesParser.parseForCli(outputPhases);
+  }
+
   @Override
   public Integer call() {
     // Validate replicates parameter
@@ -249,6 +268,7 @@ public class RunCommand implements Callable<Integer> {
         .csvPrecision(csvPrecision)
         .exportQueueSize(exportQueueSize)
         .outputSteps(parsedOutputSteps)
+        .outputPhases(parseOutputPhases())
         .dataFiles(dataFiles)
         .customParameters(customParameters)
         .minioOptions(minioOptions)

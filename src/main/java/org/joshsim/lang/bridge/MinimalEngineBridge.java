@@ -340,7 +340,11 @@ public class MinimalEngineBridge implements EngineBridge {
 
   @Override
   public String getPhase() {
-    long step = currentStep.getAsInt();
+    return getPhase(currentStep.getAsInt());
+  }
+
+  @Override
+  public String getPhase(long step) {
     if (step < observedLow) {
       return "spinup";
     }

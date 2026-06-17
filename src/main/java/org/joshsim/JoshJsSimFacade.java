@@ -36,6 +36,7 @@ import org.joshsim.lang.io.SandboxInputOutputLayer;
 import org.joshsim.lang.parse.JoshParser;
 import org.joshsim.lang.parse.ParseError;
 import org.joshsim.lang.parse.ParseResult;
+import org.joshsim.util.OutputPhasesParser;
 import org.joshsim.util.OutputStepsParser;
 import org.joshsim.wire.NamedMap;
 import org.joshsim.wire.WireConverter;
@@ -130,15 +131,40 @@ public class JoshJsSimFacade {
    *     not specified. True if BigDecimal and false otherwise.
    * @param outputSteps Comma-separated string of step numbers to export (e.g., "5,7,8,9,20").
    *     If empty or null, all steps are exported.
+   * @param outputPhases Comma-separated string of phases to export (e.g., "observed,spindown").
+   *     If empty or null, all phases are exported.
+   */
+  @JSExport
+  public static void runSimulation(String code, String simulationName, String externalData,
+        boolean favorBigDecimal, String outputSteps, String outputPhases) {
+    try {
+      runSimulationUnsafe(code, simulationName, externalData, favorBigDecimal, outputSteps,
+          outputPhases);
+    } catch (Exception e) {
+      reportError(e.toString());
+    }
+  }
+
+  /**
+   * Interpret and run a Josh simulation.
+   *
+   * <p>Backward compatibility method that delegates to the new method with empty outputPhases.
+   * This maintains compatibility with existing JavaScript callers that specify outputSteps but
+   * not outputPhases.</p>
+   *
+   * @param code The Josh source code to parse, interpret, and run as a simulation.
+   * @param simulationName The name of the simulation to be executed as defined in the parsed
+   *     program.
+   * @param externalData The serialization of the virtual file system to use in this simulation.
+   * @param favorBigDecimal Flag indicating if numbers should be backed by BigDecimal or double if
+   *     not specified. True if BigDecimal and false otherwise.
+   * @param outputSteps Comma-separated string of step numbers to export (e.g., "5,7,8,9,20").
+   *     If empty or null, all steps are exported.
    */
   @JSExport
   public static void runSimulation(String code, String simulationName, String externalData,
         boolean favorBigDecimal, String outputSteps) {
-    try {
-      runSimulationUnsafe(code, simulationName, externalData, favorBigDecimal, outputSteps);
-    } catch (Exception e) {
-      reportError(e.toString());
-    }
+    runSimulation(code, simulationName, externalData, favorBigDecimal, outputSteps, "");
   }
 
   /**
@@ -158,7 +184,7 @@ public class JoshJsSimFacade {
   @JSExport
   public static void runSimulation(String code, String simulationName, String externalData,
         boolean favorBigDecimal) {
-    runSimulation(code, simulationName, externalData, favorBigDecimal, "");
+    runSimulation(code, simulationName, externalData, favorBigDecimal, "", "");
   }
 
   /**
@@ -287,10 +313,12 @@ public class JoshJsSimFacade {
    *     not specified. True if BigDecimal and false otherwise.
    * @param outputSteps Comma-separated string of step numbers to export (e.g., "5,7,8,9,20").
    *     If empty or null, all steps are exported.
+   * @param outputPhases Comma-separated string of phases to export (e.g., "observed,spindown").
+   *     If empty or null, all phases are exported.
    * @throws RuntimeException If parsing the code results in errors.
    */
   private static void runSimulationUnsafe(String code, String simulationName, String externalData,
-        boolean favorBigDecimal, String outputSteps) {
+        boolean favorBigDecimal, String outputSteps, String outputPhases) {
     setupForWasm();
 
     ParseResult result = JoshSimFacadeUtil.parse(code);
@@ -310,6 +338,7 @@ public class JoshJsSimFacade {
     );
 
     Optional<Set<Integer>> parsedOutputSteps = parseOutputSteps(outputSteps);
+    Optional<Set<String>> parsedOutputPhases = parseOutputPhases(outputPhases);
 
     JoshSimFacadeUtil.runSimulation(
         valueFactory,
@@ -319,7 +348,8 @@ public class JoshJsSimFacade {
         simulationName,
         (x) -> JoshJsSimFacade.reportStepComplete((int) x),
         true,
-        parsedOutputSteps
+        parsedOutputSteps,
+        parsedOutputPhases
     );
   }
 
@@ -339,7 +369,7 @@ public class JoshJsSimFacade {
    */
   private static void runSimulationUnsafe(String code, String simulationName, String externalData,
         boolean favorBigDecimal) {
-    runSimulationUnsafe(code, simulationName, externalData, favorBigDecimal, "");
+    runSimulationUnsafe(code, simulationName, externalData, favorBigDecimal, "", "");
   }
 
   /**
@@ -352,6 +382,18 @@ public class JoshJsSimFacade {
    */
   private static Optional<Set<Integer>> parseOutputSteps(String outputSteps) {
     return OutputStepsParser.parseForWasmOrRemote(outputSteps);
+  }
+
+  /**
+   * Parses the output-phases parameter using the OutputPhasesParser utility.
+   *
+   * @param outputPhases Comma-separated string of phases to export
+   * @return Optional containing the set of phases to export, or empty if all phases should be
+   *     exported
+   * @throws RuntimeException if the output-phases format is invalid
+   */
+  private static Optional<Set<String>> parseOutputPhases(String outputPhases) {
+    return OutputPhasesParser.parseForWasmOrRemote(outputPhases);
   }
 
   /**
