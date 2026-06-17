@@ -202,6 +202,7 @@ public class RunRemoteLocalLeaderStrategy implements RunRemoteStrategy {
           favorBigDecimal,
           replicateIndex,
           "",  // No output filtering for local leader strategy (export all steps)
+          "",  // No phase filtering for local leader strategy (export all phases)
           context.isEnableProfiler()
       );
       tasks.add(task);

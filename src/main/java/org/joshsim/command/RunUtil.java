@@ -92,6 +92,7 @@ public final class RunUtil {
     private final int csvPrecision;
     private final int exportQueueSize;
     private final Optional<Set<Integer>> outputSteps;
+    private final Optional<Set<String>> outputPhases;
     private final String[] dataFiles;
     private final Map<String, String> customParameters;
     private final MinioOptions minioOptions;
@@ -110,6 +111,7 @@ public final class RunUtil {
       this.csvPrecision = builder.csvPrecision;
       this.exportQueueSize = builder.exportQueueSize;
       this.outputSteps = builder.outputSteps;
+      this.outputPhases = builder.outputPhases;
       this.dataFiles = builder.dataFiles;
       this.customParameters = builder.customParameters;
       this.minioOptions = builder.minioOptions;
@@ -143,6 +145,7 @@ public final class RunUtil {
       private int csvPrecision = MapSerializeStrategy.DEFAULT_MAX_DECIMAL_PLACES;
       private int exportQueueSize = 1000000;
       private Optional<Set<Integer>> outputSteps = Optional.empty();
+      private Optional<Set<String>> outputPhases = Optional.empty();
       private String[] dataFiles = new String[0];
       private Map<String, String> customParameters = new HashMap<>();
       private MinioOptions minioOptions = new MinioOptions();
@@ -278,6 +281,17 @@ public final class RunUtil {
        */
       public Builder outputSteps(Optional<Set<Integer>> value) {
         this.outputSteps = value;
+        return this;
+      }
+
+      /**
+       * Sets the specific phases to export, or empty to export all phases (default empty).
+       *
+       * @param value set of phases to export (spinup, observed, spindown), or empty
+       * @return this builder
+       */
+      public Builder outputPhases(Optional<Set<String>> value) {
+        this.outputPhases = value;
         return this;
       }
 
@@ -646,8 +660,8 @@ public final class RunUtil {
 
         runReplicate(currentJob, effectiveReplicate, totalReplicateCount > 1,
             valueFactory, geometryFactory, inputStrategy, spatialInfo, program, opts.simulation,
-            progressCalculator, opts.outputSteps, serialPatches, opts.minioOptions,
-            opts.csvPrecision, output, lastStep);
+            progressCalculator, opts.outputSteps, opts.outputPhases, serialPatches,
+            opts.minioOptions, opts.csvPrecision, output, lastStep);
 
         ProgressUpdate completion = progressCalculator.updateReplicateCompleted(
             totalReplicateCount);
@@ -692,7 +706,8 @@ public final class RunUtil {
       ValueSupportFactory valueFactory, EngineGeometryFactory geometryFactory,
       InputGetterStrategy inputStrategy, GridSpatialInfo spatialInfo, JoshProgram program,
       String simulation, ProgressCalculator progressCalculator,
-      Optional<Set<Integer>> parsedOutputSteps, boolean serialPatches, MinioOptions minioOptions,
+      Optional<Set<Integer>> parsedOutputSteps, Optional<Set<String>> parsedOutputPhases,
+      boolean serialPatches, MinioOptions minioOptions,
       int csvPrecision, OutputOptions output, long[] lastStep) {
     TemplateStringRenderer templateRenderer = new TemplateStringRenderer(currentJob,
         currentReplicate);
@@ -714,7 +729,8 @@ public final class RunUtil {
         simulation,
         stepCallback(progressCalculator, output, lastStep),
         serialPatches,
-        parsedOutputSteps
+        parsedOutputSteps,
+        parsedOutputPhases
     );
   }
 

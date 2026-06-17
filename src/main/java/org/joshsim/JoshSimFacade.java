@@ -91,11 +91,13 @@ public class JoshSimFacade {
    * @param outputSteps Optional set of step numbers to export. If empty, all steps are exported.
    *     If present, only steps contained in the set will have their output written to export files.
    *     All steps continue to execute for simulation state continuity regardless of this filter.
+   * @param outputPhases Optional set of phase names to export (spinup, observed, spindown). If
+   *     empty, all phases are exported. ANDed with outputSteps.
    */
   public static void runSimulation(EngineGeometryFactory geometryFactory, JoshProgram program,
         String simulationName, JoshSimFacadeUtil.SimulationStepCallback callback,
         boolean serialPatches, int replicateNumber, boolean favorBigDecimal,
-        Optional<Set<Integer>> outputSteps) {
+        Optional<Set<Integer>> outputSteps, Optional<Set<String>> outputPhases) {
     setupForJvm();
 
     ValueSupportFactory valueFactory = buildValueSupportFactory(favorBigDecimal);
@@ -136,7 +138,8 @@ public class JoshSimFacade {
         simulationName,
         callback,
         serialPatches,
-        outputSteps
+        outputSteps,
+        outputPhases
     );
   }
 
@@ -164,7 +167,7 @@ public class JoshSimFacade {
         String simulationName, JoshSimFacadeUtil.SimulationStepCallback callback,
         boolean serialPatches, int replicateNumber, boolean favorBigDecimal) {
     runSimulation(geometryFactory, program, simulationName, callback, serialPatches,
-        replicateNumber, favorBigDecimal, Optional.empty());
+        replicateNumber, favorBigDecimal, Optional.empty(), Optional.empty());
   }
 
   /**

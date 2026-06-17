@@ -439,7 +439,7 @@ public class RunRemoteCommandTest {
   public void testWorkerTaskEnableProfiler() {
     org.joshsim.pipeline.remote.WorkerTask task =
         new org.joshsim.pipeline.remote.WorkerTask(
-            "code", "sim", "key", "", false, 0, "", true);
+            "code", "sim", "key", "", false, 0, "", "", true);
     assertEquals(true, task.isEnableProfiler());
   }
 

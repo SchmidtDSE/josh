@@ -162,6 +162,8 @@ public class JoshSimLeaderHandler implements HttpHandler {
     boolean favorBigDecimal = Boolean.parseBoolean(formData.getFirst("favorBigDecimal").getValue());
     String outputStepsStr = formData.contains("outputSteps")
         ? formData.getFirst("outputSteps").getValue() : "";
+    String outputPhasesStr = formData.contains("outputPhases")
+        ? formData.getFirst("outputPhases").getValue() : "";
 
     int replicateStart = 0;
     if (formData.contains("replicateStart")) {
@@ -202,6 +204,7 @@ public class JoshSimLeaderHandler implements HttpHandler {
           favorBigDecimal,
           replicateIndex,
           outputStepsStr,
+          outputPhasesStr,
           false
       );
       tasks.add(task);
