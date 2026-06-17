@@ -23,11 +23,13 @@ start simulation Fire
   steps.high = 86 years
 
   start spinup
-    sample discrete uniform from 0 years to 86 years for 500 years
+    duration = 500 years
+    year = sample discrete uniform from 0 years to 86 years
   end spinup
 
   start spindown
-    sample discrete uniform from 76 years to 86 years for 500 years
+    duration = 500 years
+    year = sample discrete uniform from 76 years to 86 years
   end spindown
 
 end simulation
@@ -36,9 +38,14 @@ end simulation
 Read aloud: *"warm up for 500 years drawing each year's forcing uniformly from
 0–86; run the observed period 0–86; then run 500 more years drawing from 76–86."*
 
-The phase body is a single resample directive — `<year expression> for
-<duration>`. The year expression is not limited to `sample discrete uniform`: a
-constant (`85 years for 500 years`), `normal`, or a function of `prior` all work.
+The phase body is a set of named properties (`name = expression`), reusing the
+same assignment form as the rest of the language: `duration` (the phase length)
+and `year` (resampled each step to pick which data year's forcing is felt).
+Naming `year` explicitly is the point — it is what `meta.year` *becomes* during
+the phase. The year expression is not limited to `sample discrete uniform`: a
+constant (`year = 85 years`), `normal`, or a function of `prior` all work. Making
+the body a property set also leaves room for future properties (e.g. a
+convergence `until`, below) with no grammar change.
 
 The year is drawn with the new **`discrete uniform`** form, which reuses the
 existing uniform distribution but draws an actual integer uniformly over the
@@ -62,14 +69,14 @@ statistical terminology, so it reads naturally for an ecologist.
 The simulation is written in one **time unit** — `years` for an annual model
 (the common case), or `count` for abstract/unitless models. The window bounds
 (`from 76 years to 86 years`) are *positions* on that axis and share the unit of
-`steps.low`/`steps.high`; the duration (`for 500 years`) is a *length* on the same
+`steps.low`/`steps.high`; the `duration = 500 years` is a *length* on the same
 axis. Both reading as `years` is intentional, not an overload — like "from mile 76
 to mile 86, for 500 miles." The engine already accepts `years` on `steps.*`
 (verified), so this is a convention plus light validation (window unit matches
 `steps.*`; window falls inside `[steps.low, steps.high]`).
 
 The rule is **1 step = 1 unit of the declared time unit**. Sub-annual models
-(monthly steps where `for 500 years` ≠ 500 steps) would need an explicit
+(monthly steps where `duration = 500 years` ≠ 500 steps) would need an explicit
 time-per-step declaration; that is deliberately out of scope here.
 
 ### Multiple scenarios in one file
@@ -88,14 +95,16 @@ start simulation MainWithSpinup
   steps.low = 0 years
   steps.high = 86 years
   start spinup
-    sample discrete uniform from 0 years to 86 years for 500 years
+    duration = 500 years
+    year = sample discrete uniform from 0 years to 86 years
   end spinup
 end simulation
 ```
 
-Because the phase parameters are ordinary expressions, they are also
-config-tunable for free (`sample uniform from 0 years to config s.start years for
-config s.len years`) — see [COMPOSITION.md](COMPOSITION.md). And designing the
+Because the phase properties are ordinary expressions, they are also
+config-tunable for free (`year = sample discrete uniform from 0 years to config
+s.start years`, `duration = config s.len years`) — see
+[COMPOSITION.md](COMPOSITION.md). And designing the
 `spinup`/`spindown` stanza to attach *by simulation name* lets a scenario later
 live in its own imported file, the same merge question as separating exports.
 
@@ -143,15 +152,15 @@ while keeping observed + spin-down is a common choice.
 
 ## Scope: build narrow, structure for later
 
-Ship the narrow feature — fixed `spinup` / `spindown` blocks, `for <duration>`
+Ship the narrow feature — fixed `spinup` / `spindown` blocks with a `duration`
 only — but choose two internal representations now so the deferred features below
 are *additions*, not rewrites:
 
 - **Phases are an ordered list internally**, even though the surface only exposes
   `spinup` and `spindown`. The bridge holds `[before, observed, after]` with the
   order hardcoded; nothing else assumes exactly two phases.
-- **A phase's termination is an abstraction.** Today only `for <duration>` (a
-  fixed length) exists; the type leaves room for a *condition* — a boolean
+- **A phase's termination is an abstraction.** Today only a fixed `duration`
+  exists; the type leaves room for a *condition* — a boolean
   evaluated against grid state after each step. Both `until` (end a phase when
   stable) and `earlyStop` (end the run when collapsed) are this same condition
   variant, differing only in what the transition does, so the abstraction must
@@ -160,13 +169,23 @@ are *additions*, not rewrites:
 ### Reserved for later (accounted for, not built)
 
 - **Convergence spin-up (`until`).** "Warm up *until* the system stabilizes,
-  capped for safety" is the honest form of *find a stable state* — e.g.
-  `sample uniform from 0 years to 86 years until <stable> for at most 2000 years`.
+  capped for safety" is the honest form of *find a stable state*. With the
+  named-property body it is simply another property alongside `duration` (which
+  becomes the safety cap), no grammar change:
+
+  ```josh
+  start spinup
+    duration = 2000 years    # safety cap
+    year = sample discrete uniform from 0 years to 86 years
+    until = mean(ForeverTree.count) > 100 count
+  end spinup
+  ```
+
   It needs a windowed stop condition (history access) and variable-length runs,
   but the negative-step anchoring already absorbs variable lengths — every
   replicate realigns at step 0 — so it slots into the termination abstraction
-  without reworking the clock. Reserve the `until` / `for at most` grammar; don't
-  implement.
+  without reworking the clock. The `until` *property* is reserved; don't
+  implement (and see `earlyStop` below for the shared missing capability).
 - **Early stop (`earlyStop`).** For expensive models, end the *whole run* early
   when state collapses (or saturates) — e.g. `start earlyStop` with a condition
   like `mean(ForeverTree.count) < 1`. The step-loop hook is trivial and already
@@ -226,7 +245,7 @@ structure to build on.
 
 | Area | Change | Size |
 |---|---|---|
-| Grammar | `spinup`/`spindown` + `for` tokens; a phase stanza with a `<year expr> for <duration>` body (reuses `distributionDescription`) | S |
+| Grammar | `spinup`/`spindown` tokens; a phase stanza whose body is `name = expression` properties (`year`, `duration`), reusing the event-handler form | S |
 | Entity build | capture each block's duration and year expression onto the simulation as an ordered phase list (attach by simulation name) | S |
 | Bridge | read phase lengths, anchor the clock at the observed period (negative spin-up steps), add `getDataTimestep()` + `getPhase()` | **M** |
 | External read | resolve at `getDataTimestep()` instead of the raw step (one line) | S |

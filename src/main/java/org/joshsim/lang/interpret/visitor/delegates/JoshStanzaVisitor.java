@@ -21,15 +21,12 @@ import org.joshsim.engine.value.converter.DirectConversion;
 import org.joshsim.engine.value.converter.Units;
 import org.joshsim.engine.value.engine.ValueSupportFactory;
 import org.joshsim.lang.antlr.JoshLangParser;
-import org.joshsim.lang.interpret.BridgeGetter;
-import org.joshsim.lang.interpret.action.EventHandlerAction;
 import org.joshsim.lang.interpret.fragment.ProgramBuilder;
 import org.joshsim.lang.interpret.fragment.josh.ConversionsFragment;
 import org.joshsim.lang.interpret.fragment.josh.EntityFragment;
 import org.joshsim.lang.interpret.fragment.josh.JoshFragment;
 import org.joshsim.lang.interpret.fragment.josh.ProgramFragment;
 import org.joshsim.lang.interpret.fragment.josh.StateFragment;
-import org.joshsim.lang.interpret.machine.PushDownMachineCallable;
 import org.joshsim.lang.interpret.visitor.JoshParserToMachineVisitor;
 
 
@@ -43,7 +40,6 @@ public class JoshStanzaVisitor implements JoshVisitorDelegate {
 
   private final JoshParserToMachineVisitor parent;
   private final ValueSupportFactory valueFactory;
-  private final BridgeGetter bridgeGetter;
 
   /**
    * Create a new stanza visitor.
@@ -53,7 +49,6 @@ public class JoshStanzaVisitor implements JoshVisitorDelegate {
   public JoshStanzaVisitor(DelegateToolbox toolbox) {
     parent = toolbox.getParent();
     valueFactory = toolbox.getValueFactory();
-    bridgeGetter = toolbox.getBridgeGetter();
   }
 
   /**
@@ -134,12 +129,13 @@ public class JoshStanzaVisitor implements JoshVisitorDelegate {
   /**
    * Capture a spin-up / spin-down phase onto the simulation being built.
    *
-   * <p>A phase contributes two synthetic handlers: a constant-substep duration
-   * ({@code __<phase>Steps}) the bridge reads at construction to anchor the clock, and a per-step
-   * year expression ({@code __<phase>Year}) the bridge evaluates on demand while in that phase to
-   * pick which data year's forcing is felt. The year handler is registered under a dedicated event
-   * (the phase name) so the stepper never runs it automatically — it is only drawn while the phase
-   * is active, leaving the random sequence of other phases untouched.</p>
+   * <p>The phase body is a set of named properties ({@code name = expression}): {@code year} (the
+   * data year resampled each step while in the phase) and {@code duration} (the phase length). Each
+   * is compiled like an ordinary handler and re-registered under a synthetic key: {@code duration}
+   * as a constant-substep attribute ({@code __<phase>Steps}) the bridge reads at construction to
+   * anchor the clock, and {@code year} under a dedicated event (the phase name) so the stepper
+   * never runs it automatically — the bridge evaluates it on demand only while the phase is active,
+   * leaving the random sequence of other phases untouched.</p>
    *
    * @param ctx The phase stanza to capture.
    * @param entityBuilder The simulation entity builder to attach the phase handlers to.
@@ -159,11 +155,35 @@ public class JoshStanzaVisitor implements JoshVisitorDelegate {
           "Phase start and end type different: %s, %s", phase, closePhase));
     }
 
-    EventHandlerAction yearAction = ctx.yearExpr.accept(parent).getCurrentAction();
-    EventHandlerAction durationAction = ctx.duration.accept(parent).getCurrentAction();
+    boolean hasYear = false;
+    boolean hasDuration = false;
+    for (JoshLangParser.EventHandlerGeneralContext propertyCtx : ctx.eventHandlerGeneral()) {
+      for (EventHandlerGroupBuilder groupBuilder
+          : propertyCtx.accept(parent).getEventHandlerGroups()) {
+        String property = groupBuilder.buildKey().getAttribute();
+        CompiledCallable callable = groupBuilder.build()
+            .getEventHandlers().iterator().next().getCallable();
+        switch (property) {
+          case "year" -> {
+            addPhaseHandler(entityBuilder, "__" + phase + "Year", phase, callable);
+            hasYear = true;
+          }
+          case "duration" -> {
+            addPhaseHandler(entityBuilder, "__" + phase + "Steps", "constant", callable);
+            hasDuration = true;
+          }
+          default -> throw new IllegalArgumentException(String.format(
+              "Unknown %s property '%s'. Expected 'year' or 'duration'.", phase, property));
+        }
+      }
+    }
 
-    addPhaseHandler(entityBuilder, "__" + phase + "Steps", "constant", durationAction);
-    addPhaseHandler(entityBuilder, "__" + phase + "Year", phase, yearAction);
+    if (!hasDuration) {
+      throw new IllegalArgumentException(phase + " block is missing a 'duration'.");
+    }
+    if (!hasYear) {
+      throw new IllegalArgumentException(phase + " block is missing a 'year' expression.");
+    }
   }
 
   /**
@@ -172,18 +192,10 @@ public class JoshStanzaVisitor implements JoshVisitorDelegate {
    * @param entityBuilder The entity builder to attach the handler to.
    * @param attribute The synthetic attribute name the handler resolves.
    * @param event The substep / event under which the handler resolves.
-   * @param action The compiled action evaluated by the handler.
+   * @param callable The compiled expression evaluated by the handler.
    */
   private void addPhaseHandler(EntityBuilder entityBuilder, String attribute, String event,
-        EventHandlerAction action) {
-    // Wrap so the machine is ended after the expression runs, matching how a handler body (lambda)
-    // is compiled; getResult() requires the machine to have ended.
-    EventHandlerAction endedAction = (machine) -> {
-      action.apply(machine);
-      machine.end();
-      return machine;
-    };
-    CompiledCallable callable = new PushDownMachineCallable(endedAction, bridgeGetter);
+        CompiledCallable callable) {
     EventKey eventKey = EventKey.of(attribute, event);
     EventHandlerGroupBuilder groupBuilder = new EventHandlerGroupBuilder();
     groupBuilder.setEventKey(eventKey);

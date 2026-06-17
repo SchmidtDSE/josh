@@ -8,11 +8,13 @@ start simulation SpinupExample
   steps.high = 4 years
 
   start spinup
-    sample discrete uniform from 0 years to 4 years for 3 years
+    duration = 3 years
+    year = sample discrete uniform from 0 years to 4 years
   end spinup
 
   start spindown
-    sample discrete uniform from 3 years to 4 years for 2 years
+    duration = 2 years
+    year = sample discrete uniform from 3 years to 4 years
   end spindown
 
 end simulation
