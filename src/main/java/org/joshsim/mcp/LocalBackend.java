@@ -14,6 +14,7 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
@@ -158,6 +159,7 @@ public class LocalBackend implements Backend {
       Path script,
       String simulation,
       int replicates,
+      Optional<List<Integer>> replicateIndices,
       boolean serialPatches,
       Optional<Long> seed,
       Map<String, Path> dataFiles
@@ -187,6 +189,7 @@ public class LocalBackend implements Backend {
     //     history) while still letting models that export to MinIO work over MCP.
     RunUtil.RunOptions options = RunUtil.RunOptions.builder(script.toFile(), simulation)
         .replicates(replicates)
+        .replicateIndices(replicateIndices)
         .serialPatches(serialPatches)
         .seed(seed)
         .dataFiles(dataSpec)

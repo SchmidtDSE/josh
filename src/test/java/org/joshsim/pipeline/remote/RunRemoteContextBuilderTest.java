@@ -123,6 +123,52 @@ public class RunRemoteContextBuilderTest {
   }
 
   @Test
+  void testReplicateStartResolvesToOffsetRange() throws Exception {
+    // Regression: withReplicateNumber used to be stored but dropped, so getReplicateNumber()
+    // always returned 0. The offset must now actually reach the context.
+    RunRemoteContext context = new RunRemoteContextBuilder()
+        .withFile(testFile)
+        .withSimulation("TestSim")
+        .withEndpointUri(testEndpointUri)
+        .withApiKey("test-api-key")
+        .withJob(testJob) // 3 replicates
+        .withJoshCode("start simulation TestSim end simulation")
+        .withExternalDataSerialized("serialized-data")
+        .withMetadata(testMetadata)
+        .withProgressCalculator(testProgressCalculator)
+        .withOutputOptions(testOutputOptions)
+        .withMinioOptions(testMinioOptions)
+        .withReplicateNumber(5)
+        .build();
+
+    assertEquals(java.util.List.of(5, 6, 7), context.getReplicateIndices());
+    assertEquals(5, context.getReplicateNumber());
+    assertEquals(3, context.getReplicates());
+  }
+
+  @Test
+  void testExplicitReplicateIndicesSupersedeRange() throws Exception {
+    RunRemoteContext context = new RunRemoteContextBuilder()
+        .withFile(testFile)
+        .withSimulation("TestSim")
+        .withEndpointUri(testEndpointUri)
+        .withApiKey("test-api-key")
+        .withJob(testJob) // 3 replicates, ignored when indices are explicit
+        .withJoshCode("start simulation TestSim end simulation")
+        .withExternalDataSerialized("serialized-data")
+        .withMetadata(testMetadata)
+        .withProgressCalculator(testProgressCalculator)
+        .withOutputOptions(testOutputOptions)
+        .withMinioOptions(testMinioOptions)
+        .withReplicateIndices(java.util.Optional.of(java.util.List.of(3, 7, 8)))
+        .build();
+
+    assertEquals(java.util.List.of(3, 7, 8), context.getReplicateIndices());
+    assertEquals(3, context.getReplicates());
+    assertEquals(3, context.getReplicateNumber()); // first index
+  }
+
+  @Test
   void testMissingJobThrowsException() {
     Exception exception = assertThrows(IllegalStateException.class, () -> {
       builder

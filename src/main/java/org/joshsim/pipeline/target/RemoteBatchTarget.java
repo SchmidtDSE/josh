@@ -6,6 +6,7 @@
 
 package org.joshsim.pipeline.target;
 
+import java.util.List;
 import java.util.Map;
 
 
@@ -47,9 +48,15 @@ public interface RemoteBatchTarget {
    * @param replicateStart Starting replicate index for the half-open range
    *     {@code [start, start+replicates)}. Used for pool/resume workflows where
    *     indices need to be stable across re-dispatch. {@code 0} preserves prior
-   *     behavior.
+   *     behavior. Ignored when {@code replicateIndices} is non-empty.
+   * @param replicateIndices An explicit, possibly non-contiguous list of replicate indices to run
+   *     (e.g. {@code [3, 7, 8]}), used to backfill specific missing replicates. An empty list
+   *     selects the {@code [replicateStart, replicateStart+replicates)} range and preserves prior
+   *     behavior; when non-empty, these indices are run exactly and supersede
+   *     {@code replicates}/{@code replicateStart}.
    * @throws Exception If the dispatch fails (e.g., network error, auth failure).
    */
   void dispatch(String jobId, String minioPrefix, String simulation, int replicates,
-      Map<String, String> customTags, int replicateStart) throws Exception;
+      Map<String, String> customTags, int replicateStart, List<Integer> replicateIndices)
+      throws Exception;
 }

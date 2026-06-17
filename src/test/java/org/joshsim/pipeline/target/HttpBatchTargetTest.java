@@ -17,6 +17,7 @@ import static org.mockito.Mockito.when;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
+import java.util.List;
 import java.util.Map;
 import org.junit.jupiter.api.Test;
 
@@ -42,7 +43,7 @@ class HttpBatchTargetTest {
     HttpBatchTarget target = new HttpBatchTarget("https://example.com", "test-key", mockClient);
 
     assertDoesNotThrow(() -> target.dispatch(
-        "job-1", "batch-jobs/job-1/inputs/", "Main", 1, Map.of(), 0));
+        "job-1", "batch-jobs/job-1/inputs/", "Main", 1, Map.of(), 0, List.of()));
     verify(mockClient).send(any(HttpRequest.class), any(HttpResponse.BodyHandler.class));
   }
 
@@ -61,7 +62,7 @@ class HttpBatchTargetTest {
     HttpBatchTarget target = new HttpBatchTarget("https://example.com", "test-key", mockClient);
 
     RuntimeException ex = assertThrows(RuntimeException.class,
-        () -> target.dispatch("job-bad", "prefix/", "Main", 1, Map.of(), 0));
+        () -> target.dispatch("job-bad", "prefix/", "Main", 1, Map.of(), 0, List.of()));
     assertTrue(ex.getMessage().contains("HTTP 400"));
     assertTrue(ex.getMessage().contains("missing-fields"));
   }
@@ -79,7 +80,7 @@ class HttpBatchTargetTest {
     HttpBatchTarget target = new HttpBatchTarget("https://example.com", "test-key", mockClient);
 
     RuntimeException ex = assertThrows(RuntimeException.class,
-        () -> target.dispatch("job-err", "prefix/", "Main", 5, Map.of(), 0));
+        () -> target.dispatch("job-err", "prefix/", "Main", 5, Map.of(), 0, List.of()));
     assertTrue(ex.getMessage().contains("HTTP 500"));
   }
 
@@ -94,7 +95,7 @@ class HttpBatchTargetTest {
         .thenReturn(mockResponse);
 
     HttpBatchTarget target = new HttpBatchTarget("https://example.com", "key", mockClient);
-    target.dispatch("job-rep", "prefix/", "Main", 10, Map.of(), 0);
+    target.dispatch("job-rep", "prefix/", "Main", 10, Map.of(), 0, List.of());
 
     // Verify the request was made (form body contains replicates, verified via mock interaction)
     verify(mockClient).send(any(HttpRequest.class), any(HttpResponse.BodyHandler.class));
@@ -122,7 +123,7 @@ class HttpBatchTargetTest {
         org.mockito.ArgumentCaptor.forClass(HttpRequest.class);
     HttpBatchTarget target = new HttpBatchTarget("https://example.com", "key", mockClient);
 
-    target.dispatch("job-1", "prefix/", "Main", 1, Map.of(), 0);
+    target.dispatch("job-1", "prefix/", "Main", 1, Map.of(), 0, List.of());
 
     verify(mockClient).send(reqCaptor.capture(), any(HttpResponse.BodyHandler.class));
     String body = drainBody(reqCaptor.getValue());
@@ -149,7 +150,7 @@ class HttpBatchTargetTest {
     Map<String, String> tags = new java.util.LinkedHashMap<>();
     tags.put("run_hash", "abc123");
     tags.put("region", "west");
-    target.dispatch("job-1", "prefix/", "Main", 3, tags, 5);
+    target.dispatch("job-1", "prefix/", "Main", 3, tags, 5, List.of());
 
     verify(mockClient).send(reqCaptor.capture(), any(HttpResponse.BodyHandler.class));
     String body = drainBody(reqCaptor.getValue());
@@ -159,6 +160,30 @@ class HttpBatchTargetTest {
         "expected tag pairs in body: " + decoded);
     assertTrue(decoded.contains("replicateStart=5"),
         "expected replicateStart in body: " + decoded);
+  }
+
+  @Test
+  void dispatchSendsReplicateIndicesInsteadOfStart() throws Exception {
+    HttpClient mockClient = mock(HttpClient.class);
+    HttpResponse<String> mockResponse = mock(HttpResponse.class);
+    when(mockResponse.statusCode()).thenReturn(202);
+    when(mockResponse.body()).thenReturn("{}");
+    when(mockClient.send(any(HttpRequest.class), any(HttpResponse.BodyHandler.class)))
+        .thenReturn(mockResponse);
+
+    final org.mockito.ArgumentCaptor<HttpRequest> reqCaptor =
+        org.mockito.ArgumentCaptor.forClass(HttpRequest.class);
+    HttpBatchTarget target = new HttpBatchTarget("https://example.com", "key", mockClient);
+
+    target.dispatch("job-1", "prefix/", "Main", 1, Map.of(), 0, List.of(3, 7, 8));
+
+    verify(mockClient).send(reqCaptor.capture(), any(HttpResponse.BodyHandler.class));
+    String decoded = java.net.URLDecoder.decode(
+        drainBody(reqCaptor.getValue()), java.nio.charset.StandardCharsets.UTF_8);
+    assertTrue(decoded.contains("replicateIndices=3,7,8"),
+        "expected replicateIndices in body: " + decoded);
+    assertTrue(!decoded.contains("replicateStart="),
+        "replicateStart must not be sent when indices are given: " + decoded);
   }
 
   /**
@@ -213,6 +238,7 @@ class HttpBatchTargetTest {
         .thenReturn(mockResponse);
 
     HttpBatchTarget target = new HttpBatchTarget("https://example.com/", "key", mockClient);
-    assertDoesNotThrow(() -> target.dispatch("job-1", "prefix/", "Main", 1, Map.of(), 0));
+    assertDoesNotThrow(() ->
+        target.dispatch("job-1", "prefix/", "Main", 1, Map.of(), 0, List.of()));
   }
 }

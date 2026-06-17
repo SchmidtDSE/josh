@@ -24,6 +24,7 @@ import org.joshsim.command.RemoteResponseHandler;
 import org.joshsim.lang.io.ExportFacadeFactory;
 import org.joshsim.lang.io.InputOutputLayer;
 import org.joshsim.lang.io.JvmInputOutputLayerBuilder;
+import org.joshsim.util.ReplicateSelection;
 
 /**
  * Remote execution strategy that offloads leadership to the remote server.
@@ -120,8 +121,12 @@ public class RunRemoteOffloadLeaderStrategy implements RunRemoteStrategy {
     formData.put("externalData", context.getExternalDataSerialized());
     formData.put("favorBigDecimal", String.valueOf(!context.isUseFloat64()));
     formData.put("enableProfiler", String.valueOf(context.isEnableProfiler()));
-    if (context.getReplicateNumber() != 0) {
-      formData.put("replicateStart", String.valueOf(context.getReplicateNumber()));
+    // Only send explicit indices when the selection is not the default [0, count) range, so a
+    // plain run produces a byte-for-byte identical request. This single field carries both a
+    // replicate-start offset (a contiguous range) and an arbitrary non-contiguous set.
+    if (!ReplicateSelection.isDefaultRange(context.getReplicateIndices())) {
+      formData.put("replicateIndices",
+          ReplicateSelection.toCsv(context.getReplicateIndices()));
     }
 
     // URL encode the form data

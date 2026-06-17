@@ -51,6 +51,7 @@ import org.joshsim.util.MinioOptions;
 import org.joshsim.util.OutputOptions;
 import org.joshsim.util.ProgressCalculator;
 import org.joshsim.util.ProgressUpdate;
+import org.joshsim.util.ReplicateSelection;
 import org.joshsim.util.SharedRandom;
 import org.joshsim.util.SimulationMetadata;
 import org.joshsim.util.SimulationMetadataExtractor;
@@ -83,6 +84,7 @@ public final class RunUtil {
     private final int replicates;
     private final Integer replicateIndex;
     private final int replicateStart;
+    private final Optional<List<Integer>> replicateIndices;
     private final boolean serialPatches;
     private final Optional<Long> seed;
     private final boolean useFloat64;
@@ -100,6 +102,7 @@ public final class RunUtil {
       this.replicates = builder.replicates;
       this.replicateIndex = builder.replicateIndex;
       this.replicateStart = builder.replicateStart;
+      this.replicateIndices = builder.replicateIndices;
       this.serialPatches = builder.serialPatches;
       this.seed = builder.seed;
       this.useFloat64 = builder.useFloat64;
@@ -132,6 +135,7 @@ public final class RunUtil {
       private int replicates = 1;
       private Integer replicateIndex = null;
       private int replicateStart = 0;
+      private Optional<List<Integer>> replicateIndices = Optional.empty();
       private boolean serialPatches = false;
       private Optional<Long> seed = Optional.empty();
       private boolean useFloat64 = false;
@@ -179,6 +183,21 @@ public final class RunUtil {
        */
       public Builder replicateStart(int value) {
         this.replicateStart = value;
+        return this;
+      }
+
+      /**
+       * Sets an explicit, ordered list of replicate indices to run, or empty to use the
+       * {@code [start, start+count)} range (default empty). When present, exactly these indices
+       * are run and the replicate count is {@code indices.size()}. Subsumes
+       * {@link #replicateIndex(Integer)} and {@link #replicateStart(int)}; the list is expected to
+       * already be validated (non-negative, unique).
+       *
+       * @param value the explicit replicate indices, or empty for the range
+       * @return this builder
+       */
+      public Builder replicateIndices(Optional<List<Integer>> value) {
+        this.replicateIndices = value;
         return this;
       }
 
@@ -423,8 +442,16 @@ public final class RunUtil {
       boolean serialPatches) {
     final EngineGeometryFactory geometryFactory = new GridGeometryFactory();
 
-    // When --replicate-index is set, run exactly one replicate at that index.
-    int effectiveReplicates = opts.replicateIndex != null ? 1 : opts.replicates;
+    // Resolve how many replicates each job runs: a single --replicate-index, an explicit
+    // --replicate-indices list, or the --replicates count.
+    int effectiveReplicates;
+    if (opts.replicateIndex != null) {
+      effectiveReplicates = 1;
+    } else if (opts.replicateIndices.isPresent()) {
+      effectiveReplicates = opts.replicateIndices.get().size();
+    } else {
+      effectiveReplicates = opts.replicates;
+    }
 
     List<JoshJob> jobs = buildJobs(opts, effectiveReplicates);
     reportPlannedRun(opts, jobs, effectiveReplicates, output);
@@ -445,7 +472,8 @@ public final class RunUtil {
     }
 
     configureCompatibilityLayer(opts);
-    ProgressCalculator progressCalculator = createProgressCalculator(opts, jobs, output);
+    ProgressCalculator progressCalculator =
+        createProgressCalculator(opts, jobs, effectiveReplicates, output);
     GridSpatialInfo spatialInfo = extractSpatialInfo(program, opts.simulation, valueFactory);
 
     ExecutionSummary summary = executeJobs(opts, jobs, valueFactory, geometryFactory, program,
@@ -479,6 +507,10 @@ public final class RunUtil {
       int effectiveReplicates, OutputOptions output) {
     if (opts.replicateIndex != null) {
       output.printInfo("Running replicate index " + opts.replicateIndex
+          + " across " + jobs.size() + " job combination(s)");
+    } else if (opts.replicateIndices.isPresent()) {
+      output.printInfo("Running replicate indices "
+          + ReplicateSelection.toCsv(opts.replicateIndices.get())
           + " across " + jobs.size() + " job combination(s)");
     } else {
       output.printInfo("Grid search will execute " + jobs.size() + " job combination(s) "
@@ -545,7 +577,7 @@ public final class RunUtil {
    * Builds the progress calculator, falling back to default metadata if extraction fails.
    */
   private static ProgressCalculator createProgressCalculator(RunOptions opts, List<JoshJob> jobs,
-      OutputOptions output) {
+      int effectiveReplicates, OutputOptions output) {
     SimulationMetadata metadata;
     try {
       metadata = SimulationMetadataExtractor.extractMetadata(opts.scriptFile, opts.simulation);
@@ -556,7 +588,7 @@ public final class RunUtil {
     }
     return new ProgressCalculator(
         metadata.getTotalSteps(),
-        jobs.size() * opts.replicates // Total simulations = jobs × replicates
+        jobs.size() * effectiveReplicates // Total simulations = jobs × replicates
     );
   }
 
@@ -595,14 +627,17 @@ public final class RunUtil {
         inputStrategy = new JvmMappedInputGetter(currentJob.getFilePaths());
       }
 
-      int startReplicate = opts.replicateIndex != null ? opts.replicateIndex : opts.replicateStart;
-      int endReplicate = opts.replicateIndex != null
-          ? opts.replicateIndex + 1 : opts.replicateStart + currentJob.getReplicates();
+      // Determine the absolute replicate indices this job runs: a single --replicate-index, an
+      // explicit --replicate-indices list, or the [start, start+count) range.
+      List<Integer> replicateIndices;
+      if (opts.replicateIndex != null) {
+        replicateIndices = List.of(opts.replicateIndex);
+      } else {
+        replicateIndices = ReplicateSelection.resolve(opts.replicateIndices,
+            opts.replicateStart, currentJob.getReplicates());
+      }
 
-      for (int currentReplicate = startReplicate; currentReplicate < endReplicate;
-           currentReplicate++) {
-        int effectiveReplicate = opts.replicateIndex != null ? opts.replicateIndex
-            : currentReplicate;
+      for (int effectiveReplicate : replicateIndices) {
         totalReplicateCount++;
 
         if (totalReplicateCount > 1) {

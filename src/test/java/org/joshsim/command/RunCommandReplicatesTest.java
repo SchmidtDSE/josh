@@ -284,6 +284,79 @@ class RunCommandReplicatesTest {
   }
 
   @Test
+  void testReplicateIndicesRunsExactNonContiguousSet(@TempDir Path tempDir) throws Exception {
+    Path joshFile = tempDir.resolve("test.josh");
+    Path outputFile = tempDir.resolve("output.csv");
+    Files.writeString(joshFile,
+        JoshTestFixtures.minimalSimulationWithExport(outputFile.toString()));
+
+    setupBasicFields(runCommand, joshFile);
+    setFieldValue(runCommand, "simulation", "TestSim");
+    setFieldValue(runCommand, "replicateIndices", "3,7,8");
+
+    Integer result = runCommand.call();
+
+    assertEquals(0, result, "--replicate-indices run should succeed");
+    assertTrue(Files.exists(outputFile), "Output CSV file should be created");
+
+    String csvContent = Files.readString(outputFile);
+    java.util.Set<String> replicateValues = csvContent.lines()
+        .skip(1)
+        .filter(line -> !line.isBlank())
+        .map(line -> {
+          int lastComma = line.lastIndexOf(',');
+          return lastComma >= 0 ? line.substring(lastComma + 1).trim() : "";
+        })
+        .collect(java.util.stream.Collectors.toSet());
+    assertEquals(java.util.Set.of("3", "7", "8"), replicateValues,
+        "CSV replicate column should be exactly {3,7,8}; values were: " + replicateValues);
+  }
+
+  @Test
+  void testReplicateIndicesMutexWithReplicates(@TempDir Path tempDir) throws Exception {
+    Path joshFile = tempDir.resolve("test.josh");
+    Files.writeString(joshFile, JoshTestFixtures.MINIMAL_SIMULATION_NO_EXPORT);
+
+    setupBasicFields(runCommand, joshFile);
+    setFieldValue(runCommand, "simulation", "TestSim");
+    setFieldValue(runCommand, "replicates", 5);
+    setFieldValue(runCommand, "replicateIndices", "3,7,8");
+
+    Integer result = runCommand.call();
+
+    assertEquals(1, result, "--replicate-indices with --replicates should fail validation");
+  }
+
+  @Test
+  void testReplicateIndicesMutexWithReplicateStart(@TempDir Path tempDir) throws Exception {
+    Path joshFile = tempDir.resolve("test.josh");
+    Files.writeString(joshFile, JoshTestFixtures.MINIMAL_SIMULATION_NO_EXPORT);
+
+    setupBasicFields(runCommand, joshFile);
+    setFieldValue(runCommand, "simulation", "TestSim");
+    setFieldValue(runCommand, "replicateStart", 5);
+    setFieldValue(runCommand, "replicateIndices", "3,7,8");
+
+    Integer result = runCommand.call();
+
+    assertEquals(1, result, "--replicate-indices with --replicate-start should fail validation");
+  }
+
+  @Test
+  void testReplicateIndicesRejectsDuplicates(@TempDir Path tempDir) throws Exception {
+    Path joshFile = tempDir.resolve("test.josh");
+    Files.writeString(joshFile, JoshTestFixtures.MINIMAL_SIMULATION_NO_EXPORT);
+
+    setupBasicFields(runCommand, joshFile);
+    setFieldValue(runCommand, "simulation", "TestSim");
+    setFieldValue(runCommand, "replicateIndices", "3,7,3");
+
+    Integer result = runCommand.call();
+
+    assertEquals(1, result, "Duplicate --replicate-indices should fail validation");
+  }
+
+  @Test
   void testSimulationNotFound(@TempDir Path tempDir) throws Exception {
     // Arrange - create real Josh file but request nonexistent simulation
     Path joshFile = tempDir.resolve("test.josh");

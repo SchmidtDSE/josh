@@ -16,12 +16,15 @@ import io.modelcontextprotocol.spec.McpSchema.CallToolRequest;
 import io.modelcontextprotocol.spec.McpSchema.CallToolResult;
 import io.modelcontextprotocol.spec.McpSchema.Tool;
 import java.nio.file.Path;
+import java.util.ArrayList;
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import org.joshsim.mcp.Backend;
 import org.joshsim.mcp.JoshPaths;
 import org.joshsim.mcp.tool.local.ToolHandlers.MissingArgument;
+import org.joshsim.util.ReplicateSelection;
 
 /**
  * Registers the {@code run_simulation} MCP tool.
@@ -89,6 +92,17 @@ public final class RunSimulationTool {
       replicates = repNum.intValue();
     }
 
+    Optional<List<Integer>> replicateIndices;
+    try {
+      replicateIndices = parseReplicateIndices(args.get("replicateIndices"));
+    } catch (IllegalArgumentException e) {
+      return ToolHandlers.errorResult(e.getMessage());
+    }
+    if (replicateIndices.isPresent() && replicates > 1) {
+      return ToolHandlers.errorResult(
+          "replicateIndices and replicates (> 1) are mutually exclusive");
+    }
+
     boolean serialPatches = false;
     Object serialObj = args.get("serialPatches");
     if (serialObj instanceof Boolean serialBool) {
@@ -103,12 +117,49 @@ public final class RunSimulationTool {
 
     Path script = JoshPaths.resolve(scriptArg);
     Backend.RunSimulationResult result = backend.runSimulation(
-        script, simArg, replicates, serialPatches, seed, dataFiles
+        script, simArg, replicates, replicateIndices, serialPatches, seed, dataFiles
     );
     return CallToolResult.builder()
         .addTextContent(result.getMessage())
         .isError(!result.isSuccess())
         .build();
+  }
+
+  /**
+   * Parses the optional {@code replicateIndices} argument into an ordered list of replicate
+   * indices. Accepts either a JSON array of integers (e.g. {@code [3, 7, 8]}) or a comma-separated
+   * string (e.g. {@code "3,7,8"}). Returns empty when the argument is absent.
+   *
+   * @param indicesObj the raw {@code replicateIndices} argument value, or null
+   * @return the ordered, validated indices, or empty if none were given
+   * @throws IllegalArgumentException if the value has the wrong shape, or an index is
+   *     non-integral, negative, or repeated
+   */
+  static Optional<List<Integer>> parseReplicateIndices(Object indicesObj) {
+    if (indicesObj == null) {
+      return Optional.empty();
+    }
+    if (indicesObj instanceof String indicesStr) {
+      return ReplicateSelection.parse(indicesStr);
+    }
+    if (indicesObj instanceof List<?> rawList) {
+      if (rawList.isEmpty()) {
+        return Optional.empty();
+      }
+      List<Integer> indices = new ArrayList<>(rawList.size());
+      for (Object element : rawList) {
+        if (element instanceof Number num && num.doubleValue() == num.longValue()) {
+          indices.add((int) num.longValue());
+        } else {
+          throw new IllegalArgumentException(
+              "replicateIndices must contain only integers, got: " + element);
+        }
+      }
+      ReplicateSelection.validate(indices);
+      return Optional.of(indices);
+    }
+    throw new IllegalArgumentException(
+        "replicateIndices must be an array of integers or a comma-separated string");
   }
 
   /**

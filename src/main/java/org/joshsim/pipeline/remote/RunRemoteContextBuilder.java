@@ -12,11 +12,13 @@ package org.joshsim.pipeline.remote;
 
 import java.io.File;
 import java.net.URI;
+import java.util.List;
 import java.util.Optional;
 import org.joshsim.pipeline.job.JoshJob;
 import org.joshsim.util.MinioOptions;
 import org.joshsim.util.OutputOptions;
 import org.joshsim.util.ProgressCalculator;
+import org.joshsim.util.ReplicateSelection;
 import org.joshsim.util.SimulationMetadata;
 
 /**
@@ -55,6 +57,7 @@ public class RunRemoteContextBuilder {
   // Execution parameters for local leader mode
   private int maxConcurrentWorkers = 10;
   private int replicateNumber = 0;
+  private Optional<List<Integer>> replicateIndices = Optional.empty();
 
   private boolean enableProfiler = false;
 
@@ -203,13 +206,27 @@ public class RunRemoteContextBuilder {
   }
 
   /**
-   * Set the starting replicate number offset.
+   * Set the starting replicate number offset. Used only when no explicit index list is set: the
+   * run computes the half-open range {@code [replicateNumber, replicateNumber + count)}.
    *
    * @param replicateNumber Starting replicate number offset
    * @return This builder instance for chaining
    */
   public RunRemoteContextBuilder withReplicateNumber(int replicateNumber) {
     this.replicateNumber = replicateNumber;
+    return this;
+  }
+
+  /**
+   * Set an explicit, ordered list of absolute replicate indices to compute (e.g. 3,7,8), or empty
+   * to use the {@code [start, start+count)} range. When present, these indices are computed
+   * exactly and supersede the {@link #withReplicateNumber(int)} offset.
+   *
+   * @param replicateIndices The explicit replicate indices, or empty for the range
+   * @return This builder instance for chaining
+   */
+  public RunRemoteContextBuilder withReplicateIndices(Optional<List<Integer>> replicateIndices) {
+    this.replicateIndices = replicateIndices;
     return this;
   }
 
@@ -233,6 +250,13 @@ public class RunRemoteContextBuilder {
   public RunRemoteContext build() {
     validateRequiredParameters();
 
+    // Resolve the absolute replicate indices: an explicit list when given, otherwise the
+    // [replicateNumber, replicateNumber + count) range. Threading the resolved list here is also
+    // what carries the replicate-start offset into the context — previously the offset was stored
+    // but dropped, so getReplicateNumber() always returned 0.
+    List<Integer> resolvedIndices = ReplicateSelection.resolve(
+        replicateIndices, replicateNumber, job.get().getReplicates());
+
     return new RunRemoteContext(
         file.get(), simulation.get(), useFloat64,
         endpointUri.get(), apiKey.get(), job.get(),
@@ -240,6 +264,7 @@ public class RunRemoteContextBuilder {
         metadata.get(), progressCalculator.get(),
         outputOptions.get(), minioOptions.get(),
         maxConcurrentWorkers,
+        resolvedIndices,
         enableProfiler
     );
   }

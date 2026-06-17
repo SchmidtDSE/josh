@@ -12,6 +12,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.nio.file.Path;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import org.junit.jupiter.api.Test;
 
@@ -67,5 +68,34 @@ class RunSimulationToolTest {
     Map<String, Object> data = new HashMap<>();
     data.put("temperature.jshd", "  ");
     assertThrows(IllegalArgumentException.class, () -> RunSimulationTool.parseDataFiles(data));
+  }
+
+  @Test
+  void absentReplicateIndicesYieldsEmpty() {
+    assertTrue(RunSimulationTool.parseReplicateIndices(null).isEmpty());
+  }
+
+  @Test
+  void parsesReplicateIndicesFromJsonArray() {
+    assertEquals(List.of(3, 7, 8),
+        RunSimulationTool.parseReplicateIndices(List.of(3, 7, 8)).orElseThrow());
+  }
+
+  @Test
+  void parsesReplicateIndicesFromCsvString() {
+    assertEquals(List.of(3, 7, 8),
+        RunSimulationTool.parseReplicateIndices("3,7,8").orElseThrow());
+  }
+
+  @Test
+  void rejectsNonIntegerReplicateIndices() {
+    assertThrows(IllegalArgumentException.class,
+        () -> RunSimulationTool.parseReplicateIndices(List.of(3, 7.5, 8)));
+  }
+
+  @Test
+  void rejectsDuplicateReplicateIndices() {
+    assertThrows(IllegalArgumentException.class,
+        () -> RunSimulationTool.parseReplicateIndices(List.of(3, 7, 3)));
   }
 }

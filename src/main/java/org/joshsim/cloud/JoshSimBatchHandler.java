@@ -25,6 +25,7 @@ import java.nio.file.Files;
 import java.time.Instant;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
@@ -47,6 +48,7 @@ import org.joshsim.util.MinioHandler;
 import org.joshsim.util.MinioOptions;
 import org.joshsim.util.MinioStagingUtil;
 import org.joshsim.util.OutputOptions;
+import org.joshsim.util.ReplicateSelection;
 
 
 /**
@@ -183,12 +185,17 @@ public class JoshSimBatchHandler implements HttpHandler {
       return Optional.of(apiKey);
     }
 
-    int replicates;
-    int replicateStart;
+    List<Integer> replicateIndices;
     Map<String, String> customTags;
     try {
-      replicates = parseReplicates(formData);
-      replicateStart = parseReplicateStart(formData);
+      int replicates = parseReplicates(formData);
+      int replicateStart = parseReplicateStart(formData);
+      // An explicit replicateIndices list supersedes start/count; absent it, the [start,
+      // start+count) range is used. Resolved here via the shared helper so every route agrees.
+      Optional<List<Integer>> explicitIndices = formData.contains("replicateIndices")
+          ? ReplicateSelection.parse(formData.getFirst("replicateIndices").getValue())
+          : Optional.empty();
+      replicateIndices = ReplicateSelection.resolve(explicitIndices, replicateStart, replicates);
       customTags = parseCustomTags(formData);
     } catch (IllegalArgumentException e) {
       sendJsonError(exchange, 400, jobId, e.getMessage());
@@ -205,8 +212,8 @@ public class JoshSimBatchHandler implements HttpHandler {
     // deployed with --no-cpu-throttling. See BATCH_EXECUTOR above, #418, #421.
     CompletableFuture.runAsync(() -> {
       runBatchWithStatus(
-          statusMinio, jobId, simulation, workDir, replicates,
-          replicateStart, customTags, statusPath, capturedApiKey
+          statusMinio, jobId, simulation, workDir, replicateIndices,
+          customTags, statusPath, capturedApiKey
       );
     }, BATCH_EXECUTOR);
 
@@ -350,14 +357,14 @@ public class JoshSimBatchHandler implements HttpHandler {
   }
 
   private void runBatchWithStatus(MinioHandler statusMinio, String jobId,
-      String simulation, File workDir, int replicates, int replicateStart,
+      String simulation, File workDir, List<Integer> replicateIndices,
       Map<String, String> customTags, String statusPath, String apiKey) {
     writeStatus(statusMinio, statusPath, buildStatusJson(
         "running", jobId, "startedAt", Instant.now().toString()
     ));
 
     try {
-      executeBatchJob(jobId, simulation, workDir, replicates, replicateStart, customTags);
+      executeBatchJob(jobId, simulation, workDir, replicateIndices, customTags);
 
       writeStatus(statusMinio, statusPath, buildStatusJson(
           "complete", jobId, "completedAt", Instant.now().toString()
@@ -391,7 +398,7 @@ public class JoshSimBatchHandler implements HttpHandler {
   }
 
   private void executeBatchJob(String jobId, String simulation, File workDir,
-      int replicates, int replicateStart, Map<String, String> customTags) throws Exception {
+      List<Integer> replicateIndices, Map<String, String> customTags) throws Exception {
     // Ensure JVM threading for parallel patch export
     CompatibilityLayerKeeper.set(new JvmCompatibilityLayer());
 
@@ -415,15 +422,16 @@ public class JoshSimBatchHandler implements HttpHandler {
     // makes {key} placeholders in exportFiles paths resolve to dispatched values. Without
     // this, custom-tag template resolution silently no-ops on the batch HTTP path.
     JoshJob job = new JoshJobBuilder()
-        .setReplicates(replicates)
+        .setReplicates(replicateIndices.size())
         .setCustomParameters(customTags)
         .build();
 
     // Interpret once — the program doesn't change between replicates.
     // Only the InputOutputLayer changes (replicate index, append mode).
+    int firstReplicate = replicateIndices.get(0);
     InputOutputLayer initialLayer = new JvmInputOutputLayerBuilder()
         .withInputStrategy(new JvmMappedInputGetter(fileMapping))
-        .withTemplateRenderer(new TemplateStringRenderer(job, replicateStart))
+        .withTemplateRenderer(new TemplateStringRenderer(job, firstReplicate))
         .withMinioOptions(minioOptions)
         .build();
 
@@ -435,13 +443,14 @@ public class JoshSimBatchHandler implements HttpHandler {
       throw new IllegalArgumentException("Simulation not found: " + simulation);
     }
 
-    for (int replicate = replicateStart; replicate < replicateStart + replicates; replicate++) {
+    for (int i = 0; i < replicateIndices.size(); i++) {
+      int replicate = replicateIndices.get(i);
       InputOutputLayer replicateLayer = new JvmInputOutputLayerBuilder()
           .withReplicate(replicate)
           .withInputStrategy(new JvmMappedInputGetter(fileMapping))
           .withTemplateRenderer(new TemplateStringRenderer(job, replicate))
           .withMinioOptions(minioOptions)
-          .withAppendMode(replicate > replicateStart)
+          .withAppendMode(i > 0)
           .build();
 
       JoshSimFacadeUtil.runSimulation(

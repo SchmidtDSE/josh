@@ -182,9 +182,9 @@ public class RunRemoteLocalLeaderStrategy implements RunRemoteStrategy {
   /**
    * Creates worker tasks for parallel execution.
    *
-   * <p>Creates multiple tasks based on the replicate count specified in the context.
-   * Each task contains all the parameters needed for a worker to execute one replicate
-   * with proper replicate numbering using the offset from replicateNumber.</p>
+   * <p>Creates one task per resolved replicate index in the context. Each task carries its
+   * absolute replicate index, so the index range/offset or an explicit non-contiguous set
+   * (e.g. 3,7,8) is honored identically.</p>
    *
    * @param context The execution context
    * @return List of worker tasks to execute
@@ -193,14 +193,14 @@ public class RunRemoteLocalLeaderStrategy implements RunRemoteStrategy {
     List<WorkerTask> tasks = new ArrayList<>();
     boolean favorBigDecimal = !context.isUseFloat64();
 
-    for (int i = 0; i < context.getReplicates(); i++) {
+    for (int replicateIndex : context.getReplicateIndices()) {
       WorkerTask task = new WorkerTask(
           context.getJoshCode(),
           context.getSimulation(),
           context.getApiKey(),
           context.getExternalDataSerialized(),
           favorBigDecimal,
-          context.getReplicateNumber() + i,  // Offset by replicateNumber
+          replicateIndex,
           "",  // No output filtering for local leader strategy (export all steps)
           context.isEnableProfiler()
       );

@@ -20,6 +20,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 import org.joshsim.pipeline.remote.LeaderResponseHandler;
 import org.joshsim.pipeline.remote.ParallelWorkerHandler;
 import org.joshsim.pipeline.remote.WorkerTask;
+import org.joshsim.util.ReplicateSelection;
 import org.joshsim.wire.WireRewriteUtil;
 
 
@@ -176,16 +177,30 @@ public class JoshSimLeaderHandler implements HttpHandler {
       }
     }
 
+    // An explicit replicateIndices list (e.g. 3,7,8) takes precedence over the replicateStart
+    // offset; absent both, fall back to the [0, replicates) range. Same resolution as every other
+    // route, via the shared ReplicateSelection helper.
+    List<Integer> replicateIndices;
+    try {
+      Optional<List<Integer>> explicitIndices = formData.contains("replicateIndices")
+          ? ReplicateSelection.parse(formData.getFirst("replicateIndices").getValue())
+          : Optional.empty();
+      replicateIndices = ReplicateSelection.resolve(explicitIndices, replicateStart, replicates);
+    } catch (IllegalArgumentException e) {
+      httpServerExchange.setStatusCode(400);
+      return Optional.of(apiKey);
+    }
+
     // Prepare tasks for parallel execution
     List<WorkerTask> tasks = new ArrayList<>();
-    for (int i = 0; i < replicates; i++) {
+    for (int replicateIndex : replicateIndices) {
       WorkerTask task = new WorkerTask(
           code,
           simulationName,
           apiKey,
           externalData,
           favorBigDecimal,
-          replicateStart + i,
+          replicateIndex,
           outputStepsStr,
           false
       );
