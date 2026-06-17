@@ -53,6 +53,7 @@ CONST_: 'const';
 CREATE_: 'create';
 CURRENT_: 'current';
 DEBUG_: 'debug';
+DISCRETE_: 'discrete';
 DISTURBANCE_: 'disturbance';
 ELIF_: 'elif';
 ELSE_: 'else';
@@ -104,7 +105,7 @@ IDENTIFIER_: [A-Za-z][A-Za-z0-9_]*;
 WHITE_SPACE: [ \u000B\t\r\n] -> channel(HIDDEN);
 
 // Identifiers
-nakedIdentifier: (IDENTIFIER_|DEBUG_|INIT_|START_|STEP_|END_|HERE_|CURRENT_|PRIOR_|STATE_|ASSERT_|PATCH_|SIMULATION_|AGENT_|ORGANISM_|N_|P_);
+nakedIdentifier: (IDENTIFIER_|DEBUG_|INIT_|START_|STEP_|END_|HERE_|CURRENT_|PRIOR_|STATE_|ASSERT_|PATCH_|SIMULATION_|AGENT_|ORGANISM_|N_|P_|DISCRETE_);
 identifier: nakedIdentifier (DOT_ (nakedIdentifier))*;
 
 // Values
@@ -175,7 +176,7 @@ statement: (assignment | return | fullConditional);
 
 bool: (TRUE_ | FALSE_);
 
-distributionDescription: UNIFORM_ FROM_ low=expression TO_ high=expression # uniformSample
+distributionDescription: DISCRETE_? UNIFORM_ FROM_ low=expression TO_ high=expression # uniformSample
   | NORMAL_ WITH_ MEAN_ OF_ mean=expression STD_ OF_ stdev=expression # normalSample
   | BINOMIAL_ WITH_ N_ OF_ n=expression P_ OF_ p=expression # binomialSample
   ;

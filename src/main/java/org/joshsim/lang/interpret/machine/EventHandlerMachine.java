@@ -338,6 +338,18 @@ public interface EventHandlerMachine {
   EventHandlerMachine randUniform();
 
   /**
+   * Draw a single integer randomly from a discrete uniform distribution.
+   *
+   * <p>Draw a single value uniformly over the inclusive integer range [low, high], pushing the
+   * integer drawn to the top of the stack. Prior to pushing the result, the high end is popped
+   * followed by the low end. Unlike {@link #randUniform()} this yields an actual integer with no
+   * coercion; it backs the {@code discrete uniform} surface form.</p>
+   *
+   * @return Reference to this machine for chaining.
+   */
+  EventHandlerMachine randUniformDiscrete();
+
+  /**
    * Draw a single value randomly from a normal distribution.
    *
    * <p>Draw a single value randomly from a normal distribution, pushing the value drawn to the top

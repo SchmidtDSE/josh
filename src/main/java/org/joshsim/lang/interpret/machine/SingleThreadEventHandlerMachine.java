@@ -705,6 +705,25 @@ public class SingleThreadEventHandlerMachine implements EventHandlerMachine {
   }
 
   @Override
+  public EventHandlerMachine randUniformDiscrete() {
+    startConversionGroup();
+    EngineValue max = pop();
+    EngineValue min = pop();
+    endConversionGroup();
+
+    // `discrete uniform` draws an actual integer uniformly over the inclusive range [low, high]
+    // (no coercion), reusing the uniform distribution. This is opt-in, so a plain `uniform`
+    // remains continuous and the random sequence of existing seeded models is unchanged.
+    long low = min.getAsInt();
+    long high = max.getAsInt();
+    long span = high - low + 1;
+    long drawn = span <= 1 ? low : low + SharedRandom.nextInt((int) span);
+    memory.push(valueFactory.build(drawn, min.getUnits()));
+
+    return this;
+  }
+
+  @Override
   public EventHandlerMachine randNorm() {
     startConversionGroup();
     EngineValue std = pop();

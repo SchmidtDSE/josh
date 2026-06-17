@@ -777,6 +777,32 @@ public class SingleThreadEventHandlerMachineTest {
   }
 
   @Test
+  void randUniformDiscrete_shouldDrawIntegerWithinInclusiveRange() {
+    // `discrete uniform` draws an actual integer (no coercion) over the inclusive range.
+    machine.push(makeIntScalar(1));
+    machine.push(makeIntScalar(3));
+    machine.randUniformDiscrete();
+
+    machine.end();
+    EngineValue result = machine.getResult();
+    assertEquals("int", result.getLanguageType().getRootType());
+    long value = result.getAsInt();
+    assertTrue(value >= 1);
+    assertTrue(value <= 3);
+  }
+
+  @Test
+  void randUniformDiscrete_shouldReturnBoundForEqualBounds() {
+    // Given equal bounds, the draw is deterministic.
+    machine.push(makeIntScalar(5));
+    machine.push(makeIntScalar(5));
+    machine.randUniformDiscrete();
+
+    machine.end();
+    assertEquals(makeIntScalar(5), machine.getResult());
+  }
+
+  @Test
   void randNorm_shouldGenerateNumberFromNormalDistribution() {
     // Given
     EngineValue mean = makeDecimalScalar(new BigDecimal("5.0"));
