@@ -193,7 +193,10 @@ public class JoshSimFacadeUtil {
 
       callback.onStep(completedStep);
 
-      if (completedStep > 2) {
+      // Prune the step two behind once it exists. Gated on the earliest saved step (which is
+      // negative during spin-up) rather than a hardcoded 0, so spin-up steps are freed too instead
+      // of accumulating for the whole warm-up.
+      if (completedStep - 2 >= bridge.getEarliestTimestep()) {
         bridge.getReplicate().deleteTimeStep(completedStep - 2);
       }
     }

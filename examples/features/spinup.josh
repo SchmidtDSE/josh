@@ -1,0 +1,38 @@
+start simulation SpinupExample
+
+  grid.size = 1 m
+  grid.low = 0 m latitude, 0 m longitude
+  grid.high = 2 m latitude, 2 m longitude
+
+  steps.low = 0 years
+  steps.high = 4 years
+
+  start spinup
+    sample discrete uniform from 0 years to 4 years for 3 years
+  end spinup
+
+  start spindown
+    sample discrete uniform from 3 years to 4 years for 2 years
+  end spindown
+
+end simulation
+
+start patch Default
+
+  assert.spinupStepNegative.step:if(meta.phase == "spinup") = meta.stepCount < 0 count
+  assert.spinupYearLow.step:if(meta.phase == "spinup") = meta.year >= 0 years
+  assert.spinupYearHigh.step:if(meta.phase == "spinup") = meta.year <= 4 years
+
+  assert.observedStepLow.step:if(meta.phase == "observed") = meta.stepCount >= 0 count
+  assert.observedStepHigh.step:if(meta.phase == "observed") = meta.stepCount <= 4 count
+  assert.observedYearLow.step:if(meta.phase == "observed") = meta.year >= 0 years
+  assert.observedYearHigh.step:if(meta.phase == "observed") = meta.year <= 4 years
+
+  assert.spindownStep.step:if(meta.phase == "spindown") = meta.stepCount > 4 count
+  assert.spindownYearLow.step:if(meta.phase == "spindown") = meta.year >= 3 years
+  assert.spindownYearHigh.step:if(meta.phase == "spindown") = meta.year <= 4 years
+
+end patch
+
+start unit years
+end unit

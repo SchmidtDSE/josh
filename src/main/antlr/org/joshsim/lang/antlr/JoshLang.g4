@@ -60,6 +60,7 @@ ELSE_: 'else';
 END_: 'end';
 EXTERNAL_: 'external';
 FALSE_: 'false';
+FOR_: 'for';
 FORCE_: 'force';
 FROM_: 'from';
 HERE_: 'here';
@@ -85,6 +86,8 @@ REPLACEMENT_: 'replacement';
 RETURN_: 'return';
 SAMPLE_: 'sample';
 SIMULATION_: 'simulation';
+SPINDOWN_: 'spindown';
+SPINUP_: 'spinup';
 START_: 'start';
 STATE_: 'state';
 STD_: 'std';
@@ -105,7 +108,7 @@ IDENTIFIER_: [A-Za-z][A-Za-z0-9_]*;
 WHITE_SPACE: [ \u000B\t\r\n] -> channel(HIDDEN);
 
 // Identifiers
-nakedIdentifier: (IDENTIFIER_|DEBUG_|INIT_|START_|STEP_|END_|HERE_|CURRENT_|PRIOR_|STATE_|ASSERT_|PATCH_|SIMULATION_|AGENT_|ORGANISM_|N_|P_|DISCRETE_);
+nakedIdentifier: (IDENTIFIER_|DEBUG_|INIT_|START_|STEP_|END_|HERE_|CURRENT_|PRIOR_|STATE_|ASSERT_|PATCH_|SIMULATION_|AGENT_|ORGANISM_|N_|P_|DISCRETE_|FOR_|SPINUP_|SPINDOWN_);
 identifier: nakedIdentifier (DOT_ (nakedIdentifier))*;
 
 // Values
@@ -208,9 +211,16 @@ eventHandlerGeneral: eventHandlerGroup;
 // Regular stanzas
 stateStanza: START_ STATE_ STR_ eventHandlerGeneral* END_ STATE_;
 
+// Spin-up / spin-down phase stanzas (valid only inside a simulation; enforced in the visitor).
+// The body is `<year expression> for <duration>` — the year expression is resampled each step
+// of the phase to pick which data year's forcing is felt; the duration sets the phase length.
+phaseType: (SPINUP_ | SPINDOWN_);
+
+phaseStanza: START_ phaseType yearExpr=expression FOR_ duration=expression END_ phaseType;
+
 entityStanzaType: (DISTURBANCE_ | EXTERNAL_ | ORGANISM_ | MANAGEMENT_ | PATCH_ | SIMULATION_);
 
-entityStanza: START_ entityStanzaType identifier (eventHandlerGeneral | stateStanza)* END_ entityStanzaType;
+entityStanza: START_ entityStanzaType identifier (eventHandlerGeneral | stateStanza | phaseStanza)* END_ entityStanzaType;
 
 // Unit definitions
 unitConversion: ALIAS_ identifier # noopConversion

@@ -171,3 +171,6 @@ rm -f /tmp/profiler_multi_josh.csv
 assert_run examples/simulations/profiler_multi.josh ProfilerMultiExample --enable-profiler || exit 49
 [ -f "/tmp/profiler_multi_josh.csv" ] || exit 50
 [ -s "/tmp/profiler_multi_josh.csv" ] || exit 51
+
+# Test spin-up / spin-down: phase-anchored clock and resampled discrete years, asserted in-model
+assert_run examples/features/spinup.josh SpinupExample --seed 42 || exit 52
