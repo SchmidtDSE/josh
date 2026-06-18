@@ -177,8 +177,10 @@ public class JoshSimFacadeUtil {
     // Create incremental export callback if export configured
     Optional<PatchExportCallback> exportCallback = exportFacade.createIncrementalCallback();
 
-    // Pass callback to SimulationStepper
-    SimulationStepper stepper = new SimulationStepper(bridge, exportCallback);
+    // Pass callback + output filters to SimulationStepper so incremental patch exports honor the
+    // same step/phase filtering as the meta write path below.
+    SimulationStepper stepper =
+        new SimulationStepper(bridge, exportCallback, outputSteps, outputPhases);
 
     exportFacade.start();
     debugFacade.start();
