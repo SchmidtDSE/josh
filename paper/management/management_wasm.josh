@@ -25,7 +25,7 @@ start patch Default
   inMgmt.step = inMgmtZone and (meta.stepCount == config scenario.managementStep)
 
   inMgmtPlanted.step = inMgmt and (config scenario.outplantCount > 0 count)
-  inMgmtInvasives = inMgmt and (config scenario.removeInvasives > 0 count)
+  inMgmtInvasives.step = inMgmt and (config scenario.removeInvasives > 0 count)
 
   ForeverTree.init = create 10 count of ForeverTree
   ForeverTree.step:if(inMgmtPlanted) = prior.ForeverTree | (create config scenario.outplantCount of ForeverTree)
