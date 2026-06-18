@@ -1,0 +1,37 @@
+# --- ForeverTree growth (inherited from the base model) ---
+# How much can a ForeverTree grow in one year?
+maxNewGrowth = 1 m
+# Drought sensitivity floor (0% = precip fully gates growth)
+minPrecipImpactPct = 0 %
+
+# --- Invasive grass competition ---
+# A tree shorter than this is "small" and out-competed by grass
+smallTreeHeight = 2 m
+# Cover gained per year on an empty (treeless) patch
+invasiveBaseGrowth = 10 %
+# Tree count at which trees fully suppress grass growth
+treesForFullSuppression = 10 count
+# Cover never falls below this on its own (only management beats it)
+invasiveMinCover = 20 %
+# Fraction of neighbouring cover that disperses in each year
+invasiveDispersalRate = 10 %
+# Neighbour search radius (must exceed the 16 km cell size)
+dispersalRadius = 20000 m
+
+# --- Fire ---
+# Timestep the fire burns (0-based; year 2027 with this run's 2024 start)
+fireStep = 3 count
+# Per-tree probability of burning inside the fire footprint
+burnLikelihood = 90 %
+
+# --- Management (applied once, only inside the managed zone) ---
+# Timestep the management action happens (year after the fire)
+managementStep = 4 count
+# Outplanting: how many trees to add (0 disables)
+outplantCount = 0 count
+# Age / height of outplanted trees (height >= smallTreeHeight => planted as Adults)
+outplantAge = 20 year
+outplantHeight = 3 m
+# Invasive removal: 1 = knock grass back to invasiveRemovalTarget, 0 = off
+removeInvasives = 0 count
+invasiveRemovalTarget = 5 %

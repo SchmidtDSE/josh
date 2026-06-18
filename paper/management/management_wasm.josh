@@ -1,0 +1,160 @@
+start simulation Main
+
+  grid.size = 16000 m
+  grid.top_left =
+    36.73 degrees latitude,
+    -119.52 degrees longitude
+  grid.bottom_right =
+    35.80 degrees latitude,
+    -117.98 degrees longitude
+  grid.patch = "Default"
+
+  steps.low = 0 count
+  steps.high = 10 count
+
+  fire.step = meta.stepCount == config scenario.fireStep
+
+  exportFiles.patch = "memory://editor/patches"
+
+end simulation
+
+start patch Default
+
+  onFire.step = meta.fire and ((external burned at 0) > 0 count)
+  inMgmtZone.step = (external managed at 0) > 0 count
+
+  ForeverTree.init =
+    create 10 count of ForeverTree
+  ForeverTree.step:if(inMgmtZone and (meta.stepCount == config scenario.managementStep) and (config scenario.outplantCount > 0 count)) =
+    prior.ForeverTree | (create config scenario.outplantCount of ForeverTree)
+
+  nLiveTrees.init = count(ForeverTree)
+  nLiveTrees.step = count(ForeverTree[ForeverTree.state != "Burned"])
+
+  # Invasive grass disperses to neighbours: each patch emits a share of its cover,
+  # split among its neighbours; a patch's inflow is the sum of neighbour shares,
+  # read on the following step (prior.coverImmigration).
+  coverShare.end = {
+    const neighbors = Default within config scenario.dispersalRadius radial at prior
+    const n = limit count(neighbors) - 1 count to [1 count, 100 count]
+    return (prior.invasiveCover * config scenario.invasiveDispersalRate) / n
+  }
+  coverImmigration.init = 0%
+  coverImmigration.end = {
+    const neighbors = Default within config scenario.dispersalRadius radial at prior
+    if (count(neighbors) > 1 count) {
+      return sum(neighbors.coverShare)
+    } else {
+      return 0%
+    }
+  }
+
+  invasiveCover.init = config scenario.invasiveMinCover
+  invasiveCover.step = {
+    const openness =
+      map (limit prior.nLiveTrees to [0 count, config scenario.treesForFullSuppression])
+      from [0 count, config scenario.treesForFullSuppression]
+      to [100%, 0%] linear
+    const grown =
+      limit (prior.invasiveCover + openness * (config scenario.invasiveBaseGrowth + prior.coverImmigration))
+      to [config scenario.invasiveMinCover, 100%]
+    const removing =
+      inMgmtZone
+      and (meta.stepCount == config scenario.managementStep)
+      and (config scenario.removeInvasives > 0 count)
+    return config scenario.invasiveRemovalTarget if removing else grown
+  }
+
+  export.year.step = 2024 count + meta.stepCount
+  export.nTrees.step = count(ForeverTree)
+  export.nLiveTrees.step = nLiveTrees
+  export.nBurned.step = count(ForeverTree[ForeverTree.state == "Burned"])
+  export.meanHeight.step = mean(ForeverTree.height)
+  export.invasiveCover.step = invasiveCover
+
+end patch
+
+start organism ForeverTree
+
+  age.init
+    :if(meta.stepCount == 0 count) = 0 year
+    :else = config scenario.outplantAge
+  age.step = prior.age + 1 year
+
+  height.init
+    :if(meta.stepCount == 0 count) = 0 m
+    :else = config scenario.outplantHeight
+
+  state.init = "Adult" if height >= config scenario.smallTreeHeight else "Juvenile"
+
+  # One burn draw per tree; only true inside the fire footprint on the fire step.
+  burned.step = here.onFire and ((sample uniform from 0% to 100%) < config scenario.burnLikelihood)
+
+  clampedTemp.step =
+    limit (external temperature)
+    to [270 K, 330 K]
+
+  temperatureImpact.step =
+    map clampedTemp
+    from [270 K, 330 K]
+    to [0%, 100%] quadratic(true)
+
+  precipImpact.step =
+    map (external precipitation as mm)
+    from [300 mm, 500 mm]
+    to [config scenario.minPrecipImpactPct, 100%] sigmoid
+
+  stochastic.step =
+    sample normal
+    with mean of 100% std of 5%
+
+  newGrowth.step =
+    config scenario.maxNewGrowth
+    * temperatureImpact
+    * precipImpact
+    * stochastic
+    * growthInhibition
+
+  height.step = prior.height + newGrowth
+
+  # Small trees: out-competed by invasive grass, and can mature once tall enough.
+  start state "Juvenile"
+    growthInhibition.step = limit (100% - here.invasiveCover) to [0%, 100%]
+    state.step
+      :if(current.burned) = "Burned"
+      :elif(prior.height >= config scenario.smallTreeHeight) = "Adult"
+  end state
+
+  # Large trees: grow unhindered by grass.
+  start state "Adult"
+    growthInhibition.step = 100%
+    state.step:if(current.burned) = "Burned"
+  end state
+
+  # Killed by fire: no further growth.
+  start state "Burned"
+    growthInhibition.step = 0%
+  end state
+
+end organism
+
+start unit kgm2s
+
+  mm = current * 31536000
+
+end unit
+
+start unit mm
+
+  alias millimeter
+  alias millimeters
+  m = current / 1000
+
+end unit
+
+start unit K
+
+  alias Kelvin
+  alias Kelvins
+
+end unit
