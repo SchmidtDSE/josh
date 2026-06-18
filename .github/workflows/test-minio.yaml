@@ -205,7 +205,10 @@ jobs:
           echo "Testing large payload upload to exercise multipart upload path..."
 
           # Run simulation that generates >10MB of entity-level CSV data
-          # 1500 organisms * 100 steps * 3 fields = ~15MB CSV
+          # 1500 organisms * 100 steps * 3 fields = ~15MB CSV.
+          # No --output-steps: all steps must be exported to exceed the 10MB multipart threshold.
+          # (--output-steps now correctly filters incremental exports, so capping here would shrink
+          # the payload to a single step.)
           java -Xmx2g -jar build/libs/joshsim-fat.jar run \
             --replicates=1 \
             examples/test/minio/large_payload.josh \
@@ -213,8 +216,7 @@ jobs:
             --minio-endpoint=http://localhost:9000 \
             --minio-access-key=minioadmin \
             --minio-secret-key=minioadmin \
-            --export-queue-size=10000 \
-            --output-steps=100
+            --export-queue-size=10000
 
           # Verify file was uploaded
           ./mc stat testminio/josh-test-bucket/results/large_payload_0.csv

@@ -22,6 +22,8 @@ public class SimulationStepper {
   private final EngineBridge target;
   private final Set<String> events;
   private final Optional<PatchExportCallback> exportCallback;
+  private final Optional<Set<Integer>> outputSteps;
+  private final Optional<Set<String>> outputPhases;
 
   /**
    * Create a new stepper around a bridge without export callback.
@@ -36,17 +38,34 @@ public class SimulationStepper {
   }
 
   /**
-   * Create a new stepper around a bridge with optional export callback.
+   * Create a new stepper around a bridge with optional export callback and no output filter.
+   *
+   * @param target EngineBridge in which to perform this operation.
+   * @param exportCallback Optional callback for incremental patch export
+   */
+  public SimulationStepper(EngineBridge target, Optional<PatchExportCallback> exportCallback) {
+    this(target, exportCallback, Optional.empty(), Optional.empty());
+  }
+
+  /**
+   * Create a new stepper around a bridge with optional export callback and output filters.
    *
    * <p>Collects all unique event names from patch event handlers using direct iteration
    * instead of streams for better performance.</p>
    *
    * @param target EngineBridge in which to perform this operation.
    * @param exportCallback Optional callback for incremental patch export
+   * @param outputSteps Optional set of step numbers to export; empty means all steps. Applies to
+   *     incremental patch exports so suppressed steps are still simulated but not written.
+   * @param outputPhases Optional set of phase names to export; empty means all phases. ANDed with
+   *     outputSteps.
    */
-  public SimulationStepper(EngineBridge target, Optional<PatchExportCallback> exportCallback) {
+  public SimulationStepper(EngineBridge target, Optional<PatchExportCallback> exportCallback,
+        Optional<Set<Integer>> outputSteps, Optional<Set<String>> outputPhases) {
     this.target = target;
     this.exportCallback = exportCallback;
+    this.outputSteps = outputSteps;
+    this.outputPhases = outputPhases;
 
     MutableEntity simulation = target.getSimulation();
     Iterable<MutableEntity> patches = target.getCurrentPatches();
@@ -119,6 +138,10 @@ public class SimulationStepper {
   private void performStream(Iterable<MutableEntity> entities, String subStep, boolean serial) {
     long currentStep = target.getCurrentTimestep();
     boolean shouldExport = exportCallback.isPresent() && shouldExportInSubstep(subStep);
+    // Patches are always frozen+saved for prior-state continuity when exporting; only the write to
+    // the output is gated by the step/phase filter. getPhase() is exact here (mid-step, before the
+    // clock advances in endStep).
+    boolean writeOutput = shouldExport && isOutputIncluded(currentStep);
 
     if (serial) {
       // Use direct iteration for serial execution (better performance)
@@ -126,7 +149,7 @@ public class SimulationStepper {
       for (MutableEntity entity : entities) {
         MutableEntity result = updateEntity(entity, subStep);
         if (shouldExport) {
-          Entity frozen = exportCallback.get().exportPatch(result, currentStep);
+          Entity frozen = exportCallback.get().exportPatch(result, currentStep, writeOutput);
           saveFrozenPatchToReplicate(frozen, currentStep);
         }
         numCompleted++;
@@ -138,7 +161,7 @@ public class SimulationStepper {
           .forEach(entity -> {
             MutableEntity result = updateEntity(entity, subStep);
             if (shouldExport) {
-              Entity frozen = exportCallback.get().exportPatch(result, currentStep);
+              Entity frozen = exportCallback.get().exportPatch(result, currentStep, writeOutput);
               saveFrozenPatchToReplicate(frozen, currentStep);
             }
           });
@@ -156,6 +179,20 @@ public class SimulationStepper {
   private void performStream(MutableEntity entity, String subStep) {
     MutableEntity result = updateEntity(entity, subStep);
     assert result != null;
+  }
+
+  /**
+   * Determine whether the current step's output passes the step and phase filters.
+   *
+   * @param currentStep the step about to be written
+   * @return true if both filters include this step (or are absent)
+   */
+  private boolean isOutputIncluded(long currentStep) {
+    boolean stepIncluded = outputSteps.isEmpty()
+        || outputSteps.get().contains((int) currentStep);
+    boolean phaseIncluded = outputPhases.isEmpty()
+        || outputPhases.get().contains(target.getPhase());
+    return stepIncluded && phaseIncluded;
   }
 
   /**

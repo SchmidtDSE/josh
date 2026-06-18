@@ -46,10 +46,14 @@ public class IncrementalPatchExportCallback implements PatchExportCallback {
   }
 
   @Override
-  public Entity exportPatch(MutableEntity patch, long currentStep) {
+  public Entity exportPatch(MutableEntity patch, long currentStep, boolean write) {
+    // Always freeze (needed for the Replicate's prior-state); only serialize/queue when included
+    // by the output filter, so suppressing a step's output does not break state continuity.
     Entity frozen = freezePatch(patch);
-    exportPatchData(frozen, currentStep);
-    exportInnerEntities(frozen, currentStep);
+    if (write) {
+      exportPatchData(frozen, currentStep);
+      exportInnerEntities(frozen, currentStep);
+    }
     return frozen;
   }
 
