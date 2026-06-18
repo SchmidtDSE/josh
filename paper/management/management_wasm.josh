@@ -22,11 +22,13 @@ start patch Default
 
   onFire.step = meta.fire and ((external burned at 0) > 0 count)
   inMgmtZone.step = (external managed at 0) > 0 count
+  inMgmt.step = inMgmtZone and (meta.stepCount == config scenario.managementStep)
 
-  ForeverTree.init =
-    create 10 count of ForeverTree
-  ForeverTree.step:if(inMgmtZone and (meta.stepCount == config scenario.managementStep) and (config scenario.outplantCount > 0 count)) =
-    prior.ForeverTree | (create config scenario.outplantCount of ForeverTree)
+  inMgmtPlanted.step = inMgmt and (config scenario.outplantCount > 0 count)
+  inMgmtInvasives = inMgmt and (config scenario.removeInvasives > 0 count)
+
+  ForeverTree.init = create 10 count of ForeverTree
+  ForeverTree.step:if(inMgmtPlanted) = prior.ForeverTree | (create config scenario.outplantCount of ForeverTree)
 
   nLiveTrees.init = count(ForeverTree)
   nLiveTrees.step = count(ForeverTree[ForeverTree.state != "Burned"])
@@ -58,11 +60,7 @@ start patch Default
     const grown =
       limit (prior.invasiveCover + openness * (config scenario.invasiveBaseGrowth + prior.coverImmigration))
       to [config scenario.invasiveMinCover, 100%]
-    const removing =
-      inMgmtZone
-      and (meta.stepCount == config scenario.managementStep)
-      and (config scenario.removeInvasives > 0 count)
-    return config scenario.invasiveRemovalTarget if removing else grown
+    return config scenario.invasiveRemovalTarget if inMgmtInvasives else grown
   }
 
   export.year.step = 2024 count + meta.stepCount
