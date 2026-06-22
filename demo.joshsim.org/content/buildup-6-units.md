@@ -2,7 +2,7 @@
 Mixing meters, millimeters, and Kelvin? Josh handles the unit conversions for you.
 :::
 
-Rather than tracking conversions by hand, you declare rules in `start unit`
+Rather than tracking conversions by hand, we declare rules in `start unit`
 blocks. Here `kgm2s` (the climate data's precipitation-flux unit) converts to
 `mm` per year, and `mm` converts to `m`; Josh applies these automatically
 whenever a value is used where a different unit is expected.

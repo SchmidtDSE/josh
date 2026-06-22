@@ -44,12 +44,33 @@ class PlaygroundPresenter {
    * @param {string} configTextareaId - id of the <textarea> for the .jshc config.
    * @param {string[]} codeLines      - Full model code as an array of lines (from FOREVERTREE_WASM_SNAPSHOT).
    * @param {string} configPath       - URL/path to fetch the .jshc config file at runtime.
+   * @param {Object} [options]        - Optional overrides; all default to the forevertree behavior so
+   *     existing call sites are unaffected.
+   * @param {Object<string,string>} [options.dataManifest] - Map of virtual .jshd filename (the name
+   *     the WASM engine looks up, e.g. "temperature.jshd") to the URL to fetch it from. Defaults to
+   *     the two forevertree climate layers.
+   * @param {string} [options.configKey] - Virtual filename under which the live config text is passed
+   *     to the engine. Defaults to "forevertree.jshc".
+   * @param {string} [options.aceBasePath] - Base path for Ace's worker/mode assets. Defaults to
+   *     "./third_party"; the management page (one directory deep) passes "../third_party".
+   * @param {Array<Object>} [options.resultVariables] - Ordered list of {key, reducer, label} result
+   *     variables offered in the viz. When more than one is given, a selector is shown. Defaults to a
+   *     single mean meanHeight entry (so the forevertree viz is unchanged).
    */
-  constructor(editorId, configTextareaId, codeLines, configPath) {
+  constructor(editorId, configTextareaId, codeLines, configPath, options = {}) {
     this._editorId = editorId;
     this._configTextareaId = configTextareaId;
     this._codeLines = codeLines;
     this._configPath = configPath;
+    this._dataManifest = options.dataManifest || {
+      "temperature.jshd": "data/temperature.jshd",
+      "precipitation.jshd": "data/precipitation.jshd",
+    };
+    this._configKey = options.configKey || "forevertree.jshc";
+    this._aceBasePath = options.aceBasePath || "./third_party";
+    this._resultVariables = options.resultVariables
+      || [{key: "meanHeight", reducer: "mean", label: "Mean tree height"}];
+    this._selectedVariableKey = this._resultVariables[0].key;
     this._aceInitialized = false;
     this._editor = null;
     this._configTextarea = null;
@@ -65,6 +86,27 @@ class PlaygroundPresenter {
     this._gridPresenter = null;
     this._currentTimestep = null;
     this._runHandlerAttached = false;
+    this._hasRun = false;
+    this._onFirstRun = null;
+  }
+
+  /**
+   * Register a callback fired once, after the first successful run completes.
+   *
+   * NarrativePresenter uses this to enable the playground's "Next" button only after the user has
+   * actually run the simulation, so the Run step can't be silently skipped.
+   *
+   * @param {function} callback - Invoked with no arguments after the first successful run.
+   */
+  setOnFirstRun(callback) {
+    this._onFirstRun = callback;
+  }
+
+  /**
+   * @returns {boolean} True once the simulation has been run at least once this session.
+   */
+  hasRun() {
+    return this._hasRun;
   }
 
   /**
@@ -88,7 +130,7 @@ class PlaygroundPresenter {
 
     self._configTextarea = document.getElementById(self._configTextareaId);
 
-    ace.config.set("basePath", "./third_party");
+    ace.config.set("basePath", self._aceBasePath);
 
     self._editor = ace.edit(self._editorId);
     self._editor.getSession().setUseWorker(false);
@@ -216,7 +258,7 @@ class PlaygroundPresenter {
         // Build externalData fresh each run so config edits take effect
         const externalData = {
           ...self._jshdCache,
-          "forevertree.jshc": self.getConfig()
+          [self._configKey]: self.getConfig()
         };
 
         // Lazily construct WasmLayer
@@ -242,6 +284,14 @@ class PlaygroundPresenter {
 
         await self._showViz(result, metadata, resultsPanel);
 
+        // Mark the first successful run so the narrative can enable "Next".
+        if (!self._hasRun) {
+          self._hasRun = true;
+          if (typeof self._onFirstRun === "function") {
+            self._onFirstRun();
+          }
+        }
+
       } catch (err) {
         console.error("Simulation error:", err);
         resultsPanel.innerHTML = '<p class="playground-error">Simulation error: ' + (err.message || String(err)) + '</p>';
@@ -253,7 +303,12 @@ class PlaygroundPresenter {
   }
 
   /**
-   * Fade out the running indicator, then inject and render the meanHeight heatmap viz.
+   * Fade out the running indicator, then inject and render the result heatmap viz.
+   *
+   * When more than one result variable is offered (options.resultVariables), a selector is shown
+   * above the timeline; changing it re-summarizes the cached result for the chosen variable and
+   * re-renders without re-running the simulation. With a single variable (the forevertree default)
+   * no selector is shown and the layout is unchanged.
    *
    * @param {SimulationResult} result - The completed simulation result.
    * @param {SimulationMetadata} metadata - Metadata parsed from the simulation code.
@@ -273,13 +328,27 @@ class PlaygroundPresenter {
 
     await new Promise((resolve) => setTimeout(resolve, fadeDuration));
 
+    let selectorMarkup = "";
+    if (self._resultVariables.length > 1) {
+      const opts = self._resultVariables.map((v) =>
+        '<option value="' + v.key + '"' + (v.key === self._selectedVariableKey ? " selected" : "")
+        + ">" + v.label + "</option>"
+      ).join("");
+      selectorMarkup = `
+  <div class="viz-variable-picker">
+    <label for="viz-variable-select">Show</label>
+    <select id="viz-variable-select">${opts}</select>
+    <span> per patch, per year.</span>
+  </div>`;
+    }
+
     const vizMarkup = `
-<div id="playground-viz" class="fade-in">
-  <div class="viz-holder" id="scrub-viz-holder" title="Timeline — mean tree height per year">
+<div id="playground-viz" class="fade-in">${selectorMarkup}
+  <div class="viz-holder" id="scrub-viz-holder" title="Timeline of the selected variable per year">
     <p class="playground-hint">Each bar is one year — click a bar to update the map below for that year.</p>
     <svg id="scrub-viz"></svg>
   </div>
-  <div class="viz-holder" id="grid-viz-holder" title="Spatial heatmap of mean tree height for the selected year">
+  <div class="viz-holder" id="grid-viz-holder" title="Spatial heatmap of the selected variable for the selected year">
     <div id="grid-viz-info"></div>
     <div class="horiz-scroll-area">
       <svg id="grid-viz"></svg>
@@ -303,16 +372,43 @@ class PlaygroundPresenter {
 
     resultsPanel.innerHTML = vizMarkup;
 
-    const query = new DataQuery("meanHeight", "mean", null, null, null);
-    const summarized = summarizeDatasets([result], query);
+    self._renderSelectedVariable();
+
+    const select = document.getElementById("viz-variable-select");
+    if (select) {
+      select.addEventListener("change", () => {
+        self._selectedVariableKey = select.value;
+        self._renderSelectedVariable();
+      });
+    }
+  }
+
+  /**
+   * Summarize the cached last result for the currently-selected variable and (re)render the scrub
+   * timeline + grid heatmap. Reuses _lastResult/_lastMetadata so switching variables never re-runs
+   * the simulation. Preserves the selected timestep across a variable switch when possible.
+   */
+  _renderSelectedVariable() {
+    const self = this;
+    if (!self._lastResult || !self._lastMetadata) {
+      return;
+    }
+
+    const variable = self._resultVariables.find((v) => v.key === self._selectedVariableKey)
+      || self._resultVariables[0];
+    const query = new DataQuery(variable.key, variable.reducer, null, null, null);
+    const summarized = summarizeDatasets([self._lastResult], query);
 
     const scrubEl = document.getElementById("scrub-viz-holder");
     const gridEl = document.getElementById("grid-viz-holder");
+    if (!scrubEl || !gridEl) {
+      return;
+    }
 
     self._gridPresenter = new GridPresenter(gridEl);
     self._scrubPresenter = new ScrubPresenter(scrubEl, (step) => {
       self._currentTimestep = step;
-      self._gridPresenter.render(metadata, summarized, step, null);
+      self._gridPresenter.render(self._lastMetadata, summarized, step, null);
     });
 
     self._scrubPresenter.render(summarized);
@@ -328,22 +424,23 @@ class PlaygroundPresenter {
    * Binary .jshd files are fetched as base64 (ExternalDataSerializer expects this for isBinary=1
    * files — see wire.js _isTextFile: .jshd is not .csv/.txt/.jshc/.josh so isBinary=1).
    *
-   * Keys are the VIRTUAL FILENAMES the WASM engine looks up, including extension:
-   *   - "temperature.jshd"   -> external temperature
-   *   - "precipitation.jshd" -> external precipitation
+   * Keys are the VIRTUAL FILENAMES the WASM engine looks up, including extension (e.g.
+   * "temperature.jshd" -> external temperature). The set of files and their source URLs comes from
+   * the injected dataManifest, so the management page can supply its burn/managed masks too.
    *
    * @returns {Promise<Object>} Partial externalData map containing only the .jshd entries.
    */
   async _loadJshd() {
-    const [tempBase64, precipBase64] = await Promise.all([
-      fetchAsBase64("data/temperature.jshd"),
-      fetchAsBase64("data/precipitation.jshd")
-    ]);
+    const names = Object.keys(this._dataManifest);
+    const base64s = await Promise.all(
+      names.map((name) => fetchAsBase64(this._dataManifest[name]))
+    );
 
-    return {
-      "temperature.jshd": tempBase64,
-      "precipitation.jshd": precipBase64
-    };
+    const result = {};
+    names.forEach((name, i) => {
+      result[name] = base64s[i];
+    });
+    return result;
   }
 
 }

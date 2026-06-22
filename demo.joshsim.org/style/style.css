@@ -147,20 +147,25 @@ header .header-intro {
 
 /* ---- "glow, then settle" animation for newly added lines ---- */
 
+/* The green background glows and then fades, but the left bar STAYS green so the lines added on
+   this step remain marked until the user navigates on (a rebuild clears them). This keeps the
+   "what's new" cue visible even after the user scrolls down to it. */
 @keyframes lineAdded {
   0%   { opacity: 0; background-color: #d4f5d4; border-left-color: #3a9d3a; }
-  30%  { opacity: 1; background-color: #d4f5d4; border-left-color: #3a9d3a; }
-  55%  { opacity: 1; background-color: #d4f5d4; border-left-color: #3a9d3a; }
-  100% { opacity: 1; background-color: transparent; border-left-color: transparent; }
+  20%  { opacity: 1; background-color: #d4f5d4; border-left-color: #3a9d3a; }
+  60%  { opacity: 1; background-color: #d4f5d4; border-left-color: #3a9d3a; }
+  100% { opacity: 1; background-color: transparent; border-left-color: #3a9d3a; }
 }
 
 .code-line-added {
-  animation: lineAdded 1.6s ease-out forwards;
+  animation: lineAdded 2.2s ease-out forwards;
 }
 
 @media (prefers-reduced-motion: reduce) {
   .code-line-added {
+    /* No glow, but keep the persistent green left bar marking the new lines. */
     animation: none;
+    border-left-color: #3a9d3a;
   }
 }
 
@@ -426,7 +431,8 @@ header .header-intro {
   grid-template-columns: 1fr 1fr;
   gap: 12px;
   margin: 16px 0 8px;
-  max-width: 460px;
+  /* Wider than before so axis tick labels stay legible on a laptop (reviewer feedback). */
+  max-width: 680px;
 }
 
 @media (max-width: 500px) {
@@ -805,4 +811,47 @@ header .header-intro {
 #toc-close-button:hover,
 #toc-close-button:focus {
   background-color: #C8C8C8;
+}
+
+/* ---- Inline code: light-gray chip so `identifiers` stand out from prose.
+   Scoped to :not(pre) > code so the block code in .config-example is unaffected. ---- */
+#buildup-text-panel :not(pre) > code,
+.phase-hero-inner :not(pre) > code,
+.col-code--playground :not(pre) > code,
+.col-results :not(pre) > code {
+  background-color: #EEF0F4;
+  padding: 0.1em 0.3em;
+  border-radius: 4px;
+  font-size: 0.92em;
+}
+
+/* ---- Result variable picker (management playground; hidden on single-variable pages) ---- */
+.viz-variable-picker {
+  margin: 4px 0 10px;
+  font-size: 0.95em;
+  color: #333;
+}
+
+.viz-variable-picker select {
+  font-family: inherit;
+  font-size: 0.95em;
+  padding: 3px 6px;
+  border: 1px solid #C8C8E8;
+  border-radius: 6px;
+  background-color: #fff;
+  color: #3030A0;
+  cursor: pointer;
+}
+
+/* ---- Results-interpretation callout: promotes the "what to look for" text from a faint
+   bottom caption to a visible note beside the viz. ---- */
+.results-callout {
+  margin: 14px 0;
+  padding: 10px 14px;
+  background-color: #F0F0F8;
+  border-left: 3px solid #7070C0;
+  border-radius: 6px;
+  font-size: 0.92em;
+  color: #333;
+  line-height: 1.45;
 }

@@ -22,7 +22,10 @@ class WasmLayer {
    */
   constructor() {
     const self = this;
-    self._worker = new Worker("./js/wasm.worker.js?v=0.0.8");
+    // Resolve the worker relative to THIS module (always at /js/), not the document, so it loads
+    // correctly from both the root demo (/) and the management demo (/management/). The worker's own
+    // importScripts paths are likewise relative to /js/, so they resolve the same way either page.
+    self._worker = new Worker(new URL("./wasm.worker.js?v=0.0.8", import.meta.url));
     self._initialized = false;
     self._datasetBuilder = null;
     self._wireSerializer = new ExternalDataSerializer();

@@ -28,6 +28,15 @@ mkdir -p ../data
 [ ! -e ../data/temperature.jshd ] && cp ../../paper/forevertree/data/temperature.jshd ../data/temperature.jshd
 [ ! -e ../data/precipitation.jshd ] && cp ../../paper/forevertree/data/precipitation.jshd ../data/precipitation.jshd
 
+# Management-extension demo data. Climate layers are reused from forevertree; the burn / managed
+# boundary masks are preprocessed (--timestep 0) and committed under paper/management/data.
+mkdir -p ../management/data
+[ ! -e ../management/data/temperature.jshd ] && cp ../../paper/forevertree/data/temperature.jshd ../management/data/temperature.jshd
+[ ! -e ../management/data/precipitation.jshd ] && cp ../../paper/forevertree/data/precipitation.jshd ../management/data/precipitation.jshd
+[ ! -e ../management/data/burned.jshd ] && cp ../../paper/management/data/burned.jshd ../management/data/burned.jshd
+[ ! -e ../management/data/managed.jshd ] && cp ../../paper/management/data/managed.jshd ../management/data/managed.jshd
+[ ! -e ../management/data/scenario.jshc ] && cp ../../paper/management/scenario.jshc ../management/data/scenario.jshc
+
 # Build-up External-Data figures (canonical source: paper/forevertree/figures)
 mkdir -p ../img
 cp ../../paper/forevertree/figures/eco_temp_spatial.png ../img/eco_temp_spatial.png
