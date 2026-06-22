@@ -67,6 +67,8 @@ start patch Default
   export.nTrees.step = count(ForeverTree)
   export.nLiveTrees.step = nLiveTrees
   export.nBurned.step = count(ForeverTree[ForeverTree.state == "Burned"])
+  export.nJuvenile.step = count(ForeverTree[ForeverTree.state == "Juvenile"])
+  export.nAdult.step = count(ForeverTree[ForeverTree.state == "Adult"])
   export.meanHeight.step = mean(ForeverTree.height)
   export.invasiveCover.step = invasiveCover
 

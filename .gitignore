@@ -82,8 +82,12 @@ demo.joshsim.org/data/
 demo.joshsim.org/img/
 demo.joshsim.org/war
 
+# Management-extension data copied in by install_deps.sh at build time.
+demo.joshsim.org/management/data/
+
 # Build-up prose rendered from content/*.md by content/render.sh (pandoc).
 demo.joshsim.org/content/*.html
+demo.joshsim.org/management/content/*.html
 
 # Jotr test files
 jotr

@@ -576,8 +576,17 @@ jobs:
     runs-on: ubuntu-latest
     name: Deploy Demo to SFTP
     needs: [deployStatic]
-    if: github.ref == 'refs/heads/main'
+    if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/dev'
     steps:
+      - name: Set demo directory based on branch
+        run: |
+          if [[ $GITHUB_REF == refs/heads/main ]]; then
+            echo "DEMO_DIRECTORY=demo.joshsim.org" >> $GITHUB_ENV
+            echo "Deploying demo to production environment"
+          else
+            echo "DEMO_DIRECTORY=demo.joshsim.org/dev" >> $GITHUB_ENV
+            echo "Deploying demo to dev environment"
+          fi
       - name: Install SSH client and sshpass
         run: |
           sudo apt-get update
@@ -591,13 +600,19 @@ jobs:
         with:
           name: demo
           path: ./demo-build
+      - name: Ensure remote demo directory exists
+        env:
+          SSHPASS: ${{ secrets.SFTPPASSWORD }}
+        run: |
+          sshpass -e ssh -p 22 -o StrictHostKeyChecking=no \
+            ${{ secrets.SFTPUSER }}@${{ secrets.SFTPHOST }} "mkdir -p ${{ env.DEMO_DIRECTORY }}"
       - name: Upload demo via SCP
         env:
           SSHPASS: ${{ secrets.SFTPPASSWORD }}
         run: |
           sshpass -e scp -r -P 22 -o StrictHostKeyChecking=no \
             ./demo-build/* \
-            ${{ secrets.SFTPUSER }}@${{ secrets.SFTPHOST }}:demo.joshsim.org/
+            ${{ secrets.SFTPUSER }}@${{ secrets.SFTPHOST }}:${{ env.DEMO_DIRECTORY }}/
   deployCloud:
     name: Deploy to Cloud
     environment: Deploy

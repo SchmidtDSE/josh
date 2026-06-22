@@ -1,5 +1,5 @@
 ::: {.buildup-lede}
-First, tell Josh where in the world the model lives — and how finely to slice it up.
+First, we tell Josh where in the world the model lives — and how finely to slice it up.
 :::
 
 Every Josh simulation runs on a spatial grid. `grid.size` sets the resolution

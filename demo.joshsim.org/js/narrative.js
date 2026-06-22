@@ -119,12 +119,16 @@ class NarrativePresenter {
    * Create a new NarrativePresenter and immediately set up event wiring.
    *
    * @param {string} rootId - The id of the root narrative container element.
+   * @param {Array<Object>} [steps] - Optional injected step-descriptor array. When omitted, the
+   *     built-in forevertree steps from _buildSteps() are used, so existing call sites are
+   *     unaffected. The management page injects its own steps here (same descriptor shape and the
+   *     same four kinds, so the section-id map, stepper, ToC, diff and nav logic are reused as-is).
    */
-  constructor(rootId) {
+  constructor(rootId, steps) {
     const self = this;
     self._root = document.getElementById(rootId);
     self._currentIndex = 0;
-    self._steps = self._buildSteps();
+    self._steps = steps || self._buildSteps();
     self._setup();
   }
 
@@ -193,6 +197,11 @@ class NarrativePresenter {
    */
   setPlaygroundPresenter(presenter) {
     this._playgroundPresenter = presenter;
+    // Re-evaluate nav state after the first successful run so "Next" can be enabled. Until then,
+    // the playground "Next" button stays disabled so the Run step cannot be silently skipped.
+    if (presenter && typeof presenter.setOnFirstRun === "function") {
+      presenter.setOnFirstRun(() => this._updateNavButtons());
+    }
   }
 
   /**
@@ -923,6 +932,22 @@ class NarrativePresenter {
       codeDisplay.appendChild(div);
     });
 
+    // Scroll the first newly-added line into view so additions below the fold are not missed.
+    // Deferred past _render's focus handling (which can scroll the stepper into view first) so the
+    // code stays the final scroll target. Skipped when there are no additions (e.g. initial reveal).
+    if (addedIndices.size > 0) {
+      const prefersReducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+      setTimeout(() => {
+        const firstAdded = codeDisplay.querySelector(".code-line-added");
+        if (firstAdded && typeof firstAdded.scrollIntoView === "function") {
+          firstAdded.scrollIntoView({
+            behavior: prefersReducedMotion ? "auto" : "smooth",
+            block: "center",
+          });
+        }
+      }, 120);
+    }
+
     textPanel.innerHTML = "";
     if (toStep.heading) {
       const h2 = document.createElement("h2");
@@ -1009,7 +1034,11 @@ class NarrativePresenter {
     if (playgroundPrev && playgroundNext) {
       if (step.kind === "playground") {
         playgroundPrev.disabled = self._currentIndex <= 0;
-        playgroundNext.disabled = self._currentIndex >= self._steps.length - 1;
+        // Keep "Next" disabled until the simulation has been run at least once, so the Run step
+        // is not silently skipped. (Falls back to enabled if no presenter is wired.)
+        const presenter = self._playgroundPresenter;
+        const hasRun = !presenter || typeof presenter.hasRun !== "function" || presenter.hasRun();
+        playgroundNext.disabled = (self._currentIndex >= self._steps.length - 1) || !hasRun;
       } else {
         playgroundPrev.disabled = true;
         playgroundNext.disabled = true;
