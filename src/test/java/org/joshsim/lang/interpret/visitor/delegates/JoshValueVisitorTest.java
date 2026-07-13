@@ -131,8 +131,10 @@ class JoshValueVisitorTest {
   void testVisitString() {
     // Mock
     StringContext context = mock(StringContext.class);
+    // getText() returns the raw token including the surrounding quotes; visitString strips them
+    // so the value compares correctly against engine-produced strings (e.g. meta.phase).
     when(context.getText()).thenReturn("\"test string\"");
-    when(valueFactory.build("\"test string\"", Units.of(""))).thenReturn(mockValue);
+    when(valueFactory.build("test string", Units.of(""))).thenReturn(mockValue);
 
     // Test
     JoshFragment result = visitor.visitString(context);
