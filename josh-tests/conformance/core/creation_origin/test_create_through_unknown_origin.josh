@@ -1,0 +1,46 @@
+# @category: creation_origin
+# @subcategory: fallback
+# @priority: normal
+# @description: create through an origin with no matching start-init-through block falls back to base init
+
+start simulation CreateThroughUnknownOrigin
+
+  grid.size = 10 m
+  grid.low.x = 0 m
+  grid.low.y = 0 m
+  grid.high.x = 20 m
+  grid.high.y = 20 m
+
+  steps.low = 0 count
+  steps.high = 1 count
+
+end simulation
+
+start patch Default
+
+  # "wanderer" has no matching start-init-through block: base init applies unchanged.
+  Trees.init = create 2 count of Tree through "wanderer"
+
+  assert.count.step:if(meta.stepCount == 0 count) = count(Trees) == 2 count
+  assert.baseState.step:if(meta.stepCount == 0 count) =
+    count(Trees[Trees.state == "Base"]) == 2 count
+  assert.baseProvenance.step:if(meta.stepCount == 0 count) =
+    count(Trees[Trees.provenance == "none"]) == 2 count
+
+end patch
+
+start organism Tree
+
+  state.init = "Base"
+  provenance.init = "none"
+
+  start init through "founding"
+    state = "Adult"
+    provenance = "founding"
+  end init
+
+end organism
+
+start unit year
+  alias years
+end unit

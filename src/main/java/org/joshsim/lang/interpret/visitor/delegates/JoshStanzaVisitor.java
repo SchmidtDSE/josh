@@ -21,6 +21,7 @@ import org.joshsim.engine.value.converter.DirectConversion;
 import org.joshsim.engine.value.converter.Units;
 import org.joshsim.engine.value.engine.ValueSupportFactory;
 import org.joshsim.lang.antlr.JoshLangParser;
+import org.joshsim.lang.interpret.StringLiteralUtil;
 import org.joshsim.lang.interpret.fragment.ProgramBuilder;
 import org.joshsim.lang.interpret.fragment.josh.ConversionsFragment;
 import org.joshsim.lang.interpret.fragment.josh.EntityFragment;
@@ -62,11 +63,7 @@ public class JoshStanzaVisitor implements JoshVisitorDelegate {
     // The state name is a STR_ token whose text includes the surrounding quotes. Strip them so the
     // stored state name matches the (now unquoted) string value an entity's state attribute holds
     // (see JoshValueVisitor.visitString); otherwise state-machine dispatch never matches.
-    String rawStateName = ctx.getChild(2).getText();
-    String stateName = (rawStateName.length() >= 2
-        && rawStateName.startsWith("\"") && rawStateName.endsWith("\""))
-        ? rawStateName.substring(1, rawStateName.length() - 1)
-        : rawStateName;
+    String stateName = StringLiteralUtil.stripQuotes(ctx.getChild(2).getText());
 
     int numHandlerGroups = ctx.getChildCount() - 5;
     for (int handlerGroupIndex = 0; handlerGroupIndex < numHandlerGroups; handlerGroupIndex++) {
@@ -78,6 +75,36 @@ public class JoshStanzaVisitor implements JoshVisitorDelegate {
     }
 
     return new StateFragment(groups);
+  }
+
+  /**
+   * Capture an origin-dispatched init stanza onto the entity being built.
+   *
+   * <p>A {@code start init through "<origin>" ... end init} block supplies the init handlers that
+   * run for a cohort created via {@code create ... through "<origin>"}. Its body handlers are
+   * written without an event suffix (e.g. {@code age = ...}), so they parse as {@code constant}
+   * groups; this re-keys each group to the {@code init} event (preserving any conditional handlers)
+   * and registers it in the builder's separate origin map keyed by {@code "<origin>:<attribute>"}.
+   * Shared birth defaults stay in base {@code init}; base and origin partition the attributes.</p>
+   *
+   * @param ctx The init stanza to capture.
+   * @param entityBuilder The entity builder to attach the origin init handlers to.
+   */
+  private void captureInitThrough(JoshLangParser.InitStanzaContext ctx,
+        EntityBuilder entityBuilder) {
+    // The origin is a STR_ token whose text includes the surrounding quotes; strip them so it
+    // matches the (unquoted) origin threaded through `create ... through "<origin>"`.
+    String origin = StringLiteralUtil.stripQuotes(ctx.STR_().getText());
+
+    for (JoshLangParser.EventHandlerGeneralContext handlerCtx : ctx.eventHandlerGeneral()) {
+      for (EventHandlerGroupBuilder groupBuilder
+          : handlerCtx.accept(parent).getEventHandlerGroups()) {
+        String attribute = groupBuilder.buildKey().getAttribute();
+        // Force the event to init regardless of how the handler parsed (default "constant").
+        groupBuilder.setEventKey(EventKey.of(attribute, "init"));
+        entityBuilder.addOriginInitHandler(origin, attribute, groupBuilder.build());
+      }
+    }
   }
 
   /**
@@ -114,6 +141,11 @@ public class JoshStanzaVisitor implements JoshVisitorDelegate {
       int childIndex = innerIndex + 3;
       if (ctx.getChild(childIndex) instanceof JoshLangParser.PhaseStanzaContext phaseCtx) {
         capturePhase(phaseCtx, entityBuilder, entityType);
+        continue;
+      }
+
+      if (ctx.getChild(childIndex) instanceof JoshLangParser.InitStanzaContext initCtx) {
+        captureInitThrough(initCtx, entityBuilder);
         continue;
       }
 

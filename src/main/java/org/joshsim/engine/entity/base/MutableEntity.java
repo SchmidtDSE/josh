@@ -6,6 +6,9 @@
 
 package org.joshsim.engine.entity.base;
 
+import java.util.Collections;
+import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import org.joshsim.engine.entity.handler.EventHandlerGroup;
 import org.joshsim.engine.entity.handler.EventKey;
@@ -31,6 +34,18 @@ public interface MutableEntity extends Entity, Lockable {
    * @return the event handler group, or empty if it does not exist
    */
   Optional<EventHandlerGroup> getEventHandlers(EventKey eventKey);
+
+  /**
+   * Get the origin-dispatched init handlers keyed by {@code "<origin>:<attribute>"}.
+   *
+   * <p>These run only for entities created via {@code create ... through "<origin>"}. Entities that
+   * do not define any {@code start init through} stanza return an empty map.</p>
+   *
+   * @return map from {@code "<origin>:<attribute>"} to matching EventHandlerGroups
+   */
+  default Map<String, List<EventHandlerGroup>> getOriginInitHandlers() {
+    return Collections.emptyMap();
+  }
 
   @Override
   Optional<EngineValue> getAttributeValue(String name);

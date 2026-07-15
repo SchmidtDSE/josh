@@ -303,6 +303,19 @@ public interface EventHandlerMachine {
   EventHandlerMachine createEntity(String entityType);
 
   /**
+   * Make one or more entities tagged with a creation origin.
+   *
+   * <p>Behaves like {@link #createEntity(String)} but tags each new entity with the given origin
+   * (from {@code create ... through "<origin>"}), selecting which {@code start init through}
+   * handlers run during the new entity's init dispatch.</p>
+   *
+   * @param entityType The name of the entity type corresponding to the prototype to use.
+   * @param origin The creation origin string; empty for no origin.
+   * @return Reference to this machine for chaining.
+   */
+  EventHandlerMachine createEntity(String entityType, String origin);
+
+  /**
    * Execute a spatial query and push the result to the top of the stack.
    *
    * <p>Execute a spatial query and push the result as an EngineValue to the top of the stack. This

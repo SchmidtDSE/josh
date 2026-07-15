@@ -737,7 +737,11 @@ Built-in:
   ```
   create ExampleTree                    # Create single entity
   create 10 count of ExampleTree        # Create multiple entities
+  create 10 count of ExampleTree through "founding"   # Tag the cohort with a creation origin
   ```
+  The optional `through "<origin>"` clause tags the new entities with a creation origin. That origin
+  selects which `start init through "<origin>"` block (see **Creation origin dispatch**) supplies the
+  cohort's init handlers. See that section for the full semantics.
 - **force**: Relabel a value's units without conversion (no math applied). Prefer `as <unit>` (without `force`), which routes through `start unit` conversions and catches mismatches.
   ```
   force prior.temperature as degrees    # Relabel only; the number is unchanged
@@ -848,6 +852,53 @@ start state "dead"
   timeDead.step = prior.timeDead + 1 year
 end state
 ```
+
+### Creation origin dispatch
+
+`create ... through "<origin>"` tags newly created entities with a creation origin, and a
+`start init through "<origin>" ... end init` block supplies the init handlers that run only for that
+cohort. This dispatches birth by *how* an entity was created (founding stock vs. natural recruit vs.
+management outplant) rather than by branching on the clock (`meta.stepCount`).
+
+```
+start patch Default
+  # Two cohorts of the same organism, distinguished by origin:
+  Trees.init = create 10 count of Tree through "founding"
+  Trees.step:if(meta.stepCount == 5 count) =
+    prior.Trees | create 3 count of Tree through "outplant"
+end patch
+
+start organism Tree
+  # Shared birth defaults stay in the base init.
+  caged.init = false
+  age.step = prior.age + 1 year
+
+  start init through "founding"
+    age = 40 years
+    state = "Adult"
+  end init
+
+  start init through "outplant"
+    age = config mgmt.outplantAge
+    state = "Adult"
+  end init
+end organism
+```
+
+Semantics:
+
+- Handlers inside `start init through` are written without an event suffix (e.g. `age = ...`); they
+  are implicitly `init` handlers for the tagged cohort.
+- Base `init` and the origin block **partition** the attributes: put shared defaults in the base
+  `init` and cohort-specific attributes in the origin block. For an attribute the origin block
+  defines, the origin handler is authoritative (it overrides the base default); attributes the origin
+  block leaves unset fall back to the base `init`.
+- The origin tag is **stable** — set once at creation and never mutated — unlike `state`, which
+  changes over an entity's life. Origin is its own axis, not reused `state`.
+- Several origins created in the **same** substep are still told apart, because the tag lives on the
+  `create` call, not on the clock.
+- A `create` with no `through` runs only the base `init`; existing models are unaffected. An origin
+  with no matching `start init through` block also falls back to base `init`.
 
 ### External Data
 
@@ -962,7 +1013,7 @@ Following reserved for future use and are not currently implemented:
 - Named config (`config expression as identifier)`
 - Agent (`agent` and `organism` currently aliases)
 
-Following keywords are reserved and should not be used for user-defined entities or variables: `as`, `const`, `debug`, `disturbance`, `elif`, `else`, `end`, `if`, `management`, `limit`, `map`, `return`, `start`, `state`, `step`, `within`, `latitude`, `longitude`
+Following keywords are reserved and should not be used for user-defined entities or variables: `as`, `const`, `debug`, `disturbance`, `elif`, `else`, `end`, `if`, `management`, `limit`, `map`, `return`, `start`, `state`, `step`, `through`, `within`, `latitude`, `longitude`
 
 ## Other resources
 

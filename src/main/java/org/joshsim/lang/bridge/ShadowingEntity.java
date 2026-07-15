@@ -14,7 +14,6 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import org.apache.commons.collections4.iterators.IteratorChain;
-import org.jetbrains.annotations.NotNull;
 import org.joshsim.engine.entity.base.Entity;
 import org.joshsim.engine.entity.base.GeoKey;
 import org.joshsim.engine.entity.base.MutableEntity;
@@ -52,6 +51,11 @@ public class ShadowingEntity implements MutableEntity {
   private final Entity meta;
   private final Scope scope;
   private final Map<String, List<EventHandlerGroup>> commonHandlerCache;
+  private final Map<String, List<EventHandlerGroup>> originInitHandlers;
+
+  // Creation origin from `create ... through "<origin>"`. Empty for entities created without a
+  // `through` clause; set once at creation (before init fast-forward) and never mutated.
+  private String origin = "";
 
   // Array-based caching for resolved values and circular dependency tracking
   private final EngineValue[] resolvedCacheByIndex;
@@ -87,6 +91,7 @@ public class ShadowingEntity implements MutableEntity {
     resolvingByIndex = new boolean[numAttributes];
 
     this.commonHandlerCache = inner.getResolvedHandlers();
+    this.originInitHandlers = inner.getOriginInitHandlers();
   }
 
   /**
@@ -118,6 +123,7 @@ public class ShadowingEntity implements MutableEntity {
     resolvingByIndex = new boolean[numAttributes];
 
     this.commonHandlerCache = inner.getResolvedHandlers();
+    this.originInitHandlers = inner.getOriginInitHandlers();
   }
 
   /**
@@ -127,6 +133,24 @@ public class ShadowingEntity implements MutableEntity {
    */
   public ValueSupportFactory getValueFactory() {
     return valueFactory;
+  }
+
+  /**
+   * Set the creation origin for this entity.
+   *
+   * <p>Called once at creation (before the init fast-forward) for entities created via
+   * {@code create ... through "<origin>"}. Selects which {@code start init through} handlers run
+   * during init dispatch. Never called again afterward.</p>
+   *
+   * @param origin the creation origin string, or empty for no origin
+   */
+  public void setOrigin(String origin) {
+    this.origin = origin;
+  }
+
+  @Override
+  public Map<String, List<EventHandlerGroup>> getOriginInitHandlers() {
+    return originInitHandlers;
   }
 
   /**
@@ -176,19 +200,27 @@ public class ShadowingEntity implements MutableEntity {
 
     // Get base
     boolean onBase = state.isEmpty();
+    Iterable<EventHandlerGroup> stateChain;
     if (onBase) {
-      return immediate;
+      stateChain = immediate;
+    } else {
+      Iterable<EventHandlerGroup> inherited = getHandlersForAttribute(attribute, substep, "");
+      stateChain = () -> new IteratorChain<>(inherited.iterator(), immediate.iterator());
     }
-    Iterable<EventHandlerGroup> inherited = getHandlersForAttribute(attribute, substep, "");
 
-    // Combine
-    return new Iterable<>() {
-      @NotNull
-      @Override
-      public Iterator<EventHandlerGroup> iterator() {
-        return new IteratorChain<>(inherited.iterator(), immediate.iterator());
+    // Origin-dispatched init handlers apply during the init substep only, and only when this entity
+    // carries a creation origin. They run BEFORE the base/state chain so an origin is authoritative
+    // for the attributes it defines (e.g. it overrides the auto-generated base state.init default);
+    // base handlers still fill in attributes the origin block leaves unset. See setOrigin.
+    if (substep.equals("init") && !origin.isEmpty()) {
+      List<EventHandlerGroup> originHandlers = originInitHandlers.get(origin + ":" + attribute);
+      if (originHandlers != null && !originHandlers.isEmpty()) {
+        Iterable<EventHandlerGroup> baseChain = stateChain;
+        return () -> new IteratorChain<>(originHandlers.iterator(), baseChain.iterator());
       }
-    };
+    }
+
+    return stateChain;
   }
 
   /**

@@ -467,6 +467,11 @@ public class SingleThreadEventHandlerMachine implements EventHandlerMachine {
 
   @Override
   public EventHandlerMachine createEntity(String entityType) {
+    return createEntity(entityType, "");
+  }
+
+  @Override
+  public EventHandlerMachine createEntity(String entityType, String origin) {
     EntityPrototype prototype = bridge.getPrototype(entityType);
     MutableEntity parent = scope.get("current").getAsMutableEntity();
     EntityPrototype innerDecorated = new EmbeddedParentEntityPrototype(
@@ -476,7 +481,8 @@ public class SingleThreadEventHandlerMachine implements EventHandlerMachine {
     EntityPrototype decoratedPrototype = new ShadowingEntityPrototype(
         valueFactory,
         innerDecorated,
-        scope
+        scope,
+        origin
     );
 
     EngineValue countValue = convert(pop(), COUNT_UNITS);

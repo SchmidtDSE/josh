@@ -211,7 +211,7 @@ class JoshTypesUnitsVisitorTest {
     action.apply(mockMachine);
 
     verify(countAction).apply(mockMachine);
-    verify(mockMachine).createEntity("testVar");
+    verify(mockMachine).createEntity("testVar", "");
   }
 
   @Test
@@ -363,7 +363,7 @@ class JoshTypesUnitsVisitorTest {
     action.apply(mockMachine);
 
     verify(mockMachine).push(mockSingleCount);
-    verify(mockMachine).createEntity("agent");
+    verify(mockMachine).createEntity("agent", "");
   }
 
   @Test

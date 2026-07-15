@@ -6,6 +6,7 @@
 
 package org.joshsim.engine.entity.base;
 
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -89,6 +90,19 @@ public interface EntityInitializationInfo {
    * @return immutable map from cache key string to list of EventHandlerGroups
    */
   Map<String, List<EventHandlerGroup>> getCommonHandlerCache();
+
+  /**
+   * Gets the origin-dispatched init handlers keyed by {@code "<origin>:<attribute>"}.
+   *
+   * <p>These handler groups come from {@code start init through "<origin>" ... end init} stanzas
+   * and run only for entities created via {@code create ... through "<origin>"}. The map is shared
+   * across all instances of this entity type.</p>
+   *
+   * @return immutable map from {@code "<origin>:<attribute>"} to matching EventHandlerGroups
+   */
+  default Map<String, List<EventHandlerGroup>> getOriginInitHandlers() {
+    return Collections.emptyMap();
+  }
 
   /**
    * Gets the precomputed immutable set of attribute names.

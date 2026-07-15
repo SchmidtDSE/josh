@@ -50,6 +50,13 @@ public class EntityBuilder implements EntityInitializationInfo {
   private boolean usesState;
   private int stateIndex;
 
+  // Origin-dispatched init handlers keyed by "<origin>:<attribute>" (see addOriginInitHandler).
+  // These run only for entities created via `create ... through "<origin>"` and are kept separate
+  // from eventHandlerGroups so multiple origins defining the same attribute never collide.
+  private Map<String, List<EventHandlerGroup>> originInitHandlers;
+  private Set<String> originAttributeNames;
+  private Map<String, List<EventHandlerGroup>> immutableOriginInitHandlers;
+
   /**
    * Create an empty builder.
    */
@@ -65,6 +72,9 @@ public class EntityBuilder implements EntityInitializationInfo {
     sharedAttributeNames = null; // Computed lazily
     usesState = false;
     stateIndex = -1;
+    originInitHandlers = new HashMap<>();
+    originAttributeNames = new HashSet<>();
+    immutableOriginInitHandlers = null; // Computed lazily
   }
 
   /**
@@ -135,6 +145,9 @@ public class EntityBuilder implements EntityInitializationInfo {
     sharedAttributeNames = null; // Invalidate cache
     usesState = false;
     stateIndex = -1;
+    originInitHandlers.clear();
+    originAttributeNames.clear();
+    immutableOriginInitHandlers = null; // Invalidate cache
   }
 
   /**
@@ -149,6 +162,33 @@ public class EntityBuilder implements EntityInitializationInfo {
     immutableEventHandlerGroups = null; // Invalidate cache
     attributesWithoutHandlersBySubstep = null; // Invalidate cache
     commonHandlerCache = null; // Invalidate cache
+    sharedAttributeNames = null; // Invalidate cache
+    return this;
+  }
+
+  /**
+   * Register an origin-dispatched init handler group.
+   *
+   * <p>These handler groups come from a {@code start init through "<origin>" ... end init} stanza
+   * and run only for entities created via {@code create ... through "<origin>"}. They are stored
+   * separately from {@link #eventHandlerGroups} keyed by {@code "<origin>:<attribute>"}, so several
+   * origins defining the same attribute never overwrite one another. The group's own event is
+   * expected to be {@code init}.</p>
+   *
+   * @param origin the creation origin this handler group applies to
+   * @param attribute the attribute the handler group resolves
+   * @param group the event handler group to register
+   * @return this builder for method chaining
+   */
+  public EntityBuilder addOriginInitHandler(String origin, String attribute,
+        EventHandlerGroup group) {
+    String key = origin + ":" + attribute;
+    originInitHandlers.computeIfAbsent(key, k -> new ArrayList<>()).add(group);
+    originAttributeNames.add(attribute);
+    immutableOriginInitHandlers = null; // Invalidate cache
+    attributesWithoutHandlersBySubstep = null; // Invalidate cache
+    attributeNameToIndex = null; // Invalidate cache
+    indexToAttributeName = null; // Invalidate cache
     sharedAttributeNames = null; // Invalidate cache
     return this;
   }
@@ -226,6 +266,17 @@ public class EntityBuilder implements EntityInitializationInfo {
             if (index != null) {
               attrsWithoutHandlers[index] = false;
             }
+          }
+        }
+      }
+
+      // Origin-dispatched init handlers resolve during the init substep, so an attribute supplied
+      // only by a `start init through` block must not be fast-skipped there.
+      if (substep.equals("init")) {
+        for (String originAttribute : originAttributeNames) {
+          Integer index = indexMap.get(originAttribute);
+          if (index != null) {
+            attrsWithoutHandlers[index] = false;
           }
         }
       }
@@ -322,6 +373,28 @@ public class EntityBuilder implements EntityInitializationInfo {
   }
 
   /**
+   * Get the origin-dispatched init handlers keyed by {@code "<origin>:<attribute>"}.
+   *
+   * <p>Computed once per entity type and shared across all instances of that type.</p>
+   *
+   * @return immutable map from {@code "<origin>:<attribute>"} to matching EventHandlerGroups
+   */
+  @Override
+  public Map<String, List<EventHandlerGroup>> getOriginInitHandlers() {
+    if (immutableOriginInitHandlers != null) {
+      return immutableOriginInitHandlers;
+    }
+
+    Map<String, List<EventHandlerGroup>> result = new HashMap<>();
+    for (Map.Entry<String, List<EventHandlerGroup>> entry : originInitHandlers.entrySet()) {
+      result.put(entry.getKey(), Collections.unmodifiableList(new ArrayList<>(entry.getValue())));
+    }
+
+    immutableOriginInitHandlers = Collections.unmodifiableMap(result);
+    return immutableOriginInitHandlers;
+  }
+
+  /**
    * Get the shared set of attribute names for this entity type.
    *
    * <p>This method extracts all unique attribute names from event handlers defined
@@ -348,6 +421,9 @@ public class EntityBuilder implements EntityInitializationInfo {
         attributeNames.add(handler.getAttributeName());
       }
     }
+
+    // Include attributes defined only in origin-dispatched init blocks
+    attributeNames.addAll(originAttributeNames);
 
     // Cache immutable set for reuse
     sharedAttributeNames = Collections.unmodifiableSet(attributeNames);
@@ -382,6 +458,9 @@ public class EntityBuilder implements EntityInitializationInfo {
         allAttributeNames.add(handler.getAttributeName());
       }
     }
+
+    // Include attributes defined only in origin-dispatched init blocks so they get an array index
+    allAttributeNames.addAll(originAttributeNames);
 
     // Sort alphabetically for deterministic ordering
     List<String> sortedNames = new ArrayList<>(allAttributeNames);

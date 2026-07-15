@@ -16,6 +16,7 @@ import org.joshsim.engine.value.type.EngineValue;
 import org.joshsim.lang.antlr.JoshLangParser;
 import org.joshsim.lang.interpret.BridgeGetter;
 import org.joshsim.lang.interpret.ReservedWordChecker;
+import org.joshsim.lang.interpret.StringLiteralUtil;
 import org.joshsim.lang.interpret.ValueResolver;
 import org.joshsim.lang.interpret.action.EventHandlerAction;
 import org.joshsim.lang.interpret.fragment.josh.ActionFragment;
@@ -147,10 +148,11 @@ public class JoshTypesUnitsVisitor implements JoshVisitorDelegate {
       JoshLangParser.CreateVariableExpressionContext ctx) {
     EventHandlerAction countAction = ctx.count.accept(parent).getCurrentAction();
     String entityName = ctx.target.getText();
+    String origin = ctx.source == null ? "" : StringLiteralUtil.stripQuotes(ctx.source.getText());
 
     EventHandlerAction action = (machine) -> {
       countAction.apply(machine);
-      machine.createEntity(entityName);
+      machine.createEntity(entityName, origin);
       return machine;
     };
 
@@ -240,10 +242,11 @@ public class JoshTypesUnitsVisitor implements JoshVisitorDelegate {
   public JoshFragment visitCreateSingleExpression(
       JoshLangParser.CreateSingleExpressionContext ctx) {
     String entityName = ctx.target.getText();
+    String origin = ctx.source == null ? "" : StringLiteralUtil.stripQuotes(ctx.source.getText());
 
     EventHandlerAction action = (machine) -> {
       machine.push(singleCount);
-      machine.createEntity(entityName);
+      machine.createEntity(entityName, origin);
       return machine;
     };
 

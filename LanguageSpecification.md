@@ -497,6 +497,34 @@ const newConifers = create 5 count of Conifer
 
 This will return a realized distribution.
 
+A creation can be tagged with an origin using `through "<origin>"`, which dispatches the new entity's init handlers by cohort:
+
+```
+const founders = create 10 count of Conifer through "founding"
+```
+
+A matching `start init through "<origin>" ... end init` block on the entity supplies the init handlers for that cohort (handlers are written without an event suffix and are implicitly init handlers):
+
+```
+start organism Conifer
+
+  age.step = prior.age + 1 year
+
+  start init through "founding"
+    age = 40 years
+    state = "adult"
+  end init
+
+  start init through "outplant"
+    age = 0 years
+    state = "seedling"
+  end init
+
+end organism
+```
+
+Base `init` handlers hold shared birth defaults; the origin block supplies cohort-specific attributes, and for an attribute the origin block defines it overrides the base default. The origin tag is stable (set once at creation), so it is a cleaner axis than branching on `meta.stepCount`. A `create` without `through`, or an origin with no matching block, runs only the base `init`.
+
 ### Events
 The init event will only be executed at the initalization of a simulation or the creation of an entity. The remove event will only be executed when an entity is removed from a grid cell. There are also start, step, and end events which correspond to when in a simulation timestep the event handler should be invoked. All start will execute before step which will all execute before end though order of execution is not guaranteed within these groups. A modifier of `:if(meta.stepCount == 0 count)` can be used to determine if init is being run as part of simulation initalization (prior to starting) or if an agent is made while the simulation is running.
 
@@ -1145,7 +1173,7 @@ const countsAlsoOnCell = here.JoshuaTrees.count
 To help improve readability, it is recommended that entity names are `CamelCase` with leading upper case character.
 
 ## Reserved names
-The following are used by the system and it is not recommended that they be used for names of any user defined entities or variables and should throw an exception: as, const, debug, disturbance, elif, else, end, if, management, limit, map, return, start, state, step, within.
+The following are used by the system and it is not recommended that they be used for names of any user defined entities or variables and should throw an exception: as, const, debug, disturbance, elif, else, end, if, management, limit, map, return, start, state, step, through, within.
 
 
 # Example

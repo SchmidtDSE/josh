@@ -36,6 +36,7 @@ public abstract class DirectLockMutableEntity implements MutableEntity {
   private Set<String> attributeNames;
   private Map<String, boolean[]> attributesWithoutHandlersBySubstep;
   private Map<String, List<EventHandlerGroup>> commonHandlerCache;
+  private Map<String, List<EventHandlerGroup>> originInitHandlers;
   private final boolean usesState;
   private final int stateIndex;
 
@@ -88,6 +89,12 @@ public abstract class DirectLockMutableEntity implements MutableEntity {
     attributeNames = initInfo.getSharedAttributeNames();
     this.attributesWithoutHandlersBySubstep = initInfo.getAttributesWithoutHandlersBySubstep();
     this.commonHandlerCache = initInfo.getCommonHandlerCache();
+    Map<String, List<EventHandlerGroup>> sharedOrigin = initInfo.getOriginInitHandlers();
+    if (sharedOrigin == null) {
+      this.originInitHandlers = Collections.emptyMap();
+    } else {
+      this.originInitHandlers = sharedOrigin;
+    }
     this.usesState = initInfo.getUsesState();
     this.stateIndex = initInfo.getStateIndex();
   }
@@ -293,6 +300,15 @@ public abstract class DirectLockMutableEntity implements MutableEntity {
       return Collections.emptyMap();
     } else {
       return commonHandlerCache;
+    }
+  }
+
+  @Override
+  public Map<String, List<EventHandlerGroup>> getOriginInitHandlers() {
+    if (originInitHandlers == null) {
+      return Collections.emptyMap();
+    } else {
+      return originInitHandlers;
     }
   }
 

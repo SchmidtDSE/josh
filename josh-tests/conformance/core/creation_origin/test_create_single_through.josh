@@ -1,0 +1,43 @@
+# @category: creation_origin
+# @subcategory: single_create
+# @priority: normal
+# @description: single-entity create X through "<origin>" dispatches the origin init block
+
+start simulation CreateSingleThrough
+
+  grid.size = 10 m
+  grid.low.x = 0 m
+  grid.low.y = 0 m
+  grid.high.x = 20 m
+  grid.high.y = 20 m
+
+  steps.low = 0 count
+  steps.high = 1 count
+
+end simulation
+
+start patch Default
+
+  # Single-entity form (no count / `of`).
+  Sprouts.init = create Sprout through "outplant"
+
+  assert.count.step:if(meta.stepCount == 0 count) = count(Sprouts) == 1 count
+  assert.state.step:if(meta.stepCount == 0 count) =
+    count(Sprouts[Sprouts.state == "Adult"]) == 1 count
+
+end patch
+
+start organism Sprout
+
+  provenance.init = "none"
+
+  start init through "outplant"
+    state = "Adult"
+    provenance = "outplant"
+  end init
+
+end organism
+
+start unit year
+  alias years
+end unit
