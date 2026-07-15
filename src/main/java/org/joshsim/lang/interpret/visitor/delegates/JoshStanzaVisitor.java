@@ -59,7 +59,14 @@ public class JoshStanzaVisitor implements JoshVisitorDelegate {
    */
   public JoshFragment visitStateStanza(JoshLangParser.StateStanzaContext ctx) {
     List<EventHandlerGroupBuilder> groups = new ArrayList<>();
-    String stateName = ctx.getChild(2).getText();
+    // The state name is a STR_ token whose text includes the surrounding quotes. Strip them so the
+    // stored state name matches the (now unquoted) string value an entity's state attribute holds
+    // (see JoshValueVisitor.visitString); otherwise state-machine dispatch never matches.
+    String rawStateName = ctx.getChild(2).getText();
+    String stateName = (rawStateName.length() >= 2
+        && rawStateName.startsWith("\"") && rawStateName.endsWith("\""))
+        ? rawStateName.substring(1, rawStateName.length() - 1)
+        : rawStateName;
 
     int numHandlerGroups = ctx.getChildCount() - 5;
     for (int handlerGroupIndex = 0; handlerGroupIndex < numHandlerGroups; handlerGroupIndex++) {

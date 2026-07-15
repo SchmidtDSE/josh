@@ -85,7 +85,14 @@ public class JoshValueVisitor implements JoshVisitorDelegate {
    * @return JoshFragment containing the string literal parsed.
    */
   public JoshFragment visitString(JoshLangParser.StringContext ctx) {
-    String string = ctx.getText();
+    String raw = ctx.getText();
+    // The STR_ grammar token includes the surrounding double quotes ('"' ~["]* '"'), so strip
+    // them to get the actual string value. Without this the value carries its quotes and only
+    // compares equal to other quoted literals -- an engine-produced string (e.g. meta.phase)
+    // never matches, silently breaking guards like meta.phase == "spinup".
+    String string = (raw.length() >= 2 && raw.startsWith("\"") && raw.endsWith("\""))
+        ? raw.substring(1, raw.length() - 1)
+        : raw;
     EngineValue value = engineValueFactory.build(string, Units.of(""));
     EventHandlerAction action = (machine) -> machine.push(value);
     return new ActionFragment(action);
