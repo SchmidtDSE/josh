@@ -34,6 +34,23 @@ public class EntityFastForwarder {
    * @throws IllegalArgumentException if subStep is invalid
    */
   public static void fastForward(MutableEntity entity, String subStep) {
+    fastForward(entity, subStep, "init");
+  }
+
+  /**
+   * Fast forwards an entity, running a specific init event at the init stage.
+   *
+   * <p>Identical to {@link #fastForward(MutableEntity, String)} except that {@code initEvent} is
+   * run at the init stage instead of the base {@code "init"}. A {@code create ... through
+   * "<origin>"} passes the origin's variant init event here so its handlers run <em>instead of</em>
+   * base {@code init} (pure replace); an untagged create passes {@code "init"}.</p>
+   *
+   * @param entity The entity to fast forward
+   * @param subStep The target substep to reach
+   * @param initEvent The event to run at the init stage
+   * @throws IllegalArgumentException if subStep is invalid
+   */
+  public static void fastForward(MutableEntity entity, String subStep, String initEvent) {
     int substepNum = getSubstepNum(subStep);
 
     if (substepNum >= CONSTANT_SUBSTEP) {
@@ -41,7 +58,7 @@ public class EntityFastForwarder {
     }
 
     if (substepNum >= INIT_SUBSTEP) {
-      runStep(entity, "init", substepNum == INIT_SUBSTEP);
+      runStep(entity, initEvent, substepNum == INIT_SUBSTEP);
     }
 
     if (substepNum >= START_SUBSTEP) {

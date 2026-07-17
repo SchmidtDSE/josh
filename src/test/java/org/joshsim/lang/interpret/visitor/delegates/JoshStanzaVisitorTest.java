@@ -22,6 +22,7 @@ import org.joshsim.lang.antlr.JoshLangParser.ImportStatementContext;
 import org.joshsim.lang.antlr.JoshLangParser.ProgramContext;
 import org.joshsim.lang.antlr.JoshLangParser.StateStanzaContext;
 import org.joshsim.lang.antlr.JoshLangParser.UnitStanzaContext;
+import org.joshsim.lang.interpret.KnownEventSet;
 import org.joshsim.lang.interpret.fragment.FragmentType;
 import org.joshsim.lang.interpret.fragment.josh.ConversionsFragment;
 import org.joshsim.lang.interpret.fragment.josh.EntityFragment;
@@ -47,6 +48,7 @@ class JoshStanzaVisitorTest {
 
     when(toolbox.getParent()).thenReturn(parent);
     when(toolbox.getValueFactory()).thenReturn(valueFactory);
+    when(toolbox.getKnownEventSet()).thenReturn(new KnownEventSet());
 
     visitor = new JoshStanzaVisitor(toolbox);
   }

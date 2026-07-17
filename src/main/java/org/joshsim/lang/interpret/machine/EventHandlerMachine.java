@@ -303,17 +303,19 @@ public interface EventHandlerMachine {
   EventHandlerMachine createEntity(String entityType);
 
   /**
-   * Make one or more entities tagged with a creation origin.
+   * Make one or more entities, dispatching a specific init event at birth.
    *
-   * <p>Behaves like {@link #createEntity(String)} but tags each new entity with the given origin
-   * (from {@code create ... through "<origin>"}), selecting which {@code start init through}
-   * handlers run during the new entity's init dispatch.</p>
+   * <p>Behaves like {@link #createEntity(String)} but runs {@code initEventName} at the init stage
+   * of the new entity's fast-forward instead of the base {@code init}. This is how
+   * {@code create ... through "<origin>"} dispatches per-origin init: the origin is desugared at
+   * compile time to a variant init event (see {@code KnownEventSet}). The one-argument overload
+   * passes {@code "init"}.</p>
    *
    * @param entityType The name of the entity type corresponding to the prototype to use.
-   * @param origin The creation origin string; empty for no origin.
+   * @param initEventName The init event to run at creation ({@code "init"} or an origin variant).
    * @return Reference to this machine for chaining.
    */
-  EventHandlerMachine createEntity(String entityType, String origin);
+  EventHandlerMachine createEntity(String entityType, String initEventName);
 
   /**
    * Execute a spatial query and push the result to the top of the stack.

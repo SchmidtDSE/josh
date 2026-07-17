@@ -17,7 +17,6 @@ public class ShadowingEntityPrototype implements EntityPrototype {
   private final ValueSupportFactory valueFactory;
   private final EntityPrototype inner;
   private final Scope scope;
-  private final String origin;
 
   /**
    * Decorate a prototype with parent information.
@@ -28,23 +27,9 @@ public class ShadowingEntityPrototype implements EntityPrototype {
    */
   public ShadowingEntityPrototype(ValueSupportFactory valueFactory, EntityPrototype inner,
         Scope scope) {
-    this(valueFactory, inner, scope, "");
-  }
-
-  /**
-   * Decorate a prototype with parent information and a creation origin.
-   *
-   * @param valueFactory Factory to use in constructing engine values.
-   * @param inner Prototype for entity to be decorated as a ShadowingEntity.
-   * @param scope The Scope from which to read required attributes.
-   * @param origin Creation origin (from {@code create ... through "<origin>"}); empty for none.
-   */
-  public ShadowingEntityPrototype(ValueSupportFactory valueFactory, EntityPrototype inner,
-        Scope scope, String origin) {
     this.valueFactory = valueFactory;
     this.inner = inner;
     this.scope = scope;
-    this.origin = origin;
   }
 
   @Override
@@ -83,16 +68,12 @@ public class ShadowingEntityPrototype implements EntityPrototype {
   }
 
   private MutableEntity wrap(MutableEntity entityToWrap) {
-    ShadowingEntity wrapped = new ShadowingEntity(
+    return new ShadowingEntity(
         valueFactory,
         entityToWrap,
         scope.get("here").getAsEntity(),
         scope.get("meta").getAsEntity()
     );
-    if (!origin.isEmpty()) {
-      wrapped.setOrigin(origin);
-    }
-    return wrapped;
   }
 
 }

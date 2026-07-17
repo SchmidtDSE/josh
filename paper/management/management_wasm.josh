@@ -83,14 +83,14 @@ start organism ForeverTree
   start init through "founding"
     age = 0 year
     height = 0 m
+    state = "Adult" if height >= config scenario.smallTreeHeight else "Juvenile"
   end init
 
   start init through "outplant"
     age = config scenario.outplantAge
     height = config scenario.outplantHeight
+    state = "Adult" if height >= config scenario.smallTreeHeight else "Juvenile"
   end init
-
-  state.init = "Adult" if height >= config scenario.smallTreeHeight else "Juvenile"
 
   # One burn draw per tree; only true inside the fire footprint on the fire step.
   burned.step = here.onFire and ((sample uniform from 0% to 100%) < config scenario.burnLikelihood)

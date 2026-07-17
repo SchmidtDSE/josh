@@ -26,6 +26,7 @@ import org.joshsim.engine.simulation.Simulation;
 import org.joshsim.engine.value.converter.Units;
 import org.joshsim.engine.value.engine.ValueSupportFactory;
 import org.joshsim.engine.value.type.EngineValue;
+import org.joshsim.lang.interpret.KnownEventSet;
 
 /**
  * Builder to assist in constructing entities.
@@ -38,6 +39,11 @@ public class EntityBuilder implements EntityInitializationInfo {
   private static final List<String> SUBSTEPS = List.of("init", "step", "start", "end", "constant");
 
   private final ValueSupportFactory valueFactory;
+  // The program's declared init events (base "init" plus per-origin variants). Origin-dispatched
+  // init is a compile-time desugar: a `start init through "<origin>"` block registers ordinary
+  // handler groups keyed to the variant init event, and this set tells the builder which init
+  // events to build handler caches and default state handlers for.
+  private final KnownEventSet knownEventSet;
   private Optional<String> name;
   private Map<EventKey, EventHandlerGroup> eventHandlerGroups;
   private Map<String, EngineValue> attributes;
@@ -50,18 +56,26 @@ public class EntityBuilder implements EntityInitializationInfo {
   private boolean usesState;
   private int stateIndex;
 
-  // Origin-dispatched init handlers keyed by "<origin>:<attribute>" (see addOriginInitHandler).
-  // These run only for entities created via `create ... through "<origin>"` and are kept separate
-  // from eventHandlerGroups so multiple origins defining the same attribute never collide.
-  private Map<String, List<EventHandlerGroup>> originInitHandlers;
-  private Set<String> originAttributeNames;
-  private Map<String, List<EventHandlerGroup>> immutableOriginInitHandlers;
-
   /**
-   * Create an empty builder.
+   * Create an empty builder recognizing only the base init event.
+   *
+   * <p>Use this where origin-dispatched init cannot occur (tests, non-interpret construction).</p>
+   *
+   * @param valueFactory The factory used for creating engine values.
    */
   public EntityBuilder(ValueSupportFactory valueFactory) {
+    this(valueFactory, new KnownEventSet());
+  }
+
+  /**
+   * Create an empty builder aware of the program's declared init events.
+   *
+   * @param valueFactory The factory used for creating engine values.
+   * @param knownEventSet The set of event names declared by the program being interpreted.
+   */
+  public EntityBuilder(ValueSupportFactory valueFactory, KnownEventSet knownEventSet) {
     this.valueFactory = valueFactory;
+    this.knownEventSet = knownEventSet;
 
     name = Optional.empty();
     eventHandlerGroups = new HashMap<>();
@@ -72,9 +86,23 @@ public class EntityBuilder implements EntityInitializationInfo {
     sharedAttributeNames = null; // Computed lazily
     usesState = false;
     stateIndex = -1;
-    originInitHandlers = new HashMap<>();
-    originAttributeNames = new HashSet<>();
-    immutableOriginInitHandlers = null; // Computed lazily
+  }
+
+  /**
+   * Get the substep-like events for which handler caches and skip arrays are built.
+   *
+   * <p>The standard substeps plus every declared per-origin init variant event, so a
+   * {@code start init through} block's handlers resolve when its variant init is
+   * fast-forwarded.</p>
+   *
+   * @return The set of event names to build per-substep structures for.
+   */
+  private Set<String> getCacheableEvents() {
+    Set<String> events = new HashSet<>(SUBSTEPS);
+    for (String initEvent : knownEventSet.getInitEvents()) {
+      events.add(initEvent);
+    }
+    return events;
   }
 
   /**
@@ -145,9 +173,6 @@ public class EntityBuilder implements EntityInitializationInfo {
     sharedAttributeNames = null; // Invalidate cache
     usesState = false;
     stateIndex = -1;
-    originInitHandlers.clear();
-    originAttributeNames.clear();
-    immutableOriginInitHandlers = null; // Invalidate cache
   }
 
   /**
@@ -162,33 +187,6 @@ public class EntityBuilder implements EntityInitializationInfo {
     immutableEventHandlerGroups = null; // Invalidate cache
     attributesWithoutHandlersBySubstep = null; // Invalidate cache
     commonHandlerCache = null; // Invalidate cache
-    sharedAttributeNames = null; // Invalidate cache
-    return this;
-  }
-
-  /**
-   * Register an origin-dispatched init handler group.
-   *
-   * <p>These handler groups come from a {@code start init through "<origin>" ... end init} stanza
-   * and run only for entities created via {@code create ... through "<origin>"}. They are stored
-   * separately from {@link #eventHandlerGroups} keyed by {@code "<origin>:<attribute>"}, so several
-   * origins defining the same attribute never overwrite one another. The group's own event is
-   * expected to be {@code init}.</p>
-   *
-   * @param origin the creation origin this handler group applies to
-   * @param attribute the attribute the handler group resolves
-   * @param group the event handler group to register
-   * @return this builder for method chaining
-   */
-  public EntityBuilder addOriginInitHandler(String origin, String attribute,
-        EventHandlerGroup group) {
-    String key = origin + ":" + attribute;
-    originInitHandlers.computeIfAbsent(key, k -> new ArrayList<>()).add(group);
-    originAttributeNames.add(attribute);
-    immutableOriginInitHandlers = null; // Invalidate cache
-    attributesWithoutHandlersBySubstep = null; // Invalidate cache
-    attributeNameToIndex = null; // Invalidate cache
-    indexToAttributeName = null; // Invalidate cache
     sharedAttributeNames = null; // Invalidate cache
     return this;
   }
@@ -239,7 +237,7 @@ public class EntityBuilder implements EntityInitializationInfo {
 
     Map<String, boolean[]> result = new HashMap<>();
 
-    for (String substep : SUBSTEPS) {
+    for (String substep : getCacheableEvents()) {
       // Create boolean array for this substep
       boolean[] attrsWithoutHandlers = new boolean[arraySize];
 
@@ -266,17 +264,6 @@ public class EntityBuilder implements EntityInitializationInfo {
             if (index != null) {
               attrsWithoutHandlers[index] = false;
             }
-          }
-        }
-      }
-
-      // Origin-dispatched init handlers resolve during the init substep, so an attribute supplied
-      // only by a `start init through` block must not be fast-skipped there.
-      if (substep.equals("init")) {
-        for (String originAttribute : originAttributeNames) {
-          Integer index = indexMap.get(originAttribute);
-          if (index != null) {
-            attrsWithoutHandlers[index] = false;
           }
         }
       }
@@ -330,7 +317,7 @@ public class EntityBuilder implements EntityInitializationInfo {
     // Pre-compute all (attribute × substep × state) combinations
     Map<String, List<EventHandlerGroup>> result = new HashMap<>();
     for (String attribute : allAttributes) {
-      for (String substep : SUBSTEPS) {
+      for (String substep : getCacheableEvents()) {
         for (String state : allStates) {
           // Build cache key
           String cacheKey;
@@ -373,28 +360,6 @@ public class EntityBuilder implements EntityInitializationInfo {
   }
 
   /**
-   * Get the origin-dispatched init handlers keyed by {@code "<origin>:<attribute>"}.
-   *
-   * <p>Computed once per entity type and shared across all instances of that type.</p>
-   *
-   * @return immutable map from {@code "<origin>:<attribute>"} to matching EventHandlerGroups
-   */
-  @Override
-  public Map<String, List<EventHandlerGroup>> getOriginInitHandlers() {
-    if (immutableOriginInitHandlers != null) {
-      return immutableOriginInitHandlers;
-    }
-
-    Map<String, List<EventHandlerGroup>> result = new HashMap<>();
-    for (Map.Entry<String, List<EventHandlerGroup>> entry : originInitHandlers.entrySet()) {
-      result.put(entry.getKey(), Collections.unmodifiableList(new ArrayList<>(entry.getValue())));
-    }
-
-    immutableOriginInitHandlers = Collections.unmodifiableMap(result);
-    return immutableOriginInitHandlers;
-  }
-
-  /**
    * Get the shared set of attribute names for this entity type.
    *
    * <p>This method extracts all unique attribute names from event handlers defined
@@ -421,9 +386,6 @@ public class EntityBuilder implements EntityInitializationInfo {
         attributeNames.add(handler.getAttributeName());
       }
     }
-
-    // Include attributes defined only in origin-dispatched init blocks
-    attributeNames.addAll(originAttributeNames);
 
     // Cache immutable set for reuse
     sharedAttributeNames = Collections.unmodifiableSet(attributeNames);
@@ -458,9 +420,6 @@ public class EntityBuilder implements EntityInitializationInfo {
         allAttributeNames.add(handler.getAttributeName());
       }
     }
-
-    // Include attributes defined only in origin-dispatched init blocks so they get an array index
-    allAttributeNames.addAll(originAttributeNames);
 
     // Sort alphabetically for deterministic ordering
     List<String> sortedNames = new ArrayList<>(allAttributeNames);
@@ -631,28 +590,36 @@ public class EntityBuilder implements EntityInitializationInfo {
   }
 
   /**
-   * Ensure a default state handler exists for entities that use state blocks.
+   * Ensure a default state handler exists for each init event an entity may be born through.
    *
-   * <p>Creates a default state.init handler that returns an empty string if no state.init handler
-   * has been defined. This allows entities with state blocks to fall back to base handlers when
-   * no state-specific handler matches. Has no effect if base state state.init defined.</p>
+   * <p>Creates a default {@code state} handler returning an empty string for every declared init
+   * event ({@code "init"} plus each per-origin variant), so an entity gets a state even when the
+   * matching {@code start init through} block leaves {@code state} unset. Since origin dispatch is
+   * a pure replace (a {@code create ... through} runs only its variant init, not base
+   * {@code init}),
+   * every variant needs its own default. Any real {@code state} handler added later for the same
+   * event overwrites the default. Call before handler groups are registered.</p>
    */
   public void ensureStateDefaultHandler() {
-    EventKey key = new EventKey("state", "init");
-    if (eventHandlerGroups.containsKey(key)) {
-      return;
+    EngineValue defaultStateValue = valueFactory.build("", Units.EMPTY);
+    addAttribute("state", defaultStateValue);
+
+    for (String initEvent : knownEventSet.getInitEvents()) {
+      EventKey key = new EventKey("state", initEvent);
+      if (eventHandlerGroups.containsKey(key)) {
+        continue;
+      }
+
+      CompiledCallable callable = (scope) -> defaultStateValue;
+      EventHandler handler = new EventHandler(callable, "state", initEvent);
+
+      List<EventHandler> handlers = new ArrayList<>(1);
+      handlers.add(handler);
+      EventHandlerGroup group = new EventHandlerGroup(handlers, key);
+
+      addEventHandlerGroup(key, group);
     }
 
-    EngineValue defaultStateValue = valueFactory.build("", Units.EMPTY);
-    CompiledCallable callable = (scope) -> defaultStateValue;
-    EventHandler handler = new EventHandler(callable, "state", "init");
-
-    List<EventHandler> handlers = new ArrayList<>(1);
-    handlers.add(handler);
-    EventHandlerGroup group = new EventHandlerGroup(handlers, key);
-
-    addAttribute("state", defaultStateValue);
-    addEventHandlerGroup(key, group);
     usesState = true;
   }
 

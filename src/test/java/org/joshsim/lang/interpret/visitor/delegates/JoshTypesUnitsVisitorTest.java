@@ -26,6 +26,7 @@ import org.joshsim.lang.antlr.JoshLangParser.NoopConversionContext;
 import org.joshsim.lang.antlr.JoshLangParser.PositionContext;
 import org.joshsim.lang.antlr.JoshLangParser.SpatialQueryContext;
 import org.joshsim.lang.interpret.BridgeGetter;
+import org.joshsim.lang.interpret.KnownEventSet;
 import org.joshsim.lang.interpret.ReservedWordChecker;
 import org.joshsim.lang.interpret.ValueResolver;
 import org.joshsim.lang.interpret.action.EventHandlerAction;
@@ -59,6 +60,7 @@ class JoshTypesUnitsVisitorTest {
     when(toolbox.getParent()).thenReturn(parent);
     when(toolbox.getBridgeGetter()).thenReturn(bridgeGetter);
     when(toolbox.getValueFactory()).thenReturn(valueFactory);
+    when(toolbox.getKnownEventSet()).thenReturn(new KnownEventSet());
     when(valueFactory.buildValueResolver(any())).thenReturn(mock(ValueResolver.class));
 
     visitor = new JoshTypesUnitsVisitor(toolbox);
@@ -211,7 +213,7 @@ class JoshTypesUnitsVisitorTest {
     action.apply(mockMachine);
 
     verify(countAction).apply(mockMachine);
-    verify(mockMachine).createEntity("testVar", "");
+    verify(mockMachine).createEntity("testVar", "init");
   }
 
   @Test
@@ -344,6 +346,7 @@ class JoshTypesUnitsVisitorTest {
     when(toolbox.getParent()).thenReturn(parent);
     when(toolbox.getBridgeGetter()).thenReturn(bridgeGetter);
     when(toolbox.getValueFactory()).thenReturn(valueFactory);
+    when(toolbox.getKnownEventSet()).thenReturn(new KnownEventSet());
     when(valueFactory.build(1, Units.of("count"))).thenReturn(mockSingleCount);
 
     JoshTypesUnitsVisitor testVisitor = new JoshTypesUnitsVisitor(toolbox);
@@ -363,7 +366,7 @@ class JoshTypesUnitsVisitorTest {
     action.apply(mockMachine);
 
     verify(mockMachine).push(mockSingleCount);
-    verify(mockMachine).createEntity("agent", "");
+    verify(mockMachine).createEntity("agent", "init");
   }
 
   @Test

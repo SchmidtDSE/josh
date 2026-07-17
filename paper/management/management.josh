@@ -79,18 +79,20 @@ start organism ForeverTree
   age.step = prior.age + 1 year
 
   # Founders (planted at init) start as bare seedlings; outplants (added by management) arrive as
-  # established stock. Birth is dispatched by creation origin, not by the simulation clock.
+  # established stock. Birth is dispatched by creation origin, not by the simulation clock. Origin
+  # dispatch is a pure replace: each block supplies the full birth state (including state), since a
+  # create ... through runs only its own init block, not a shared base init.
   start init through "founding"
     age = 0 year
     height = 0 m
+    state = "Adult" if height >= config scenario.smallTreeHeight else "Juvenile"
   end init
 
   start init through "outplant"
     age = config scenario.outplantAge
     height = config scenario.outplantHeight
+    state = "Adult" if height >= config scenario.smallTreeHeight else "Juvenile"
   end init
-
-  state.init = "Adult" if height >= config scenario.smallTreeHeight else "Juvenile"
 
   # One burn draw per tree; only true inside the fire footprint on the fire step.
   burned.step = here.onFire and ((sample uniform from 0% to 100%) < config scenario.burnLikelihood)

@@ -523,7 +523,7 @@ start organism Conifer
 end organism
 ```
 
-Base `init` handlers hold shared birth defaults; the origin block supplies cohort-specific attributes, and for an attribute the origin block defines it overrides the base default. The origin tag is stable (set once at creation), so it is a cleaner axis than branching on `meta.stepCount`. A `create` without `through`, or an origin with no matching block, runs only the base `init`.
+Origin dispatch is a pure replace: a `create ... through "<origin>"` runs only that origin block's handlers at init, not the base `init`, so each origin block must supply the full birth state its cohort needs (shared defaults are repeated in each block). The origin tag is stable (chosen once at creation), so it is a cleaner axis than branching on `meta.stepCount`. A `create` without `through`, or an origin with no matching block, runs the base `init` instead. `start init through` blocks are only valid on entity types created via `create` (such as `organism`); one on a `patch` or `simulation` is an error.
 
 ### Events
 The init event will only be executed at the initalization of a simulation or the creation of an entity. The remove event will only be executed when an entity is removed from a grid cell. There are also start, step, and end events which correspond to when in a simulation timestep the event handler should be invoked. All start will execute before step which will all execute before end though order of execution is not guaranteed within these groups. A modifier of `:if(meta.stepCount == 0 count)` can be used to determine if init is being run as part of simulation initalization (prior to starting) or if an agent is made while the simulation is running.

@@ -48,17 +48,19 @@ end patch
 
 start organism Tree
 
-  # Shared base default (partitioned from the origin-specific attributes).
-  caged.init = false
   age.step = prior.age + 1 year
 
+  # Origin dispatch is a pure replace: each block supplies the full birth state (including the
+  # shared caged default), since a create ... through runs only its own init block.
   start init through "founding"
+    caged = false
     age = 40 years
     state = "Adult"
     provenance = "founding"
   end init
 
   start init through "recruitment"
+    caged = false
     age = 0 years
     state = "Seedling"
     provenance = "recruitment"

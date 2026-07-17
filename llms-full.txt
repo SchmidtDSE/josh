@@ -869,16 +869,17 @@ start patch Default
 end patch
 
 start organism Tree
-  # Shared birth defaults stay in the base init.
-  caged.init = false
   age.step = prior.age + 1 year
 
+  # Each origin block supplies the FULL birth state for its cohort (pure replace).
   start init through "founding"
+    caged = false
     age = 40 years
     state = "Adult"
   end init
 
   start init through "outplant"
+    caged = false
     age = config mgmt.outplantAge
     state = "Adult"
   end init
@@ -889,16 +890,18 @@ Semantics:
 
 - Handlers inside `start init through` are written without an event suffix (e.g. `age = ...`); they
   are implicitly `init` handlers for the tagged cohort.
-- Base `init` and the origin block **partition** the attributes: put shared defaults in the base
-  `init` and cohort-specific attributes in the origin block. For an attribute the origin block
-  defines, the origin handler is authoritative (it overrides the base default); attributes the origin
-  block leaves unset fall back to the base `init`.
-- The origin tag is **stable** — set once at creation and never mutated — unlike `state`, which
+- Origin dispatch is a **pure replace**: a `create ... through "<origin>"` runs *only* that origin
+  block's handlers at init — the base `init` does **not** run for a tagged create. So each origin
+  block must supply the full birth state its cohort needs; shared defaults are repeated in each
+  block rather than left in a base `init`.
+- The origin tag is **stable** — chosen once at creation and never mutated — unlike `state`, which
   changes over an entity's life. Origin is its own axis, not reused `state`.
 - Several origins created in the **same** substep are still told apart, because the tag lives on the
   `create` call, not on the clock.
-- A `create` with no `through` runs only the base `init`; existing models are unaffected. An origin
-  with no matching `start init through` block also falls back to base `init`.
+- A `create` with no `through` runs the base `init`; existing models are unaffected. An origin with
+  no matching `start init through` block also falls back to the base `init`.
+- `start init through` blocks are only valid on entity types created via `create` (e.g. `organism`);
+  putting one on a `patch` or `simulation` is an error.
 
 ### External Data
 

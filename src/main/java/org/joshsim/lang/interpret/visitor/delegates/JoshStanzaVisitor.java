@@ -21,6 +21,7 @@ import org.joshsim.engine.value.converter.DirectConversion;
 import org.joshsim.engine.value.converter.Units;
 import org.joshsim.engine.value.engine.ValueSupportFactory;
 import org.joshsim.lang.antlr.JoshLangParser;
+import org.joshsim.lang.interpret.KnownEventSet;
 import org.joshsim.lang.interpret.StringLiteralUtil;
 import org.joshsim.lang.interpret.fragment.ProgramBuilder;
 import org.joshsim.lang.interpret.fragment.josh.ConversionsFragment;
@@ -41,6 +42,7 @@ public class JoshStanzaVisitor implements JoshVisitorDelegate {
 
   private final JoshParserToMachineVisitor parent;
   private final ValueSupportFactory valueFactory;
+  private final KnownEventSet knownEventSet;
 
   /**
    * Create a new stanza visitor.
@@ -50,6 +52,7 @@ public class JoshStanzaVisitor implements JoshVisitorDelegate {
   public JoshStanzaVisitor(DelegateToolbox toolbox) {
     parent = toolbox.getParent();
     valueFactory = toolbox.getValueFactory();
+    knownEventSet = toolbox.getKnownEventSet();
   }
 
   /**
@@ -83,26 +86,38 @@ public class JoshStanzaVisitor implements JoshVisitorDelegate {
    * <p>A {@code start init through "<origin>" ... end init} block supplies the init handlers that
    * run for a cohort created via {@code create ... through "<origin>"}. Its body handlers are
    * written without an event suffix (e.g. {@code age = ...}), so they parse as {@code constant}
-   * groups; this re-keys each group to the {@code init} event (preserving any conditional handlers)
-   * and registers it in the builder's separate origin map keyed by {@code "<origin>:<attribute>"}.
-   * Shared birth defaults stay in base {@code init}; base and origin partition the attributes.</p>
+   * groups; this re-keys each group to the per-origin init variant event
+   * ({@link KnownEventSet#initEventFor}) and registers it as an ordinary handler group. Dispatch is
+   * a compile-time desugar: a {@code create ... through "<origin>"} fast-forwards this variant
+   * event <em>instead of</em> the base {@code init} (pure replace), so the variant must supply
+   * every attribute the cohort needs at birth.</p>
    *
    * @param ctx The init stanza to capture.
-   * @param entityBuilder The entity builder to attach the origin init handlers to.
+   * @param entityBuilder The entity builder to attach the variant init handlers to.
+   * @param entityType The enclosing stanza type; origin init is meaningless on patch / simulation,
+   *     which are never created via {@code create ... through}.
    */
   private void captureInitThrough(JoshLangParser.InitStanzaContext ctx,
-        EntityBuilder entityBuilder) {
+        EntityBuilder entityBuilder, String entityType) {
+    if ("patch".equals(entityType) || "simulation".equals(entityType)) {
+      throw new IllegalArgumentException(String.format(
+          "start init through blocks are not allowed inside a %s stanza; %s entities are not "
+          + "created via `create ... through` so their init cannot be origin-dispatched.",
+          entityType, entityType));
+    }
+
     // The origin is a STR_ token whose text includes the surrounding quotes; strip them so it
     // matches the (unquoted) origin threaded through `create ... through "<origin>"`.
     String origin = StringLiteralUtil.stripQuotes(ctx.STR_().getText());
+    String initEvent = KnownEventSet.initEventFor(origin);
 
     for (JoshLangParser.EventHandlerGeneralContext handlerCtx : ctx.eventHandlerGeneral()) {
       for (EventHandlerGroupBuilder groupBuilder
           : handlerCtx.accept(parent).getEventHandlerGroups()) {
         String attribute = groupBuilder.buildKey().getAttribute();
-        // Force the event to init regardless of how the handler parsed (default "constant").
-        groupBuilder.setEventKey(EventKey.of(attribute, "init"));
-        entityBuilder.addOriginInitHandler(origin, attribute, groupBuilder.build());
+        // Force the event to the variant init regardless of how the handler parsed ("constant").
+        groupBuilder.setEventKey(EventKey.of(attribute, initEvent));
+        entityBuilder.addEventHandlerGroup(groupBuilder.buildKey(), groupBuilder.build());
       }
     }
   }
@@ -133,7 +148,7 @@ public class JoshStanzaVisitor implements JoshVisitorDelegate {
       throw new IllegalArgumentException(message);
     }
 
-    EntityBuilder entityBuilder = new EntityBuilder(valueFactory);
+    EntityBuilder entityBuilder = new EntityBuilder(valueFactory, knownEventSet);
     entityBuilder.ensureStateDefaultHandler();
     entityBuilder.setName(identifier);
 
@@ -145,7 +160,7 @@ public class JoshStanzaVisitor implements JoshVisitorDelegate {
       }
 
       if (ctx.getChild(childIndex) instanceof JoshLangParser.InitStanzaContext initCtx) {
-        captureInitThrough(initCtx, entityBuilder);
+        captureInitThrough(initCtx, entityBuilder, entityType);
         continue;
       }
 

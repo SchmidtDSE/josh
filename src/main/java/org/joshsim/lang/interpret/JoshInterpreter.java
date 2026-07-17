@@ -9,8 +9,10 @@ package org.joshsim.lang.interpret;
 import java.util.Iterator;
 import org.joshsim.engine.geometry.EngineGeometryFactory;
 import org.joshsim.engine.value.engine.ValueSupportFactory;
+import org.joshsim.lang.antlr.JoshLangParser;
 import org.joshsim.lang.bridge.EngineBridgeSimulationStore;
 import org.joshsim.lang.interpret.fragment.josh.JoshFragment;
+import org.joshsim.lang.interpret.visitor.JoshLangEventSetVisitor;
 import org.joshsim.lang.interpret.visitor.JoshParserToMachineVisitor;
 import org.joshsim.lang.io.InputOutputLayer;
 import org.joshsim.lang.parse.ParseResult;
@@ -38,8 +40,12 @@ public class JoshInterpreter {
 
     FutureBridgeGetter bridgeGetter = new FutureBridgeGetter(valueFactory);
 
-    JoshParserToMachineVisitor visitor = new JoshParserToMachineVisitor(valueFactory, bridgeGetter);
-    JoshFragment fragment = visitor.visit(parseResult.getProgram().orElseThrow());
+    JoshLangParser.ProgramContext programContext = parseResult.getProgram().orElseThrow();
+    KnownEventSet knownEventSet = new JoshLangEventSetVisitor().visit(programContext);
+
+    JoshParserToMachineVisitor visitor =
+        new JoshParserToMachineVisitor(valueFactory, bridgeGetter, knownEventSet);
+    JoshFragment fragment = visitor.visit(programContext);
 
     JoshProgram program = fragment.getProgram();
     bridgeGetter.setProgram(program);
@@ -75,8 +81,12 @@ public class JoshInterpreter {
 
     FutureBridgeGetter bridgeGetter = new FutureBridgeGetter(valueFactory);
 
-    JoshParserToMachineVisitor visitor = new JoshParserToMachineVisitor(valueFactory, bridgeGetter);
-    JoshFragment fragment = visitor.visit(parseResult.getProgram().orElseThrow());
+    JoshLangParser.ProgramContext programContext = parseResult.getProgram().orElseThrow();
+    KnownEventSet knownEventSet = new JoshLangEventSetVisitor().visit(programContext);
+
+    JoshParserToMachineVisitor visitor =
+        new JoshParserToMachineVisitor(valueFactory, bridgeGetter, knownEventSet);
+    JoshFragment fragment = visitor.visit(programContext);
 
     JoshProgram program = fragment.getProgram();
     bridgeGetter.setProgram(program);

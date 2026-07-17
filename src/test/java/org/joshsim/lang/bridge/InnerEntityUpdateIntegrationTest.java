@@ -451,7 +451,8 @@ public class InnerEntityUpdateIntegrationTest {
    *
    * <p>Verifies that founders (created at init via {@code through "founding"}) and recruits
    * (created mid-simulation via {@code through "recruitment"}) each run their own
-   * {@code start init through} block, while a shared base-init default still applies to both. The
+   * {@code start init through} block. Origin dispatch is a pure replace: each block supplies the
+   * full birth state, so a tagged create runs only its block and not the base {@code init}. The
    * in-{@code josh} asserts throw mid-run if origin dispatch selects the wrong handlers.</p>
    */
   @Test

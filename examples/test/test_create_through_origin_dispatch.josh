@@ -1,8 +1,9 @@
 # Integration test for create ... through "<origin>" creation-origin dispatch.
 #
 # Founders (created at init) get age 40 / state Adult; recruits (created at step 1) get age 0 /
-# state Seedling. Base init supplies the shared `caged` default. In-script asserts throw mid-run if
-# origin dispatch misbehaves.
+# state Seedling. Origin dispatch is a pure replace: each block supplies the full birth state
+# (including the caged default), since a create ... through runs only its own init block. In-script
+# asserts throw mid-run if origin dispatch misbehaves.
 
 start simulation Main
 
@@ -41,16 +42,17 @@ end patch
 
 start organism Tree
 
-  caged.init = false
   age.step = prior.age + 1 year
 
   start init through "founding"
+    caged = false
     age = 40 years
     state = "Adult"
     provenance = "founding"
   end init
 
   start init through "recruitment"
+    caged = false
     age = 0 years
     state = "Seedling"
     provenance = "recruitment"
