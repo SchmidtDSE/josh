@@ -28,7 +28,7 @@ start patch Default
     return sum(adultNeighbors.seedCache) / 10% * 1 count
   }
 
-  QueryTrees.init = create (sample normal with mean of 30 std of 10) of QueryTree
+  QueryTrees.init = create round(sample normal with mean of 30 std of 10) of QueryTree
   QueryTrees.start = {
     const deadTrees = current.QueryTrees[current.QueryTrees.state == "dead"]
     return current.QueryTree - deadTrees

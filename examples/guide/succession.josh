@@ -39,8 +39,8 @@ start patch Default
   initialBCount.init = countOccupancy - initialACount
 
   # Create initial occupants
-  SpeciesA.init = create initialACount of SpeciesA
-  SpeciesB.init = create initialBCount of SpeciesB
+  SpeciesA.init = create floor(initialACount) of SpeciesA
+  SpeciesB.init = create floor(initialBCount) of SpeciesB
   
   # Determine if in an extreme temperature event
   inExtremeTemperature.step = {
@@ -70,7 +70,7 @@ start patch Default
     if (totalCount > 0) {
       return floor((speciesACount / totalCount) * newCount)
     } else {
-      return newCount * 50%
+      return floor(newCount * 50%)
     }
   }
 
@@ -78,7 +78,7 @@ start patch Default
     if (totalCount > 0) {
       return floor((speciesACount / totalCount) * newCount)
     } else {
-      return newCount * 50%
+      return floor(newCount * 50%)
     }
   }
 
