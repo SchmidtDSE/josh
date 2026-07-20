@@ -46,4 +46,43 @@ public class JoshParserTest {
     assertFalse(result.hasErrors());
   }
 
+  @Test
+  public void testCreateThroughParses() {
+    ParseResult result = parser.parse(
+        "start patch Default "
+        + "Trees.init = create 3 count of Tree through \"founding\" "
+        + "end patch");
+    assertFalse(result.hasErrors());
+  }
+
+  @Test
+  public void testCreateSingleThroughParses() {
+    ParseResult result = parser.parse(
+        "start patch Default "
+        + "Sprouts.init = create Sprout through \"outplant\" "
+        + "end patch");
+    assertFalse(result.hasErrors());
+  }
+
+  @Test
+  public void testInitThroughStanzaParses() {
+    ParseResult result = parser.parse(
+        "start organism Tree "
+        + "start init through \"founding\" "
+        + "age = 40 years "
+        + "state = \"Adult\" "
+        + "end init "
+        + "end organism");
+    assertFalse(result.hasErrors());
+  }
+
+  @Test
+  public void testCreateThroughRequiresString() {
+    ParseResult result = parser.parse(
+        "start patch Default "
+        + "Trees.init = create 3 count of Tree through founding "
+        + "end patch");
+    assertTrue(result.hasErrors());
+  }
+
 }

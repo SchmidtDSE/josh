@@ -60,6 +60,10 @@ public class InnerEntityUpdateIntegrationTest {
       "examples/test/test_organism_created_midsim_sees_here.josh"
   );
 
+  private static final Path CREATE_THROUGH_ORIGIN_SCRIPT_PATH = Path.of(
+      "examples/test/test_create_through_origin_dispatch.josh"
+  );
+
   @Test
   public void testInnerEntitiesUpdateAcrossSteps() throws IOException {
     String joshCode = Files.readString(SCRIPT_PATH);
@@ -435,6 +439,50 @@ public class InnerEntityUpdateIntegrationTest {
         "Main",
         callback,
         false,
+        1,
+        true
+    );
+
+    assertFalse(completedSteps.isEmpty(), "Simulation should have completed at least one step");
+  }
+
+  /**
+   * Test that {@code create ... through "<origin>"} dispatches per-cohort init handlers.
+   *
+   * <p>Verifies that founders (created at init via {@code through "founding"}) and recruits
+   * (created mid-simulation via {@code through "recruitment"}) each run their own
+   * {@code start init through} block. Origin dispatch is a pure replace: each block supplies the
+   * full birth state, so a tagged create runs only its block and not the base {@code init}. The
+   * in-{@code josh} asserts throw mid-run if origin dispatch selects the wrong handlers.</p>
+   */
+  @Test
+  public void testCreateThroughOriginDispatch() throws IOException {
+    String joshCode = Files.readString(CREATE_THROUGH_ORIGIN_SCRIPT_PATH);
+
+    ParseResult parsed = JoshSimFacade.parse(joshCode);
+    assertFalse(parsed.hasErrors(),
+        "Josh code should parse without errors. Errors: " + parsed.getErrors());
+
+    EngineGeometryFactory geometryFactory = new GridGeometryFactory();
+    JvmInputOutputLayer inputOutputLayer = new JvmInputOutputLayerBuilder()
+        .withReplicate(1)
+        .build();
+
+    JoshProgram program = JoshSimFacade.interpret(geometryFactory, parsed, inputOutputLayer);
+    assertNotNull(program, "Program should be successfully interpreted");
+
+    List<Long> completedSteps = new ArrayList<>();
+
+    JoshSimFacadeUtil.SimulationStepCallback callback = (stepNumber) -> {
+      completedSteps.add(stepNumber);
+    };
+
+    JoshSimFacade.runSimulation(
+        geometryFactory,
+        program,
+        "Main",
+        callback,
+        true,
         1,
         true
     );

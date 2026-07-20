@@ -1,0 +1,54 @@
+# @category: creation_origin
+# @subcategory: isolation
+# @priority: critical
+# @description: an origin declared by one entity's start-init-through block must not be treated as
+#   valid for a different entity type; the second entity must still fall back to its own base init.
+
+start simulation CreateThroughNoCrossEntityLeak
+
+  grid.size = 10 m
+  grid.low.x = 0 m
+  grid.low.y = 0 m
+  grid.high.x = 20 m
+  grid.high.y = 20 m
+
+  steps.low = 0 count
+  steps.high = 1 count
+
+end simulation
+
+start patch Default
+
+  # Tree declares a "founding" origin block below. Shrub does NOT declare one. Shrub is still
+  # created through "founding" here -- this must resolve to Shrub's own base init, not silently
+  # resolve to an "init:founding" event Shrub never registered any handlers for.
+  Trees.init = create 1 count of Tree through "founding"
+  Shrubs.init = create 2 count of Shrub through "founding"
+
+  assert.treeCount.step:if(meta.stepCount == 0 count) = count(Trees) == 1 count
+  assert.treeFounding.step:if(meta.stepCount == 0 count) =
+    count(Trees[Trees.state == "TreeFounder"]) == 1 count
+
+  assert.shrubCount.step:if(meta.stepCount == 0 count) = count(Shrubs) == 2 count
+  assert.shrubBaseState.step:if(meta.stepCount == 0 count) =
+    count(Shrubs[Shrubs.state == "ShrubBase"]) == 2 count
+
+end patch
+
+start organism Tree
+
+  state.init = "TreeBase"
+
+  start init through "founding"
+    state = "TreeFounder"
+  end init
+
+end organism
+
+start organism Shrub
+
+  # No start-init-through block at all: any create through "<origin>" for Shrub must always
+  # fall back to this base init, regardless of what other entities declare.
+  state.init = "ShrubBase"
+
+end organism

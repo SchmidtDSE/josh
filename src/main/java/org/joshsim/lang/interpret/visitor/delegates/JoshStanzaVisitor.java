@@ -21,6 +21,8 @@ import org.joshsim.engine.value.converter.DirectConversion;
 import org.joshsim.engine.value.converter.Units;
 import org.joshsim.engine.value.engine.ValueSupportFactory;
 import org.joshsim.lang.antlr.JoshLangParser;
+import org.joshsim.lang.interpret.KnownEventSet;
+import org.joshsim.lang.interpret.StringLiteralUtil;
 import org.joshsim.lang.interpret.fragment.ProgramBuilder;
 import org.joshsim.lang.interpret.fragment.josh.ConversionsFragment;
 import org.joshsim.lang.interpret.fragment.josh.EntityFragment;
@@ -40,6 +42,7 @@ public class JoshStanzaVisitor implements JoshVisitorDelegate {
 
   private final JoshParserToMachineVisitor parent;
   private final ValueSupportFactory valueFactory;
+  private final KnownEventSet knownEventSet;
 
   /**
    * Create a new stanza visitor.
@@ -49,6 +52,7 @@ public class JoshStanzaVisitor implements JoshVisitorDelegate {
   public JoshStanzaVisitor(DelegateToolbox toolbox) {
     parent = toolbox.getParent();
     valueFactory = toolbox.getValueFactory();
+    knownEventSet = toolbox.getKnownEventSet();
   }
 
   /**
@@ -62,11 +66,7 @@ public class JoshStanzaVisitor implements JoshVisitorDelegate {
     // The state name is a STR_ token whose text includes the surrounding quotes. Strip them so the
     // stored state name matches the (now unquoted) string value an entity's state attribute holds
     // (see JoshValueVisitor.visitString); otherwise state-machine dispatch never matches.
-    String rawStateName = ctx.getChild(2).getText();
-    String stateName = (rawStateName.length() >= 2
-        && rawStateName.startsWith("\"") && rawStateName.endsWith("\""))
-        ? rawStateName.substring(1, rawStateName.length() - 1)
-        : rawStateName;
+    String stateName = StringLiteralUtil.stripQuotes(ctx.getChild(2).getText());
 
     int numHandlerGroups = ctx.getChildCount() - 5;
     for (int handlerGroupIndex = 0; handlerGroupIndex < numHandlerGroups; handlerGroupIndex++) {
@@ -78,6 +78,48 @@ public class JoshStanzaVisitor implements JoshVisitorDelegate {
     }
 
     return new StateFragment(groups);
+  }
+
+  /**
+   * Capture an origin-dispatched init stanza onto the entity being built.
+   *
+   * <p>A {@code start init through "<origin>" ... end init} block supplies the init handlers that
+   * run for a cohort created via {@code create ... through "<origin>"}. Its body handlers are
+   * written without an event suffix (e.g. {@code age = ...}), so they parse as {@code constant}
+   * groups; this re-keys each group to the per-origin init variant event
+   * ({@link KnownEventSet#initEventFor}) and registers it as an ordinary handler group. Dispatch is
+   * a compile-time desugar: a {@code create ... through "<origin>"} fast-forwards this variant
+   * event <em>instead of</em> the base {@code init} (pure replace), so the variant must supply
+   * every attribute the cohort needs at birth.</p>
+   *
+   * @param ctx The init stanza to capture.
+   * @param entityBuilder The entity builder to attach the variant init handlers to.
+   * @param entityType The enclosing stanza type; origin init is meaningless on patch / simulation,
+   *     which are never created via {@code create ... through}.
+   */
+  private void captureInitThrough(JoshLangParser.InitStanzaContext ctx,
+        EntityBuilder entityBuilder, String entityType) {
+    if ("patch".equals(entityType) || "simulation".equals(entityType)) {
+      throw new IllegalArgumentException(String.format(
+          "start init through blocks are not allowed inside a %s stanza; %s entities are not "
+          + "created via `create ... through` so their init cannot be origin-dispatched.",
+          entityType, entityType));
+    }
+
+    // The origin is a STR_ token whose text includes the surrounding quotes; strip them so it
+    // matches the (unquoted) origin threaded through `create ... through "<origin>"`.
+    String origin = StringLiteralUtil.stripQuotes(ctx.STR_().getText());
+    String initEvent = KnownEventSet.initEventFor(origin);
+
+    for (JoshLangParser.EventHandlerGeneralContext handlerCtx : ctx.eventHandlerGeneral()) {
+      for (EventHandlerGroupBuilder groupBuilder
+          : handlerCtx.accept(parent).getEventHandlerGroups()) {
+        String attribute = groupBuilder.buildKey().getAttribute();
+        // Force the event to the variant init regardless of how the handler parsed ("constant").
+        groupBuilder.setEventKey(EventKey.of(attribute, initEvent));
+        entityBuilder.addEventHandlerGroup(groupBuilder.buildKey(), groupBuilder.build());
+      }
+    }
   }
 
   /**
@@ -106,14 +148,21 @@ public class JoshStanzaVisitor implements JoshVisitorDelegate {
       throw new IllegalArgumentException(message);
     }
 
-    EntityBuilder entityBuilder = new EntityBuilder(valueFactory);
-    entityBuilder.ensureStateDefaultHandler();
+    EntityBuilder entityBuilder = new EntityBuilder(valueFactory, knownEventSet);
+    // Name must be set before ensureStateDefaultHandler(), which scopes its per-init-event
+    // defaults to this entity's own declared origins via knownEventSet.getInitEvents(name).
     entityBuilder.setName(identifier);
+    entityBuilder.ensureStateDefaultHandler();
 
     for (int innerIndex = 0; innerIndex < numInner; innerIndex++) {
       int childIndex = innerIndex + 3;
       if (ctx.getChild(childIndex) instanceof JoshLangParser.PhaseStanzaContext phaseCtx) {
         capturePhase(phaseCtx, entityBuilder, entityType);
+        continue;
+      }
+
+      if (ctx.getChild(childIndex) instanceof JoshLangParser.InitStanzaContext initCtx) {
+        captureInitThrough(initCtx, entityBuilder, entityType);
         continue;
       }
 

@@ -468,6 +468,11 @@ public class SingleThreadEventHandlerMachine implements EventHandlerMachine {
 
   @Override
   public EventHandlerMachine createEntity(String entityType) {
+    return createEntity(entityType, "init");
+  }
+
+  @Override
+  public EventHandlerMachine createEntity(String entityType, String initEventName) {
     EntityPrototype prototype = bridge.getPrototype(entityType);
     MutableEntity parent = scope.get("current").getAsMutableEntity();
     EntityPrototype innerDecorated = new EmbeddedParentEntityPrototype(
@@ -513,14 +518,14 @@ public class SingleThreadEventHandlerMachine implements EventHandlerMachine {
     EngineValue result;
     if (count == 1) {
       MutableEntity newEntity = decoratedPrototype.build();
-      EntityFastForwarder.fastForward(newEntity, substep);
+      EntityFastForwarder.fastForward(newEntity, substep, initEventName);
       result = valueFactory.build(newEntity);
     } else {
       // Pre-size ArrayList with known count to avoid growth overhead
       List<EngineValue> values = new ArrayList<>((int) count);
       for (int i = 0; i < count; i++) {
         MutableEntity newEntity = decoratedPrototype.build();
-        EntityFastForwarder.fastForward(newEntity, substep);
+        EntityFastForwarder.fastForward(newEntity, substep, initEventName);
         values.add(valueFactory.build(newEntity));
       }
       result = valueFactory.buildRealizedDistribution(values, Units.of(entityType));

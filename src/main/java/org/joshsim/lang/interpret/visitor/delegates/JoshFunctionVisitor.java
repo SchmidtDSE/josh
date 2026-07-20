@@ -18,6 +18,7 @@ import org.joshsim.engine.func.CompiledSelector;
 import org.joshsim.engine.func.CompiledSelectorFromCallable;
 import org.joshsim.lang.antlr.JoshLangParser;
 import org.joshsim.lang.interpret.BridgeGetter;
+import org.joshsim.lang.interpret.KnownEventSet;
 import org.joshsim.lang.interpret.ReservedWordChecker;
 import org.joshsim.lang.interpret.action.EventHandlerAction;
 import org.joshsim.lang.interpret.fragment.josh.ActionFragment;
@@ -39,6 +40,7 @@ public class JoshFunctionVisitor implements JoshVisitorDelegate {
 
   private final JoshParserToMachineVisitor parent;
   private final BridgeGetter bridgeGetter;
+  private final KnownEventSet knownEventSet;
 
   /**
    * Create a new visitor for function operations.
@@ -48,6 +50,7 @@ public class JoshFunctionVisitor implements JoshVisitorDelegate {
   public JoshFunctionVisitor(DelegateToolbox toolbox) {
     parent = toolbox.getParent();
     bridgeGetter = toolbox.getBridgeGetter();
+    knownEventSet = toolbox.getKnownEventSet();
   }
 
   /**
@@ -315,10 +318,7 @@ public class JoshFunctionVisitor implements JoshVisitorDelegate {
    * @return true if the string is a valid event name, false otherwise.
    */
   private boolean isEventName(String candidate) {
-    return switch (candidate) {
-      case "init", "start", "step", "end", "remove", "constant" -> true;
-      default -> false;
-    };
+    return knownEventSet.isEventName(candidate);
   }
 
   /**

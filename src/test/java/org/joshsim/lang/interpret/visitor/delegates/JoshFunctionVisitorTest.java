@@ -23,6 +23,7 @@ import org.joshsim.lang.antlr.JoshLangParser.IdentifierContext;
 import org.joshsim.lang.antlr.JoshLangParser.LambdaContext;
 import org.joshsim.lang.antlr.JoshLangParser.ReturnContext;
 import org.joshsim.lang.interpret.BridgeGetter;
+import org.joshsim.lang.interpret.KnownEventSet;
 import org.joshsim.lang.interpret.action.EventHandlerAction;
 import org.joshsim.lang.interpret.fragment.josh.ActionFragment;
 import org.joshsim.lang.interpret.fragment.josh.CompiledCallableFragment;
@@ -48,6 +49,7 @@ class JoshFunctionVisitorTest {
 
     when(toolbox.getParent()).thenReturn(parent);
     when(toolbox.getBridgeGetter()).thenReturn(bridgeGetter);
+    when(toolbox.getKnownEventSet()).thenReturn(new KnownEventSet());
 
     visitor = new JoshFunctionVisitor(toolbox);
   }
