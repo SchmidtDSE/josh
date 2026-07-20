@@ -91,15 +91,17 @@ public class EntityBuilder implements EntityInitializationInfo {
   /**
    * Get the substep-like events for which handler caches and skip arrays are built.
    *
-   * <p>The standard substeps plus every declared per-origin init variant event, so a
-   * {@code start init through} block's handlers resolve when its variant init is
-   * fast-forwarded.</p>
+   * <p>The standard substeps plus every per-origin init variant event <em>this entity</em>
+   * declared via its own {@code start init through} blocks, so a variant's handlers resolve when
+   * its init is fast-forwarded. Deliberately scoped to this entity's own declarations (not every
+   * origin declared anywhere in the program) so one entity's origins don't inflate every other
+   * entity's cache.</p>
    *
    * @return The set of event names to build per-substep structures for.
    */
   private Set<String> getCacheableEvents() {
     Set<String> events = new HashSet<>(SUBSTEPS);
-    for (String initEvent : knownEventSet.getInitEvents()) {
+    for (String initEvent : knownEventSet.getInitEvents(name.orElse(""))) {
       events.add(initEvent);
     }
     return events;
@@ -592,19 +594,21 @@ public class EntityBuilder implements EntityInitializationInfo {
   /**
    * Ensure a default state handler exists for each init event an entity may be born through.
    *
-   * <p>Creates a default {@code state} handler returning an empty string for every declared init
-   * event ({@code "init"} plus each per-origin variant), so an entity gets a state even when the
-   * matching {@code start init through} block leaves {@code state} unset. Since origin dispatch is
-   * a pure replace (a {@code create ... through} runs only its variant init, not base
-   * {@code init}),
-   * every variant needs its own default. Any real {@code state} handler added later for the same
-   * event overwrites the default. Call before handler groups are registered.</p>
+   * <p>Creates a default {@code state} handler returning an empty string for every init event
+   * <em>this entity</em> declared ({@code "init"} plus each of its own per-origin variants), so an
+   * entity gets a state even when the matching {@code start init through} block leaves
+   * {@code state} unset. Since origin dispatch is a pure replace (a {@code create ... through}
+   * runs only its variant init, not base {@code init}), every variant needs its own default. Any
+   * real {@code state} handler added later for the same event overwrites the default. Requires the
+   * builder's name to already be set (see {@link #setName(String)}) so the lookup is scoped to
+   * this entity and not some other entity's declared origins. Call before handler groups are
+   * registered.</p>
    */
   public void ensureStateDefaultHandler() {
     EngineValue defaultStateValue = valueFactory.build("", Units.EMPTY);
     addAttribute("state", defaultStateValue);
 
-    for (String initEvent : knownEventSet.getInitEvents()) {
+    for (String initEvent : knownEventSet.getInitEvents(name.orElse(""))) {
       EventKey key = new EventKey("state", initEvent);
       if (eventHandlerGroups.containsKey(key)) {
         continue;

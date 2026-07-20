@@ -16,9 +16,11 @@ import org.joshsim.lang.interpret.StringLiteralUtil;
  *
  * <p>Runs ahead of {@link JoshParserToMachineVisitor} and produces a {@link KnownEventSet} which is
  * threaded into the {@code DelegateToolbox}. Today it collects the per-origin init variant events
- * declared by {@code start init through "<origin>"} blocks; the base init and standard substep
- * events are always present via {@link KnownEventSet}'s defaults. Later work can extend this to
- * user-declared substep events.</p>
+ * declared by each entity's own {@code start init through "<origin>"} blocks, keyed to that entity
+ * type so an origin declared on one entity (e.g. {@code Tree}) is never treated as valid for a
+ * different entity (e.g. {@code Shrub}); the base init and standard substep events are always
+ * present via {@link KnownEventSet}'s defaults. Later work can extend this to user-declared substep
+ * events, scoped per simulation the same way init variants are scoped per entity here.</p>
  */
 public class JoshLangEventSetVisitor extends JoshLangBaseVisitor<KnownEventSet> {
 
@@ -29,14 +31,26 @@ public class JoshLangEventSetVisitor extends JoshLangBaseVisitor<KnownEventSet> 
     super();
   }
 
+  /**
+   * Collect the per-origin init variants declared directly on this entity stanza.
+   *
+   * <p>{@code initStanza} nodes only ever appear directly nested in an {@code entityStanza} (see
+   * the grammar), so this is the one place the declaring entity's name is known; each variant is
+   * registered against that name rather than a program-wide bucket.</p>
+   *
+   * @param ctx The entity stanza (organism, patch, etc.) to collect declared init origins from.
+   * @return The init variants declared by this entity, combined with anything found deeper in the
+   *     tree (there is currently nothing else to find, since entities cannot nest).
+   */
   @Override
-  public KnownEventSet visitInitStanza(JoshLangParser.InitStanzaContext ctx) {
-    String origin = StringLiteralUtil.stripQuotes(ctx.STR_().getText());
+  public KnownEventSet visitEntityStanza(JoshLangParser.EntityStanzaContext ctx) {
+    String entityType = ctx.identifier().getText();
     KnownEventSet result = new KnownEventSet();
-    result.addInitOrigin(origin);
-
-    KnownEventSet childResult = visitChildren(ctx);
-    return childResult == null ? result : result.combine(childResult);
+    for (JoshLangParser.InitStanzaContext initCtx : ctx.initStanza()) {
+      String origin = StringLiteralUtil.stripQuotes(initCtx.STR_().getText());
+      result.addInitOrigin(entityType, origin);
+    }
+    return result;
   }
 
   @Override

@@ -48,37 +48,75 @@ class KnownEventSetTest {
   }
 
   @Test
-  void addedOriginBecomesAnInitEvent() {
+  void baseInitEventIsRecognizedForAnyEntity() {
     KnownEventSet events = new KnownEventSet();
-    events.addInitOrigin("founding");
-    assertTrue(events.isInitEvent("init:founding"));
-    assertTrue(events.isEventName("init:founding"));
-    assertFalse(events.isInitEvent("init:outplant"));
+    assertTrue(events.isInitEvent("Tree", "init"));
+    assertTrue(events.isInitEvent("Shrub", "init"));
   }
 
   @Test
-  void combineUnionsBothSets() {
+  void addedOriginBecomesAnInitEventOnlyForItsOwnEntity() {
+    KnownEventSet events = new KnownEventSet();
+    events.addInitOrigin("Tree", "founding");
+
+    assertTrue(events.isInitEvent("Tree", "init:founding"));
+    assertFalse(events.isInitEvent("Tree", "init:outplant"));
+  }
+
+  @Test
+  void originDeclaredByOneEntityDoesNotLeakToAnother() {
+    KnownEventSet events = new KnownEventSet();
+    events.addInitOrigin("Tree", "founding");
+
+    // Shrub never declared "founding"; it must not inherit Tree's variant.
+    assertFalse(events.isInitEvent("Shrub", "init:founding"));
+    // Shrub still gets the always-available base init.
+    assertTrue(events.isInitEvent("Shrub", "init"));
+  }
+
+  @Test
+  void getInitEventsIsScopedToTheRequestedEntity() {
+    KnownEventSet events = new KnownEventSet();
+    events.addInitOrigin("Tree", "founding");
+    events.addInitOrigin("Tree", "outplant");
+    events.addInitOrigin("Shrub", "cutting");
+
+    boolean treeHasCutting = false;
+    for (String event : events.getInitEvents("Tree")) {
+      if (event.equals("init:cutting")) {
+        treeHasCutting = true;
+      }
+    }
+    assertFalse(treeHasCutting, "Tree must not see Shrub's declared origin");
+  }
+
+  @Test
+  void combineUnionsBothSetsKeepingEntitiesSeparate() {
     KnownEventSet first = new KnownEventSet();
-    first.addInitOrigin("founding");
+    first.addInitOrigin("Tree", "founding");
     KnownEventSet second = new KnownEventSet();
-    second.addInitOrigin("outplant");
+    second.addInitOrigin("Shrub", "outplant");
 
     KnownEventSet combined = first.combine(second);
-    assertTrue(combined.isInitEvent("init:founding"));
-    assertTrue(combined.isInitEvent("init:outplant"));
-    assertTrue(combined.isInitEvent("init"));
+    assertTrue(combined.isInitEvent("Tree", "init:founding"));
+    assertTrue(combined.isInitEvent("Shrub", "init:outplant"));
+    assertTrue(combined.isInitEvent("Tree", "init"));
+
+    // Combining must not cross-pollinate entities either.
+    assertFalse(combined.isInitEvent("Tree", "init:outplant"));
+    assertFalse(combined.isInitEvent("Shrub", "init:founding"));
   }
 
   @Test
   void combineDoesNotMutateOperands() {
     KnownEventSet first = new KnownEventSet();
-    first.addInitOrigin("founding");
+    first.addInitOrigin("Tree", "founding");
     KnownEventSet second = new KnownEventSet();
-    second.addInitOrigin("outplant");
+    second.addInitOrigin("Tree", "outplant");
 
     first.combine(second);
-    assertFalse(first.isInitEvent("init:outplant"));
-    assertFalse(second.isInitEvent("init:founding"));
+    assertFalse(first.isInitEvent("Tree", "init:outplant"));
+    assertFalse(second.isInitEvent("Tree", "init:founding"));
   }
 
 }

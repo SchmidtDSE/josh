@@ -37,17 +37,33 @@ class JoshLangEventSetVisitorTest {
         + "start init through \"outplant\" age = 0 years end init "
         + "end organism");
 
-    assertTrue(events.isInitEvent("init"));
-    assertTrue(events.isInitEvent("init:founding"));
-    assertTrue(events.isInitEvent("init:outplant"));
-    assertFalse(events.isInitEvent("init:recruitment"));
+    assertTrue(events.isInitEvent("Tree", "init"));
+    assertTrue(events.isInitEvent("Tree", "init:founding"));
+    assertTrue(events.isInitEvent("Tree", "init:outplant"));
+    assertFalse(events.isInitEvent("Tree", "init:recruitment"));
   }
 
   @Test
   void programWithoutOriginInitHasOnlyBaseInit() {
     KnownEventSet events = discover("start organism Tree age.init = 0 years end organism");
-    assertTrue(events.isInitEvent("init"));
-    assertFalse(events.isInitEvent("init:founding"));
+    assertTrue(events.isInitEvent("Tree", "init"));
+    assertFalse(events.isInitEvent("Tree", "init:founding"));
+  }
+
+  @Test
+  void originDeclaredByOneEntityDoesNotLeakToAnotherEntity() {
+    KnownEventSet events = discover(
+        "start organism Tree "
+        + "start init through \"founding\" age = 40 years end init "
+        + "end organism "
+        + "start organism Shrub "
+        + "age.init = 0 years "
+        + "end organism");
+
+    assertTrue(events.isInitEvent("Tree", "init:founding"));
+    // Shrub never declared "founding"; it must fall back to base init, not inherit Tree's variant.
+    assertFalse(events.isInitEvent("Shrub", "init:founding"));
+    assertTrue(events.isInitEvent("Shrub", "init"));
   }
 
   @Test

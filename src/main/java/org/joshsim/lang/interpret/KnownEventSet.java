@@ -7,7 +7,9 @@
 package org.joshsim.lang.interpret;
 
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Map;
 import java.util.Set;
 
 /**
@@ -15,18 +17,22 @@ import java.util.Set;
  *
  * <p>Josh has two kinds of events. <em>Init</em> events run once when an entity is born: the base
  * {@code "init"} plus, for each {@code create ... through "<origin>"} dispatch target, a per-origin
- * variant event named {@link #initEventFor(String)} (e.g. {@code "init:founding"}).
- * <em>Substep</em> events ({@code "start"}, {@code "step"}, {@code "end"}) run every timestep. Two
- * further names, {@code "constant"} and {@code "remove"}, are structural and always recognized.</p>
+ * variant event named {@link #initEventFor(String)} (e.g. {@code "init:founding"}). A per-origin
+ * variant is declared by a {@code start init through} block on a specific entity stanza, so it is
+ * only ever valid for the entity type that declared it — {@code Shrub} does not gain an
+ * {@code init:founding} event just because {@code Tree} declared one. <em>Substep</em> events
+ * ({@code "start"}, {@code "step"}, {@code "end"}) run every timestep and, today, are shared
+ * program-wide (no per-entity or per-simulation axis yet).</p>
  *
  * <p>This is produced by a pre-pass ({@code JoshLangEventSetVisitor}) before the main interpret
  * walk and threaded into the {@code DelegateToolbox} so the visitors can (a) split an attribute
- * name from its trailing event (see {@code JoshFunctionVisitor.isEventName}), (b) decide whether a
- * {@code through "<origin>"} clause has a matching {@code start init through} block, and (c) tell
- * {@code EntityBuilder} which init events to build handler caches and default {@code state}
- * handlers for. Instances are immutable once built; {@link #combine(KnownEventSet)} merges two
- * into a new
- * one.</p>
+ * name from its trailing event (see {@code JoshFunctionVisitor.isEventName}) — a check that only
+ * ever sees naked identifiers and so never needs per-origin variants, since a colon can never
+ * appear in one — (b) decide, for the specific entity type being created, whether a
+ * {@code through "<origin>"} clause has a matching {@code start init through} block on that same
+ * entity, and (c) tell {@code EntityBuilder} which of its own declared init events to build handler
+ * caches and default {@code state} handlers for. Instances are immutable once built;
+ * {@link #combine(KnownEventSet)} merges two into a new one.</p>
  */
 public class KnownEventSet {
 
@@ -42,26 +48,30 @@ public class KnownEventSet {
   /** The standard per-timestep substep events. */
   private static final Set<String> STANDARD_SUBSTEP_EVENTS = Set.of("start", "step", "end");
 
-  private final Set<String> initEvents;
+  /** Per-entity-type declared init variant events (e.g. {@code "Tree" -> {"init:founding"}}). */
+  private final Map<String, Set<String>> initEventsByEntity;
+
   private final Set<String> substepEvents;
 
   /**
-   * Create a set seeded with the base init event and the standard substeps.
+   * Create a set seeded with the standard substeps and no declared init origins.
    */
   public KnownEventSet() {
-    initEvents = new HashSet<>();
-    initEvents.add(BASE_INIT_EVENT);
+    initEventsByEntity = new HashMap<>();
     substepEvents = new HashSet<>(STANDARD_SUBSTEP_EVENTS);
   }
 
   /**
    * Create a set from explicit event collections (used by {@link #combine(KnownEventSet)}).
    *
-   * @param initEvents The init events to include.
+   * @param initEventsByEntity The per-entity declared init variant events to include.
    * @param substepEvents The substep events to include.
    */
-  private KnownEventSet(Set<String> initEvents, Set<String> substepEvents) {
-    this.initEvents = new HashSet<>(initEvents);
+  private KnownEventSet(Map<String, Set<String>> initEventsByEntity, Set<String> substepEvents) {
+    this.initEventsByEntity = new HashMap<>();
+    for (Map.Entry<String, Set<String>> entry : initEventsByEntity.entrySet()) {
+      this.initEventsByEntity.put(entry.getKey(), new HashSet<>(entry.getValue()));
+    }
     this.substepEvents = new HashSet<>(substepEvents);
   }
 
@@ -78,22 +88,50 @@ public class KnownEventSet {
   }
 
   /**
-   * Register a per-origin init variant event.
+   * Register a per-origin init variant event declared by a specific entity type.
    *
-   * @param origin The origin declared by a {@code start init through "<origin>"} block.
+   * @param entityType The entity type (e.g. {@code "Tree"}) whose stanza declared the
+   *     {@code start init through "<origin>"} block.
+   * @param origin The origin declared by that block.
    */
-  public void addInitOrigin(String origin) {
-    initEvents.add(initEventFor(origin));
+  public void addInitOrigin(String entityType, String origin) {
+    initEventsByEntity.computeIfAbsent(entityType, key -> new HashSet<>())
+        .add(initEventFor(origin));
   }
 
   /**
-   * Determine whether a name is an init event (base or a declared per-origin variant).
+   * Determine whether a name is a recognized init event name (base only).
+   *
+   * <p>Used only for the naked-identifier discovery check in
+   * {@code JoshFunctionVisitor.isEventName}: a candidate there is always a bare identifier segment,
+   * which can never contain the {@code ":"} that marks a per-origin variant, so only the base event
+   * is ever relevant here. Use {@link #isInitEvent(String, String)} to check whether a specific
+   * entity type supports a given (possibly variant) init event.</p>
    *
    * @param candidate The event name to test.
-   * @return True if {@code candidate} is an init event.
+   * @return True if {@code candidate} is the base init event.
    */
   public boolean isInitEvent(String candidate) {
-    return initEvents.contains(candidate);
+    return BASE_INIT_EVENT.equals(candidate);
+  }
+
+  /**
+   * Determine whether a specific entity type recognizes an init event.
+   *
+   * <p>True for the base init event (always available) or a per-origin variant that entity type's
+   * own {@code start init through} block declared. False for a variant declared by a
+   * <em>different</em> entity type — origin dispatch must not resolve across entity types.</p>
+   *
+   * @param entityType The entity type being created (e.g. {@code "Tree"}).
+   * @param candidate The init event to test (base or a variant from {@link #initEventFor}).
+   * @return True if {@code candidate} is valid for {@code entityType}.
+   */
+  public boolean isInitEvent(String entityType, String candidate) {
+    if (BASE_INIT_EVENT.equals(candidate)) {
+      return true;
+    }
+    Set<String> declared = initEventsByEntity.get(entityType);
+    return declared != null && declared.contains(candidate);
   }
 
   /**
@@ -109,9 +147,10 @@ public class KnownEventSet {
   /**
    * Determine whether a name is a recognized event name.
    *
-   * <p>True for init events, substep events, and the structural {@code "constant"} and
+   * <p>True for the base init event, substep events, and the structural {@code "constant"} and
    * {@code "remove"} events. This is the predicate used to split an attribute name from its
-   * trailing event.</p>
+   * trailing event; per-origin init variants never appear here since they can only be produced
+   * from a quoted string literal, never from a naked identifier segment.</p>
    *
    * @param candidate The final dot-separated segment of a handler name.
    * @return True if {@code candidate} names an event rather than part of the attribute name.
@@ -123,12 +162,20 @@ public class KnownEventSet {
   }
 
   /**
-   * Get the init events (base plus declared per-origin variants).
+   * Get the init events a specific entity type may be born through.
    *
-   * @return An unmodifiable view of the init event names.
+   * @param entityType The entity type (e.g. {@code "Tree"}).
+   * @return The base init event plus any per-origin variants that entity type declared. Never
+   *     includes another entity type's variants.
    */
-  public Iterable<String> getInitEvents() {
-    return Collections.unmodifiableSet(initEvents);
+  public Iterable<String> getInitEvents(String entityType) {
+    Set<String> result = new HashSet<>();
+    result.add(BASE_INIT_EVENT);
+    Set<String> declared = initEventsByEntity.get(entityType);
+    if (declared != null) {
+      result.addAll(declared);
+    }
+    return Collections.unmodifiableSet(result);
   }
 
   /**
@@ -144,13 +191,21 @@ public class KnownEventSet {
    * Merge this set with another, producing a new combined set.
    *
    * @param other The set to merge in.
-   * @return A new KnownEventSet containing the union of both sets' events.
+   * @return A new KnownEventSet containing the union of both sets' events, keeping each entity
+   *     type's declared init variants separate from every other entity type's.
    */
   public KnownEventSet combine(KnownEventSet other) {
-    Set<String> combinedInit = new HashSet<>(initEvents);
+    Map<String, Set<String>> combinedInit = new HashMap<>();
+    for (Map.Entry<String, Set<String>> entry : initEventsByEntity.entrySet()) {
+      combinedInit.computeIfAbsent(entry.getKey(), key -> new HashSet<>()).addAll(entry.getValue());
+    }
+    for (Map.Entry<String, Set<String>> entry : other.initEventsByEntity.entrySet()) {
+      combinedInit.computeIfAbsent(entry.getKey(), key -> new HashSet<>()).addAll(entry.getValue());
+    }
+
     Set<String> combinedSubstep = new HashSet<>(substepEvents);
-    combinedInit.addAll(other.initEvents);
     combinedSubstep.addAll(other.substepEvents);
+
     return new KnownEventSet(combinedInit, combinedSubstep);
   }
 

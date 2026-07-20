@@ -149,8 +149,10 @@ public class JoshStanzaVisitor implements JoshVisitorDelegate {
     }
 
     EntityBuilder entityBuilder = new EntityBuilder(valueFactory, knownEventSet);
-    entityBuilder.ensureStateDefaultHandler();
+    // Name must be set before ensureStateDefaultHandler(), which scopes its per-init-event
+    // defaults to this entity's own declared origins via knownEventSet.getInitEvents(name).
     entityBuilder.setName(identifier);
+    entityBuilder.ensureStateDefaultHandler();
 
     for (int innerIndex = 0; innerIndex < numInner; innerIndex++) {
       int childIndex = innerIndex + 3;
