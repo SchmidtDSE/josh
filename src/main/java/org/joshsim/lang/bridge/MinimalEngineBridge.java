@@ -245,8 +245,7 @@ public class MinimalEngineBridge implements EngineBridge {
    * {@code 0.4 percent} would otherwise compare directly against a config threshold like
    * {@code 0.004 count} (from {@code 0.4 %}) and appear ~100x larger than intended. Normalizing
    * here, at the single point all {@code external} reads pass through, avoids re-preprocessing
-   * already-generated {@code .jshd}/{@code .jshdz} files. See
-   * https://github.com/SchmidtDSE/josh-models/issues/39.</p>
+   * already-generated {@code .jshd}/{@code .jshdz} files.</p>
    *
    * @param value the raw value read from the external data source.
    * @return the value unchanged, or converted to a count-unit fraction if tagged percent.
