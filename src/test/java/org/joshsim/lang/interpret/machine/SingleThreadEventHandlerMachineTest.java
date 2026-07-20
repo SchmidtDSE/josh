@@ -1000,6 +1000,45 @@ public class SingleThreadEventHandlerMachineTest {
   }
 
   @Test
+  void createEntity_shouldThrowForFractionalCount() {
+    // Given
+    machine.push(factory.build(new BigDecimal("12.1"), Units.COUNT));
+
+    // When and then
+    IllegalArgumentException error = assertThrows(
+        IllegalArgumentException.class,
+        () -> machine.createEntity("JoshuaTree")
+    );
+    assertTrue(error.getMessage().contains("JoshuaTree"));
+    assertTrue(error.getMessage().contains("12.1"));
+    assertTrue(error.getMessage().contains("round()"));
+    assertTrue(error.getMessage().contains("floor()"));
+    assertTrue(error.getMessage().contains("ceil()"));
+  }
+
+  @Test
+  void createEntity_shouldToleratePrecisionNoiseNearWholeNumber() {
+    // Given - a value that should be treated as exactly 3 despite floating-point noise
+    when(mockScope.get("meta")).thenReturn(mockValue);
+    when(mockScope.get("here")).thenReturn(mockValue);
+    when(mockValue.getAsEntity()).thenReturn(mockEntity);
+    when(mockValue.getUnits()).thenReturn(Units.of("Test"));
+    when(mockBridge.getPrototype("Test")).thenReturn(mockPrototype);
+    when(mockPrototype.buildSpatial(any(Entity.class))).thenReturn(mockCreatedEntity);
+    when(mockCreatedEntity.getName()).thenReturn("Test");
+    when(mockPrototype.requiresParent()).thenReturn(true);
+
+    // When
+    machine.push(factory.build(2.9999999999998, Units.COUNT));
+    machine.createEntity("Test");
+
+    // Then
+    machine.end();
+    Distribution result = machine.getResult().getAsDistribution();
+    assertEquals(Optional.of(3), result.getSize());
+  }
+
+  @Test
   void executeSpatialQuery_shouldReturnPatchesWithinDistance() {
     // Given
     Set<String> mockAttrs = Set.of("testAttr");
