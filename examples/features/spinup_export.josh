@@ -4,19 +4,17 @@ start simulation SpinupExport
   grid.low = 0 m latitude, 0 m longitude
   grid.high = 10 m latitude, 10 m longitude
 
-  steps.low = 0 years
-  steps.high = 2 years
+  steps.low = 0 count
+  steps.high = 2 count
 
   exportFiles.patch = "file:///tmp/spinup_export_josh.csv"
 
   start spinup
-    duration = 2 years
-    year = sample discrete uniform from 0 years to 2 years
+    duration = 2 count
   end spinup
 
   start spindown
-    duration = 2 years
-    year = sample discrete uniform from 0 years to 2 years
+    duration = 2 count
   end spindown
 
 end simulation
@@ -26,6 +24,3 @@ start patch Default
   export.phase.step = meta.phase
 
 end patch
-
-start unit years
-end unit

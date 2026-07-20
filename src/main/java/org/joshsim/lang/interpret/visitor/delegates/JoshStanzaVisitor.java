@@ -185,13 +185,12 @@ public class JoshStanzaVisitor implements JoshVisitorDelegate {
   /**
    * Capture a spin-up / spin-down phase onto the simulation being built.
    *
-   * <p>The phase body is a set of named properties ({@code name = expression}): {@code year} (the
-   * data year resampled each step while in the phase) and {@code duration} (the phase length). Each
-   * is compiled like an ordinary handler and re-registered under a synthetic key: {@code duration}
-   * as a constant-substep attribute ({@code __<phase>Steps}) the bridge reads at construction to
-   * anchor the clock, and {@code year} under a dedicated event (the phase name) so the stepper
-   * never runs it automatically — the bridge evaluates it on demand only while the phase is active,
-   * leaving the random sequence of other phases untouched.</p>
+   * <p>The phase body is a single named property, {@code duration} (the phase length), compiled
+   * like an ordinary handler and re-registered as a constant-substep attribute
+   * ({@code __<phase>Steps}) the bridge reads at construction to anchor the clock. A model that
+   * wants a different data year while the phase is active defines an ordinary {@code year}
+   * attribute (readable as {@code meta.year}) with a {@code meta.phase}-gated handler instead of a
+   * dedicated phase-only property — see {@code MinimalEngineBridge#getDataTimestep()}.</p>
    *
    * @param ctx The phase stanza to capture.
    * @param entityBuilder The simulation entity builder to attach the phase handlers to.
@@ -211,7 +210,6 @@ public class JoshStanzaVisitor implements JoshVisitorDelegate {
           "Phase start and end type different: %s, %s", phase, closePhase));
     }
 
-    boolean hasYear = false;
     boolean hasDuration = false;
     for (JoshLangParser.EventHandlerGeneralContext propertyCtx : ctx.eventHandlerGeneral()) {
       for (EventHandlerGroupBuilder groupBuilder
@@ -220,25 +218,18 @@ public class JoshStanzaVisitor implements JoshVisitorDelegate {
         CompiledCallable callable = groupBuilder.build()
             .getEventHandlers().iterator().next().getCallable();
         switch (property) {
-          case "year" -> {
-            addPhaseHandler(entityBuilder, "__" + phase + "Year", phase, callable);
-            hasYear = true;
-          }
           case "duration" -> {
             addPhaseHandler(entityBuilder, "__" + phase + "Steps", "constant", callable);
             hasDuration = true;
           }
           default -> throw new IllegalArgumentException(String.format(
-              "Unknown %s property '%s'. Expected 'year' or 'duration'.", phase, property));
+              "Unknown %s property '%s'. Expected 'duration'.", phase, property));
         }
       }
     }
 
     if (!hasDuration) {
       throw new IllegalArgumentException(phase + " block is missing a 'duration'.");
-    }
-    if (!hasYear) {
-      throw new IllegalArgumentException(phase + " block is missing a 'year' expression.");
     }
   }
 

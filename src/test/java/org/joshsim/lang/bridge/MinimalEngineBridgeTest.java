@@ -101,6 +101,25 @@ public class MinimalEngineBridgeTest {
   }
 
   @Test
+  void testGetDataTimestepFallsBackToClockWhenYearNotOverridden() {
+    // No "year" attribute declared on the simulation entity (the lenient mock's default
+    // getAttributeValue returns Optional.empty()) -- must fall back to the raw clock.
+    assertEquals(bridge.getCurrentTimestep(), bridge.getDataTimestep());
+  }
+
+  @Test
+  void testGetDataTimestepUsesYearOverrideWhenDefined() {
+    // A model that defines its own "year" attribute (e.g. resampled during spin-up via a
+    // meta.phase-gated handler) wins over the raw clock -- the same override meta.year already
+    // honors for ordinary attribute reads via SingleThreadEventHandlerMachine#pushAttribute.
+    ValueSupportFactory engineValueFactory = new ValueSupportFactory();
+    EngineValue overrideYear = engineValueFactory.build(42, Units.of("count"));
+    when(mockSimulation.getAttributeValue("year")).thenReturn(Optional.of(overrideYear));
+
+    assertEquals(42L, bridge.getDataTimestep());
+  }
+
+  @Test
   void testGetPatch() {
     expectQuery(new Query(0, mockEnginePoint), Arrays.asList(mockPatch));
 

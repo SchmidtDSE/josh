@@ -16,13 +16,9 @@ import org.joshsim.engine.config.Config;
 import org.joshsim.engine.entity.base.Entity;
 import org.joshsim.engine.entity.base.GeoKey;
 import org.joshsim.engine.entity.base.MutableEntity;
-import org.joshsim.engine.entity.handler.EventHandler;
-import org.joshsim.engine.entity.handler.EventHandlerGroup;
-import org.joshsim.engine.entity.handler.EventKey;
 import org.joshsim.engine.entity.prototype.EntityPrototype;
 import org.joshsim.engine.entity.prototype.EntityPrototypeStore;
 import org.joshsim.engine.func.CompiledCallable;
-import org.joshsim.engine.func.EntityScope;
 import org.joshsim.engine.func.SingleValueScope;
 import org.joshsim.engine.geometry.EngineGeometry;
 import org.joshsim.engine.geometry.EngineGeometryFactory;
@@ -69,10 +65,6 @@ public class MinimalEngineBridge implements EngineBridge {
   private long spindownSteps;
   private long observedLow;
   private long observedHigh;
-  private Optional<CompiledCallable> spinupYearCallable = Optional.empty();
-  private Optional<CompiledCallable> spindownYearCallable = Optional.empty();
-  private long memoizedYearStep = Long.MIN_VALUE;
-  private long memoizedYear;
 
   private final Map<MutableEntity, MutableEntity> patchWrapperCache = new IdentityHashMap<>();
 
@@ -128,8 +120,6 @@ public class MinimalEngineBridge implements EngineBridge {
     // Anchor the clock at the observed period: spin-up counts backward into the negatives, so the
     // first observed step is always the same value regardless of spin-up length.
     currentStep = engineValueFactory.build(observedLow - spinupSteps, Units.of("count"));
-    spinupYearCallable = retrievePhaseYearCallable("__spinupYear", "spinup");
-    spindownYearCallable = retrievePhaseYearCallable("__spindownYear", "spindown");
 
     absoluteStep = 0;
     inStep = false;
@@ -181,8 +171,6 @@ public class MinimalEngineBridge implements EngineBridge {
     // Anchor the clock at the observed period: spin-up counts backward into the negatives, so the
     // first observed step is always the same value regardless of spin-up length.
     currentStep = engineValueFactory.build(observedLow - spinupSteps, Units.of("count"));
-    spinupYearCallable = retrievePhaseYearCallable("__spinupYear", "spinup");
-    spindownYearCallable = retrievePhaseYearCallable("__spindownYear", "spindown");
 
     absoluteStep = 0;
     inStep = false;
@@ -342,24 +330,15 @@ public class MinimalEngineBridge implements EngineBridge {
 
   @Override
   public long getDataTimestep() {
-    long step = currentStep.getAsInt();
-    if (step >= observedLow && step <= observedHigh) {
-      return step;
-    }
-
-    Optional<CompiledCallable> yearCallable =
-        step < observedLow ? spinupYearCallable : spindownYearCallable;
-    if (yearCallable.isEmpty()) {
-      return step;
-    }
-
-    // Draw once per step and memoize so every external read in the same step shares the same year.
-    if (memoizedYearStep != step) {
-      EngineValue drawn = yearCallable.get().evaluate(new EntityScope(simulation));
-      memoizedYear = drawn.getAsInt();
-      memoizedYearStep = step;
-    }
-    return memoizedYear;
+    // The simulation's own "year" attribute (accessible in-model as meta.year) wins if the model
+    // defines one at all -- the same override a direct meta.year read already honors via ordinary
+    // attribute resolution (see SingleThreadEventHandlerMachine#pushAttribute). This lets a model
+    // resample the forcing year during spin-up/spin-down (or anywhere else) with an ordinary
+    // handler instead of a dedicated phase-only property, and keeps this the single place that
+    // decides the answer so external reads and meta.year can never disagree.
+    return simulation.getAttributeValue("year")
+        .map(EngineValue::getAsInt)
+        .orElseGet(this::getCurrentTimestep);
   }
 
   @Override
@@ -434,25 +413,6 @@ public class MinimalEngineBridge implements EngineBridge {
    */
   private long readPhaseDuration(String attribute) {
     return simulation.getAttributeValue(attribute).map(EngineValue::getAsInt).orElse(0L);
-  }
-
-  /**
-   * Retrieve the per-step year expression for a phase, if declared.
-   *
-   * <p>The handler is registered under a dedicated event so the stepper never runs it; the bridge
-   * evaluates it on demand only while that phase is active.</p>
-   *
-   * @param attribute The synthetic year attribute (e.g. {@code "__spinupYear"}).
-   * @param event The event under which the year handler is registered (the phase name).
-   * @return The compiled year expression, or empty if the phase is not declared.
-   */
-  private Optional<CompiledCallable> retrievePhaseYearCallable(String attribute, String event) {
-    Optional<EventHandlerGroup> group = simulation.getEventHandlers(EventKey.of(attribute, event));
-    if (group.isEmpty()) {
-      return Optional.empty();
-    }
-    Iterator<EventHandler> handlers = group.get().getEventHandlers().iterator();
-    return handlers.hasNext() ? Optional.of(handlers.next().getCallable()) : Optional.empty();
   }
 
   /**

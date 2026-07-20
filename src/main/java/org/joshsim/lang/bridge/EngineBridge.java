@@ -111,9 +111,10 @@ public interface EngineBridge {
   /**
    * Get the data timestep felt during the current step.
    *
-   * <p>During the observed period this equals {@link #getCurrentTimestep()}. During a spin-up or
-   * spin-down phase it is the resampled year drawn for this step, which every {@code external} read
-   * and {@code meta.year} bind to so forcing stays physically consistent within the step.</p>
+   * <p>Equals the simulation's own {@code year} attribute (readable in-model as {@code meta.year})
+   * if the model defines one at all, else {@link #getCurrentTimestep()}. Every {@code external}
+   * read binds to this so forcing lines up with {@code meta.year} whether or not the model
+   * overrides it.</p>
    *
    * @return the data year whose forcing is felt this step.
    */
