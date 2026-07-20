@@ -232,7 +232,31 @@ public class MinimalEngineBridge implements EngineBridge {
   public EngineValue getExternal(GeoKey key, String name, long step) {
     DataGridLayer layer = externalData.computeIfAbsent(name,
         k -> externalResourceGetter.getResource(name));
-    return layer.getAt(key, step);
+    return normalizePercent(layer.getAt(key, step));
+  }
+
+  /**
+   * Reconcile "%" / "percent" tagged external values with Josh's percent convention.
+   *
+   * <p>Script and config percent literals (e.g. {@code 2 %}) are parsed as a fraction in
+   * dimensionless {@code count} units (see {@code JoshValueVisitor} and
+   * {@code JoshConfigParserVisitor}). Data preprocessed with {@code --units %} or
+   * {@code --units percent} keeps the raw magnitude instead, so an external value like
+   * {@code 0.4 percent} would otherwise compare directly against a config threshold like
+   * {@code 0.004 count} (from {@code 0.4 %}) and appear ~100x larger than intended. Normalizing
+   * here, at the single point all {@code external} reads pass through, avoids re-preprocessing
+   * already-generated {@code .jshd}/{@code .jshdz} files.</p>
+   *
+   * @param value the raw value read from the external data source.
+   * @return the value unchanged, or converted to a count-unit fraction if tagged percent.
+   */
+  private EngineValue normalizePercent(EngineValue value) {
+    String unitsStr = value.getUnits().toString();
+    boolean isPercent = unitsStr.equals("%") || unitsStr.equals("percent");
+    if (!isPercent) {
+      return value;
+    }
+    return engineValueFactory.buildForNumber(value.getAsDouble() / 100.0, Units.of("count"));
   }
 
   @Override

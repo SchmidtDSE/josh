@@ -223,6 +223,68 @@ public class MinimalEngineBridgeTest {
     verify(mockExternalGetter).getResource("Precipitation");
   }
 
+  @Test
+  void testGetExternalNormalizesPercentUnits() {
+    // Regression test for https://github.com/SchmidtDSE/josh-models/issues/39: data preprocessed
+    // with --units % or --units percent stores the raw magnitude (e.g. 0.4 for "0.4%") tagged
+    // with a literal "%"/"percent" units string, unlike script/config percent literals which are
+    // parsed as a fraction (0.4 % -> 0.004) in count units. Without normalization here, comparing
+    // an external percent value against a config threshold silently compares mismatched
+    // magnitudes ~100x apart instead of erroring or converting.
+    ExternalResourceGetter mockExternalGetter = mock(ExternalResourceGetter.class);
+    DataGridLayer mockLayer = mock(DataGridLayer.class);
+    ValueSupportFactory engineValueFactory = new ValueSupportFactory();
+    EngineValue mockValue = engineValueFactory.build(0.4, Units.of("percent"));
+    GeoKey mockKey = mock(GeoKey.class);
+
+    when(mockLayer.getAt(mockKey, 0L)).thenReturn(mockValue);
+    when(mockExternalGetter.getResource("cover")).thenReturn(mockLayer);
+
+    EngineBridge bridgeWithExternal = new MinimalEngineBridge(
+        new ValueSupportFactory(),
+        new GridGeometryFactory(),
+        mockSimulation,
+        mockConverter,
+        mockPrototypeStore,
+        mockExternalGetter,
+        new NoOpConfigGetter(),
+        mockReplicate
+    );
+
+    EngineValue result = bridgeWithExternal.getExternal(mockKey, "cover", 0L);
+
+    assertEquals(0.004, result.getAsDouble(), 0.0001);
+    assertEquals(Units.of("count"), result.getUnits());
+  }
+
+  @Test
+  void testGetExternalLeavesNonPercentUnitsUnchanged() {
+    ExternalResourceGetter mockExternalGetter = mock(ExternalResourceGetter.class);
+    DataGridLayer mockLayer = mock(DataGridLayer.class);
+    ValueSupportFactory engineValueFactory = new ValueSupportFactory();
+    EngineValue mockValue = engineValueFactory.build(10.0, Units.of("mm"));
+    GeoKey mockKey = mock(GeoKey.class);
+
+    when(mockLayer.getAt(mockKey, 0L)).thenReturn(mockValue);
+    when(mockExternalGetter.getResource("Precipitation")).thenReturn(mockLayer);
+
+    EngineBridge bridgeWithExternal = new MinimalEngineBridge(
+        new ValueSupportFactory(),
+        new GridGeometryFactory(),
+        mockSimulation,
+        mockConverter,
+        mockPrototypeStore,
+        mockExternalGetter,
+        new NoOpConfigGetter(),
+        mockReplicate
+    );
+
+    EngineValue result = bridgeWithExternal.getExternal(mockKey, "Precipitation", 0L);
+
+    assertEquals(10.0, result.getAsDouble(), 0.001);
+    assertEquals(Units.of("mm"), result.getUnits());
+  }
+
   private void expectQuery(Query query, List<Patch> result) {
     when(mockReplicate.query(any(Query.class))).thenAnswer(invocation -> {
       Query argument = invocation.getArgument(0);
