@@ -39,6 +39,7 @@ import org.joshsim.lang.interpret.mapping.MapBounds;
 import org.joshsim.lang.interpret.mapping.MapStrategy;
 import org.joshsim.lang.interpret.mapping.MappingBuilder;
 import org.joshsim.lang.io.CombinedDebugOutputFacade;
+import org.joshsim.util.PrecisionUtil;
 import org.joshsim.util.SharedRandom;
 
 
@@ -480,7 +481,22 @@ public class SingleThreadEventHandlerMachine implements EventHandlerMachine {
     );
 
     EngineValue countValue = convert(pop(), COUNT_UNITS);
-    long count = countValue.getAsInt();
+
+    double countAsDouble = countValue.getAsDouble();
+    double roundedCount = Math.round(countAsDouble);
+    if (!PrecisionUtil.areEqual(countAsDouble, roundedCount)) {
+      throw new IllegalArgumentException(
+          String.format(
+              "Cannot create a fractional number of %s entities. Received count value: %s. "
+              + "The count value must be a concrete whole number: use round(), floor(), or "
+              + "ceil() to convert it first.",
+              entityType,
+              countValue.getAsString()
+          )
+      );
+    }
+
+    long count = (long) roundedCount;
 
     if (count < 0) {
       throw new IllegalArgumentException(

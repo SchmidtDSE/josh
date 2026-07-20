@@ -39,7 +39,7 @@ start patch Default
     return sum(adultNeighbors.seedCache) / 10% * 1 count
   }
 
-  JoshuaTrees.init = create sum(external ObservedCounts) of JoshuaTree
+  JoshuaTrees.init = create round(sum(external ObservedCounts)) of JoshuaTree
   JoshuaTrees.start = {
     const deadTrees = current.JoshuaTrees[current.JoshuaTrees.state == "dead"]
     return current.JoshuaTree - deadTrees
