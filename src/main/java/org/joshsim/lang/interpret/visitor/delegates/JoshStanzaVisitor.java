@@ -159,6 +159,11 @@ public class JoshStanzaVisitor implements JoshVisitorDelegate {
         continue;
       }
 
+      if (ctx.getChild(childIndex) instanceof JoshLangParser.PhasesStanzaContext) {
+        // Already captured by JoshLangEventSetVisitor's pre-pass; declares no handlers of its own.
+        continue;
+      }
+
       JoshFragment childFragment = ctx.getChild(childIndex).accept(parent);
 
       for (EventHandlerGroupBuilder groupBuilder : childFragment.getEventHandlerGroups()) {

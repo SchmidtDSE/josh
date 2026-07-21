@@ -41,6 +41,7 @@ public class MinimalEngineBridge implements EngineBridge {
 
   private static final long DEFAULT_START_STEP = 0;
   private static final long DEFAULT_END_STEP = 100;
+  private static final List<String> DEFAULT_SUBSTEP_ORDER = List.of("start", "step", "end");
 
   private final EngineGeometryFactory geometryFactory;
   private final MutableEntity simulation;
@@ -53,6 +54,7 @@ public class MinimalEngineBridge implements EngineBridge {
   private final ExternalResourceGetter externalResourceGetter;
   private final Map<String, Optional<Config>> configData;
   private final ConfigGetter configGetter;
+  private final List<String> substepOrder;
 
   private Optional<Replicate> replicate;
   private long absoluteStep;
@@ -81,6 +83,28 @@ public class MinimalEngineBridge implements EngineBridge {
         EngineGeometryFactory geometryFactory, MutableEntity simulation,
         Converter converter, EntityPrototypeStore prototypeStore,
         ExternalResourceGetter externalResourceGetter, ConfigGetter configGetter) {
+    this(engineValueFactory, geometryFactory, simulation, converter, prototypeStore,
+        externalResourceGetter, configGetter, DEFAULT_SUBSTEP_ORDER);
+  }
+
+  /**
+   * Constructs an EngineBridge with a declared substep order.
+   *
+   * @param engineValueFactory The factory to use for building engine values.
+   * @param geometryFactory The factory to use for building engine geometries.
+   * @param simulation The simulation instance to be used for retrieving or manipulating simulation
+   *     data.
+   * @param converter The converter for handling unit conversions between different engine values.
+   * @param prototypeStore The set of prototypes to use to build new entities.
+   * @param externalResourceGetter Strategy to use in loading external resources.
+   * @param configGetter Strategy to use in loading configuration resources.
+   * @param substepOrder The ordered substep sequence declared by the simulation, if any.
+   */
+  public MinimalEngineBridge(ValueSupportFactory engineValueFactory,
+        EngineGeometryFactory geometryFactory, MutableEntity simulation,
+        Converter converter, EntityPrototypeStore prototypeStore,
+        ExternalResourceGetter externalResourceGetter, ConfigGetter configGetter,
+        List<String> substepOrder) {
     this.engineValueFactory = engineValueFactory;
     this.geometryFactory = geometryFactory;
     this.simulation = simulation;
@@ -89,6 +113,7 @@ public class MinimalEngineBridge implements EngineBridge {
     this.externalResourceGetter = externalResourceGetter;
     this.configGetter = configGetter;
     this.configData = new ConcurrentHashMap<>();
+    this.substepOrder = substepOrder;
 
     replicate = Optional.empty();
 
@@ -125,6 +150,28 @@ public class MinimalEngineBridge implements EngineBridge {
         EngineGeometryFactory geometryFactory, MutableEntity simulation, Converter converter,
         EntityPrototypeStore prototypeStore, ExternalResourceGetter externalResourceGetter,
         ConfigGetter configGetter, Replicate replicate) {
+    this(engineValueFactory, geometryFactory, simulation, converter, prototypeStore,
+        externalResourceGetter, configGetter, replicate, DEFAULT_SUBSTEP_ORDER);
+  }
+
+  /**
+   * Constructs an EngineBridge with a given Replicate for testing and a declared substep order.
+   *
+   * @param engineValueFactory The factory to use for building engine values.
+   * @param geometryFactory The factory to use for building engine geometries.
+   * @param simulation The simulation instance to be used for retrieving or manipulating simulation
+   *     data.
+   * @param converter The converter for handling unit conversions between different engine values.
+   * @param prototypeStore The set of prototypes to use to build new entities.
+   * @param externalResourceGetter Strategy to use in loading external resources.
+   * @param configGetter Strategy to use in loading configuration resources.
+   * @param replicate The replicate to use for testing.
+   * @param substepOrder The ordered substep sequence declared by the simulation, if any.
+   */
+  public MinimalEngineBridge(ValueSupportFactory engineValueFactory,
+        EngineGeometryFactory geometryFactory, MutableEntity simulation, Converter converter,
+        EntityPrototypeStore prototypeStore, ExternalResourceGetter externalResourceGetter,
+        ConfigGetter configGetter, Replicate replicate, List<String> substepOrder) {
     this.engineValueFactory = engineValueFactory;
     this.geometryFactory = geometryFactory;
     this.simulation = simulation;
@@ -133,6 +180,7 @@ public class MinimalEngineBridge implements EngineBridge {
     this.externalResourceGetter = externalResourceGetter;
     this.configGetter = configGetter;
     this.configData = new ConcurrentHashMap<>();
+    this.substepOrder = substepOrder;
     this.replicate = Optional.of(replicate);
 
     simulation.startSubstep("constant");
@@ -250,6 +298,11 @@ public class MinimalEngineBridge implements EngineBridge {
   @Override
   public ValueSupportFactory getValueSupportFactory() {
     return engineValueFactory;
+  }
+
+  @Override
+  public List<String> getSubstepOrder() {
+    return substepOrder;
   }
 
   @Override

@@ -2,9 +2,12 @@
 package org.joshsim.lang.bridge;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import java.util.ArrayList;
+import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 import org.joshsim.engine.entity.base.MutableEntity;
@@ -46,6 +49,7 @@ class SimulationStepperTest {
     when(mockBridge.getCurrentPatches()).thenReturn(patches);
     when(mockBridge.getCurrentTimestep()).thenReturn(1L);
     when(mockBridge.getAbsoluteTimestep()).thenReturn(0L);
+    when(mockBridge.getSubstepOrder()).thenReturn(List.of("start", "step", "end"));
 
     stepper = new SimulationStepper(mockBridge);
   }
@@ -74,5 +78,25 @@ class SimulationStepperTest {
 
     // Verify
     assertEquals(1L, result, "Step should complete and return timestep 1");
+  }
+
+  @Test
+  void performRunsOnlyDeclaredCustomPhasesThatAreActuallyUsed() {
+    // A patch handler uses "disturbance" but not "base"; the declared order lists both.
+    EventKey disturbanceKey = EventKey.of("testAttribute", "disturbance");
+    when(mockPatch.getEventHandlers()).thenReturn(List.of(mockHandlerGroup));
+    when(mockHandlerGroup.getEventKey()).thenReturn(disturbanceKey);
+    when(mockBridge.getSubstepOrder()).thenReturn(List.of("base", "disturbance"));
+
+    when(mockSimulation.getAttributeNames()).thenReturn(Set.of());
+    when(mockPatch.getAttributeNames()).thenReturn(Set.of());
+
+    SimulationStepper customStepper = new SimulationStepper(mockBridge);
+    customStepper.perform(true);
+
+    verify(mockPatch, never()).startSubstep("base");
+    verify(mockPatch).startSubstep("disturbance");
+    verify(mockSimulation, never()).startSubstep("base");
+    verify(mockSimulation).startSubstep("disturbance");
   }
 }

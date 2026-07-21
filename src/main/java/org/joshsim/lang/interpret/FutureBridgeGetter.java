@@ -7,6 +7,7 @@
 
 package org.joshsim.lang.interpret;
 
+import java.util.List;
 import java.util.Optional;
 import org.joshsim.engine.config.JshcConfigGetter;
 import org.joshsim.engine.entity.base.MutableEntity;
@@ -37,6 +38,7 @@ public class FutureBridgeGetter implements BridgeGetter {
   private Optional<EngineGeometryFactory> geometryFactory;
   private Optional<InputOutputLayer> inputOutputLayer;
   private Optional<CombinedDebugOutputFacade> debugOutputFacade;
+  private Optional<KnownEventSet> knownEventSet;
 
   /**
    * Creates a new future bridge getter with no initial configuration.
@@ -51,6 +53,7 @@ public class FutureBridgeGetter implements BridgeGetter {
     this.geometryFactory = Optional.empty();
     this.inputOutputLayer = Optional.empty();
     this.debugOutputFacade = Optional.empty();
+    this.knownEventSet = Optional.empty();
   }
 
   /**
@@ -121,6 +124,18 @@ public class FutureBridgeGetter implements BridgeGetter {
   }
 
   /**
+   * Set the known event set to use when getting the bridge.
+   *
+   * @param newKnownEventSet The known event set to use when getting the bridge.
+   */
+  public void setKnownEventSet(KnownEventSet newKnownEventSet) {
+    if (knownEventSet.isPresent()) {
+      throw new IllegalStateException("Known event set already set.");
+    }
+    knownEventSet = Optional.of(newKnownEventSet);
+  }
+
+  /**
    * Sets the bridge to use instead of building one.
    *
    * <p>This allows injecting the main simulation bridge so that external data
@@ -178,7 +193,8 @@ public class FutureBridgeGetter implements BridgeGetter {
         converter,
         prototypeStore,
         new JshdExternalGetter(inputOutputLayerRealized.getInputStrategy(), valueFactory),
-        new JshcConfigGetter(inputOutputLayerRealized.getInputStrategy(), valueFactory)
+        new JshcConfigGetter(inputOutputLayerRealized.getInputStrategy(), valueFactory),
+        knownEventSet.map(KnownEventSet::getSubstepOrder).orElse(List.of("start", "step", "end"))
     );
 
     builtBridge = Optional.of(newBridge);

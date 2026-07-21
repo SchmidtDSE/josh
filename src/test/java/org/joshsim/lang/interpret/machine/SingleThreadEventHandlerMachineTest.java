@@ -76,6 +76,7 @@ public class SingleThreadEventHandlerMachineTest {
 
     factory = new ValueSupportFactory();
     when(mockBridge.getValueSupportFactory()).thenReturn(factory);
+    when(mockBridge.getSubstepOrder()).thenReturn(List.of("start", "step", "end"));
 
     machine = new SingleThreadEventHandlerMachine(mockBridge, mockScope);
   }

@@ -42,6 +42,7 @@ public class JoshInterpreter {
 
     JoshLangParser.ProgramContext programContext = parseResult.getProgram().orElseThrow();
     KnownEventSet knownEventSet = new JoshLangEventSetVisitor().visit(programContext);
+    bridgeGetter.setKnownEventSet(knownEventSet);
 
     JoshParserToMachineVisitor visitor =
         new JoshParserToMachineVisitor(valueFactory, bridgeGetter, knownEventSet);
@@ -83,6 +84,7 @@ public class JoshInterpreter {
 
     JoshLangParser.ProgramContext programContext = parseResult.getProgram().orElseThrow();
     KnownEventSet knownEventSet = new JoshLangEventSetVisitor().visit(programContext);
+    bridgeGetter.setKnownEventSet(knownEventSet);
 
     JoshParserToMachineVisitor visitor =
         new JoshParserToMachineVisitor(valueFactory, bridgeGetter, knownEventSet);

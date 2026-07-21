@@ -23,6 +23,8 @@ public class SimulationStepper {
   private final Set<String> events;
   private final Optional<PatchExportCallback> exportCallback;
   private final Optional<Set<Integer>> outputSteps;
+  private final List<String> substepOrder;
+  private final String lastActiveSubstep;
 
   /**
    * Create a new stepper around a bridge without export callback.
@@ -76,6 +78,27 @@ public class SimulationStepper {
       }
     }
     events = eventSet;
+
+    substepOrder = target.getSubstepOrder();
+    lastActiveSubstep = computeLastActiveSubstep();
+  }
+
+  /**
+   * Determine the last substep in the declared order that is actually used by any patch handler.
+   *
+   * <p>Falls back to {@code "init"} if none of the declared substeps are used, matching the
+   * original priority ({@code end > step > start > init}) generalized to an arbitrary order.</p>
+   *
+   * @return The name of the last active substep.
+   */
+  private String computeLastActiveSubstep() {
+    for (int i = substepOrder.size() - 1; i >= 0; i--) {
+      String candidate = substepOrder.get(i);
+      if (events.contains(candidate)) {
+        return candidate;
+      }
+    }
+    return "init";
   }
 
   /**
@@ -97,19 +120,11 @@ public class SimulationStepper {
       performStream(patches, "init", serialPatches);
     }
 
-    if (events.contains("start")) {
-      performStream(simulation, "start");
-      performStream(patches, "start", serialPatches);
-    }
-
-    if (events.contains("step")) {
-      performStream(simulation, "step");
-      performStream(patches, "step", serialPatches);
-    }
-
-    if (events.contains("end")) {
-      performStream(simulation, "end");
-      performStream(patches, "end", serialPatches);
+    for (String subStep : substepOrder) {
+      if (events.contains(subStep)) {
+        performStream(simulation, subStep);
+        performStream(patches, subStep, serialPatches);
+      }
     }
 
     long timestepCompleted = target.getCurrentTimestep();
@@ -262,24 +277,15 @@ public class SimulationStepper {
   /**
    * Determine if patches should be exported in the given substep.
    *
-   * <p>Only export after the final substep to ensure the patch is fully resolved.
-   * The final substep is determined by checking which events are defined, with
-   * priority: end > step > start > init.</p>
+   * <p>Only export after the final substep to ensure the patch is fully resolved, where "final" is
+   * the last substep in the declared order (default or custom) that any patch handler actually
+   * uses.</p>
    *
    * @param subStep the substep to check
    * @return true if patches should be exported after this substep
    */
   private boolean shouldExportInSubstep(String subStep) {
-    // Only export after final substep (usually "step", but could be "end")
-    if (events.contains("end")) {
-      return subStep.equals("end");
-    } else if (events.contains("step")) {
-      return subStep.equals("step");
-    } else if (events.contains("start")) {
-      return subStep.equals("start");
-    } else {
-      return subStep.equals("init");
-    }
+    return subStep.equals(lastActiveSubstep);
   }
 
   /**

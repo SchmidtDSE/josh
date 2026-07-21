@@ -514,18 +514,19 @@ public class SingleThreadEventHandlerMachine implements EventHandlerMachine {
     }
 
     String substep = parent.getSubstep().orElseThrow();
+    List<String> substepOrder = bridge.getSubstepOrder();
 
     EngineValue result;
     if (count == 1) {
       MutableEntity newEntity = decoratedPrototype.build();
-      EntityFastForwarder.fastForward(newEntity, substep, initEventName);
+      EntityFastForwarder.fastForward(newEntity, substep, initEventName, substepOrder);
       result = valueFactory.build(newEntity);
     } else {
       // Pre-size ArrayList with known count to avoid growth overhead
       List<EngineValue> values = new ArrayList<>((int) count);
       for (int i = 0; i < count; i++) {
         MutableEntity newEntity = decoratedPrototype.build();
-        EntityFastForwarder.fastForward(newEntity, substep, initEventName);
+        EntityFastForwarder.fastForward(newEntity, substep, initEventName, substepOrder);
         values.add(valueFactory.build(newEntity));
       }
       result = valueFactory.buildRealizedDistribution(values, Units.of(entityType));
@@ -582,8 +583,7 @@ public class SingleThreadEventHandlerMachine implements EventHandlerMachine {
                 String.format(
                     "Cannot resolve '%s' in spatial query. The attribute may not be available "
                     + "in the 'prior' context at this substep. Check that the attribute is "
-                    + "set in a substep that runs before the current one (e.g., 'init', 'start', "
-                    + "or 'step' run before 'end').",
+                    + "set in a substep that runs earlier in this simulation's step sequence.",
                     resolver
                 )
             )

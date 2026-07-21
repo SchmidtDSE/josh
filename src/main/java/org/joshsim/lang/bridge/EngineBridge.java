@@ -184,4 +184,11 @@ public interface EngineBridge {
    */
   ValueSupportFactory getValueSupportFactory();
 
+  /**
+   * Get the ordered substep sequence for this simulation.
+   *
+   * @return The declared phase order, or the default start/step/end if none was declared.
+   */
+  List<String> getSubstepOrder();
+
 }
