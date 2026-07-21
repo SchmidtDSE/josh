@@ -127,7 +127,7 @@ expression: unitsValue # simpleExpression
   | expression DOT_ identifier # attrExpression
   | unitsValue (LATITUDE_ | LONGITUDE_) COMMA_ unitsValue (LATITUDE_ | LONGITUDE_) # position
   | EXTERNAL_ name=identifier # externalValue
-  | EXTERNAL_ name=identifier AT_ step=(PRIOR_ | INTEGER_) # externalValueAtTime
+  | EXTERNAL_ name=identifier AT_ step=expression # externalValueAtTime
   | CONFIG_ name=identifier # configValue
   | CONFIG_ name=identifier ELSE_ defaultValue=expression # configValueWithDefault
   | subject=expression LBRAC_ selection=expression RBRAC_ # slice

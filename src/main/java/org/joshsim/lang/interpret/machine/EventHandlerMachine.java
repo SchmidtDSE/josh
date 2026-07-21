@@ -590,13 +590,15 @@ public interface EventHandlerMachine {
   long getCurrentTimestep();
 
   /**
-   * Get a value from an external resource at a given time.
+   * Get a value from an external resource at the timestep on top of the stack.
+   *
+   * <p>Pops the step value already pushed by the caller (the current timestep for an unadorned
+   * {@code external X}, or an arbitrary evaluated expression for {@code external X at <expr>}) and
+   * pushes the resolved external value in its place.</p>
    *
    * @param name The name of the external resource.
-   * @param step The timestep (according to the external resource) at which a value should be
-   *     returned.
    */
-  void pushExternal(String name, long step);
+  void pushExternalAtStep(String name);
 
   /**
    * Push a config value onto the stack.

@@ -1004,7 +1004,8 @@ public class SingleThreadEventHandlerMachine implements EventHandlerMachine {
   }
 
   @Override
-  public void pushExternal(String name, long step) {
+  public void pushExternalAtStep(String name) {
+    long step = pop().getAsInt();
     push(bridge.getExternal(scope.get("here").getAsEntity().getKey().orElseThrow(), name, step));
   }
 
