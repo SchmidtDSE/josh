@@ -306,19 +306,6 @@ public class MinimalEngineBridge implements EngineBridge {
   }
 
   @Override
-  public long getDataTimestep() {
-    // The simulation's own "year" attribute (accessible in-model as meta.year) wins if the model
-    // defines one at all -- the same override a direct meta.year read already honors via ordinary
-    // attribute resolution (see SingleThreadEventHandlerMachine#pushAttribute). This lets a model
-    // resample the forcing year during spin-up/spin-down (or anywhere else) with an ordinary
-    // handler instead of a dedicated phase-only property, and keeps this the single place that
-    // decides the answer so external reads and meta.year can never disagree.
-    return simulation.getAttributeValue("year")
-        .map(EngineValue::getAsInt)
-        .orElseGet(this::getCurrentTimestep);
-  }
-
-  @Override
   public long getPriorTimestep() {
     return currentStep.getAsInt() - 1;
   }

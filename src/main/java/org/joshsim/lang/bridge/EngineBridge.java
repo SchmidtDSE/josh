@@ -109,18 +109,6 @@ public interface EngineBridge {
   long getCurrentTimestep();
 
   /**
-   * Get the data timestep felt during the current step.
-   *
-   * <p>Equals the simulation's own {@code year} attribute (readable in-model as {@code meta.year})
-   * if the model defines one at all, else {@link #getCurrentTimestep()}. Every {@code external}
-   * read binds to this so forcing lines up with {@code meta.year} whether or not the model
-   * overrides it.</p>
-   *
-   * @return the data year whose forcing is felt this step.
-   */
-  long getDataTimestep();
-
-  /**
    * Get the prior simulation step as a long value.
    *
    * @return the prior simulation step count as a long.

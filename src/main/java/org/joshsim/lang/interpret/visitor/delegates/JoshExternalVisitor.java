@@ -38,10 +38,10 @@ public class JoshExternalVisitor implements JoshVisitorDelegate {
   public JoshFragment visitExternalValue(JoshLangParser.ExternalValueContext ctx) {
     String name = ctx.name.getText();
     EventHandlerAction action = (machine) -> {
-      // Resolve against the data timestep so external data lines up with how its grid is keyed and
-      // with meta.year. During the observed period this equals the current (steps.low-based) step;
-      // during spin-up/spin-down it is the resampled year drawn for this step.
-      long step = machine.getDataTimestep();
+      // Resolve against the current (steps.low-based) timestep so external data lines up with how
+      // its grid is keyed. A model wanting a different lookup year should use the explicit
+      // `external X at <step>` form rather than an implicit attribute-name convention.
+      long step = machine.getCurrentTimestep();
       machine.pushExternal(name, step);
       return machine;
     };

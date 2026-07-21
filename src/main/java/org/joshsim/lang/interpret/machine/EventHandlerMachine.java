@@ -590,17 +590,6 @@ public interface EventHandlerMachine {
   long getCurrentTimestep();
 
   /**
-   * Get the data timestep felt during the current step.
-   *
-   * <p>Equals the simulation's own {@code year} attribute (readable in-model as {@code meta.year})
-   * if the model defines one, else {@link #getCurrentTimestep()}. External reads bind to this so
-   * forcing lines up with {@code meta.year} whether or not the model overrides it.</p>
-   *
-   * @return The data year whose forcing is felt this step.
-   */
-  long getDataTimestep();
-
-  /**
    * Get a value from an external resource at a given time.
    *
    * @param name The name of the external resource.

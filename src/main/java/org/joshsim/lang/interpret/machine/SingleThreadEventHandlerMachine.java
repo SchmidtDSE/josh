@@ -644,9 +644,7 @@ public class SingleThreadEventHandlerMachine implements EventHandlerMachine {
               bridge.getCurrentTimestep() - bridge.getStartTimestep(), COUNT_UNITS)
       );
       case "year" -> Optional.of(
-          // The data year felt this step -- the simulation's own "year" attribute if the model
-          // defines one, else the raw clock. See MinimalEngineBridge#getDataTimestep().
-          valueFactory.build(bridge.getDataTimestep(), Units.of("years"))
+          valueFactory.build(bridge.getCurrentTimestep(), Units.of("years"))
       );
       default -> Optional.empty();
     };
@@ -1003,11 +1001,6 @@ public class SingleThreadEventHandlerMachine implements EventHandlerMachine {
   @Override
   public long getCurrentTimestep() {
     return bridge.getCurrentTimestep();
-  }
-
-  @Override
-  public long getDataTimestep() {
-    return bridge.getDataTimestep();
   }
 
   @Override
