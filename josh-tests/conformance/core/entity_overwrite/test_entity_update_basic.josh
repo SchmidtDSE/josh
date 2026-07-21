@@ -1,0 +1,35 @@
+# @category: core
+# @subcategory: entity_overwrite
+# @priority: critical
+# @description: update merges onto a prior same-named entity - the handler it redeclares
+#   overrides the original, while every other handler and attribute survives unchanged
+
+start simulation EntityUpdateBasic
+
+  grid.size = 10 m
+  grid.low.x = 0 m
+  grid.low.y = 0 m
+  grid.high.x = 10 m
+  grid.high.y = 10 m
+
+  steps.low = 0 count
+  steps.high = 0 count
+
+end simulation
+
+start patch Default
+
+  age.init = 0 count
+  age.step = prior.age + 1 count
+  height.init = 5 count
+
+  assert.ageUsesUpdatedStepFormula.step = age == 10 count
+  assert.heightSurvivesFromBaseDeclaration.step = height == 5 count
+
+end patch
+
+update patch Default
+
+  age.step = prior.age + 10 count
+
+end patch

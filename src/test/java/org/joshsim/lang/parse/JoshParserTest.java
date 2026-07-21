@@ -111,6 +111,18 @@ public class JoshParserTest {
   }
 
   @Test
+  public void testReplaceStanzaParses() {
+    ParseResult result = parser.parse("replace organism Tree end organism");
+    assertFalse(result.hasErrors());
+  }
+
+  @Test
+  public void testUpdateStanzaParses() {
+    ParseResult result = parser.parse("update organism Tree end organism");
+    assertFalse(result.hasErrors());
+  }
+
+  @Test
   public void testPhasesStanzaRequiresPhaseKeyword() {
     ParseResult result = parser.parse(
         "start simulation Main "
