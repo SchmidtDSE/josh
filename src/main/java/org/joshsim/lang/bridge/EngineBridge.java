@@ -121,35 +121,6 @@ public interface EngineBridge {
   long getDataTimestep();
 
   /**
-   * Get the phase the simulation is currently in.
-   *
-   * @return one of {@code "spinup"}, {@code "observed"}, or {@code "spindown"}.
-   */
-  String getPhase();
-
-  /**
-   * Get the phase a specific (absolute) timestep belongs to.
-   *
-   * <p>Unlike {@link #getPhase()}, which reflects the bridge's current clock position, this
-   * reports the phase of an arbitrary step. This is needed when filtering completed steps for
-   * export, because the clock has already advanced past the step just completed.</p>
-   *
-   * @param step the absolute timestep number to classify.
-   * @return one of {@code "spinup"}, {@code "observed"}, or {@code "spindown"}.
-   */
-  String getPhase(long step);
-
-  /**
-   * Get the earliest timestep key the run will ever save.
-   *
-   * <p>This is {@code steps.low} shifted back by the spin-up length (so it can be negative). Used
-   * to bound memory-retention pruning during spin-up.</p>
-   *
-   * @return the earliest (possibly negative) anchored timestep.
-   */
-  long getEarliestTimestep();
-
-  /**
    * Get the prior simulation step as a long value.
    *
    * @return the prior simulation step count as a long.

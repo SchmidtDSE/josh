@@ -9,13 +9,11 @@ package org.joshsim.lang.interpret.visitor.delegates;
 import java.util.ArrayList;
 import java.util.List;
 import org.joshsim.engine.entity.base.EntityBuilder;
-import org.joshsim.engine.entity.handler.EventHandler;
 import org.joshsim.engine.entity.handler.EventHandlerGroupBuilder;
 import org.joshsim.engine.entity.handler.EventKey;
 import org.joshsim.engine.entity.prototype.EntityPrototype;
 import org.joshsim.engine.entity.prototype.ParentlessEntityPrototype;
 import org.joshsim.engine.entity.type.EntityType;
-import org.joshsim.engine.func.CompiledCallable;
 import org.joshsim.engine.value.converter.Conversion;
 import org.joshsim.engine.value.converter.DirectConversion;
 import org.joshsim.engine.value.converter.Units;
@@ -156,11 +154,6 @@ public class JoshStanzaVisitor implements JoshVisitorDelegate {
 
     for (int innerIndex = 0; innerIndex < numInner; innerIndex++) {
       int childIndex = innerIndex + 3;
-      if (ctx.getChild(childIndex) instanceof JoshLangParser.PhaseStanzaContext phaseCtx) {
-        capturePhase(phaseCtx, entityBuilder, entityType);
-        continue;
-      }
-
       if (ctx.getChild(childIndex) instanceof JoshLangParser.InitStanzaContext initCtx) {
         captureInitThrough(initCtx, entityBuilder, entityType);
         continue;
@@ -180,74 +173,6 @@ public class JoshStanzaVisitor implements JoshVisitorDelegate {
     );
 
     return new EntityFragment(prototype);
-  }
-
-  /**
-   * Capture a spin-up / spin-down phase onto the simulation being built.
-   *
-   * <p>The phase body is a single named property, {@code duration} (the phase length), compiled
-   * like an ordinary handler and re-registered as a constant-substep attribute
-   * ({@code __<phase>Steps}) the bridge reads at construction to anchor the clock. A model that
-   * wants a different data year while the phase is active defines an ordinary {@code year}
-   * attribute (readable as {@code meta.year}) with a {@code meta.phase}-gated handler instead of a
-   * dedicated phase-only property — see {@code MinimalEngineBridge#getDataTimestep()}.</p>
-   *
-   * @param ctx The phase stanza to capture.
-   * @param entityBuilder The simulation entity builder to attach the phase handlers to.
-   * @param entityType The enclosing stanza type; phases are only valid inside a simulation.
-   */
-  private void capturePhase(JoshLangParser.PhaseStanzaContext ctx, EntityBuilder entityBuilder,
-        String entityType) {
-    if (!"simulation".equals(entityType)) {
-      throw new IllegalArgumentException(
-          "spinup / spindown blocks are only allowed inside a simulation stanza.");
-    }
-
-    String phase = ctx.phaseType(0).getText();
-    String closePhase = ctx.phaseType(1).getText();
-    if (!phase.equals(closePhase)) {
-      throw new IllegalArgumentException(String.format(
-          "Phase start and end type different: %s, %s", phase, closePhase));
-    }
-
-    boolean hasDuration = false;
-    for (JoshLangParser.EventHandlerGeneralContext propertyCtx : ctx.eventHandlerGeneral()) {
-      for (EventHandlerGroupBuilder groupBuilder
-          : propertyCtx.accept(parent).getEventHandlerGroups()) {
-        String property = groupBuilder.buildKey().getAttribute();
-        CompiledCallable callable = groupBuilder.build()
-            .getEventHandlers().iterator().next().getCallable();
-        switch (property) {
-          case "duration" -> {
-            addPhaseHandler(entityBuilder, "__" + phase + "Steps", "constant", callable);
-            hasDuration = true;
-          }
-          default -> throw new IllegalArgumentException(String.format(
-              "Unknown %s property '%s'. Expected 'duration'.", phase, property));
-        }
-      }
-    }
-
-    if (!hasDuration) {
-      throw new IllegalArgumentException(phase + " block is missing a 'duration'.");
-    }
-  }
-
-  /**
-   * Register a single synthetic event handler on the entity being built.
-   *
-   * @param entityBuilder The entity builder to attach the handler to.
-   * @param attribute The synthetic attribute name the handler resolves.
-   * @param event The substep / event under which the handler resolves.
-   * @param callable The compiled expression evaluated by the handler.
-   */
-  private void addPhaseHandler(EntityBuilder entityBuilder, String attribute, String event,
-        CompiledCallable callable) {
-    EventKey eventKey = EventKey.of(attribute, event);
-    EventHandlerGroupBuilder groupBuilder = new EventHandlerGroupBuilder();
-    groupBuilder.setEventKey(eventKey);
-    groupBuilder.addEventHandler(new EventHandler(callable, attribute, event));
-    entityBuilder.addEventHandlerGroup(groupBuilder.buildKey(), groupBuilder.build());
   }
 
   /**

@@ -4,23 +4,22 @@ start simulation SpinupExport
   grid.low = 0 m latitude, 0 m longitude
   grid.high = 10 m latitude, 10 m longitude
 
-  steps.low = 0 count
-  steps.high = 2 count
+  # 2 steps of spin-up, 3 observed steps (0..2), 2 steps of spin-down. See spinup.josh for the
+  # recipe explanation -- steps.low/steps.high are widened directly and "state" marks the phase.
+  steps.low = -2 count
+  steps.high = 4 count
 
   exportFiles.patch = "file:///tmp/spinup_export_josh.csv"
 
-  start spinup
-    duration = 2 count
-  end spinup
-
-  start spindown
-    duration = 2 count
-  end spindown
+  state.init = "spinup"
+  state.step
+    :if(meta.stepCount == 2 count) = "observed"
+    :elif(meta.stepCount == 5 count) = "spindown"
 
 end simulation
 
 start patch Default
 
-  export.phase.step = meta.phase
+  export.state.step = meta.state
 
 end patch

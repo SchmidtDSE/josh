@@ -461,7 +461,6 @@ public class JoshSimBatchHandler implements HttpHandler {
           simulation,
           (step) -> { /* progress unused in batch mode */ },
           false,
-          Optional.empty(),
           Optional.empty()
       );
     }

@@ -110,7 +110,7 @@ public class MinimalEngineBridgeTest {
   @Test
   void testGetDataTimestepUsesYearOverrideWhenDefined() {
     // A model that defines its own "year" attribute (e.g. resampled during spin-up via a
-    // meta.phase-gated handler) wins over the raw clock -- the same override meta.year already
+    // current.state-gated handler) wins over the raw clock -- the same override meta.year already
     // honors for ordinary attribute reads via SingleThreadEventHandlerMachine#pushAttribute.
     ValueSupportFactory engineValueFactory = new ValueSupportFactory();
     EngineValue overrideYear = engineValueFactory.build(42, Units.of("count"));

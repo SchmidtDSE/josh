@@ -59,13 +59,6 @@ public class MinimalEngineBridge implements EngineBridge {
   private EngineValue currentStep;
   private boolean inStep;
 
-  // Spin-up / spin-down phase configuration. With no phase blocks these are zero/empty and the
-  // clock behaves exactly as before: currentStep runs steps.low..steps.high.
-  private long spinupSteps;
-  private long spindownSteps;
-  private long observedLow;
-  private long observedHigh;
-
   private final Map<MutableEntity, MutableEntity> patchWrapperCache = new IdentityHashMap<>();
 
   /**
@@ -109,17 +102,9 @@ public class MinimalEngineBridge implements EngineBridge {
       .getAttributeValue("steps.high")
       .orElseGet(() -> engineValueFactory.build(DEFAULT_END_STEP, Units.of("count")));
 
-    spinupSteps = readPhaseDuration("__spinupSteps");
-    spindownSteps = readPhaseDuration("__spindownSteps");
-
     simulation.endSubstep();
 
-    observedLow = startStep.getAsInt();
-    observedHigh = endStep.getAsInt();
-
-    // Anchor the clock at the observed period: spin-up counts backward into the negatives, so the
-    // first observed step is always the same value regardless of spin-up length.
-    currentStep = engineValueFactory.build(observedLow - spinupSteps, Units.of("count"));
+    currentStep = engineValueFactory.build(startStep.getAsInt(), Units.of("count"));
 
     absoluteStep = 0;
     inStep = false;
@@ -160,17 +145,9 @@ public class MinimalEngineBridge implements EngineBridge {
       .getAttributeValue("steps.high")
       .orElseGet(() -> engineValueFactory.build(DEFAULT_END_STEP, Units.of("count")));
 
-    spinupSteps = readPhaseDuration("__spinupSteps");
-    spindownSteps = readPhaseDuration("__spindownSteps");
-
     simulation.endSubstep();
 
-    observedLow = startStep.getAsInt();
-    observedHigh = endStep.getAsInt();
-
-    // Anchor the clock at the observed period: spin-up counts backward into the negatives, so the
-    // first observed step is always the same value regardless of spin-up length.
-    currentStep = engineValueFactory.build(observedLow - spinupSteps, Units.of("count"));
+    currentStep = engineValueFactory.build(startStep.getAsInt(), Units.of("count"));
 
     absoluteStep = 0;
     inStep = false;
@@ -213,7 +190,7 @@ public class MinimalEngineBridge implements EngineBridge {
 
   @Override
   public boolean isComplete() {
-    return currentStep.getAsInt() > observedHigh + spindownSteps;
+    return currentStep.getAsInt() > endStep.getAsInt();
   }
 
   @Override
@@ -342,27 +319,6 @@ public class MinimalEngineBridge implements EngineBridge {
   }
 
   @Override
-  public String getPhase() {
-    return getPhase(currentStep.getAsInt());
-  }
-
-  @Override
-  public String getPhase(long step) {
-    if (step < observedLow) {
-      return "spinup";
-    }
-    if (step > observedHigh) {
-      return "spindown";
-    }
-    return "observed";
-  }
-
-  @Override
-  public long getEarliestTimestep() {
-    return observedLow - spinupSteps;
-  }
-
-  @Override
   public long getPriorTimestep() {
     return currentStep.getAsInt() - 1;
   }
@@ -400,19 +356,6 @@ public class MinimalEngineBridge implements EngineBridge {
     }
 
     return prototypeStore.get(name);
-  }
-
-  /**
-   * Read a phase duration (in steps) from a synthetic constant-substep attribute.
-   *
-   * <p>Must be called while the {@code "constant"} substep is open. Returns 0 when the phase is
-   * absent, which keeps the clock identical to a simulation without spin-up/spin-down.</p>
-   *
-   * @param attribute The synthetic duration attribute (e.g. {@code "__spinupSteps"}).
-   * @return The phase length in steps, or 0 if not declared.
-   */
-  private long readPhaseDuration(String attribute) {
-    return simulation.getAttributeValue(attribute).map(EngineValue::getAsInt).orElse(0L);
   }
 
   /**
