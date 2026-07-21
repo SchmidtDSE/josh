@@ -142,4 +142,79 @@ public class EntityBuilderTest {
     groups.forEach(groupList::add);
     assertEquals(length, groupList.size());
   }
+
+  /**
+   * combineWith should keep a base handler the override does not redeclare.
+   */
+  @Test
+  public void combineWithKeepsBaseHandlerNotRedeclaredByOverride() {
+    EventKey ageKey = EventKey.of("age", "step");
+    EventHandlerGroup ageGroup = mock(EventHandlerGroup.class);
+    builder.setName("Tree").addEventHandlerGroup(ageKey, ageGroup);
+
+    EntityBuilder override = new EntityBuilder(new ValueSupportFactory());
+    override.setName("Tree");
+
+    EntityBuilder combined = builder.combineWith(override);
+
+    Agent agent = combined.buildAgent(mockParent);
+    assertTrue(agent.getEventHandlers(ageKey).isPresent());
+  }
+
+  /**
+   * combineWith should let the override's handler win for a key both declare.
+   */
+  @Test
+  public void combineWithLetsOverrideWinOnSharedKey() {
+    EventKey heightKey = EventKey.of("height", "step");
+    EventHandlerGroup baseGroup = mock(EventHandlerGroup.class);
+    EventHandlerGroup overrideGroup = mock(EventHandlerGroup.class);
+    builder.setName("Tree").addEventHandlerGroup(heightKey, baseGroup);
+
+    EntityBuilder override = new EntityBuilder(new ValueSupportFactory());
+    override.setName("Tree").addEventHandlerGroup(heightKey, overrideGroup);
+
+    EntityBuilder combined = builder.combineWith(override);
+
+    Agent agent = combined.buildAgent(mockParent);
+    assertEquals(overrideGroup, agent.getEventHandlers(heightKey).orElseThrow());
+  }
+
+  /**
+   * combineWith should add a handler the override declares that the base never had.
+   */
+  @Test
+  public void combineWithAddsHandlerOnlyTheOverrideDeclares() {
+    EventKey widthKey = EventKey.of("width", "step");
+    EventHandlerGroup widthGroup = mock(EventHandlerGroup.class);
+    builder.setName("Tree");
+
+    EntityBuilder override = new EntityBuilder(new ValueSupportFactory());
+    override.setName("Tree").addEventHandlerGroup(widthKey, widthGroup);
+
+    EntityBuilder combined = builder.combineWith(override);
+
+    Agent agent = combined.buildAgent(mockParent);
+    assertEquals(widthGroup, agent.getEventHandlers(widthKey).orElseThrow());
+  }
+
+  /**
+   * combineWith should not mutate either source builder.
+   */
+  @Test
+  public void combineWithDoesNotMutateEitherSourceBuilder() {
+    EventKey ageKey = EventKey.of("age", "step");
+    EventHandlerGroup ageGroup = mock(EventHandlerGroup.class);
+    builder.setName("Tree").addEventHandlerGroup(ageKey, ageGroup);
+
+    EntityBuilder override = new EntityBuilder(new ValueSupportFactory());
+    override.setName("Tree");
+
+    builder.combineWith(override);
+
+    Agent baseAgent = builder.buildAgent(mockParent);
+    Agent overrideAgent = override.buildAgent(mockParent);
+    assertTrue(baseAgent.getEventHandlers(ageKey).isPresent());
+    assertTrue(overrideAgent.getEventHandlers(ageKey).isEmpty());
+  }
 }

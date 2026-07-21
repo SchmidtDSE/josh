@@ -11,6 +11,7 @@ import java.util.List;
 import org.joshsim.engine.entity.base.EntityBuilder;
 import org.joshsim.engine.entity.handler.EventHandlerGroupBuilder;
 import org.joshsim.engine.entity.handler.EventKey;
+import org.joshsim.engine.entity.prototype.EntityOverwriteBehavior;
 import org.joshsim.engine.entity.prototype.EntityPrototype;
 import org.joshsim.engine.entity.prototype.ParentlessEntityPrototype;
 import org.joshsim.engine.entity.type.EntityType;
@@ -177,7 +178,24 @@ public class JoshStanzaVisitor implements JoshVisitorDelegate {
         entityBuilder
     );
 
-    return new EntityFragment(prototype);
+    return new EntityFragment(prototype, getOverwriteBehavior(ctx));
+  }
+
+  /**
+   * Determine how an entity stanza's opening keyword relates to a prior same-named entity.
+   *
+   * @param ctx The entity stanza context whose opening keyword to inspect.
+   * @return The overwrite behavior for {@code start} / {@code replace} / {@code update}.
+   * @throws IllegalArgumentException if the opening keyword is not one of the three above.
+   */
+  private EntityOverwriteBehavior getOverwriteBehavior(JoshLangParser.EntityStanzaContext ctx) {
+    String opener = ctx.getChild(0).getText();
+    return switch (opener) {
+      case "start" -> EntityOverwriteBehavior.NOT_SPECIFIED;
+      case "replace" -> EntityOverwriteBehavior.OVERWRITE;
+      case "update" -> EntityOverwriteBehavior.UPDATE;
+      default -> throw new IllegalArgumentException("Unknown entity stanza opener: " + opener);
+    };
   }
 
   /**

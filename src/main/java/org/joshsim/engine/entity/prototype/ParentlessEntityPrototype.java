@@ -86,4 +86,16 @@ public class ParentlessEntityPrototype implements EntityPrototype {
     return entityType == EntityType.PATCH;
   }
 
+  /**
+   * Get the underlying builder backing this prototype.
+   *
+   * <p>Package-private: only {@link EntityPrototypeCombineUtil} needs this, to merge two
+   * prototypes' handlers for an {@code update} declaration.</p>
+   *
+   * @return The builder used to construct instances of this entity.
+   */
+  EntityBuilder getEntityBuilder() {
+    return entityBuilder;
+  }
+
 }

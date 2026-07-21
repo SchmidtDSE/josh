@@ -83,6 +83,7 @@ PHASE_: 'phase';
 PHASES_: 'phases';
 PRIOR_: 'prior';
 RADIAL_: 'radial';
+REPLACE_: 'replace';
 REPLACEMENT_: 'replacement';
 RETURN_: 'return';
 SAMPLE_: 'sample';
@@ -97,6 +98,7 @@ TO_: 'to';
 TRUE_: 'true';
 UNIFORM_: 'uniform';
 UNIT_: 'unit';
+UPDATE_: 'update';
 WITH_: 'with';
 WITHIN_: 'within';
 WITHOUT_: 'without';
@@ -223,7 +225,9 @@ phasesStanza: START_ PHASES_ phaseDeclaration+ END_ PHASES_;
 
 entityStanzaType: (DISTURBANCE_ | EXTERNAL_ | ORGANISM_ | MANAGEMENT_ | PATCH_ | SIMULATION_);
 
-entityStanza: START_ entityStanzaType identifier (eventHandlerGeneral | stateStanza | initStanza | phasesStanza)* END_ entityStanzaType;
+// start declares a new entity; replace fully overwrites a prior same-named one; update merges,
+// overriding only the handlers it redeclares and leaving the rest of the prior definition intact.
+entityStanza: (START_ | REPLACE_ | UPDATE_) entityStanzaType identifier (eventHandlerGeneral | stateStanza | initStanza | phasesStanza)* END_ entityStanzaType;
 
 // Unit definitions
 unitConversion: ALIAS_ identifier # noopConversion

@@ -594,6 +594,39 @@ public class EntityBuilder implements EntityInitializationInfo {
   }
 
   /**
+   * Combine this builder (as the base) with an {@code update} override.
+   *
+   * <p>Produces a new builder carrying every attribute and event handler group from this builder,
+   * with the override's attributes and handler groups layered on top: an override entry replaces a
+   * base entry with the same key, and every base entry the override does not redeclare survives
+   * unchanged. The new builder shares this builder's value factory and known event set, since both
+   * builders are expected to come from the same program interpretation pass.</p>
+   *
+   * @param override The builder whose attributes and handlers take priority.
+   * @return A new builder combining both.
+   */
+  public EntityBuilder combineWith(EntityBuilder override) {
+    EntityBuilder combined = new EntityBuilder(valueFactory, knownEventSet);
+    combined.setName(getName());
+
+    for (Map.Entry<String, EngineValue> entry : attributes.entrySet()) {
+      combined.addAttribute(entry.getKey(), entry.getValue());
+    }
+    for (Map.Entry<EventKey, EventHandlerGroup> entry : eventHandlerGroups.entrySet()) {
+      combined.addEventHandlerGroup(entry.getKey(), entry.getValue());
+    }
+
+    for (Map.Entry<String, EngineValue> entry : override.attributes.entrySet()) {
+      combined.addAttribute(entry.getKey(), entry.getValue());
+    }
+    for (Map.Entry<EventKey, EventHandlerGroup> entry : override.eventHandlerGroups.entrySet()) {
+      combined.addEventHandlerGroup(entry.getKey(), entry.getValue());
+    }
+
+    return combined;
+  }
+
+  /**
    * Ensure a default state handler exists for each init event an entity may be born through.
    *
    * <p>Creates a default {@code state} handler returning an empty string for every init event
