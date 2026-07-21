@@ -93,7 +93,9 @@ public class JoshJsSimFacade {
   public static String getSimulations(String code) {
     setupForWasm();
 
-    ParseResult result = JoshSimFacadeUtil.parse(code);
+    InputOutputLayer inputOutputLayer = getInputOutputLayer();
+    ParseResult result = JoshSimFacadeUtil.parseWithImports(
+        "", code, inputOutputLayer.getInputStrategy());
     if (result.hasErrors()) {
       throw new RuntimeException("Failed on: " + result.getErrors().iterator().next().toString());
     }
@@ -104,7 +106,7 @@ public class JoshJsSimFacade {
         new ValueSupportFactory(),
         geometryFactory,
         result,
-        getInputOutputLayer()
+        inputOutputLayer
     );
 
     CompatibleStringJoiner stringJoiner = CompatibilityLayerKeeper.get().createStringJoiner(",");
@@ -179,7 +181,9 @@ public class JoshJsSimFacade {
   public static String getSimulationMetadata(String code, String simulationName) {
     setupForWasm();
 
-    ParseResult result = JoshSimFacadeUtil.parse(code);
+    InputOutputLayer inputOutputLayer = getInputOutputLayer();
+    ParseResult result = JoshSimFacadeUtil.parseWithImports(
+        "", code, inputOutputLayer.getInputStrategy());
     if (result.hasErrors()) {
       throw new RuntimeException("Failed on: " + result.getErrors().iterator().next().toString());
     }
@@ -191,7 +195,7 @@ public class JoshJsSimFacade {
         engineValueFactory,
         geometryFactory,
         result,
-        getInputOutputLayer()
+        inputOutputLayer
     );
     program.getSimulations().getProtoype(simulationName);
 
@@ -293,14 +297,15 @@ public class JoshJsSimFacade {
         boolean favorBigDecimal, String outputSteps) {
     setupForWasm();
 
-    ParseResult result = JoshSimFacadeUtil.parse(code);
+    InputOutputLayer inputOutputLayer = getInputOutputLayer(externalData);
+    ParseResult result = JoshSimFacadeUtil.parseWithImports(
+        "", code, inputOutputLayer.getInputStrategy());
     if (result.hasErrors()) {
       throw new RuntimeException("Failed on: " + result.getErrors().iterator().next().toString());
     }
 
     ValueSupportFactory valueFactory = buildValueSupportFactory(favorBigDecimal);
     EngineGeometryFactory geometryFactory = new GridGeometryFactory();
-    InputOutputLayer inputOutputLayer = getInputOutputLayer(externalData);
 
     JoshProgram program = JoshSimFacadeUtil.interpret(
         valueFactory,

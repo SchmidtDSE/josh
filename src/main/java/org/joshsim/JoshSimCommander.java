@@ -35,10 +35,8 @@ import org.joshsim.lang.interpret.JoshProgram;
 import org.joshsim.lang.io.InputOutputLayer;
 import org.joshsim.lang.io.JvmInputOutputLayerBuilder;
 import org.joshsim.lang.io.JvmWorkingDirInputGetter;
-import org.joshsim.lang.parse.JoshImportPreprocessor;
 import org.joshsim.lang.parse.ParseError;
 import org.joshsim.lang.parse.ParseResult;
-import org.joshsim.lang.parse.PreprocessResult;
 import org.joshsim.util.OutputOptions;
 import picocli.CommandLine;
 
@@ -216,17 +214,11 @@ public class JoshSimCommander {
       return new ProgramInitResult(CommanderStepEnum.READ);
     }
 
-    JoshImportPreprocessor preprocessor =
-        new JoshImportPreprocessor(new JvmWorkingDirInputGetter());
-    PreprocessResult preprocessResult = preprocessor.preprocess(
-        file.getPath().replace(File.separatorChar, '/'), fileContent
+    ParseResult result = JoshSimFacadeUtil.parseWithImports(
+        file.getPath().replace(File.separatorChar, '/'),
+        fileContent,
+        new JvmWorkingDirInputGetter()
     );
-    if (preprocessResult.hasErrors()) {
-      printParseErrors(file, preprocessResult.getErrors(), output);
-      return new ProgramInitResult(CommanderStepEnum.PARSE);
-    }
-
-    ParseResult result = JoshSimFacade.parse(preprocessResult.getSource().orElseThrow());
 
     if (result.hasErrors()) {
       printParseErrors(file, result.getErrors(), output);
@@ -238,7 +230,7 @@ public class JoshSimCommander {
       program = JoshSimFacadeUtil.interpret(
           valueFactory, geometryFactory, result, inputOutputLayer
       );
-    } catch (RuntimeException e) {
+    } catch (IllegalArgumentException | IllegalStateException e) {
       output.printError(String.format(
           "Found errors in Josh code at %s: %s", file, e.getMessage()
       ));

@@ -1,0 +1,51 @@
+# @category: core
+# @subcategory: entity_overwrite
+# @priority: critical
+# @description: an update stanza that adds a NEW origin must not clobber a DIFFERENT origin's
+#   state-conditional handlers with empty-string defaults when merged onto the base entity
+
+start simulation EntityUpdatePreservesOtherOriginState
+
+  grid.size = 10 m
+  grid.low.x = 0 m
+  grid.low.y = 0 m
+  grid.high.x = 10 m
+  grid.high.y = 10 m
+
+  steps.low = 0 count
+  steps.high = 0 count
+
+end simulation
+
+start patch Default
+
+  Tree.init = create 1 count of Tree through "founding"
+
+  # BUG (fixed): ensureStateDefaultHandler seeds a default "state" handler for every origin the
+  # entity type has anywhere in the program, not just the ones a given stanza redeclares. Without
+  # the fix, the update stanza's own default for "founding" (which it does not redeclare) would
+  # overwrite the base's real "founding" state assignment once merged, leaving Tree.state == "" and
+  # growthInhibition unresolvable.
+  assert.foundingStateSurvivesUpdateMerge.step = mean(Tree.growthInhibition) == 100%
+
+end patch
+
+start organism Tree
+
+  start init through "founding"
+    state = "Adult"
+  end init
+
+  start state "Adult"
+    growthInhibition.step = 100%
+  end state
+
+end organism
+
+update organism Tree
+
+  start init through "outplant"
+    state = "Adult"
+  end init
+
+end organism

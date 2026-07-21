@@ -40,6 +40,7 @@ import org.joshsim.lang.interpret.JoshProgram;
 import org.joshsim.lang.io.InputOutputLayer;
 import org.joshsim.lang.io.JvmInputOutputLayerBuilder;
 import org.joshsim.lang.io.JvmMappedInputGetter;
+import org.joshsim.lang.io.JvmWorkingDirInputGetter;
 import org.joshsim.lang.parse.ParseResult;
 import org.joshsim.pipeline.job.JoshJob;
 import org.joshsim.pipeline.job.JoshJobBuilder;
@@ -405,7 +406,11 @@ public class JoshSimBatchHandler implements HttpHandler {
     File scriptFile = LocalFileUtil.findScriptFile(workDir);
     String code = Files.readString(scriptFile.toPath());
 
-    ParseResult parseResult = JoshSimFacadeUtil.parse(code);
+    ParseResult parseResult = JoshSimFacadeUtil.parseWithImports(
+        scriptFile.getPath().replace(File.separatorChar, '/'),
+        code,
+        new JvmWorkingDirInputGetter()
+    );
     if (parseResult.hasErrors()) {
       throw new IllegalArgumentException(
           "Parse errors in Josh script: " + parseResult.getErrors().iterator().next()

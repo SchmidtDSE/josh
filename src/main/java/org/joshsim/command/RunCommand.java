@@ -115,8 +115,8 @@ public class RunCommand implements Callable<Integer> {
 
   @Option(
       names = "--output-steps",
-      description = "Comma-separated list of time steps to export (e.g., 5,7,8,9,20). "
-                  + "If not specified, all steps are exported."
+      description = "Comma-separated list of time steps and/or inclusive ranges to export "
+                  + "(e.g., 5,7-9,20 or 0-100). If not specified, all steps are exported."
   )
   private String outputSteps = "";
 

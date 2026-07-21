@@ -157,7 +157,9 @@ public class JoshSimWorkerHandler implements HttpHandler {
 
     boolean useProfiler = this.enableProfiler || getProfilerEnabled(formData);
 
-    ParseResult result = JoshSimFacadeUtil.parse(code);
+    InputOutputLayer inputOutputLayer = getLayer(httpServerExchange, externalData);
+    ParseResult result = JoshSimFacadeUtil.parseWithImports(
+        "", code, inputOutputLayer.getInputStrategy());
     if (result.hasErrors()) {
       httpServerExchange.setStatusCode(400);
       httpServerExchange.getResponseHeaders().put(new HttpString("Content-Type"), "text/plain");
@@ -165,7 +167,6 @@ public class JoshSimWorkerHandler implements HttpHandler {
       return Optional.of(apiKey);
     }
 
-    InputOutputLayer inputOutputLayer = getLayer(httpServerExchange, externalData);
     ValueSupportFactory valueFactory = buildValueFactory(favorBigDecimal, useProfiler);
 
     // Execute interpretation securely

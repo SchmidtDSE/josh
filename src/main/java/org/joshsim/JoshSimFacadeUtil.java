@@ -26,9 +26,12 @@ import org.joshsim.lang.io.CombinedDebugOutputFacade;
 import org.joshsim.lang.io.CombinedExportFacade;
 import org.joshsim.lang.io.DebugOutputFacadeBuilder;
 import org.joshsim.lang.io.ExportFacadeFactory;
+import org.joshsim.lang.io.InputGetterStrategy;
 import org.joshsim.lang.io.InputOutputLayer;
+import org.joshsim.lang.parse.JoshImportPreprocessor;
 import org.joshsim.lang.parse.JoshParser;
 import org.joshsim.lang.parse.ParseResult;
+import org.joshsim.lang.parse.PreprocessResult;
 import org.joshsim.precompute.JshdExternalGetter;
 
 
@@ -50,6 +53,32 @@ public class JoshSimFacadeUtil {
   public static ParseResult parse(String code) {
     JoshParser parser = new JoshParser();
     return parser.parse(code);
+  }
+
+  /**
+   * Resolve {@code import} statements and then parse the combined Josh script.
+   *
+   * <p>Shared by every execution environment (CLI, WASM, cloud/remote) so imports behave
+   * identically wherever a Josh script is parsed, each supplying its own {@link
+   * InputGetterStrategy} for resolving imported files.</p>
+   *
+   * @param entryIdentifier path or identifier for the entry script, used to resolve its own
+   *     relative imports. Use an empty string when the entry script has no real file path (e.g.
+   *     code submitted directly by a WASM or remote caller); imports then resolve as root-relative
+   *     paths.
+   * @param code String code to parse as a Josh source.
+   * @param inputStrategy strategy used to open and check existence of imported files.
+   * @return The result of parsing the code (including any import-resolution errors) where
+   *     hasErrors and getErrors can report on issues found.
+   */
+  public static ParseResult parseWithImports(
+      String entryIdentifier, String code, InputGetterStrategy inputStrategy) {
+    PreprocessResult preprocessed =
+        new JoshImportPreprocessor(inputStrategy).preprocess(entryIdentifier, code);
+    if (preprocessed.hasErrors()) {
+      return new ParseResult(preprocessed.getErrors());
+    }
+    return parse(preprocessed.getSource().orElseThrow());
   }
 
   /**

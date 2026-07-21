@@ -565,6 +565,28 @@ start unit year
 end unit
 ```
 
+### Imports
+
+`import "path"` splices another Josh file's contents in place of the import statement, before
+parsing, so the imported file's stanzas become part of the same program:
+
+```
+import "shared/tree.josh"
+```
+
+- Paths are always relative to the directory of the file that contains the `import` statement
+  (not the working directory or the entry file), joined with `/` and `..`. Absolute paths are
+  rejected, as are paths that escape above their own root.
+- The imported file must parse as a complete, standalone Josh program; its own imports (if any)
+  are resolved first, depth-first, before splicing into the file that imported it.
+- Importing the same file twice (directly or through different chains) is not deduplicated — a
+  resulting duplicate entity name surfaces as an ordinary duplicate-definition error.
+- Works the same way across every execution environment (CLI, WASM/browser, cloud/remote
+  workers); each environment resolves imported file contents through its own file-access
+  mechanism (local filesystem for the CLI, the supplied virtual file set for WASM/remote).
+- Combine with `replace`/`update` entity stanza openers to override or extend an entity declared
+  in an imported file, instead of `start` which requires the name to be new.
+
 ### Spatial / Temporal Configuration
 
 Set on the `simulation` stanza:
@@ -1012,7 +1034,6 @@ identifier within distance radial at prior
 
 Following reserved for future use and are not currently implemented:
 
-- Imports (`import`)
 - Named config (`config expression as identifier)`
 - Agent (`agent` and `organism` currently aliases)
 

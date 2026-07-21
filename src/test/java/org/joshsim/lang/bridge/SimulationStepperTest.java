@@ -2,7 +2,6 @@
 package org.joshsim.lang.bridge;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -81,8 +80,11 @@ class SimulationStepperTest {
   }
 
   @Test
-  void performRunsOnlyDeclaredCustomPhasesThatAreActuallyUsed() {
-    // A patch handler uses "disturbance" but not "base"; the declared order lists both.
+  void performRunsEveryDeclaredPhaseRegardlessOfHandlerOwner() {
+    // Neither the patch nor the simulation declares a handler for "base"; only "disturbance" has
+    // one (on the patch). Both declared phases must still run on both entities: a phase used only
+    // by, say, an organism nested in the patch (not modeled directly by this mock) must not be
+    // silently skipped just because the patch itself has no handler for it.
     EventKey disturbanceKey = EventKey.of("testAttribute", "disturbance");
     when(mockPatch.getEventHandlers()).thenReturn(List.of(mockHandlerGroup));
     when(mockHandlerGroup.getEventKey()).thenReturn(disturbanceKey);
@@ -94,9 +96,9 @@ class SimulationStepperTest {
     SimulationStepper customStepper = new SimulationStepper(mockBridge);
     customStepper.perform(true);
 
-    verify(mockPatch, never()).startSubstep("base");
+    verify(mockPatch).startSubstep("base");
     verify(mockPatch).startSubstep("disturbance");
-    verify(mockSimulation, never()).startSubstep("base");
+    verify(mockSimulation).startSubstep("base");
     verify(mockSimulation).startSubstep("disturbance");
   }
 }

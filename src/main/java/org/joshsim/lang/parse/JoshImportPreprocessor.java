@@ -17,6 +17,7 @@ import java.util.Deque;
 import java.util.List;
 import java.util.Optional;
 import org.joshsim.lang.antlr.JoshLangParser;
+import org.joshsim.lang.interpret.StringLiteralUtil;
 import org.joshsim.lang.io.InputGetterStrategy;
 
 
@@ -36,6 +37,9 @@ import org.joshsim.lang.io.InputGetterStrategy;
  * expected to surface as an ordinary duplicate-definition error once interpreted.</p>
  */
 public class JoshImportPreprocessor {
+
+  /** Refuse to splice in an imported file larger than this many bytes. */
+  private static final int MAX_IMPORT_FILE_BYTES = 10 * 1024 * 1024;
 
   private final InputGetterStrategy inputStrategy;
 
@@ -88,7 +92,7 @@ public class JoshImportPreprocessor {
     int cursor = 0;
 
     for (JoshLangParser.ImportStatementContext importCtx : imports) {
-      String literal = stripQuotes(importCtx.path.getText());
+      String literal = StringLiteralUtil.stripQuotes(importCtx.path.getText());
       String targetId;
       try {
         targetId = resolvePath(currentDir, literal);
@@ -135,12 +139,19 @@ public class JoshImportPreprocessor {
 
   private String readFile(String identifier, JoshLangParser.ImportStatementContext importCtx,
         String referencingIdentifier) {
+    byte[] bytes;
     try (InputStream stream = inputStrategy.open(identifier)) {
-      return new String(stream.readAllBytes(), StandardCharsets.UTF_8);
+      bytes = stream.readNBytes(MAX_IMPORT_FILE_BYTES + 1);
     } catch (IOException | RuntimeException e) {
       throw errorAt(importCtx, referencingIdentifier,
           "Error reading imported file \"" + identifier + "\": " + e.getMessage());
     }
+    if (bytes.length > MAX_IMPORT_FILE_BYTES) {
+      throw errorAt(importCtx, referencingIdentifier,
+          "Imported file \"" + identifier + "\" exceeds the " + MAX_IMPORT_FILE_BYTES
+              + "-byte import size limit.");
+    }
+    return new String(bytes, StandardCharsets.UTF_8);
   }
 
   private static String resolvePath(String currentDir, String literal) {
@@ -173,11 +184,6 @@ public class JoshImportPreprocessor {
   private static String dirOf(String identifier) {
     int lastSlash = identifier.lastIndexOf('/');
     return lastSlash < 0 ? "" : identifier.substring(0, lastSlash);
-  }
-
-  private static String stripQuotes(String raw) {
-    boolean quoted = raw.length() >= 2 && raw.startsWith("\"") && raw.endsWith("\"");
-    return quoted ? raw.substring(1, raw.length() - 1) : raw;
   }
 
   private static ImportResolutionException errorAt(

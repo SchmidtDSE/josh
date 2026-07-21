@@ -23,6 +23,7 @@ import org.joshsim.lang.bridge.ShadowingEntity;
 import org.joshsim.lang.interpret.JoshProgram;
 import org.joshsim.lang.io.InputOutputLayer;
 import org.joshsim.lang.io.JvmInputOutputLayerBuilder;
+import org.joshsim.lang.io.JvmWorkingDirInputGetter;
 import org.joshsim.lang.parse.ParseResult;
 
 
@@ -57,7 +58,12 @@ public class SimulationMetadataExtractor {
     }
 
     String joshCode = Files.readString(file.toPath());
-    return extractMetadataFromCode(joshCode, simulationName);
+    ParseResult result = JoshSimFacadeUtil.parseWithImports(
+        file.getPath().replace(File.separatorChar, '/'),
+        joshCode,
+        new JvmWorkingDirInputGetter()
+    );
+    return extractMetadataFromParseResult(result, simulationName);
   }
 
   /**
@@ -65,7 +71,8 @@ public class SimulationMetadataExtractor {
    *
    * <p>This method parses the provided Josh script code string and extracts key simulation
    * parameters including step ranges. It uses the parsing infrastructure directly without
-   * requiring temporary files.</p>
+   * requiring temporary files. {@code import} statements are not resolved since a bare code
+   * string has no file path to resolve relative imports against.</p>
    *
    * @param joshCode The Josh script code as a string
    * @param simulationName The name of the simulation to extract metadata for
@@ -73,9 +80,20 @@ public class SimulationMetadataExtractor {
    * @throws IllegalArgumentException if the Josh script is invalid or cannot be parsed
    */
   public static SimulationMetadata extractMetadataFromCode(String joshCode, String simulationName) {
+    return extractMetadataFromParseResult(JoshSimFacadeUtil.parse(joshCode), simulationName);
+  }
+
+  /**
+   * Extracts simulation metadata from an already-parsed Josh script.
+   *
+   * @param result The result of parsing the Josh script.
+   * @param simulationName The name of the simulation to extract metadata for
+   * @return SimulationMetadata containing the extracted parameters, or default fallback values if
+   *     parsing or interpretation failed.
+   */
+  private static SimulationMetadata extractMetadataFromParseResult(
+      ParseResult result, String simulationName) {
     try {
-      // Parse Josh code directly using facade utilities (avoids temporary files)
-      ParseResult result = JoshSimFacadeUtil.parse(joshCode);
       if (result.hasErrors()) {
         throw new IllegalArgumentException(
             "Failed to parse Josh script: " + result.getErrors().iterator().next().toString());

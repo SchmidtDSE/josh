@@ -127,7 +127,13 @@ public class JoshParseHandler implements HttpHandler {
     }
 
     String code = formData.getFirst("code").getValue();
-    ParseResult result = JoshSimFacadeUtil.parse(code);
+    SandboxInputOutputLayer inputOutputLayer = new SandboxInputOutputLayer(
+        new HashMap<>(),
+        (x) -> {
+        }
+    );
+    ParseResult result = JoshSimFacadeUtil.parseWithImports(
+        "", code, inputOutputLayer.getInputStrategy());
 
     String parseStatus = "";
     if (result.hasErrors()) {
@@ -135,12 +141,6 @@ public class JoshParseHandler implements HttpHandler {
     } else {
       parseStatus = "success";
     }
-
-    SandboxInputOutputLayer inputOutputLayer = new SandboxInputOutputLayer(
-        new HashMap<>(),
-        (x) -> {
-        }
-    );
 
     StringJoiner responseJoiner = new StringJoiner("\t");
     responseJoiner.add(parseStatus);

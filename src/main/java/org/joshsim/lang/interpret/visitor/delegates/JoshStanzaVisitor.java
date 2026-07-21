@@ -151,7 +151,17 @@ public class JoshStanzaVisitor implements JoshVisitorDelegate {
     // Name must be set before ensureStateDefaultHandler(), which scopes its per-init-event
     // defaults to this entity's own declared origins via knownEventSet.getInitEvents(name).
     entityBuilder.setName(identifier);
-    entityBuilder.ensureStateDefaultHandler();
+    // An `update` stanza's defaults would otherwise clobber the base's real state handlers once
+    // EntityBuilder.combineWith layers this builder's entries on top: ensureStateDefaultHandler
+    // seeds a default for every origin the entity type has ANYWHERE in the program (per
+    // knownEventSet), not just the ones this stanza redeclares, so an `update` block that only
+    // adds one origin would otherwise overwrite the base's real handlers for every other origin
+    // with empty-string defaults. `update` only ever needs to contribute what it explicitly
+    // declares; the base it merges onto already carries its own complete defaults.
+    boolean isUpdate = "update".equals(ctx.getChild(0).getText());
+    if (!isUpdate) {
+      entityBuilder.ensureStateDefaultHandler();
+    }
 
     for (int innerIndex = 0; innerIndex < numInner; innerIndex++) {
       int childIndex = innerIndex + 3;

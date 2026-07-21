@@ -1,0 +1,51 @@
+# @category: core
+# @subcategory: custom_phases
+# @priority: critical
+# @description: a declared phase with a handler only on an organism (no patch attribute uses it)
+#   must still execute every step, not be silently skipped because no patch handler names it
+
+start simulation TestCustomPhaseOrganismOnlyHandler
+
+  grid.size = 10 m
+  grid.low.x = 0 m
+  grid.low.y = 0 m
+  grid.high.x = 10 m
+  grid.high.y = 10 m
+  grid.patch = "Default"
+
+  steps.low = 0 count
+  steps.high = 1 count
+
+  start phases
+    with phase base
+    then phase disturb
+    then phase manage
+  end phases
+
+end simulation
+
+start patch Default
+
+  Tree.init = create 1 count of Tree
+
+  # Neither "base" nor "disturb" has any patch-level handler; only "manage" does (below). A
+  # patch-only scan of used phase names would treat "base" and "disturb" as unused and skip them
+  # entirely, so Tree.age (which only advances during "disturb") would never change.
+  avgAge.manage = mean(Tree.age)
+  assert.ageAdvancedThroughDisturb.manage:if(meta.stepCount == 1 count) = current.avgAge >= 1 year
+
+end patch
+
+start organism Tree
+  age.init = 0 year
+  age.disturb = prior.age + 1 year
+end organism
+
+start unit year
+  alias years
+end unit
+
+start unit m
+  alias meter
+  alias meters
+end unit
