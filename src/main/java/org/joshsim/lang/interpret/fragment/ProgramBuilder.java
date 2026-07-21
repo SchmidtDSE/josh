@@ -11,6 +11,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import org.joshsim.engine.entity.prototype.EntityOverwriteBehavior;
 import org.joshsim.engine.entity.prototype.EntityPrototype;
 import org.joshsim.engine.entity.prototype.EntityPrototypeStoreBuilder;
 import org.joshsim.engine.entity.type.EntityType;
@@ -49,7 +50,7 @@ public class ProgramBuilder {
   public void add(JoshFragment fragment) {
     switch (fragment.getFragmentType()) {
       case CONVERSIONS -> fragment.getConversions().forEach(converter::addConversion);
-      case ENTITY -> addEntity(fragment.getEntity());
+      case ENTITY -> addEntity(fragment.getEntity(), fragment.getOverwriteBehavior());
       default -> throw new IllegalArgumentException(
           "Unexpected top level fragment: " + fragment.getFragmentType()
       );
@@ -69,9 +70,17 @@ public class ProgramBuilder {
    * Adds an entity to the program and tracks simulation entities separately.
    *
    * @param entity The entity prototype to add
+   * @param overwriteBehavior How this declaration relates to a prior same-named entity, per the
+   *     stanza's opening keyword ({@code start} / {@code replace} / {@code update}).
    */
-  private void addEntity(EntityPrototype entity) {
-    entities.add(entity);
+  private void addEntity(EntityPrototype entity, EntityOverwriteBehavior overwriteBehavior) {
+    switch (overwriteBehavior) {
+      case NOT_SPECIFIED -> entities.add(entity);
+      case OVERWRITE -> entities.replace(entity);
+      case UPDATE -> entities.update(entity);
+      default -> throw new IllegalArgumentException(
+          "Unknown entity overwrite behavior: " + overwriteBehavior);
+    }
 
     if (entity.getEntityType() == EntityType.SIMULATION) {
       simulationNames.add(entity.getIdentifier());

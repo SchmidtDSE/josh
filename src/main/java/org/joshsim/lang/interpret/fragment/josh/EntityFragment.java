@@ -6,6 +6,7 @@
 
 package org.joshsim.lang.interpret.fragment.josh;
 
+import org.joshsim.engine.entity.prototype.EntityOverwriteBehavior;
 import org.joshsim.engine.entity.prototype.EntityPrototype;
 import org.joshsim.lang.interpret.fragment.FragmentType;
 
@@ -18,18 +19,27 @@ import org.joshsim.lang.interpret.fragment.FragmentType;
 public class EntityFragment extends JoshFragment {
 
   private final EntityPrototype prototype;
+  private final EntityOverwriteBehavior overwriteBehavior;
 
   /**
    * Creates a new fragment around an entity prototype.
    *
    * @param prototype The entity prototype to wrap
+   * @param overwriteBehavior How this declaration relates to a prior same-named entity, per the
+   *     stanza's opening keyword ({@code start} / {@code replace} / {@code update}).
    */
-  public EntityFragment(EntityPrototype prototype) {
+  public EntityFragment(EntityPrototype prototype, EntityOverwriteBehavior overwriteBehavior) {
     this.prototype = prototype;
+    this.overwriteBehavior = overwriteBehavior;
   }
 
   public EntityPrototype getEntity() {
     return prototype;
+  }
+
+  @Override
+  public EntityOverwriteBehavior getOverwriteBehavior() {
+    return overwriteBehavior;
   }
 
   @Override

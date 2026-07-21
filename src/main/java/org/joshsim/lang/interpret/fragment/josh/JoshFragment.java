@@ -9,6 +9,7 @@ package org.joshsim.lang.interpret.fragment.josh;
 import java.util.List;
 import java.util.Optional;
 import org.joshsim.engine.entity.handler.EventHandlerGroupBuilder;
+import org.joshsim.engine.entity.prototype.EntityOverwriteBehavior;
 import org.joshsim.engine.entity.prototype.EntityPrototype;
 import org.joshsim.engine.func.CompiledCallable;
 import org.joshsim.engine.func.CompiledSelector;
@@ -80,6 +81,16 @@ public abstract class JoshFragment {
    */
   public EntityPrototype getEntity() {
     throw new RuntimeException("This fragment does not have an entity.");
+  }
+
+  /**
+   * Gets how an entity fragment's declaration relates to a prior same-named entity.
+   *
+   * @return The overwrite behavior declared by the entity stanza's opening keyword.
+   * @throws RuntimeException if this fragment type does not contain an entity
+   */
+  public EntityOverwriteBehavior getOverwriteBehavior() {
+    throw new RuntimeException("This fragment does not have an overwrite behavior.");
   }
 
   /**
