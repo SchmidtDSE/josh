@@ -36,7 +36,7 @@ import org.joshsim.lang.interpret.KnownEventSet;
  * way to pass initialization parameters to entity constructors.</p>
  */
 public class EntityBuilder implements EntityInitializationInfo {
-  private static final List<String> SUBSTEPS = List.of("init", "step", "start", "end", "constant");
+  private static final List<String> STRUCTURAL_EVENTS = List.of("init", "constant");
 
   private final ValueSupportFactory valueFactory;
   // The program's declared init events (base "init" plus per-origin variants). Origin-dispatched
@@ -91,16 +91,18 @@ public class EntityBuilder implements EntityInitializationInfo {
   /**
    * Get the substep-like events for which handler caches and skip arrays are built.
    *
-   * <p>The standard substeps plus every per-origin init variant event <em>this entity</em>
-   * declared via its own {@code start init through} blocks, so a variant's handlers resolve when
-   * its init is fast-forwarded. Deliberately scoped to this entity's own declarations (not every
-   * origin declared anywhere in the program) so one entity's origins don't inflate every other
-   * entity's cache.</p>
+   * <p>The structural events plus the program's declared substep order (default {@code start}/
+   * {@code step}/{@code end}, or a simulation's declared {@code phases}) plus every per-origin init
+   * variant event <em>this entity</em> declared via its own {@code start init through} blocks, so a
+   * variant's handlers resolve when its init is fast-forwarded. Init variants are deliberately
+   * scoped to this entity's own declarations (not every origin declared anywhere in the program) so
+   * one entity's origins don't inflate every other entity's cache.</p>
    *
    * @return The set of event names to build per-substep structures for.
    */
   private Set<String> getCacheableEvents() {
-    Set<String> events = new HashSet<>(SUBSTEPS);
+    Set<String> events = new HashSet<>(STRUCTURAL_EVENTS);
+    events.addAll(knownEventSet.getSubstepOrder());
     for (String initEvent : knownEventSet.getInitEvents(name.orElse(""))) {
       events.add(initEvent);
     }

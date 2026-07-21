@@ -6,10 +6,12 @@
 
 package org.joshsim.lang.interpret.visitor;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+import java.util.List;
 import org.joshsim.JoshSimFacade;
 import org.joshsim.engine.geometry.grid.GridGeometryFactory;
 import org.joshsim.lang.interpret.KnownEventSet;
@@ -84,6 +86,65 @@ class JoshLangEventSetVisitorTest {
         new GridGeometryFactory(),
         parsed,
         new JvmInputOutputLayerBuilder().withReplicate(1).build()));
+  }
+
+  @Test
+  void discoversDeclaredPhaseOrder() {
+    KnownEventSet events = discover(
+        "start simulation Main "
+        + "start phases "
+        + "with phase base "
+        + "then phase disturb "
+        + "then phase manage "
+        + "end phases "
+        + "end simulation");
+
+    assertEquals(List.of("base", "disturb", "manage"), events.getSubstepOrder());
+    assertTrue(events.isEventName("disturb"));
+  }
+
+  @Test
+  void phasesOutsideSimulationIsRejected() {
+    assertThrows(RuntimeException.class, () -> discover(
+        "start patch Default "
+        + "start phases with phase base end phases "
+        + "end patch"));
+  }
+
+  @Test
+  void multiplePhasesStanzasInOneSimulationAreRejected() {
+    assertThrows(RuntimeException.class, () -> discover(
+        "start simulation Main "
+        + "start phases with phase base end phases "
+        + "start phases with phase other end phases "
+        + "end simulation"));
+  }
+
+  @Test
+  void phasesMustStartWithWith() {
+    assertThrows(RuntimeException.class, () -> discover(
+        "start simulation Main "
+        + "start phases then phase base end phases "
+        + "end simulation"));
+  }
+
+  @Test
+  void onlyTheFirstPhaseMayUseWith() {
+    assertThrows(RuntimeException.class, () -> discover(
+        "start simulation Main "
+        + "start phases with phase base with phase disturb end phases "
+        + "end simulation"));
+  }
+
+  @Test
+  void differentPhasesDeclaredInDifferentSimulationsAreRejected() {
+    assertThrows(RuntimeException.class, () -> discover(
+        "start simulation Main "
+        + "start phases with phase base end phases "
+        + "end simulation "
+        + "start simulation Other "
+        + "start phases with phase alternate end phases "
+        + "end simulation"));
   }
 
 }

@@ -16,6 +16,7 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import java.util.Collections;
+import java.util.List;
 import java.util.Optional;
 import org.joshsim.engine.entity.base.MutableEntity;
 import org.junit.jupiter.api.BeforeEach;
@@ -74,5 +75,25 @@ public class EntityFastForwarderTest {
         () -> EntityFastForwarder.fastForward(mockEntity, "invalid"),
         "Should throw when substep is invalid"
     );
+  }
+
+  @Test
+  void testFastForwardHonorsCustomSubstepOrder() {
+    EntityFastForwarder.fastForward(
+        mockEntity, "management", "init", List.of("base", "disturbance", "management"));
+    verify(mockEntity).startSubstep("constant");
+    verify(mockEntity).startSubstep("init");
+    verify(mockEntity).startSubstep("base");
+    verify(mockEntity).startSubstep("disturbance");
+    verify(mockEntity).startSubstep("management");
+    // Every substep up to and including the target closes except the target itself.
+    verify(mockEntity, times(4)).endSubstep();
+  }
+
+  @Test
+  void testFastForwardStopsBeforeLaterCustomPhases() {
+    EntityFastForwarder.fastForward(
+        mockEntity, "disturbance", "init", List.of("base", "disturbance", "management"));
+    verify(mockEntity, times(0)).startSubstep("management");
   }
 }

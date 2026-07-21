@@ -9,7 +9,9 @@ package org.joshsim.lang.interpret;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 
 /**
@@ -20,9 +22,10 @@ import java.util.Set;
  * variant event named {@link #initEventFor(String)} (e.g. {@code "init:founding"}). A per-origin
  * variant is declared by a {@code start init through} block on a specific entity stanza, so it is
  * only ever valid for the entity type that declared it — {@code Shrub} does not gain an
- * {@code init:founding} event just because {@code Tree} declared one. <em>Substep</em> events
- * ({@code "start"}, {@code "step"}, {@code "end"}) run every timestep and, today, are shared
- * program-wide (no per-entity or per-simulation axis yet).</p>
+ * {@code init:founding} event just because {@code Tree} declared one. <em>Substep</em> events run
+ * every timestep and default to {@code "start"}, {@code "step"}, {@code "end"}, but a simulation
+ * may replace them with its own ordered, named phases via a {@code start phases ... end phases}
+ * block (see {@link #declarePhases(List)}); this is program-wide, not per-entity.</p>
  *
  * <p>This is produced by a pre-pass ({@code JoshLangEventSetVisitor}) before the main interpret
  * walk and threaded into the {@code DelegateToolbox} so the visitors can (a) split an attribute
@@ -45,34 +48,35 @@ public class KnownEventSet {
   /** Structural events that are always valid regardless of what a program declares. */
   private static final Set<String> STRUCTURAL_EVENTS = Set.of("constant", "remove");
 
-  /** The standard per-timestep substep events. */
-  private static final Set<String> STANDARD_SUBSTEP_EVENTS = Set.of("start", "step", "end");
+  /** The default per-timestep substep order, used unless a simulation declares its own phases. */
+  private static final List<String> DEFAULT_SUBSTEP_ORDER = List.of("start", "step", "end");
 
   /** Per-entity-type declared init variant events (e.g. {@code "Tree" -> {"init:founding"}}). */
   private final Map<String, Set<String>> initEventsByEntity;
 
-  private final Set<String> substepEvents;
+  private Optional<List<String>> customSubstepOrder;
 
   /**
    * Create a set seeded with the standard substeps and no declared init origins.
    */
   public KnownEventSet() {
     initEventsByEntity = new HashMap<>();
-    substepEvents = new HashSet<>(STANDARD_SUBSTEP_EVENTS);
+    customSubstepOrder = Optional.empty();
   }
 
   /**
    * Create a set from explicit event collections (used by {@link #combine(KnownEventSet)}).
    *
    * @param initEventsByEntity The per-entity declared init variant events to include.
-   * @param substepEvents The substep events to include.
+   * @param customSubstepOrder The declared phase order to include, if any.
    */
-  private KnownEventSet(Map<String, Set<String>> initEventsByEntity, Set<String> substepEvents) {
+  private KnownEventSet(Map<String, Set<String>> initEventsByEntity,
+        Optional<List<String>> customSubstepOrder) {
     this.initEventsByEntity = new HashMap<>();
     for (Map.Entry<String, Set<String>> entry : initEventsByEntity.entrySet()) {
       this.initEventsByEntity.put(entry.getKey(), new HashSet<>(entry.getValue()));
     }
-    this.substepEvents = new HashSet<>(substepEvents);
+    this.customSubstepOrder = customSubstepOrder;
   }
 
   /**
@@ -97,6 +101,35 @@ public class KnownEventSet {
   public void addInitOrigin(String entityType, String origin) {
     initEventsByEntity.computeIfAbsent(entityType, key -> new HashSet<>())
         .add(initEventFor(origin));
+  }
+
+  /**
+   * Declare the ordered phase sequence a {@code start phases ... end phases} block names, replacing
+   * the default {@code start}/{@code step}/{@code end} substeps for the whole program.
+   *
+   * @param order The phase names in declaration order.
+   * @throws IllegalStateException if phases have already been declared elsewhere in the program.
+   * @throws IllegalArgumentException if a phase name is reserved or repeated.
+   */
+  public void declarePhases(List<String> order) {
+    if (customSubstepOrder.isPresent()) {
+      throw new IllegalStateException(
+          "Only one simulation may declare a `phases` block per program.");
+    }
+
+    Set<String> seen = new HashSet<>();
+    for (String phase : order) {
+      if (BASE_INIT_EVENT.equals(phase) || STRUCTURAL_EVENTS.contains(phase)) {
+        throw new IllegalArgumentException(
+            String.format("Cannot use \"%s\" as a phase name; it is reserved.", phase));
+      }
+      if (!seen.add(phase)) {
+        throw new IllegalArgumentException(
+            String.format("Phase \"%s\" declared more than once.", phase));
+      }
+    }
+
+    customSubstepOrder = Optional.of(List.copyOf(order));
   }
 
   /**
@@ -141,7 +174,7 @@ public class KnownEventSet {
    * @return True if {@code candidate} is a substep event.
    */
   public boolean isSubstepEvent(String candidate) {
-    return substepEvents.contains(candidate);
+    return getSubstepOrder().contains(candidate);
   }
 
   /**
@@ -179,12 +212,13 @@ public class KnownEventSet {
   }
 
   /**
-   * Get the substep events.
+   * Get the ordered substep sequence: the program's declared phases, or the default
+   * {@code start}/{@code step}/{@code end} if none were declared.
    *
-   * @return An unmodifiable view of the substep event names.
+   * @return The ordered substep names.
    */
-  public Iterable<String> getSubstepEvents() {
-    return Collections.unmodifiableSet(substepEvents);
+  public List<String> getSubstepOrder() {
+    return customSubstepOrder.orElse(DEFAULT_SUBSTEP_ORDER);
   }
 
   /**
@@ -193,6 +227,7 @@ public class KnownEventSet {
    * @param other The set to merge in.
    * @return A new KnownEventSet containing the union of both sets' events, keeping each entity
    *     type's declared init variants separate from every other entity type's.
+   * @throws IllegalStateException if both sides declare a (necessarily different) phase order.
    */
   public KnownEventSet combine(KnownEventSet other) {
     Map<String, Set<String>> combinedInit = new HashMap<>();
@@ -203,10 +238,15 @@ public class KnownEventSet {
       combinedInit.computeIfAbsent(entry.getKey(), key -> new HashSet<>()).addAll(entry.getValue());
     }
 
-    Set<String> combinedSubstep = new HashSet<>(substepEvents);
-    combinedSubstep.addAll(other.substepEvents);
+    if (customSubstepOrder.isPresent() && other.customSubstepOrder.isPresent()) {
+      throw new IllegalStateException(
+          "Only one simulation may declare a `phases` block per program.");
+    }
+    Optional<List<String>> combinedOrder = customSubstepOrder.isPresent()
+        ? customSubstepOrder
+        : other.customSubstepOrder;
 
-    return new KnownEventSet(combinedInit, combinedSubstep);
+    return new KnownEventSet(combinedInit, combinedOrder);
   }
 
 }

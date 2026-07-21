@@ -79,6 +79,8 @@ OR_: 'or';
 ORGANISM_: 'organism';
 P_: 'p';
 PATCH_: 'patch';
+PHASE_: 'phase';
+PHASES_: 'phases';
 PRIOR_: 'prior';
 RADIAL_: 'radial';
 REPLACEMENT_: 'replacement';
@@ -89,6 +91,7 @@ START_: 'start';
 STATE_: 'state';
 STD_: 'std';
 STEP_: 'step';
+THEN_: 'then';
 THROUGH_: 'through';
 TO_: 'to';
 TRUE_: 'true';
@@ -214,9 +217,13 @@ stateStanza: START_ STATE_ STR_ eventHandlerGeneral* END_ STATE_;
 // handlers (the visitor re-keys them to the init event).
 initStanza: START_ INIT_ THROUGH_ STR_ eventHandlerGeneral* END_ INIT_;
 
+// Declares the ordered phase sequence for a simulation, replacing start/step/end (init unaffected).
+phaseDeclaration: (WITH_ | THEN_) PHASE_ name=identifier;
+phasesStanza: START_ PHASES_ phaseDeclaration+ END_ PHASES_;
+
 entityStanzaType: (DISTURBANCE_ | EXTERNAL_ | ORGANISM_ | MANAGEMENT_ | PATCH_ | SIMULATION_);
 
-entityStanza: START_ entityStanzaType identifier (eventHandlerGeneral | stateStanza | initStanza)* END_ entityStanzaType;
+entityStanza: START_ entityStanzaType identifier (eventHandlerGeneral | stateStanza | initStanza | phasesStanza)* END_ entityStanzaType;
 
 // Unit definitions
 unitConversion: ALIAS_ identifier # noopConversion

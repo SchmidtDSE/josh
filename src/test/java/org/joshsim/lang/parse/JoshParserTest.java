@@ -85,4 +85,28 @@ public class JoshParserTest {
     assertTrue(result.hasErrors());
   }
 
+  @Test
+  public void testPhasesStanzaParses() {
+    ParseResult result = parser.parse(
+        "start simulation Main "
+        + "start phases "
+        + "with phase base "
+        + "then phase disturb "
+        + "then phase manage "
+        + "end phases "
+        + "end simulation");
+    assertFalse(result.hasErrors());
+  }
+
+  @Test
+  public void testPhasesStanzaRequiresPhaseKeyword() {
+    ParseResult result = parser.parse(
+        "start simulation Main "
+        + "start phases "
+        + "with base "
+        + "end phases "
+        + "end simulation");
+    assertTrue(result.hasErrors());
+  }
+
 }

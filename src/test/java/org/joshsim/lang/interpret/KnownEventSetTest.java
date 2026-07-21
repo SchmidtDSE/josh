@@ -8,8 +8,10 @@ package org.joshsim.lang.interpret;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+import java.util.List;
 import org.junit.jupiter.api.Test;
 
 /**
@@ -117,6 +119,81 @@ class KnownEventSetTest {
     first.combine(second);
     assertFalse(first.isInitEvent("Tree", "init:outplant"));
     assertFalse(second.isInitEvent("Tree", "init:founding"));
+  }
+
+  @Test
+  void defaultSubstepOrderIsStartStepEnd() {
+    KnownEventSet events = new KnownEventSet();
+    assertEquals(List.of("start", "step", "end"), events.getSubstepOrder());
+  }
+
+  @Test
+  void declarePhasesReplacesTheDefaultOrder() {
+    KnownEventSet events = new KnownEventSet();
+    events.declarePhases(List.of("base", "disturbance", "management"));
+
+    assertEquals(List.of("base", "disturbance", "management"), events.getSubstepOrder());
+    assertTrue(events.isSubstepEvent("base"));
+    assertTrue(events.isSubstepEvent("disturbance"));
+    assertTrue(events.isSubstepEvent("management"));
+    assertFalse(events.isSubstepEvent("start"));
+    assertFalse(events.isSubstepEvent("step"));
+    assertFalse(events.isSubstepEvent("end"));
+  }
+
+  @Test
+  void declaredPhaseBecomesRecognizedEventName() {
+    KnownEventSet events = new KnownEventSet();
+    events.declarePhases(List.of("disturb"));
+
+    assertTrue(events.isEventName("disturb"));
+  }
+
+  @Test
+  void declarePhasesTwiceThrows() {
+    KnownEventSet events = new KnownEventSet();
+    events.declarePhases(List.of("base"));
+
+    assertThrows(IllegalStateException.class, () -> events.declarePhases(List.of("other")));
+  }
+
+  @Test
+  void declarePhasesRejectsReservedNames() {
+    KnownEventSet events = new KnownEventSet();
+    assertThrows(IllegalArgumentException.class,
+        () -> events.declarePhases(List.of("init")));
+    assertThrows(IllegalArgumentException.class,
+        () -> new KnownEventSet().declarePhases(List.of("constant")));
+  }
+
+  @Test
+  void declarePhasesRejectsDuplicateNames() {
+    KnownEventSet events = new KnownEventSet();
+    assertThrows(IllegalArgumentException.class,
+        () -> events.declarePhases(List.of("base", "base")));
+  }
+
+  @Test
+  void combineThrowsWhenBothSidesDeclarePhases() {
+    KnownEventSet first = new KnownEventSet();
+    first.declarePhases(List.of("base"));
+    KnownEventSet second = new KnownEventSet();
+    second.declarePhases(List.of("other"));
+
+    assertThrows(IllegalStateException.class, () -> first.combine(second));
+  }
+
+  @Test
+  void combineKeepsTheDeclaredPhasesFromEitherSide() {
+    KnownEventSet withPhases = new KnownEventSet();
+    withPhases.declarePhases(List.of("base", "disturbance"));
+    KnownEventSet withoutPhases = new KnownEventSet();
+
+    KnownEventSet combined = withPhases.combine(withoutPhases);
+    assertEquals(List.of("base", "disturbance"), combined.getSubstepOrder());
+
+    KnownEventSet combinedOtherOrder = withoutPhases.combine(withPhases);
+    assertEquals(List.of("base", "disturbance"), combinedOtherOrder.getSubstepOrder());
   }
 
 }
