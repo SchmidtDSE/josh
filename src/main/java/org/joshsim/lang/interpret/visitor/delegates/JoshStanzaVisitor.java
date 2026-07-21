@@ -230,15 +230,18 @@ public class JoshStanzaVisitor implements JoshVisitorDelegate {
   /**
    * Visit an import statement.
    *
-   * <p>Process an import statement, which is currently reserved for future use. Specifically, this
-   * may be used for multi-file scripts.</p>
+   * <p>An {@code import} is resolved by {@code JoshImportPreprocessor} before this visitor ever
+   * runs: it is spliced out and replaced with the imported file's own text. Reaching this method
+   * means either the current execution environment does not preprocess imports (e.g. WASM or a
+   * cloud worker, which receive a single source string with no file system to resolve against) or
+   * preprocessing was skipped.</p>
    *
    * @param ctx The import statement context to visit.
    * @return A fragment representing the import statement.
-   * @throws RuntimeException as this feature is not yet implemented.
+   * @throws RuntimeException as imports are not supported outside of file-based execution.
    */
   public JoshFragment visitImportStatement(JoshLangParser.ImportStatementContext ctx) {
-    throw new RuntimeException("Import statements reserved for future use.");
+    throw new RuntimeException("Imports are not supported in this execution environment.");
   }
 
   /**

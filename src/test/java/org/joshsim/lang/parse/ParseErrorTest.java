@@ -7,7 +7,9 @@
 package org.joshsim.lang.parse;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
+import java.util.Optional;
 import org.junit.jupiter.api.Test;
 
 
@@ -24,5 +26,13 @@ public class ParseErrorTest {
 
     assertEquals(line, error.getLine(), "Line number should match constructor value");
     assertEquals(message, error.getMessage(), "Message should match constructor value");
+    assertTrue(error.getSourceName().isEmpty(), "Two-arg constructor has no source name");
+  }
+
+  @Test
+  public void testParseErrorWithSourceName() {
+    ParseError error = new ParseError(7, "Bad token", Optional.of("imported.josh"));
+
+    assertEquals("imported.josh", error.getSourceName().orElseThrow());
   }
 }

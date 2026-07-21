@@ -1,0 +1,6 @@
+start patch Default
+
+  value.init = 5 count
+  assert.importedValueHoldsAcrossSteps.step = value == 5 count
+
+end patch

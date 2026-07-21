@@ -99,6 +99,18 @@ public class JoshParserTest {
   }
 
   @Test
+  public void testImportStatementParses() {
+    ParseResult result = parser.parse("import \"other.josh\"");
+    assertFalse(result.hasErrors());
+  }
+
+  @Test
+  public void testImportStatementRequiresStringLiteral() {
+    ParseResult result = parser.parse("import other.josh");
+    assertTrue(result.hasErrors());
+  }
+
+  @Test
   public void testPhasesStanzaRequiresPhaseKeyword() {
     ParseResult result = parser.parse(
         "start simulation Main "
