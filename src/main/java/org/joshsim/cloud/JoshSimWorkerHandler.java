@@ -27,7 +27,6 @@ import org.joshsim.lang.io.SandboxExportCallback;
 import org.joshsim.lang.io.SandboxInputOutputLayer;
 import org.joshsim.lang.io.VirtualFile;
 import org.joshsim.lang.parse.ParseResult;
-import org.joshsim.util.OutputPhasesParser;
 import org.joshsim.util.OutputStepsParser;
 
 
@@ -155,7 +154,6 @@ public class JoshSimWorkerHandler implements HttpHandler {
         formData.getFirst("favorBigDecimal").getValue()
     );
     final Optional<Set<Integer>> outputSteps = getOutputSteps(formData);
-    final Optional<Set<String>> outputPhases = getOutputPhases(formData);
 
     boolean useProfiler = this.enableProfiler || getProfilerEnabled(formData);
 
@@ -187,7 +185,7 @@ public class JoshSimWorkerHandler implements HttpHandler {
     // Execute simulation securely
     boolean simulationSuccess = executeSimulation(
         valueFactory, geometryFactory, externalData, program,
-        simulationName, httpServerExchange, apiKey, outputSteps, outputPhases
+        simulationName, httpServerExchange, apiKey, outputSteps
     );
     if (!simulationSuccess) {
       return Optional.of(apiKey); // Error response already set
@@ -225,21 +223,6 @@ public class JoshSimWorkerHandler implements HttpHandler {
     } else {
       String outputStepsStr = formData.getFirst("outputSteps").getValue();
       return OutputStepsParser.parseForWasmOrRemote(outputStepsStr);
-    }
-  }
-
-  /**
-   * Parse the output-phases form field from the request.
-   *
-   * @param formData The form data submitted with the request.
-   * @return Optional set of phase names to export, or empty if all phases should be exported.
-   */
-  private Optional<Set<String>> getOutputPhases(FormData formData) {
-    if (!formData.contains("outputPhases")) {
-      return OutputPhasesParser.parseForWasmOrRemote("");
-    } else {
-      String outputPhasesStr = formData.getFirst("outputPhases").getValue();
-      return OutputPhasesParser.parseForWasmOrRemote(outputPhasesStr);
     }
   }
 
@@ -287,14 +270,12 @@ public class JoshSimWorkerHandler implements HttpHandler {
    * @param apiKey The API key for secure logging.
    * @param outputSteps Optional set of step numbers to export, or empty if all steps
    *     should be exported.
-   * @param outputPhases Optional set of phase names to export, or empty if all phases
-   *     should be exported.
    * @return true on success, false on failure (400 response set).
    */
   private boolean executeSimulation(ValueSupportFactory valueFactory,
         EngineGeometryFactory geometryFactory, String externalData, JoshProgram program,
         String simulationName, HttpServerExchange httpServerExchange, String apiKey,
-        Optional<Set<Integer>> outputSteps, Optional<Set<String>> outputPhases) {
+        Optional<Set<Integer>> outputSteps) {
     try {
       InputOutputLayer layer = getLayer(httpServerExchange, externalData);
 
@@ -318,8 +299,7 @@ public class JoshSimWorkerHandler implements HttpHandler {
             }
           },
           useSerial,
-          outputSteps,
-          outputPhases
+          outputSteps
       );
 
       // Add end marker for replicate 0 to standardize wire format

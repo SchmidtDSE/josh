@@ -178,24 +178,116 @@ public class ExternalTimestepAlignmentIntegrationTest {
     }
   }
 
+  /**
+   * Regression test: a model's own "year" attribute, declared for unrelated bookkeeping, must
+   * never redirect an unadorned {@code external X} read. This is the exact shape of the bug caught
+   * in CI on the real Tulare tutorial model - a "year" attribute computing an unrelated calendar
+   * label (here, a wildly out-of-range constant) would have thrown "Timestep out of bounds" if
+   * external reads implicitly consulted it.
+   */
+  @Test
+  public void unadornedExternalIgnoresSameNamedYearAttribute() throws Exception {
+    RunResult baseline = runWindow(0, 2);
+
+    Path jshd = preprocessToJshd(0, 2);
+    Path outDir = Files.createDirectories(tempDir.resolve("run_unrelated_year"));
+    Path csvTarget = outDir.resolve("results_{replicate}.csv");
+    String script = """
+        start simulation Test
+          grid.size = 16000 m
+          grid.low = 36.73 degrees latitude, -119.52 degrees longitude
+          grid.high = 35.80 degrees latitude, -117.98 degrees longitude
+          grid.patch = "Default"
+          steps.low = 0 count
+          steps.high = 2 count
+          exportFiles.patch = "file://%s"
+
+          year.init = 999999 count
+          year.step = prior.year
+
+        end simulation
+
+        start patch Default
+          export.year.step = meta.year
+          export.temperature.step = external temperature
+        end patch
+        """.formatted(csvTarget.toString());
+    Path scriptFile = tempDir.resolve("unrelated_year.josh");
+    Files.writeString(scriptFile, script);
+
+    RunResult withUnrelatedYear = runScript(scriptFile, jshd, outDir);
+
+    assertEquals(new TreeSet<>(List.of(999999L)), withUnrelatedYear.years,
+        "meta.year should still reflect the model's own override attribute");
+    assertEquals(baseline.temperatures, withUnrelatedYear.temperatures,
+        "an unrelated 'year' attribute must not redirect the unadorned external read");
+  }
+
+  /**
+   * A model that wants a different lookup step for external data must opt in explicitly via
+   * {@code external X at <expr>} - here a patch attribute equal to the raw step - and gets exactly
+   * the same records as the unadorned form when that expression matches the raw clock.
+   */
+  @Test
+  public void explicitAtExpressionUsesComputedStep() throws Exception {
+    RunResult baseline = runWindow(0, 2);
+
+    Path jshd = preprocessToJshd(0, 2);
+    Path outDir = Files.createDirectories(tempDir.resolve("run_explicit_at"));
+    Path csvTarget = outDir.resolve("results_{replicate}.csv");
+    String script = """
+        start simulation Test
+          grid.size = 16000 m
+          grid.low = 36.73 degrees latitude, -119.52 degrees longitude
+          grid.high = 35.80 degrees latitude, -117.98 degrees longitude
+          grid.patch = "Default"
+          steps.low = 0 count
+          steps.high = 2 count
+          exportFiles.patch = "file://%s"
+        end simulation
+
+        start patch Default
+          computedStep.step = meta.stepCount
+          export.year.step = meta.year
+          export.temperature.step = external temperature at computedStep
+        end patch
+        """.formatted(csvTarget.toString());
+    Path scriptFile = tempDir.resolve("explicit_at.josh");
+    Files.writeString(scriptFile, script);
+
+    RunResult explicit = runScript(scriptFile, jshd, outDir);
+
+    assertEquals(baseline.temperatures, explicit.temperatures,
+        "external X at <expr> should read the same records as the unadorned form when the "
+        + "expression matches the raw clock");
+  }
+
   /** Preprocess + run a window, returning the observed year set and temperature values. */
   private RunResult runWindow(long stepsLow, long stepsHigh) throws Exception {
-    preprocessGrid(stepsLow, stepsHigh, new PreprocessUtil.PreprocessOptions());
-    Path jshd = tempDir.resolve("grid_" + stepsLow + ".jshd"); // written by preprocessGrid
-    assertTrue(Files.exists(jshd));
-
+    Path jshd = preprocessToJshd(stepsLow, stepsHigh);
     Path outDir = Files.createDirectories(tempDir.resolve("run_" + stepsLow));
     Path csvTarget = outDir.resolve("results_{replicate}.csv");
     Path script = writeScript("run_" + stepsLow, stepsLow, stepsHigh, csvTarget);
+    return runScript(script, jshd, outDir);
+  }
 
+  /** Preprocess a window's grid to a .jshd file without also running a simulation against it. */
+  private Path preprocessToJshd(long stepsLow, long stepsHigh) throws Exception {
+    preprocessGrid(stepsLow, stepsHigh, new PreprocessUtil.PreprocessOptions());
+    Path jshd = tempDir.resolve("grid_" + stepsLow + ".jshd"); // written by preprocessGrid
+    assertTrue(Files.exists(jshd));
+    return jshd;
+  }
+
+  /** Run an already-written script against a preprocessed grid, returning the parsed CSV. */
+  private RunResult runScript(Path script, Path jshd, Path outDir) throws Exception {
     RunUtil.RunOptions options = RunUtil.RunOptions.builder(script.toFile(), "Test")
         .replicates(1)
         .dataFiles(new String[] {"temperature.jshd=" + jshd})
         .seed(Optional.of(42L))
         .build();
     RunUtil.RunResult result = RunUtil.run(options, new OutputOptions());
-    assertTrue(result.isSuccess(),
-        "run with steps.low=" + stepsLow + " should succeed: " + result.getMessage());
+    assertTrue(result.isSuccess(), "run should succeed: " + result.getMessage());
 
     Path csv = outDir.resolve("results_0.csv");
     assertTrue(Files.exists(csv), "expected output CSV at " + csv);

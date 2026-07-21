@@ -88,8 +88,8 @@ public class JoshValueVisitor implements JoshVisitorDelegate {
     String raw = ctx.getText();
     // The STR_ grammar token includes the surrounding double quotes ('"' ~["]* '"'), so strip
     // them to get the actual string value. Without this the value carries its quotes and only
-    // compares equal to other quoted literals -- an engine-produced string (e.g. meta.phase)
-    // never matches, silently breaking guards like meta.phase == "spinup".
+    // compares equal to other quoted literals -- an engine-produced string (e.g. current.state)
+    // never matches, silently breaking guards like current.state == "Adult".
     String string = (raw.length() >= 2 && raw.startsWith("\"") && raw.endsWith("\""))
         ? raw.substring(1, raw.length() - 1)
         : raw;

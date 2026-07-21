@@ -638,17 +638,13 @@ public class SingleThreadEventHandlerMachine implements EventHandlerMachine {
   private Optional<EngineValue> getBuiltinMetaAttribute(String name) {
     return switch (name) {
       case "stepCount" -> Optional.of(
-          // Anchored at the observed period: 0 is the first observed step, spin-up is negative.
-          // For a run without spin-up this equals the old absolute step count.
+          // Anchored so 0 is the first step at steps.low; negative if the model widened steps.low
+          // itself (e.g. for its own spin-up convention).
           valueFactory.build(
               bridge.getCurrentTimestep() - bridge.getStartTimestep(), COUNT_UNITS)
       );
       case "year" -> Optional.of(
-          // The data year felt this step (resampled during spin-up/spin-down).
-          valueFactory.build(bridge.getDataTimestep(), Units.of("years"))
-      );
-      case "phase" -> Optional.of(
-          valueFactory.build(bridge.getPhase(), Units.EMPTY)
+          valueFactory.build(bridge.getCurrentTimestep(), Units.of("years"))
       );
       default -> Optional.empty();
     };
@@ -1008,12 +1004,8 @@ public class SingleThreadEventHandlerMachine implements EventHandlerMachine {
   }
 
   @Override
-  public long getDataTimestep() {
-    return bridge.getDataTimestep();
-  }
-
-  @Override
-  public void pushExternal(String name, long step) {
+  public void pushExternalAtStep(String name) {
+    long step = pop().getAsInt();
     push(bridge.getExternal(scope.get("here").getAsEntity().getKey().orElseThrow(), name, step));
   }
 

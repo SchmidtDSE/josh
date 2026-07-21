@@ -590,24 +590,15 @@ public interface EventHandlerMachine {
   long getCurrentTimestep();
 
   /**
-   * Get the data timestep felt during the current step.
+   * Get a value from an external resource at the timestep on top of the stack.
    *
-   * <p>Equals {@link #getCurrentTimestep()} during the observed period; during a spin-up or
-   * spin-down phase it is the resampled year drawn for this step. External reads bind to this so
-   * forcing lines up with {@code meta.year}.</p>
-   *
-   * @return The data year whose forcing is felt this step.
-   */
-  long getDataTimestep();
-
-  /**
-   * Get a value from an external resource at a given time.
+   * <p>Pops the step value already pushed by the caller (the current timestep for an unadorned
+   * {@code external X}, or an arbitrary evaluated expression for {@code external X at <expr>}) and
+   * pushes the resolved external value in its place.</p>
    *
    * @param name The name of the external resource.
-   * @param step The timestep (according to the external resource) at which a value should be
-   *     returned.
    */
-  void pushExternal(String name, long step);
+  void pushExternalAtStep(String name);
 
   /**
    * Push a config value onto the stack.

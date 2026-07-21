@@ -87,15 +87,11 @@ public class JoshSimFacadeUtil {
    * @param outputSteps Optional set of step numbers to export. If empty, all steps are exported.
    *     If present, only steps contained in the set will have their output written to export files.
    *     All steps continue to execute for simulation state continuity regardless of this filter.
-   * @param outputPhases Optional set of phase names to export (spinup, observed, spindown). If
-   *     empty, all phases are exported. If present, only steps whose phase is contained in the set
-   *     will have their output written. ANDed with outputSteps.
    */
   public static void runSimulation(ValueSupportFactory valueFactory,
         EngineGeometryFactory geometryFactory, InputOutputLayer inputOutputLayer,
         JoshProgram program, String simulationName, SimulationStepCallback callback,
-        boolean serialPatches, Optional<Set<Integer>> outputSteps,
-        Optional<Set<String>> outputPhases) {
+        boolean serialPatches, Optional<Set<Integer>> outputSteps) {
     runSimulation(
         valueFactory,
         geometryFactory,
@@ -105,8 +101,7 @@ public class JoshSimFacadeUtil {
         simulationName,
         callback,
         serialPatches,
-        outputSteps,
-        outputPhases
+        outputSteps
     );
   }
 
@@ -127,15 +122,12 @@ public class JoshSimFacadeUtil {
    * @param callback A callback invoked after each simulation step.
    * @param serialPatches If true, patches are processed serially; otherwise in parallel.
    * @param outputSteps Optional set of step numbers to export.
-   * @param outputPhases Optional set of phase names to export (spinup, observed, spindown). ANDed
-   *     with outputSteps.
    */
   public static void runSimulation(ValueSupportFactory valueFactory,
         EngineGeometryFactory geometryFactory, InputOutputLayer inputOutputLayer,
         ExternalResourceGetter externalResourceGetter,
         JoshProgram program, String simulationName, SimulationStepCallback callback,
-        boolean serialPatches, Optional<Set<Integer>> outputSteps,
-        Optional<Set<String>> outputPhases) {
+        boolean serialPatches, Optional<Set<Integer>> outputSteps) {
 
     MutableEntity simEntityRaw = program.getSimulations().getProtoype(simulationName).build();
     MutableEntity simEntity = new ShadowingEntity(valueFactory, simEntityRaw, simEntityRaw);
@@ -177,10 +169,10 @@ public class JoshSimFacadeUtil {
     // Create incremental export callback if export configured
     Optional<PatchExportCallback> exportCallback = exportFacade.createIncrementalCallback();
 
-    // Pass callback + output filters to SimulationStepper so incremental patch exports honor the
-    // same step/phase filtering as the meta write path below.
+    // Pass callback + output filter to SimulationStepper so incremental patch exports honor the
+    // same step filtering as the meta write path below.
     SimulationStepper stepper =
-        new SimulationStepper(bridge, exportCallback, outputSteps, outputPhases);
+        new SimulationStepper(bridge, exportCallback, outputSteps);
 
     exportFacade.start();
     debugFacade.start();
@@ -190,9 +182,7 @@ public class JoshSimFacadeUtil {
 
       boolean stepIncluded = outputSteps.isEmpty()
           || outputSteps.get().contains((int) completedStep);
-      boolean phaseIncluded = outputPhases.isEmpty()
-          || outputPhases.get().contains(bridge.getPhase(completedStep));
-      if (stepIncluded && phaseIncluded) {
+      if (stepIncluded) {
         TimeStep completedTimeStep = bridge.getReplicate()
             .getTimeStep(completedStep)
             .orElseThrow();
@@ -207,10 +197,10 @@ public class JoshSimFacadeUtil {
 
       callback.onStep(completedStep);
 
-      // Prune the step two behind once it exists. Gated on the earliest saved step (which is
-      // negative during spin-up) rather than a hardcoded 0, so spin-up steps are freed too instead
-      // of accumulating for the whole warm-up.
-      if (completedStep - 2 >= bridge.getEarliestTimestep()) {
+      // Prune the step two behind once it exists. Gated on the true start (which is negative if
+      // the model widened steps.low itself) rather than a hardcoded 0, so those steps are freed
+      // too instead of accumulating for the whole run.
+      if (completedStep - 2 >= bridge.getStartTimestep()) {
         bridge.getReplicate().deleteTimeStep(completedStep - 2);
       }
     }
@@ -242,7 +232,7 @@ public class JoshSimFacadeUtil {
         JoshProgram program, String simulationName, SimulationStepCallback callback,
         boolean serialPatches) {
     runSimulation(valueFactory, geometryFactory, inputOutputLayer, program,
-        simulationName, callback, serialPatches, Optional.empty(), Optional.empty());
+        simulationName, callback, serialPatches, Optional.empty());
   }
 
   /**

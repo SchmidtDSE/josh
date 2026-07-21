@@ -4,37 +4,42 @@ start simulation SpinupExample
   grid.low = 0 m latitude, 0 m longitude
   grid.high = 2 m latitude, 2 m longitude
 
-  steps.low = 0 years
-  steps.high = 4 years
+  # Spin-up / spin-down as an ordinary modeling recipe rather than dedicated engine machinery:
+  # widen the simulated range yourself (steps.low/steps.high are the only source of truth for the
+  # clock), then use the entity's own "state" to mark which part of the run a step belongs to.
+  # 3 steps of spin-up, 5 observed steps (0..4), 2 steps of spin-down.
+  steps.low = -3 count
+  steps.high = 6 count
 
-  start spinup
-    duration = 3 years
-    year = sample discrete uniform from 0 years to 4 years
-  end spinup
+  state.init = "spinup"
+  state.step
+    :if(meta.stepCount == 3 count) = "observed"
+    :elif(meta.stepCount == 8 count) = "spindown"
 
-  start spindown
-    duration = 2 years
-    year = sample discrete uniform from 3 years to 4 years
-  end spindown
+  # Re-anchor to the observed window (0..4) for readability, the same numbers meta.stepCount used
+  # to report automatically when spin-up/spin-down were dedicated engine machinery.
+  observedStep.step = meta.stepCount - 3 count
+
+  year.step
+    :if(current.state == "spinup") = sample discrete uniform from 0 count to 4 count
+    :elif(current.state == "spindown") = sample discrete uniform from 3 count to 4 count
+    :else = observedStep
 
 end simulation
 
 start patch Default
 
-  assert.spinupStepNegative.step:if(meta.phase == "spinup") = meta.stepCount < 0 count
-  assert.spinupYearLow.step:if(meta.phase == "spinup") = meta.year >= 0 years
-  assert.spinupYearHigh.step:if(meta.phase == "spinup") = meta.year <= 4 years
+  assert.spinupStepNegative.step:if(meta.state == "spinup") = meta.observedStep < 0 count
+  assert.spinupYearLow.step:if(meta.state == "spinup") = meta.year >= 0 count
+  assert.spinupYearHigh.step:if(meta.state == "spinup") = meta.year <= 4 count
 
-  assert.observedStepLow.step:if(meta.phase == "observed") = meta.stepCount >= 0 count
-  assert.observedStepHigh.step:if(meta.phase == "observed") = meta.stepCount <= 4 count
-  assert.observedYearLow.step:if(meta.phase == "observed") = meta.year >= 0 years
-  assert.observedYearHigh.step:if(meta.phase == "observed") = meta.year <= 4 years
+  assert.observedStepLow.step:if(meta.state == "observed") = meta.observedStep >= 0 count
+  assert.observedStepHigh.step:if(meta.state == "observed") = meta.observedStep <= 4 count
+  assert.observedYearLow.step:if(meta.state == "observed") = meta.year >= 0 count
+  assert.observedYearHigh.step:if(meta.state == "observed") = meta.year <= 4 count
 
-  assert.spindownStep.step:if(meta.phase == "spindown") = meta.stepCount > 4 count
-  assert.spindownYearLow.step:if(meta.phase == "spindown") = meta.year >= 3 years
-  assert.spindownYearHigh.step:if(meta.phase == "spindown") = meta.year <= 4 years
+  assert.spindownStep.step:if(meta.state == "spindown") = meta.observedStep > 4 count
+  assert.spindownYearLow.step:if(meta.state == "spindown") = meta.year >= 3 count
+  assert.spindownYearHigh.step:if(meta.state == "spindown") = meta.year <= 4 count
 
 end patch
-
-start unit years
-end unit
