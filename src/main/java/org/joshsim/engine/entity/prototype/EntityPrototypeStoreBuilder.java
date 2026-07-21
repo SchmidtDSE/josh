@@ -27,9 +27,14 @@ public class EntityPrototypeStoreBuilder {
    * Adds an entity prototype to the store being built.
    *
    * @param prototype The EntityPrototype to be added to the store.
+   * @throws IllegalStateException if an entity with the same name was already added.
    */
   public void add(EntityPrototype prototype) {
-    prototypes.put(prototype.getIdentifier(), prototype);
+    String name = prototype.getIdentifier();
+    if (prototypes.containsKey(name)) {
+      throw new IllegalStateException("Entity \"" + name + "\" is already defined.");
+    }
+    prototypes.put(name, prototype);
   }
 
   /**

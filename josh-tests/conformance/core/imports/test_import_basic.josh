@@ -1,0 +1,20 @@
+# @category: core
+# @subcategory: imports
+# @priority: critical
+# @description: a patch entity defined in an imported file is available to the importing
+#   simulation, proving import textually splices the file in place before interpretation
+
+start simulation ImportBasic
+
+  grid.size = 10 m
+  grid.low.x = 0 m
+  grid.low.y = 0 m
+  grid.high.x = 10 m
+  grid.high.y = 10 m
+
+  steps.low = 0 count
+  steps.high = 1 count
+
+end simulation
+
+import "imported_patch.josh"

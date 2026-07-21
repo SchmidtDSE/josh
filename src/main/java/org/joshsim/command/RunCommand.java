@@ -262,6 +262,7 @@ public class RunCommand implements Callable<Integer> {
         case LOAD -> 1;
         case READ -> 2;
         case PARSE -> 3;
+        case INTERPRET -> 5;
         default -> UNKNOWN_ERROR_CODE;
       };
     }

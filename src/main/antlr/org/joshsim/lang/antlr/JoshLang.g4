@@ -235,7 +235,7 @@ unitStanza: START_ UNIT_ name=identifier unitConversion* END_ UNIT_;
 // Imports and config
 configStatement: CONFIG_ expression AS_ identifier;
 
-importStatement: IMPORT_ expression;
+importStatement: IMPORT_ path=STR_;
 
 // Program
 program: (configStatement | importStatement | unitStanza | entityStanza)*;
