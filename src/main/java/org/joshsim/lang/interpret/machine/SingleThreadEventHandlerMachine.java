@@ -20,6 +20,7 @@ import org.joshsim.engine.entity.base.MutableEntity;
 import org.joshsim.engine.entity.prototype.EmbeddedParentEntityPrototype;
 import org.joshsim.engine.entity.prototype.EntityPrototype;
 import org.joshsim.engine.entity.type.EntityType;
+import org.joshsim.engine.func.DistributionScope;
 import org.joshsim.engine.func.EntityScope;
 import org.joshsim.engine.func.LocalScope;
 import org.joshsim.engine.func.Scope;
@@ -575,7 +576,10 @@ public class SingleThreadEventHandlerMachine implements EventHandlerMachine {
         resolved.add(valueFactory.build(patch));
       }
     } else {
-      // Return attributes from the patches with improved error message
+      // Return attributes from the patches with improved error message. Each patch's attribute
+      // value may itself be a collection (e.g. a patch's "Tree" attribute holding many trees), so
+      // flatten each patch's contents into the result rather than nesting one sub-collection per
+      // patch, which would break downstream slicing/aggregation over the combined result.
       for (Entity patch : patches) {
         EntityScope patchScope = new EntityScope(patch);
         EngineValue value = resolver.get(patchScope).orElseThrow(
@@ -588,7 +592,15 @@ public class SingleThreadEventHandlerMachine implements EventHandlerMachine {
                 )
             )
         );
-        resolved.add(value);
+
+        int valueSize = value.getSize().orElse(1);
+        if (valueSize == 0) {
+          continue;
+        }
+
+        for (EngineValue element : value.getAsDistribution().getContents(valueSize, false)) {
+          resolved.add(element);
+        }
       }
     }
 
@@ -603,7 +615,26 @@ public class SingleThreadEventHandlerMachine implements EventHandlerMachine {
 
   @Override
   public EventHandlerMachine pushAttribute(ValueResolver resolver) {
-    Entity entity = pop().getAsEntity();
+    EngineValue popped = pop();
+    Optional<Integer> size = popped.getSize();
+
+    if (size.isPresent() && size.get() == 0) {
+      memory.push(new RealizedDistribution(popped.getCaster(), new ArrayList<>(), EMPTY_UNITS));
+      return this;
+    }
+
+    if (size.isPresent() && size.get() > 1) {
+      Scope distributionScope = new DistributionScope(valueFactory, popped.getAsDistribution());
+      Optional<EngineValue> distributionValue = resolver.get(distributionScope);
+      if (distributionValue.isPresent()) {
+        memory.push(distributionValue.get());
+        return this;
+      }
+      throw new IllegalStateException("Unable to get attribute " + resolver.getPath()
+          + " from a distribution of " + size.get() + " entities");
+    }
+
+    Entity entity = popped.getAsEntity();
     Scope scope = new EntityScope(entity);
 
     // Try normal resolution first
