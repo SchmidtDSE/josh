@@ -25,10 +25,8 @@
 
 start simulation TestCanonicalDispersalWithStates
   grid.size = 10 m
-  grid.low.x = 0 m
-  grid.low.y = 0 m
-  grid.high.x = 50 m
-  grid.high.y = 50 m
+  grid.low = 0 m latitude, 0 m longitude
+  grid.high = 50 m latitude, 50 m longitude
   grid.patch = "Default"
 
   steps.low = 0 count

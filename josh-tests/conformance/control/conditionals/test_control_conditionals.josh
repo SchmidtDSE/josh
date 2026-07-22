@@ -33,9 +33,10 @@ start organism Tree
 
   # Conditional growth - grow by 1m normally, but 2m on even steps
   height.init = 1 m
-  height.step = prior.height + 1 m
-  height.step:if(meta.stepCount == 2 count) = prior.height + 2 m
-  height.step:if(meta.stepCount == 4 count) = prior.height + 2 m
+  height.step
+    :if(meta.stepCount == 2 count) = prior.height + 2 m
+    :elif(meta.stepCount == 4 count) = prior.height + 2 m
+    :else = prior.height + 1 m
 
   # Status flag that changes based on age (using numeric value)
   status.init = 0 count

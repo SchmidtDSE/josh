@@ -7,10 +7,8 @@ start simulation SpatialNeighborsInteractions
 
   # Create a 3x3 grid
   grid.size = 10 m
-  grid.low.x = 0 m
-  grid.low.y = 0 m
-  grid.high.x = 30 m
-  grid.high.y = 30 m  # 3x3 grid
+  grid.low = 0 m latitude, 0 m longitude
+  grid.high = 30 m latitude, 30 m longitude  # 3x3 grid
   grid.patch = "Default"
 
   steps.low = 0 count
@@ -62,8 +60,9 @@ start organism Tree
 
   # Test density-dependent behavior
   neighborDensity.step = count(Tree within 15 m radial at prior)
-  crowded.step:if(current.neighborDensity > 4 count) = 1 count
-  crowded.step:if(current.neighborDensity <= 4 count) = 0 count
+  crowded.step
+    :if(current.neighborDensity > 4 count) = 1 count
+    :else = 0 count
 
   # Assert crowding is detected
   assert.crowdingDetected.step:if(meta.stepCount == 2 count) = (current.crowded == 1 count) or (current.crowded == 0 count)

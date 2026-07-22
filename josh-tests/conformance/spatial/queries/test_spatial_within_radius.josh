@@ -7,10 +7,8 @@ start simulation SpatialWithinRadius
 
   # Create a 5x5 grid
   grid.size = 5 m
-  grid.low.x = 0 m
-  grid.low.y = 0 m
-  grid.high.x = 25 m
-  grid.high.y = 25 m  # 5x5 grid
+  grid.low = 0 m latitude, 0 m longitude
+  grid.high = 25 m latitude, 25 m longitude  # 5x5 grid
   grid.patch = "Default"
 
   steps.low = 0 count
@@ -42,15 +40,19 @@ start organism Tree
   # Count neighbors within 20m radius
   neighborsWithin20m.step = count(Tree within 20 m radial at prior)
 
+  # Total organisms across the whole 5x5 grid (9 per patch x 25 patches), used below as the
+  # upper bound a smaller radius shouldn't reach.
+  totalOrganisms.step = count(Tree within 1000 m radial at prior)
+
   # Test that within 10m finds some organisms (including self in most cases)
-  assert.hasNeighbors10m.step:if(meta.stepCount == 1 count) = current.neighborsWithin10m >= 1 count
+  assert.hasNeighbors10m.step:if(meta.stepCount == 2 count) = current.neighborsWithin10m >= 1 count
 
   # Test that within 20m finds more or equal organisms than within 10m
-  assert.moreNeighbors20m.step:if(meta.stepCount == 1 count) = current.neighborsWithin20m >= current.neighborsWithin10m
+  assert.moreNeighbors20m.step:if(meta.stepCount == 2 count) = current.neighborsWithin20m >= current.neighborsWithin10m
 
   # Test that not all organisms are within 10m (assuming spread across grid)
   # At least one organism should have fewer than total count within 10m
-  assert.notAllClose.step:if(meta.stepCount == 1 count) = current.neighborsWithin10m <= 9 count
+  assert.notAllClose.step:if(meta.stepCount == 2 count) = current.neighborsWithin10m <= current.totalOrganisms
 
 end organism
 

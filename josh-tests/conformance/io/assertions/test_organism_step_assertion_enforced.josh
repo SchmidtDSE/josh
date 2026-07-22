@@ -3,23 +3,21 @@
 # @priority: critical
 # @description: Organism .step assertions are enforced regardless of patch handler presence
 
-# BUG: When the step phase is skipped (no patch .step handler), organism
-# assertions at .step are never evaluated.
+# Regresses a fixed bug: when the step phase was skipped (no patch .step handler), organism
+# assertions at .step were never evaluated.
 #
 # This test verifies indirectly: the organism has age.step which should
 # advance age. A patch-level .end assertion checks mean(Tree.age).
 # If step ran, age >= 1. If skipped, age == 0 and assertion fails.
 #
-# The organism also has a trivially false .step assertion. Even if the
-# age bug is fixed, this organism assertion should independently fail.
-# Currently neither fires.
+# The organism also marks that its own .step handler actually ran, so this test independently
+# confirms organism-level .step assertions themselves are evaluated (not just that some other
+# .step handler advanced a value the patch happens to read).
 
 start simulation TestOrganismStepAssertionEnforced
   grid.size = 10 m
-  grid.low.x = 0 m
-  grid.low.y = 0 m
-  grid.high.x = 10 m
-  grid.high.y = 10 m
+  grid.low = 0 m latitude, 0 m longitude
+  grid.high = 10 m latitude, 10 m longitude
   grid.patch = "Default"
 
   steps.low = 0 count
@@ -41,9 +39,12 @@ start organism Tree
   age.init = 0 year
   age.step = prior.age + 1 year
 
-  # This trivially false organism assertion would ALSO fail if it ever ran.
-  # BUG: it silently passes because the step phase is never entered.
-  assert.alwaysFalse.step = 1 count == 0 count
+  # Marks that this organism's own .step handlers actually ran; stays 0 if the step phase is
+  # skipped (the regression this test guards against).
+  stepRan.init = 0 count
+  stepRan.step = 1 count
+
+  assert.stepRanOnOrganism.end:if(meta.stepCount == 3 count) = current.stepRan == 1 count
 end organism
 
 start unit year

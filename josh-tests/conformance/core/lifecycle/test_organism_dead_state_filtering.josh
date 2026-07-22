@@ -26,10 +26,8 @@
 
 start simulation TestOrganismDeadStateFiltering
   grid.size = 10 m
-  grid.low.x = 0 m
-  grid.low.y = 0 m
-  grid.high.x = 10 m
-  grid.high.y = 10 m
+  grid.low = 0 m latitude, 0 m longitude
+  grid.high = 10 m latitude, 10 m longitude
   grid.patch = "Default"
 
   steps.low = 0 count

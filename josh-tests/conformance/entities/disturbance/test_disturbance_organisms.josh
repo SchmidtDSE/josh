@@ -6,10 +6,8 @@
 start simulation DisturbanceOrganisms
 
   grid.size = 10 m
-  grid.low.x = 0 m
-  grid.low.y = 0 m
-  grid.high.x = 100 m
-  grid.high.y = 100 m  # 10x10 grid
+  grid.low = 0 m latitude, 0 m longitude
+  grid.high = 100 m latitude, 100 m longitude  # 10x10 grid
   grid.patch = "Default"
 
   steps.low = 0 count
@@ -50,8 +48,9 @@ start disturbance Fire
 
   # Active status
   active.init = false
-  active.step:if(meta.stepCount == current.occurTime) = true
-  active.step:if(meta.stepCount != current.occurTime) = false
+  active.step
+    :if(meta.stepCount == current.occurTime) = true
+    :else = false
 
   # Find affected trees within disturbance radius
   affectedTrees.step:if(current.active == true) =
@@ -92,17 +91,20 @@ start organism Tree
 
   # State changes based on fire
   burned.init = false
-  burned.step = prior.burned
 
   # Count fires nearby (simple proximity check)
   firesNearby.init = 0 count
   firesNearby.step = count(Fire within 30 m radial at prior)
 
-  # Mark as burned if fire is active and nearby
-  burned.step:if(current.firesNearby > 0 count) = true
+  # Mark as burned if fire is active and nearby (stays burned once true)
+  burned.step
+    :if(current.firesNearby > 0 count) = true
+    :else = prior.burned
 
   # Health reduces if burned
-  health.step:if(current.burned == true) = 0 count
+  health.step
+    :if(current.burned == true) = 0 count
+    :else = prior.health
 
   # Assertions about organism state
   assert.healthInitial.init = current.health == 100 count

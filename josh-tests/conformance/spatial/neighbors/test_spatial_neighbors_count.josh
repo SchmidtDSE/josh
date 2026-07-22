@@ -7,10 +7,8 @@ start simulation SpatialNeighborsCount
 
   # Create a 3x3 grid with 10m patches
   grid.size = 10 m
-  grid.low.x = 0 m
-  grid.low.y = 0 m
-  grid.high.x = 30 m
-  grid.high.y = 30 m  # 3x3 grid
+  grid.low = 0 m latitude, 0 m longitude
+  grid.high = 30 m latitude, 30 m longitude  # 3x3 grid
   grid.patch = "Default"
 
   steps.low = 0 count
@@ -34,25 +32,28 @@ start organism Tree
   age.step = prior.age + 1 year
 
   # Count all neighbors within 50m (should capture all in 3x3 grid)
+  allNeighbors.init = 0 count
   allNeighbors.step = count(Tree within 50 m radial at prior)
 
   # Count close neighbors within 15m
   closeNeighbors.step = count(Tree within 15 m radial at prior)
 
-  # Assert that we find all 9 organisms with large radius
-  assert.findAll.step:if(meta.stepCount == 1 count) = current.allNeighbors == 9 count
+  # Assert that we find all 9 organisms with large radius. Checked at stepCount==2 (not 1): a
+  # spatial "at prior" query has nothing to find during stepCount==1, since that's the engine's
+  # very first timestep, which by definition has no prior timestep to query.
+  assert.findAll.step:if(meta.stepCount == 2 count) = current.allNeighbors == 9 count
 
   # Assert that close neighbors is less than or equal to all neighbors
-  assert.closeVsAll.step:if(meta.stepCount == 1 count) = current.closeNeighbors <= current.allNeighbors
+  assert.closeVsAll.step:if(meta.stepCount == 2 count) = current.closeNeighbors <= current.allNeighbors
 
   # Assert that we find at least 1 (self) with any radius
-  assert.findSelf.step:if(meta.stepCount == 1 count) = current.closeNeighbors >= 1 count
+  assert.findSelf.step:if(meta.stepCount == 2 count) = current.closeNeighbors >= 1 count
 
   # Test neighbor count remains stable across steps
   neighborsPrevious.init = 0 count
   neighborsPrevious.step = prior.allNeighbors
 
-  assert.stableCount.step:if(meta.stepCount == 2 count) = current.allNeighbors == current.neighborsPrevious
+  assert.stableCount.step:if(meta.stepCount == 3 count) = current.allNeighbors == current.neighborsPrevious
 
 end organism
 
