@@ -110,17 +110,17 @@ public class JoshImportPreprocessor {
     Deque<String> stack = new ArrayDeque<>();
     stack.push(normalizedEntry);
 
-    List<FlattenedEntity> entities = new ArrayList<>();
+    List<FlattenedStanza> stanzas = new ArrayList<>();
     String combined;
     try {
       combined = spliceImports(
-          entryContent, parsed.getProgram().orElseThrow(), normalizedEntry, stack, entities
+          entryContent, parsed.getProgram().orElseThrow(), normalizedEntry, stack, stanzas
       );
     } catch (ImportResolutionException e) {
       return new FlattenResult(e.getErrors());
     }
 
-    Optional<ParseError> duplicate = findDuplicateEntity(entities);
+    Optional<ParseError> duplicate = findDuplicateEntity(stanzas);
     if (duplicate.isPresent()) {
       return new FlattenResult(List.of(duplicate.get()));
     }
@@ -129,7 +129,7 @@ public class JoshImportPreprocessor {
   }
 
   private String spliceImports(String content, JoshLangParser.ProgramContext program,
-        String identifier, Deque<String> stack, List<FlattenedEntity> collected) {
+        String identifier, Deque<String> stack, List<FlattenedStanza> collected) {
     // Walk imports and entity declarations together in source order so collected entities land in
     // the same order they occupy in the flattened output (nested imports expand in place).
     List<ParserRuleContext> topLevel = new ArrayList<>();
@@ -144,7 +144,7 @@ public class JoshImportPreprocessor {
     for (ParserRuleContext topLevelCtx : topLevel) {
       if (topLevelCtx instanceof JoshLangParser.EntityStanzaContext entityCtx) {
         // Entity text stays verbatim in the output; only record it for duplicate detection.
-        collected.add(new FlattenedEntity(
+        collected.add(new FlattenedStanza(
             entityCtx.getChild(2).getText(),
             entityCtx.getChild(0).getText(),
             entityCtx.getStart().getLine(),
@@ -209,24 +209,24 @@ public class JoshImportPreprocessor {
    * refer back to an existing one and so are never themselves the offending declaration. Reported
    * ahead of the merge so the duplicate can name its originating file and line.</p>
    *
-   * @param entities the entities collected in flattened order.
+   * @param stanzas the declarations collected in flattened order.
    * @return the duplicate-entity error, or empty if every declaration is consistent.
    */
-  private static Optional<ParseError> findDuplicateEntity(List<FlattenedEntity> entities) {
-    Map<String, FlattenedEntity> defined = new HashMap<>();
-    for (FlattenedEntity entity : entities) {
-      FlattenedEntity prior = defined.get(entity.name);
-      if ("start".equals(entity.keyword) && prior != null) {
+  private static Optional<ParseError> findDuplicateEntity(List<FlattenedStanza> stanzas) {
+    Map<String, FlattenedStanza> defined = new HashMap<>();
+    for (FlattenedStanza stanza : stanzas) {
+      FlattenedStanza prior = defined.get(stanza.name);
+      if ("start".equals(stanza.keyword) && prior != null) {
         String message = String.format(
             "Duplicate entity \"%s\": redeclared at %s line %d (first defined at %s line %d). "
                 + "Use \"replace\" or \"update\" to modify an imported entity.",
-            entity.name, entity.sourceFile, entity.line, prior.sourceFile, prior.line
+            stanza.name, stanza.sourceFile, stanza.line, prior.sourceFile, prior.line
         );
-        return Optional.of(new ParseError(entity.line, message, Optional.of(entity.sourceFile)));
+        return Optional.of(new ParseError(stanza.line, message, Optional.of(stanza.sourceFile)));
       }
       // start / replace / update all leave the name defined in the store; register the earliest
       // location so a later duplicate can point back to it.
-      defined.putIfAbsent(entity.name, entity);
+      defined.putIfAbsent(stanza.name, stanza);
     }
     return Optional.empty();
   }
@@ -287,19 +287,19 @@ public class JoshImportPreprocessor {
   }
 
   /**
-   * A top-level entity declaration recorded during splicing, with the file it originated in.
+   * A top-level stanza declaration recorded during splicing, with the file it originated in.
    *
    * <p>Carries just enough to enforce the duplicate-entity condition and attribute a violation to
    * its source: the declared name, the opening keyword ({@code start} / {@code replace} /
    * {@code update}), the line within its originating file, and that file's identifier.</p>
    */
-  private static final class FlattenedEntity {
+  private static final class FlattenedStanza {
     private final String name;
     private final String keyword;
     private final int line;
     private final String sourceFile;
 
-    FlattenedEntity(String name, String keyword, int line, String sourceFile) {
+    FlattenedStanza(String name, String keyword, int line, String sourceFile) {
       this.name = name;
       this.keyword = keyword;
       this.line = line;
