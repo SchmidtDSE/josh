@@ -130,8 +130,6 @@ public class JoshImportPreprocessor {
 
   private String spliceImports(String content, JoshLangParser.ProgramContext program,
         String identifier, Deque<String> stack, List<FlattenedEntity> collected) {
-    String currentDir = dirOf(identifier);
-
     // Walk imports and entity declarations together in source order so collected entities land in
     // the same order they occupy in the flattened output (nested imports expand in place).
     List<ParserRuleContext> topLevel = new ArrayList<>();
@@ -139,6 +137,7 @@ public class JoshImportPreprocessor {
     topLevel.addAll(program.entityStanza());
     topLevel.sort(Comparator.comparingInt(ctx -> ctx.getStart().getStartIndex()));
 
+    String currentDir = dirOf(identifier);
     StringBuilder result = new StringBuilder();
     int cursor = 0;
 
