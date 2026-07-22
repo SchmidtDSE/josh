@@ -22,7 +22,7 @@ end simulation
 start patch Default
 
   # Create 9 organisms (one per patch in 3x3 grid)
-  Tree.init = create 9 count of Tree
+  Tree.init = create 1 count of Tree
 
 end patch
 
