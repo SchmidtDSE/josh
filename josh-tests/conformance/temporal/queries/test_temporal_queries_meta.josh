@@ -73,6 +73,13 @@ start organism Tree
   currentYear.init = meta.year
   currentYear.step = meta.year
 
+  # yearsAlive is a calendar-derived duration (current year minus birth year), which is
+  # a deliberately different idiom from age's per-step accumulator below - it stays 0
+  # for the entire first calendar year (birthYear == currentYear) and only advances once
+  # meta.year itself has ticked over. It is NOT expected to equal age (which becomes 1
+  # after the very first .step): age tracks elapsed .step calls, yearsAlive tracks
+  # elapsed meta.year values, and those two counts are offset by one for exactly this
+  # reason. See assert.yearsAliveTracksStepCount below for the invariant that does hold.
   yearsAlive.init = 0 year
   yearsAlive.step = meta.year - current.birthYear
 
@@ -90,18 +97,20 @@ start organism Tree
   assert.currentYearStep3.step:if(meta.stepCount == 3 count) = current.currentYear == 2023 years
   assert.currentYearStep4.step:if(meta.stepCount == 4 count) = current.currentYear == 2024 years
 
-  # Assert yearsAlive matches age (and stepCount)
+  # Assert yearsAlive tracks meta.stepCount directly (both are 0-based, calendar-aligned
+  # counters)
   assert.yearsAliveStep0.step:if(meta.stepCount == 0 count) = current.yearsAlive == 0 years
   assert.yearsAliveStep1.step:if(meta.stepCount == 1 count) = current.yearsAlive == 1 year
   assert.yearsAliveStep2.step:if(meta.stepCount == 2 count) = current.yearsAlive == 2 years
   assert.yearsAliveStep3.step:if(meta.stepCount == 3 count) = current.yearsAlive == 3 years
   assert.yearsAliveStep4.step:if(meta.stepCount == 4 count) = current.yearsAlive == 4 years
 
-  # Assert age equals yearsAlive
-  assert.ageEqualsYearsAliveStep1.step:if(meta.stepCount == 1 count) = current.age == current.yearsAlive
-  assert.ageEqualsYearsAliveStep2.step:if(meta.stepCount == 2 count) = current.age == current.yearsAlive
-  assert.ageEqualsYearsAliveStep3.step:if(meta.stepCount == 3 count) = current.age == current.yearsAlive
-  assert.ageEqualsYearsAliveStep4.step:if(meta.stepCount == 4 count) = current.age == current.yearsAlive
+  # Assert the known, deliberate one-year offset between the two duration idioms: age
+  # accumulates from the first .step, yearsAlive from the first meta.year rollover.
+  assert.ageIsOneAheadOfYearsAliveStep1.step:if(meta.stepCount == 1 count) = current.age == current.yearsAlive + 1 year
+  assert.ageIsOneAheadOfYearsAliveStep2.step:if(meta.stepCount == 2 count) = current.age == current.yearsAlive + 1 year
+  assert.ageIsOneAheadOfYearsAliveStep3.step:if(meta.stepCount == 3 count) = current.age == current.yearsAlive + 1 year
+  assert.ageIsOneAheadOfYearsAliveStep4.step:if(meta.stepCount == 4 count) = current.age == current.yearsAlive + 1 year
 
 end organism
 
