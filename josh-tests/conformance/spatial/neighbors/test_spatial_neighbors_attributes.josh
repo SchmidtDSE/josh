@@ -14,15 +14,12 @@ start simulation SpatialNeighborsAttributes
   steps.low = 0 count
   steps.high = 3 count
 
-  stepCount.init = 0 count
-  stepCount.step = prior.stepCount + 1 count
-
 end simulation
 
 start patch Default
 
-  # Create 9 organisms
-  Tree.init = create 9 count of Tree
+  # 1 organism per patch x 9 patches (3x3 grid) = 9 organisms total
+  Tree.init = create 1 count of Tree
 
 end patch
 
@@ -34,11 +31,21 @@ start organism Tree
   biomass.init = sample uniform from 10 kg to 100 kg
   biomass.step = prior.biomass + 1 kg
 
+  # Two things to get right here:
+  #  1. ".age"/".biomass" must chain onto the PARENTHESIZED query result - without parens,
+  #     "at prior.age" binds ".age" onto "prior" itself (this organism's own prior.age scalar),
+  #     which is not a valid spatial locator and silently produces an empty match set.
+  #  2. "at prior" queries the timestep-minus-1 snapshot, which doesn't exist yet at
+  #     stepCount 0, so these would run mean()/sum()/max()/min() on an empty distribution
+  #     that step - guard each formula until a prior step actually exists.
+
   # Calculate mean age of neighbors within 50m
-  meanNeighborAge.step = mean(Tree within 50 m radial at prior.age)
+  meanNeighborAge.init = 0 years
+  meanNeighborAge.step:if(meta.stepCount > 0 count) = mean((Tree within 50 m radial at prior).age)
 
   # Calculate sum of neighbor biomass within 50m
-  totalNeighborBiomass.step = sum(Tree within 50 m radial at prior.biomass)
+  totalNeighborBiomass.init = 0 kg
+  totalNeighborBiomass.step:if(meta.stepCount > 0 count) = sum((Tree within 50 m radial at prior).biomass)
 
   # Assert mean age is within reasonable range
   assert.meanAgeValid.step:if(meta.stepCount == 1 count) = current.meanNeighborAge >= 0 years
@@ -56,8 +63,10 @@ start organism Tree
   assert.ageIncreases.step:if(meta.stepCount == 3 count) = current.meanNeighborAge > current.meanAgeStep2
 
   # Test accessing specific attributes with max/min
-  maxNeighborAge.step = max(Tree within 50 m radial at prior.age)
-  minNeighborAge.step = min(Tree within 50 m radial at prior.age)
+  maxNeighborAge.init = 0 years
+  maxNeighborAge.step:if(meta.stepCount > 0 count) = max((Tree within 50 m radial at prior).age)
+  minNeighborAge.init = 0 years
+  minNeighborAge.step:if(meta.stepCount > 0 count) = min((Tree within 50 m radial at prior).age)
 
   # Max should be >= min
   assert.maxGteMin.step:if(meta.stepCount == 1 count) = current.maxNeighborAge >= current.minNeighborAge

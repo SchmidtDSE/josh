@@ -1,0 +1,8 @@
+start organism Tree
+
+  age.init = 0 count
+  age.step = prior.age + 1 count
+
+  height.init = 5 count
+
+end organism

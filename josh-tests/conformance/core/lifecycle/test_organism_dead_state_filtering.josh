@@ -8,21 +8,27 @@
 #   2. Trees age each step
 #   3. Trees transition to "Dead" when age > 2 years
 #   4. Patch filters dead trees: Tree.step = prior.Tree[prior.Tree.state != "Dead"]
-#   5. Population count decreases after deaths
+#   5. Population count decreases the SAME step a tree's state transitions
 #
-# Timeline (5 trees, all created at step 0):
-#   Step 0: init -> age=0, state="Alive", count=5
-#   Step 1: age=1, state="Alive" (1 <= 2), count=5
-#   Step 2: age=2, state="Alive" (2 <= 2), count=5
-#   Step 3: age=3, state.step -> "Dead" (3 > 2).
-#           Patch Tree.step filters on prior.state which is "Alive" -> kept.
-#           Trees ARE now "Dead" at end of step 3.
-#   Step 4: Patch Tree.step filters on prior.state="Dead" -> removed. count=0.
+# Timeline (5 trees, all created at init; meta.stepCount is 0-based and ages one full
+# year every .step, including the first):
+#   stepCount 0: age becomes 1, state stays "Alive" (1 <= 2). count=5.
+#   stepCount 1: age becomes 2, state stays "Alive" (2 <= 2). count=5.
+#   stepCount 2: age becomes 3, current.age > 2 so state transitions to "Dead" this
+#                same step. The patch's `prior.Tree[prior.Tree.state != "Dead"]` filter
+#                reads `.state` on each entity in the prior collection, and that read
+#                resolves to the entity's live, current-step value (there is no separate
+#                frozen "prior" snapshot of a nested entity's own attributes reachable
+#                through a collection reference) - so the filter sees "Dead" immediately
+#                and excludes them. count drops to 0 in the SAME step the transition
+#                happens, not the step after.
+#   stepCount 3+: no trees remain to re-add; count stays 0.
 #
 # This tests:
 #   - Organism state machines work during .step
-#   - Filtering by prior.state in patch .step handler
-#   - Population management via collection filtering
+#   - Filtering by .state in patch .step handler
+#   - Population management via collection filtering, including the same-step
+#     transition-then-filter interaction above
 
 start simulation TestOrganismDeadStateFiltering
   grid.size = 10 m
@@ -43,14 +49,17 @@ start patch Default
   # Track counts via patch .step exports (these also gate the step phase)
   export.treeCount.step = count(Tree)
 
-  # At step 0, all trees should exist
-  assert.allPresent.step:if(meta.stepCount == 0 count) = count(Tree) == 5 count
+  # stepCount 0: age becomes 1, well under the threshold
+  assert.allPresentAtStep0.step:if(meta.stepCount == 0 count) = count(Tree) == 5 count
 
-  # At step 2, all trees still alive (age=2, threshold is > 2)
-  assert.stillAlive.step:if(meta.stepCount == 2 count) = count(Tree) == 5 count
+  # stepCount 1: age becomes 2, still not > 2
+  assert.allPresentAtStep1.step:if(meta.stepCount == 1 count) = count(Tree) == 5 count
 
-  # At step 4, trees should be gone (died at step 3, filtered at step 4)
-  assert.removed.step:if(meta.stepCount == 4 count) = count(Tree) == 0 count
+  # stepCount 2: age becomes 3 and the transition + filter both happen this same step
+  assert.removedAtStep2.step:if(meta.stepCount == 2 count) = count(Tree) == 0 count
+
+  # stepCount 4: stays removed, nothing left to re-add
+  assert.staysRemovedAtStep4.step:if(meta.stepCount == 4 count) = count(Tree) == 0 count
 end patch
 
 start organism Tree

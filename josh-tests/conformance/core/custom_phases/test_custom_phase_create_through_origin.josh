@@ -1,0 +1,75 @@
+# @category: core
+# @subcategory: custom_phases
+# @priority: high
+# @description: an entity created mid-step via create ... through "<origin>" during an earlier
+#   declared phase is fast-forwarded through every later phase in that SAME step, not just
+#   starting the following step, and still carries its origin-specific init state
+
+start simulation TestCustomPhaseCreateThroughOrigin
+
+  grid.size = 10 m
+  grid.low.x = 0 m
+  grid.low.y = 0 m
+  grid.high.x = 10 m
+  grid.high.y = 10 m
+  grid.patch = "Default"
+
+  steps.low = 0 count
+  steps.high = 1 count
+
+  start phases
+    with phase base
+    then phase disturb
+    then phase manage
+  end phases
+
+end simulation
+
+start patch Default
+
+  # Founders exist from init; recruits are created mid-step during "disturb", the phase
+  # BEFORE "manage" (where age advances).
+  Trees.init = create 2 count of Tree through "founding"
+  Trees.disturb:if(meta.stepCount == 0 count) =
+    prior.Trees | create 1 count of Tree through "recruitment"
+
+  assert.founderCountStep0.manage:if(meta.stepCount == 0 count) =
+    count(Trees[Trees.provenance == "founding"]) == 2 count
+  assert.recruitCountStep0.manage:if(meta.stepCount == 0 count) =
+    count(Trees[Trees.provenance == "recruitment"]) == 1 count
+
+  # Founders age from 10 -> 11 via "manage" as expected. Recruits, created moments earlier in
+  # "disturb" this same step, still go from 0 -> 1 via "manage" this SAME step - proving a
+  # mid-step-created entity is not skipped for the remainder of the step's declared phases.
+  assert.founderAgeStep0.manage:if(meta.stepCount == 0 count) =
+    mean(Trees[Trees.provenance == "founding"].age) == 11 years
+  assert.recruitAgeStep0.manage:if(meta.stepCount == 0 count) =
+    mean(Trees[Trees.provenance == "recruitment"].age) == 1 year
+
+end patch
+
+start organism Tree
+
+  age.manage = prior.age + 1 year
+
+  # Origin dispatch is a pure replace, so each block supplies its own full birth state.
+  start init through "founding"
+    age = 10 years
+    provenance = "founding"
+  end init
+
+  start init through "recruitment"
+    age = 0 years
+    provenance = "recruitment"
+  end init
+
+end organism
+
+start unit year
+  alias years
+end unit
+
+start unit m
+  alias meter
+  alias meters
+end unit

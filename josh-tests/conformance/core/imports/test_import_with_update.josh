@@ -1,0 +1,38 @@
+# @category: core
+# @subcategory: imports
+# @priority: high
+# @description: update merges onto an entity whose base declaration came from an imported file -
+#   import splicing places the imported "start organism" earlier in the combined source than the
+#   importing file's own "update organism" stanza, so the merge finds it and composes correctly
+
+start simulation ImportWithUpdate
+
+  grid.size = 10 m
+  grid.low.x = 0 m
+  grid.low.y = 0 m
+  grid.high.x = 10 m
+  grid.high.y = 10 m
+
+  steps.low = 0 count
+  steps.high = 0 count
+
+end simulation
+
+import "imported_tree_base.josh"
+
+start patch Default
+
+  Tree.init = create 1 count of Tree
+
+  # 10 comes from the update stanza's formula below, not the imported base's +1.
+  assert.ageUsesUpdatedStepFormula.step = mean(Tree.age) == 10 count
+  # height survives untouched from the imported base declaration.
+  assert.heightSurvivesFromImportedBase.step = mean(Tree.height) == 5 count
+
+end patch
+
+update organism Tree
+
+  age.step = prior.age + 10 count
+
+end organism
