@@ -14,9 +14,6 @@ start simulation SpatialWithinSelf
   steps.low = 0 count
   steps.high = 2 count
 
-  stepCount.init = 0 count
-  stepCount.step = prior.stepCount + 1 count
-
 end simulation
 
 start patch Default
@@ -48,7 +45,15 @@ start organism Tree
 
   # Verify that biomass sum includes self
   biomassSelf.init = 10 kg
-  totalBiomassNearby.step = sum(Tree within 5 m radial at prior.biomassSelf)
+
+  # Two things to get right here:
+  #  1. ".biomassSelf" must chain onto the PARENTHESIZED query result - without parens,
+  #     "at prior.biomassSelf" binds ".biomassSelf" onto "prior" itself (this organism's own
+  #     prior.biomassSelf scalar), not a valid spatial locator, and silently returns an empty set.
+  #  2. "at prior" queries the timestep-minus-1 snapshot, which doesn't exist yet at stepCount
+  #     0, so sum() would run on an empty distribution that step - guard until a prior exists.
+  totalBiomassNearby.init = 0 kg
+  totalBiomassNearby.step:if(meta.stepCount > 0 count) = sum((Tree within 5 m radial at prior).biomassSelf)
 
   # Should find at least own biomass
   assert.biomassIncludesSelf.step:if(meta.stepCount == 2 count) = current.totalBiomassNearby >= 10 kg
