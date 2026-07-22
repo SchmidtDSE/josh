@@ -585,7 +585,23 @@ import "shared/tree.josh"
   workers); each environment resolves imported file contents through its own file-access
   mechanism (local filesystem for the CLI, the supplied virtual file set for WASM/remote).
 - Combine with `replace`/`update` entity stanza openers to override or extend an entity declared
-  in an imported file, instead of `start` which requires the name to be new.
+  in an imported file, instead of `start` - 'update' will merge with existing entity definitions, 
+  replacing handlers if they exist already and preserved those not redefined, while `replace` is
+  wholesale replacement:
+
+```
+start patch Default
+
+  ForeverTree.init = create 10 count of ForeverTree
+  
+end patch
+
+update patch Default
+
+  ForeverTree.init = create 20 count of ForeverTree
+
+end patch
+```
 
 ### Spatial / Temporal Configuration
 
