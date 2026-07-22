@@ -6,6 +6,7 @@
 
 package org.joshsim.lang.interpret.machine;
 
+import java.util.List;
 import org.joshsim.engine.entity.base.MutableEntity;
 
 
@@ -17,11 +18,7 @@ import org.joshsim.engine.entity.base.MutableEntity;
  */
 public class EntityFastForwarder {
 
-  private static final int CONSTANT_SUBSTEP = -1;
-  private static final int INIT_SUBSTEP = 0;
-  private static final int START_SUBSTEP = 1;
-  private static final int STEP_SUBSTEP = 2;
-  private static final int END_SUBSTEP = 3;
+  private static final List<String> DEFAULT_SUBSTEP_ORDER = List.of("start", "step", "end");
 
   /**
    * Fast forwards an entity through simulation steps up to the specified substep.
@@ -34,27 +31,60 @@ public class EntityFastForwarder {
    * @throws IllegalArgumentException if subStep is invalid
    */
   public static void fastForward(MutableEntity entity, String subStep) {
-    int substepNum = getSubstepNum(subStep);
+    fastForward(entity, subStep, "init", DEFAULT_SUBSTEP_ORDER);
+  }
 
-    if (substepNum >= CONSTANT_SUBSTEP) {
-      runStep(entity, "constant", substepNum == CONSTANT_SUBSTEP);
+  /**
+   * Fast forwards an entity, running a specific init event at the init stage.
+   *
+   * <p>Identical to {@link #fastForward(MutableEntity, String)} except that {@code initEvent} is
+   * run at the init stage instead of the base {@code "init"}. A {@code create ... through
+   * "<origin>"} passes the origin's variant init event here so its handlers run <em>instead of</em>
+   * base {@code init} (pure replace); an untagged create passes {@code "init"}.</p>
+   *
+   * @param entity The entity to fast forward
+   * @param subStep The target substep to reach
+   * @param initEvent The event to run at the init stage
+   * @throws IllegalArgumentException if subStep is invalid
+   */
+  public static void fastForward(MutableEntity entity, String subStep, String initEvent) {
+    fastForward(entity, subStep, initEvent, DEFAULT_SUBSTEP_ORDER);
+  }
+
+  /**
+   * Fast forwards an entity through a declared substep order, running a specific init event.
+   *
+   * <p>Identical to {@link #fastForward(MutableEntity, String, String)} except that the substeps
+   * run after init are taken from {@code substepOrder} instead of the default {@code start}/
+   * {@code step}/{@code end}, so a simulation's declared {@code phases} are honored.</p>
+   *
+   * @param entity The entity to fast forward
+   * @param subStep The target substep to reach
+   * @param initEvent The event to run at the init stage
+   * @param substepOrder The ordered substeps that run after init, up to and including subStep
+   * @throws IllegalArgumentException if subStep is invalid
+   */
+  public static void fastForward(MutableEntity entity, String subStep, String initEvent,
+        List<String> substepOrder) {
+    runStep(entity, "constant", "constant".equals(subStep));
+    if ("constant".equals(subStep)) {
+      return;
     }
 
-    if (substepNum >= INIT_SUBSTEP) {
-      runStep(entity, "init", substepNum == INIT_SUBSTEP);
+    runStep(entity, initEvent, "init".equals(subStep));
+    if ("init".equals(subStep)) {
+      return;
     }
 
-    if (substepNum >= START_SUBSTEP) {
-      runStep(entity, "start", substepNum == START_SUBSTEP);
+    for (String candidate : substepOrder) {
+      boolean isTarget = candidate.equals(subStep);
+      runStep(entity, candidate, isTarget);
+      if (isTarget) {
+        return;
+      }
     }
 
-    if (substepNum >= STEP_SUBSTEP) {
-      runStep(entity, "step", substepNum == STEP_SUBSTEP);
-    }
-
-    if (substepNum >= END_SUBSTEP) {
-      runStep(entity, "end", substepNum == END_SUBSTEP);
-    }
+    throw new IllegalArgumentException("Cannot fast forward to " + subStep);
   }
 
   /**
@@ -79,24 +109,6 @@ public class EntityFastForwarder {
     if (!leaveOpen) {
       entity.endSubstep();
     }
-  }
-
-  /**
-   * Converts a substep name to its corresponding numeric value.
-   *
-   * @param subStep The name of the substep
-   * @return The numeric value of the substep
-   * @throws IllegalArgumentException if the substep name is invalid
-   */
-  private static int getSubstepNum(String subStep) {
-    return switch (subStep) {
-      case "constant" -> CONSTANT_SUBSTEP;
-      case "init" -> INIT_SUBSTEP;
-      case "start" -> START_SUBSTEP;
-      case "step" -> STEP_SUBSTEP;
-      case "end" -> END_SUBSTEP;
-      default -> throw new IllegalArgumentException("Cannot fast forward to " + subStep);
-    };
   }
 
 }

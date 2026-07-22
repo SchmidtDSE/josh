@@ -79,22 +79,26 @@ OR_: 'or';
 ORGANISM_: 'organism';
 P_: 'p';
 PATCH_: 'patch';
+PHASE_: 'phase';
+PHASES_: 'phases';
 PRIOR_: 'prior';
 RADIAL_: 'radial';
+REPLACE_: 'replace';
 REPLACEMENT_: 'replacement';
 RETURN_: 'return';
 SAMPLE_: 'sample';
 SIMULATION_: 'simulation';
-SPINDOWN_: 'spindown';
-SPINUP_: 'spinup';
 START_: 'start';
 STATE_: 'state';
 STD_: 'std';
 STEP_: 'step';
+THEN_: 'then';
+THROUGH_: 'through';
 TO_: 'to';
 TRUE_: 'true';
 UNIFORM_: 'uniform';
 UNIT_: 'unit';
+UPDATE_: 'update';
 WITH_: 'with';
 WITHIN_: 'within';
 WITHOUT_: 'without';
@@ -107,7 +111,7 @@ IDENTIFIER_: [A-Za-z][A-Za-z0-9_]*;
 WHITE_SPACE: [ \u000B\t\r\n] -> channel(HIDDEN);
 
 // Identifiers
-nakedIdentifier: (IDENTIFIER_|DEBUG_|INIT_|START_|STEP_|END_|HERE_|CURRENT_|PRIOR_|STATE_|ASSERT_|PATCH_|SIMULATION_|AGENT_|ORGANISM_|N_|P_|DISCRETE_|SPINUP_|SPINDOWN_);
+nakedIdentifier: (IDENTIFIER_|DEBUG_|INIT_|START_|STEP_|END_|HERE_|CURRENT_|PRIOR_|STATE_|ASSERT_|PATCH_|SIMULATION_|AGENT_|ORGANISM_|N_|P_|DISCRETE_);
 identifier: nakedIdentifier (DOT_ (nakedIdentifier))*;
 
 // Values
@@ -128,7 +132,7 @@ expression: unitsValue # simpleExpression
   | expression DOT_ identifier # attrExpression
   | unitsValue (LATITUDE_ | LONGITUDE_) COMMA_ unitsValue (LATITUDE_ | LONGITUDE_) # position
   | EXTERNAL_ name=identifier # externalValue
-  | EXTERNAL_ name=identifier AT_ step=(PRIOR_ | INTEGER_) # externalValueAtTime
+  | EXTERNAL_ name=identifier AT_ step=expression # externalValueAtTime
   | CONFIG_ name=identifier # configValue
   | CONFIG_ name=identifier ELSE_ defaultValue=expression # configValueWithDefault
   | subject=expression LBRAC_ selection=expression RBRAC_ # slice
@@ -152,8 +156,8 @@ expression: unitsValue # simpleExpression
   | MAP_ operand=expression FROM_ LBRAC_ fromlow=expression COMMA_ fromhigh=expression RBRAC_ TO_ LBRAC_ tolow=expression COMMA_ tohigh=expression RBRAC_ # mapLinear
   | MAP_ operand=expression FROM_ LBRAC_ fromlow=expression COMMA_ fromhigh=expression RBRAC_ TO_ LBRAC_ tolow=expression COMMA_ tohigh=expression RBRAC_ method=identifier # mapParam
   | MAP_ operand=expression FROM_ LBRAC_ fromlow=expression COMMA_ fromhigh=expression RBRAC_ TO_ LBRAC_ tolow=expression COMMA_ tohigh=expression RBRAC_ method=identifier LPAREN_ methodarg=expression RPAREN_ # mapParamParam
-  | CREATE_ target=identifier # createSingleExpression
-  | CREATE_ count=expression OF_ target=identifier # createVariableExpression
+  | CREATE_ target=identifier (THROUGH_ source=STR_)? # createSingleExpression
+  | CREATE_ count=expression OF_ target=identifier (THROUGH_ source=STR_)? # createVariableExpression
   | target=identifier WITHIN_ distance=expression RADIAL_ AT_ PRIOR_ # spatialQuery
   | pos=expression IF_ cond=expression ELSE_ neg=expression # conditional
   ;
@@ -210,17 +214,20 @@ eventHandlerGeneral: eventHandlerGroup;
 // Regular stanzas
 stateStanza: START_ STATE_ STR_ eventHandlerGeneral* END_ STATE_;
 
-// Spin-up / spin-down phase stanzas (valid only inside a simulation; enforced in the visitor).
-// The body is a set of named properties (`name = expression`), reusing the event-handler form:
-// `year` (resampled each step to pick which data year's forcing is felt) and `duration` (the
-// phase length). Reads like the rest of the language and leaves room for future properties.
-phaseType: (SPINUP_ | SPINDOWN_);
+// Origin-dispatched init stanza (parallel to stateStanza). Supplies the init handlers that run for a
+// cohort created with a matching `create ... through "<origin>"`. Body handlers are implicitly init
+// handlers (the visitor re-keys them to the init event).
+initStanza: START_ INIT_ THROUGH_ STR_ eventHandlerGeneral* END_ INIT_;
 
-phaseStanza: START_ phaseType eventHandlerGeneral* END_ phaseType;
+// Declares the ordered phase sequence for a simulation, replacing start/step/end (init unaffected).
+phaseDeclaration: (WITH_ | THEN_) PHASE_ name=identifier;
+phasesStanza: START_ PHASES_ phaseDeclaration+ END_ PHASES_;
 
 entityStanzaType: (DISTURBANCE_ | EXTERNAL_ | ORGANISM_ | MANAGEMENT_ | PATCH_ | SIMULATION_);
 
-entityStanza: START_ entityStanzaType identifier (eventHandlerGeneral | stateStanza | phaseStanza)* END_ entityStanzaType;
+// start declares a new entity; replace fully overwrites a prior same-named one; update merges,
+// overriding only the handlers it redeclares and leaving the rest of the prior definition intact.
+entityStanza: (START_ | REPLACE_ | UPDATE_) entityStanzaType identifier (eventHandlerGeneral | stateStanza | initStanza | phasesStanza)* END_ entityStanzaType;
 
 // Unit definitions
 unitConversion: ALIAS_ identifier # noopConversion
@@ -232,7 +239,7 @@ unitStanza: START_ UNIT_ name=identifier unitConversion* END_ UNIT_;
 // Imports and config
 configStatement: CONFIG_ expression AS_ identifier;
 
-importStatement: IMPORT_ expression;
+importStatement: IMPORT_ path=STR_;
 
 // Program
 program: (configStatement | importStatement | unitStanza | entityStanza)*;

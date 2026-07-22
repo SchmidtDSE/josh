@@ -172,15 +172,19 @@ assert_run examples/simulations/profiler_multi.josh ProfilerMultiExample --enabl
 [ -f "/tmp/profiler_multi_josh.csv" ] || exit 50
 [ -s "/tmp/profiler_multi_josh.csv" ] || exit 51
 
-# Test spin-up / spin-down: phase-anchored clock and resampled discrete years, asserted in-model
+# Test spin-up / spin-down as a plain "state" recipe (widened steps.low/steps.high, no dedicated
+# engine machinery): resampled discrete years and re-anchored step count, asserted in-model.
 assert_run examples/features/spinup.josh SpinupExample --seed 42 || exit 52
-assert_run examples/features/spinup.josh SpinupExample --seed 42 --output-phases observed || exit 53
 
-# Test --output-phases actually filters the incremental patch export (not just the meta path).
+# Test that --output-steps still filters the incremental patch export down to just the observed
+# rows; the exported "state" column (an ordinary attribute, not a dedicated CLI concept) is what
+# a caller would filter on to select spinup/observed/spindown after the fact. Uses the inclusive
+# range syntax (0-2) rather than listing each index, since individually listing steps doesn't
+# scale to large step counts.
 rm -f /tmp/spinup_export_josh.csv
 assert_run examples/features/spinup_export.josh SpinupExport --seed 1 || exit 54
 grep -q "spinup" /tmp/spinup_export_josh.csv || exit 55
 rm -f /tmp/spinup_export_josh.csv
-assert_run examples/features/spinup_export.josh SpinupExport --seed 1 --output-phases observed || exit 56
+assert_run examples/features/spinup_export.josh SpinupExport --seed 1 --output-steps 0-2 || exit 56
 grep -q "observed" /tmp/spinup_export_josh.csv || exit 57
 ! grep -qE "spinup|spindown" /tmp/spinup_export_josh.csv || exit 58

@@ -15,7 +15,9 @@ import org.joshsim.engine.value.engine.ValueSupportFactory;
 import org.joshsim.engine.value.type.EngineValue;
 import org.joshsim.lang.antlr.JoshLangParser;
 import org.joshsim.lang.interpret.BridgeGetter;
+import org.joshsim.lang.interpret.KnownEventSet;
 import org.joshsim.lang.interpret.ReservedWordChecker;
+import org.joshsim.lang.interpret.StringLiteralUtil;
 import org.joshsim.lang.interpret.ValueResolver;
 import org.joshsim.lang.interpret.action.EventHandlerAction;
 import org.joshsim.lang.interpret.fragment.josh.ActionFragment;
@@ -37,6 +39,7 @@ public class JoshTypesUnitsVisitor implements JoshVisitorDelegate {
   private final ValueSupportFactory engineValueFactory;
   private final EngineValue singleCount;
   private final BridgeGetter bridgeGetter;
+  private final KnownEventSet knownEventSet;
 
   /**
    * Create a new visitor for types and units.
@@ -47,7 +50,33 @@ public class JoshTypesUnitsVisitor implements JoshVisitorDelegate {
     parent = toolbox.getParent();
     engineValueFactory = toolbox.getValueFactory();
     bridgeGetter = toolbox.getBridgeGetter();
+    knownEventSet = toolbox.getKnownEventSet();
     singleCount = engineValueFactory.build(1, Units.of("count"));
+  }
+
+  /**
+   * Resolve the init event a {@code create ... through "<origin>"} clause dispatches to.
+   *
+   * <p>With no origin, or an origin with no matching {@code start init through} block on the
+   * specific entity type being created, this is the base {@code init} event (existing / untagged
+   * models are unaffected). A known origin resolves to its per-origin variant init event, which a
+   * create fast-forwards <em>instead of</em> base {@code init} (pure replace). The check is scoped
+   * to {@code entityName}: an origin declared on a different entity type is not a match here, so
+   * one entity's {@code start init through} block can never redirect another entity's plain
+   * {@code create ... through} onto an event it never declared.</p>
+   *
+   * @param entityName The entity type being created (e.g. {@code "Tree"}).
+   * @param origin The (unquoted) origin string, or empty for a create without {@code through}.
+   * @return The init event name to fast-forward at creation.
+   */
+  private String resolveInitEvent(String entityName, String origin) {
+    if (origin.isEmpty()) {
+      return KnownEventSet.BASE_INIT_EVENT;
+    }
+    String variantEvent = KnownEventSet.initEventFor(origin);
+    return knownEventSet.isInitEvent(entityName, variantEvent)
+        ? variantEvent
+        : KnownEventSet.BASE_INIT_EVENT;
   }
 
   /**
@@ -147,10 +176,12 @@ public class JoshTypesUnitsVisitor implements JoshVisitorDelegate {
       JoshLangParser.CreateVariableExpressionContext ctx) {
     EventHandlerAction countAction = ctx.count.accept(parent).getCurrentAction();
     String entityName = ctx.target.getText();
+    String origin = ctx.source == null ? "" : StringLiteralUtil.stripQuotes(ctx.source.getText());
+    String initEvent = resolveInitEvent(entityName, origin);
 
     EventHandlerAction action = (machine) -> {
       countAction.apply(machine);
-      machine.createEntity(entityName);
+      machine.createEntity(entityName, initEvent);
       return machine;
     };
 
@@ -240,10 +271,12 @@ public class JoshTypesUnitsVisitor implements JoshVisitorDelegate {
   public JoshFragment visitCreateSingleExpression(
       JoshLangParser.CreateSingleExpressionContext ctx) {
     String entityName = ctx.target.getText();
+    String origin = ctx.source == null ? "" : StringLiteralUtil.stripQuotes(ctx.source.getText());
+    String initEvent = resolveInitEvent(entityName, origin);
 
     EventHandlerAction action = (machine) -> {
       machine.push(singleCount);
-      machine.createEntity(entityName);
+      machine.createEntity(entityName, initEvent);
       return machine;
     };
 

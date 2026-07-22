@@ -10,6 +10,7 @@ import org.joshsim.engine.value.engine.ValueSupportFactory;
 import org.joshsim.lang.antlr.JoshLangBaseVisitor;
 import org.joshsim.lang.antlr.JoshLangParser;
 import org.joshsim.lang.interpret.BridgeGetter;
+import org.joshsim.lang.interpret.KnownEventSet;
 import org.joshsim.lang.interpret.fragment.josh.JoshFragment;
 import org.joshsim.lang.interpret.visitor.delegates.DelegateToolbox;
 import org.joshsim.lang.interpret.visitor.delegates.JoshConfigVisitor;
@@ -50,11 +51,13 @@ public class JoshParserToMachineVisitor extends JoshLangBaseVisitor<JoshFragment
    *
    * @param valueFactory The factory to use in building engine values within this visitor.
    * @param bridgeGetter The bridge getter to use in accessing a bridge for operations.
+   * @param knownEventSet The set of event names declared by the program being interpreted.
    */
-  public JoshParserToMachineVisitor(ValueSupportFactory valueFactory, BridgeGetter bridgeGetter) {
+  public JoshParserToMachineVisitor(ValueSupportFactory valueFactory, BridgeGetter bridgeGetter,
+        KnownEventSet knownEventSet) {
     super();
 
-    DelegateToolbox toolbox = new DelegateToolbox(this, valueFactory, bridgeGetter);
+    DelegateToolbox toolbox = new DelegateToolbox(this, valueFactory, bridgeGetter, knownEventSet);
     valueVisitor = new JoshValueVisitor(toolbox);
     externalVisitor = new JoshExternalVisitor(toolbox);
     configVisitor = new JoshConfigVisitor(toolbox);

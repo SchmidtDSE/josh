@@ -23,7 +23,6 @@ public class WorkerTask {
   private final boolean favorBigDecimal;
   private final int replicateNumber;
   private final String outputSteps;
-  private final String outputPhases;
   private final boolean enableProfiler;
 
   /**
@@ -36,12 +35,11 @@ public class WorkerTask {
    * @param favorBigDecimal Whether to favor BigDecimal precision
    * @param replicateNumber The replicate number for this task
    * @param outputSteps Comma-separated list of time steps to export
-   * @param outputPhases Comma-separated list of phases to export (spinup, observed, spindown)
    * @param enableProfiler Whether to enable per-request profiling
    */
   public WorkerTask(String code, String simulationName, String apiKey,
       String externalData, boolean favorBigDecimal, int replicateNumber, String outputSteps,
-      String outputPhases, boolean enableProfiler) {
+      boolean enableProfiler) {
     this.code = code;
     this.simulationName = simulationName;
     this.apiKey = apiKey;
@@ -49,7 +47,6 @@ public class WorkerTask {
     this.favorBigDecimal = favorBigDecimal;
     this.replicateNumber = replicateNumber;
     this.outputSteps = outputSteps;
-    this.outputPhases = outputPhases;
     this.enableProfiler = enableProfiler;
   }
 
@@ -114,15 +111,6 @@ public class WorkerTask {
    */
   public String getOutputSteps() {
     return outputSteps;
-  }
-
-  /**
-   * Gets the output phases filter for this task.
-   *
-   * @return The output phases as a comma-separated string
-   */
-  public String getOutputPhases() {
-    return outputPhases;
   }
 
   /**

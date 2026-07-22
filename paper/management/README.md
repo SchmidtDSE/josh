@@ -32,8 +32,10 @@ model behind `demo.joshsim.org/management`.
 
 | File | What it is |
 |------|------------|
-| `management.josh` | The model, with a `file://` export sink — run from the CLI. |
-| `management_wasm.josh` | Byte-for-byte twin with a `memory://editor/patches` sink for the Josh web (WASM) editor. The two files differ **only** in the `exportFiles.patch` line. |
+| `forevertree.josh` | Base layer: grid definition + basic ForeverTree ecology (climate-driven growth only). |
+| `invasive_grass.josh` | Imports `forevertree.josh`; `update`s in invasive-grass competition and the `Juvenile`/`Adult` maturity states that gate growth suppression. |
+| `management.josh` | Imports `invasive_grass.josh`; `update`s in fire, the outplant origin, the terminal `Burned` state, and the `file://` export sink — this is the file actually run from the CLI. |
+| `management_wasm.josh` | Single self-contained file (not built via import/update, since the browser/WASM demo can't bundle multiple files) with the same simulated behavior as `management.josh` but a `memory://editor/patches` export sink instead. |
 | `scenario.jshc` | Tunable scenario knobs (named `scenario` because `management` is a reserved word). |
 | `data/fire_synthetic.nc` | Static fire footprint (`burned` mask, 1 = burned). |
 | `data/management_synthetic.nc` | Static managed boundary (`managed` mask, 1 = managed; south/hot half of the burn). |

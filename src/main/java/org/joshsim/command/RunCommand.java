@@ -22,7 +22,6 @@ import org.joshsim.JoshSimCommander;
 import org.joshsim.lang.io.MapSerializeStrategy;
 import org.joshsim.util.MinioOptions;
 import org.joshsim.util.OutputOptions;
-import org.joshsim.util.OutputPhasesParser;
 import org.joshsim.util.OutputStepsParser;
 import org.joshsim.util.ReplicateSelection;
 import picocli.CommandLine.Command;
@@ -116,17 +115,10 @@ public class RunCommand implements Callable<Integer> {
 
   @Option(
       names = "--output-steps",
-      description = "Comma-separated list of time steps to export (e.g., 5,7,8,9,20). "
-                  + "If not specified, all steps are exported."
+      description = "Comma-separated list of time steps and/or inclusive ranges to export "
+                  + "(e.g., 5,7-9,20 or 0-100). If not specified, all steps are exported."
   )
   private String outputSteps = "";
-
-  @Option(
-      names = "--output-phases",
-      description = "Comma-separated list of phases to export (spinup,observed,spindown). "
-                  + "If not specified, all phases are exported."
-  )
-  private String outputPhases = "";
 
   @Option(
       names = "--export-queue-size",
@@ -197,17 +189,6 @@ public class RunCommand implements Callable<Integer> {
     return OutputStepsParser.parseForCli(outputSteps);
   }
 
-  /**
-   * Parses the output-phases command line option using the OutputPhasesParser utility.
-   *
-   * @return Optional containing the set of phases to export, or empty if all phases should
-   *     be exported
-   * @throws IllegalArgumentException if the output-phases format is invalid
-   */
-  private Optional<Set<String>> parseOutputPhases() {
-    return OutputPhasesParser.parseForCli(outputPhases);
-  }
-
   @Override
   public Integer call() {
     // Validate replicates parameter
@@ -268,7 +249,6 @@ public class RunCommand implements Callable<Integer> {
         .csvPrecision(csvPrecision)
         .exportQueueSize(exportQueueSize)
         .outputSteps(parsedOutputSteps)
-        .outputPhases(parseOutputPhases())
         .dataFiles(dataFiles)
         .customParameters(customParameters)
         .minioOptions(minioOptions)
@@ -282,6 +262,7 @@ public class RunCommand implements Callable<Integer> {
         case LOAD -> 1;
         case READ -> 2;
         case PARSE -> 3;
+        case INTERPRET -> 5;
         default -> UNKNOWN_ERROR_CODE;
       };
     }

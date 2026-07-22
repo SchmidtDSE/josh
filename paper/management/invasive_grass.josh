@@ -1,0 +1,60 @@
+import "forevertree.josh"
+
+update patch Default
+
+  coverShare.end = {
+    const neighbors = Default within config scenario.dispersalRadius radial at prior
+    const n = limit count(neighbors) - 1 count to [1 count, 100 count]
+    return (prior.invasiveCover * config scenario.invasiveDispersalRate) / n
+  }
+  coverImmigration.init = 0%
+  coverImmigration.end = {
+    const neighbors = Default within config scenario.dispersalRadius radial at prior
+    if (count(neighbors) > 1 count) {
+      return sum(neighbors.coverShare)
+    } else {
+      return 0%
+    }
+  }
+
+  invasiveCover.init = config scenario.invasiveMinCover
+  invasiveCover.step = {
+    const openness =
+      map (limit prior.nLiveTrees to [0 count, config scenario.treesForFullSuppression])
+      from [0 count, config scenario.treesForFullSuppression]
+      to [100%, 0%] linear
+    return limit (prior.invasiveCover + openness * (config scenario.invasiveBaseGrowth + prior.coverImmigration))
+      to [config scenario.invasiveMinCover, 100%]
+  }
+
+  nLiveTrees.init = count(ForeverTree)
+  nLiveTrees.step = count(ForeverTree)
+
+  export.nLiveTrees.step = nLiveTrees
+  export.invasiveCover.step = invasiveCover
+
+end patch
+
+update organism ForeverTree
+
+  # A tree shorter than smallTreeHeight is out-competed by invasive grass; once it clears that
+  # threshold it grows unhindered. Plain (non-origin) init, so this only classifies trees created
+  # without a `through "<origin>"` dispatch; origin-dispatched creates set state themselves.
+  state.init = "Adult" if height >= config scenario.smallTreeHeight else "Juvenile"
+
+  newGrowth.step =
+    config scenario.maxNewGrowth
+    * temperatureImpact
+    * precipImpact
+    * stochastic
+    * growthInhibition
+
+  start state "Juvenile"
+    growthInhibition.step = limit (100% - here.invasiveCover) to [0%, 100%]
+  end state
+
+  start state "Adult"
+    growthInhibition.step = 100%
+  end state
+
+end organism

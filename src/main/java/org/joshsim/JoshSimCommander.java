@@ -13,6 +13,7 @@ package org.joshsim;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
+import java.util.List;
 import java.util.Optional;
 import org.joshsim.command.BatchRemoteCommand;
 import org.joshsim.command.DiscoverConfigCommand;
@@ -33,6 +34,7 @@ import org.joshsim.engine.value.engine.ValueSupportFactory;
 import org.joshsim.lang.interpret.JoshProgram;
 import org.joshsim.lang.io.InputOutputLayer;
 import org.joshsim.lang.io.JvmInputOutputLayerBuilder;
+import org.joshsim.lang.io.JvmWorkingDirInputGetter;
 import org.joshsim.lang.parse.ParseError;
 import org.joshsim.lang.parse.ParseResult;
 import org.joshsim.util.OutputOptions;
@@ -212,30 +214,56 @@ public class JoshSimCommander {
       return new ProgramInitResult(CommanderStepEnum.READ);
     }
 
-    ParseResult result = JoshSimFacade.parse(fileContent);
+    ParseResult result = JoshSimFacadeUtil.parseWithImports(
+        file.getPath().replace(File.separatorChar, '/'),
+        fileContent,
+        new JvmWorkingDirInputGetter()
+    );
 
     if (result.hasErrors()) {
-      String leadMessage = String.format("Found errors in Josh code at %s:", file);
-      output.printError(leadMessage);
-
-      for (ParseError error : result.getErrors()) {
-        String lineMessage = String.format(
-            " - On line %d: %s",
-            error.getLine(),
-            error.getMessage()
-        );
-        output.printError(lineMessage);
-      }
-
+      printParseErrors(file, result.getErrors(), output);
       return new ProgramInitResult(CommanderStepEnum.PARSE);
     }
 
-    JoshProgram program = JoshSimFacadeUtil.interpret(
-        valueFactory, geometryFactory, result, inputOutputLayer
-    );
+    JoshProgram program;
+    try {
+      program = JoshSimFacadeUtil.interpret(
+          valueFactory, geometryFactory, result, inputOutputLayer
+      );
+    } catch (IllegalArgumentException | IllegalStateException e) {
+      output.printError(String.format(
+          "Found errors in Josh code at %s: %s", file, e.getMessage()
+      ));
+      return new ProgramInitResult(CommanderStepEnum.INTERPRET);
+    }
     assert program != null;
 
     return new ProgramInitResult(program);
+  }
+
+  /**
+   * Print a batch of parse errors, attributing each to its imported file when known.
+   *
+   * @param entryFile the top-level file that was requested to run, used when an error has no
+   *     more specific source (i.e. it came from the entry file itself rather than an import).
+   * @param errors the errors to print.
+   * @param output where to print the errors.
+   */
+  private static void printParseErrors(File entryFile, List<ParseError> errors,
+      OutputOptions output) {
+    String leadMessage = String.format("Found errors in Josh code at %s:", entryFile);
+    output.printError(leadMessage);
+
+    for (ParseError error : errors) {
+      String source = error.getSourceName().orElse(entryFile.toString());
+      String lineMessage = String.format(
+          " - %s, line %d: %s",
+          source,
+          error.getLine(),
+          error.getMessage()
+      );
+      output.printError(lineMessage);
+    }
   }
 
   /**

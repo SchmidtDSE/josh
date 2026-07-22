@@ -36,7 +36,6 @@ public class ParallelWorkerHandlerTest {
         true,
         5,
         "5,10,15",
-        "observed",
         false
     );
 
@@ -58,7 +57,6 @@ public class ParallelWorkerHandlerTest {
         "",
         false,
         0,
-        "",
         "",
         false
     );

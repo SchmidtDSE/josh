@@ -16,13 +16,9 @@ import org.joshsim.engine.config.Config;
 import org.joshsim.engine.entity.base.Entity;
 import org.joshsim.engine.entity.base.GeoKey;
 import org.joshsim.engine.entity.base.MutableEntity;
-import org.joshsim.engine.entity.handler.EventHandler;
-import org.joshsim.engine.entity.handler.EventHandlerGroup;
-import org.joshsim.engine.entity.handler.EventKey;
 import org.joshsim.engine.entity.prototype.EntityPrototype;
 import org.joshsim.engine.entity.prototype.EntityPrototypeStore;
 import org.joshsim.engine.func.CompiledCallable;
-import org.joshsim.engine.func.EntityScope;
 import org.joshsim.engine.func.SingleValueScope;
 import org.joshsim.engine.geometry.EngineGeometry;
 import org.joshsim.engine.geometry.EngineGeometryFactory;
@@ -45,6 +41,7 @@ public class MinimalEngineBridge implements EngineBridge {
 
   private static final long DEFAULT_START_STEP = 0;
   private static final long DEFAULT_END_STEP = 100;
+  private static final List<String> DEFAULT_SUBSTEP_ORDER = List.of("start", "step", "end");
 
   private final EngineGeometryFactory geometryFactory;
   private final MutableEntity simulation;
@@ -57,22 +54,12 @@ public class MinimalEngineBridge implements EngineBridge {
   private final ExternalResourceGetter externalResourceGetter;
   private final Map<String, Optional<Config>> configData;
   private final ConfigGetter configGetter;
+  private final List<String> substepOrder;
 
   private Optional<Replicate> replicate;
   private long absoluteStep;
   private EngineValue currentStep;
   private boolean inStep;
-
-  // Spin-up / spin-down phase configuration. With no phase blocks these are zero/empty and the
-  // clock behaves exactly as before: currentStep runs steps.low..steps.high.
-  private long spinupSteps;
-  private long spindownSteps;
-  private long observedLow;
-  private long observedHigh;
-  private Optional<CompiledCallable> spinupYearCallable = Optional.empty();
-  private Optional<CompiledCallable> spindownYearCallable = Optional.empty();
-  private long memoizedYearStep = Long.MIN_VALUE;
-  private long memoizedYear;
 
   private final Map<MutableEntity, MutableEntity> patchWrapperCache = new IdentityHashMap<>();
 
@@ -96,6 +83,28 @@ public class MinimalEngineBridge implements EngineBridge {
         EngineGeometryFactory geometryFactory, MutableEntity simulation,
         Converter converter, EntityPrototypeStore prototypeStore,
         ExternalResourceGetter externalResourceGetter, ConfigGetter configGetter) {
+    this(engineValueFactory, geometryFactory, simulation, converter, prototypeStore,
+        externalResourceGetter, configGetter, DEFAULT_SUBSTEP_ORDER);
+  }
+
+  /**
+   * Constructs an EngineBridge with a declared substep order.
+   *
+   * @param engineValueFactory The factory to use for building engine values.
+   * @param geometryFactory The factory to use for building engine geometries.
+   * @param simulation The simulation instance to be used for retrieving or manipulating simulation
+   *     data.
+   * @param converter The converter for handling unit conversions between different engine values.
+   * @param prototypeStore The set of prototypes to use to build new entities.
+   * @param externalResourceGetter Strategy to use in loading external resources.
+   * @param configGetter Strategy to use in loading configuration resources.
+   * @param substepOrder The ordered substep sequence declared by the simulation, if any.
+   */
+  public MinimalEngineBridge(ValueSupportFactory engineValueFactory,
+        EngineGeometryFactory geometryFactory, MutableEntity simulation,
+        Converter converter, EntityPrototypeStore prototypeStore,
+        ExternalResourceGetter externalResourceGetter, ConfigGetter configGetter,
+        List<String> substepOrder) {
     this.engineValueFactory = engineValueFactory;
     this.geometryFactory = geometryFactory;
     this.simulation = simulation;
@@ -104,6 +113,7 @@ public class MinimalEngineBridge implements EngineBridge {
     this.externalResourceGetter = externalResourceGetter;
     this.configGetter = configGetter;
     this.configData = new ConcurrentHashMap<>();
+    this.substepOrder = substepOrder;
 
     replicate = Optional.empty();
 
@@ -117,19 +127,9 @@ public class MinimalEngineBridge implements EngineBridge {
       .getAttributeValue("steps.high")
       .orElseGet(() -> engineValueFactory.build(DEFAULT_END_STEP, Units.of("count")));
 
-    spinupSteps = readPhaseDuration("__spinupSteps");
-    spindownSteps = readPhaseDuration("__spindownSteps");
-
     simulation.endSubstep();
 
-    observedLow = startStep.getAsInt();
-    observedHigh = endStep.getAsInt();
-
-    // Anchor the clock at the observed period: spin-up counts backward into the negatives, so the
-    // first observed step is always the same value regardless of spin-up length.
-    currentStep = engineValueFactory.build(observedLow - spinupSteps, Units.of("count"));
-    spinupYearCallable = retrievePhaseYearCallable("__spinupYear", "spinup");
-    spindownYearCallable = retrievePhaseYearCallable("__spindownYear", "spindown");
+    currentStep = engineValueFactory.build(startStep.getAsInt(), Units.of("count"));
 
     absoluteStep = 0;
     inStep = false;
@@ -150,6 +150,28 @@ public class MinimalEngineBridge implements EngineBridge {
         EngineGeometryFactory geometryFactory, MutableEntity simulation, Converter converter,
         EntityPrototypeStore prototypeStore, ExternalResourceGetter externalResourceGetter,
         ConfigGetter configGetter, Replicate replicate) {
+    this(engineValueFactory, geometryFactory, simulation, converter, prototypeStore,
+        externalResourceGetter, configGetter, replicate, DEFAULT_SUBSTEP_ORDER);
+  }
+
+  /**
+   * Constructs an EngineBridge with a given Replicate for testing and a declared substep order.
+   *
+   * @param engineValueFactory The factory to use for building engine values.
+   * @param geometryFactory The factory to use for building engine geometries.
+   * @param simulation The simulation instance to be used for retrieving or manipulating simulation
+   *     data.
+   * @param converter The converter for handling unit conversions between different engine values.
+   * @param prototypeStore The set of prototypes to use to build new entities.
+   * @param externalResourceGetter Strategy to use in loading external resources.
+   * @param configGetter Strategy to use in loading configuration resources.
+   * @param replicate The replicate to use for testing.
+   * @param substepOrder The ordered substep sequence declared by the simulation, if any.
+   */
+  public MinimalEngineBridge(ValueSupportFactory engineValueFactory,
+        EngineGeometryFactory geometryFactory, MutableEntity simulation, Converter converter,
+        EntityPrototypeStore prototypeStore, ExternalResourceGetter externalResourceGetter,
+        ConfigGetter configGetter, Replicate replicate, List<String> substepOrder) {
     this.engineValueFactory = engineValueFactory;
     this.geometryFactory = geometryFactory;
     this.simulation = simulation;
@@ -158,6 +180,7 @@ public class MinimalEngineBridge implements EngineBridge {
     this.externalResourceGetter = externalResourceGetter;
     this.configGetter = configGetter;
     this.configData = new ConcurrentHashMap<>();
+    this.substepOrder = substepOrder;
     this.replicate = Optional.of(replicate);
 
     simulation.startSubstep("constant");
@@ -170,19 +193,9 @@ public class MinimalEngineBridge implements EngineBridge {
       .getAttributeValue("steps.high")
       .orElseGet(() -> engineValueFactory.build(DEFAULT_END_STEP, Units.of("count")));
 
-    spinupSteps = readPhaseDuration("__spinupSteps");
-    spindownSteps = readPhaseDuration("__spindownSteps");
-
     simulation.endSubstep();
 
-    observedLow = startStep.getAsInt();
-    observedHigh = endStep.getAsInt();
-
-    // Anchor the clock at the observed period: spin-up counts backward into the negatives, so the
-    // first observed step is always the same value regardless of spin-up length.
-    currentStep = engineValueFactory.build(observedLow - spinupSteps, Units.of("count"));
-    spinupYearCallable = retrievePhaseYearCallable("__spinupYear", "spinup");
-    spindownYearCallable = retrievePhaseYearCallable("__spindownYear", "spindown");
+    currentStep = engineValueFactory.build(startStep.getAsInt(), Units.of("count"));
 
     absoluteStep = 0;
     inStep = false;
@@ -225,7 +238,7 @@ public class MinimalEngineBridge implements EngineBridge {
 
   @Override
   public boolean isComplete() {
-    return currentStep.getAsInt() > observedHigh + spindownSteps;
+    return currentStep.getAsInt() > endStep.getAsInt();
   }
 
   @Override
@@ -288,6 +301,11 @@ public class MinimalEngineBridge implements EngineBridge {
   }
 
   @Override
+  public List<String> getSubstepOrder() {
+    return substepOrder;
+  }
+
+  @Override
   public Optional<Entity> getPatch(EnginePoint enginePoint) {
     Query query = new Query(currentStep.getAsInt(), enginePoint);
     Iterable<Entity> patches = getReplicate().query(query);
@@ -341,49 +359,6 @@ public class MinimalEngineBridge implements EngineBridge {
   }
 
   @Override
-  public long getDataTimestep() {
-    long step = currentStep.getAsInt();
-    if (step >= observedLow && step <= observedHigh) {
-      return step;
-    }
-
-    Optional<CompiledCallable> yearCallable =
-        step < observedLow ? spinupYearCallable : spindownYearCallable;
-    if (yearCallable.isEmpty()) {
-      return step;
-    }
-
-    // Draw once per step and memoize so every external read in the same step shares the same year.
-    if (memoizedYearStep != step) {
-      EngineValue drawn = yearCallable.get().evaluate(new EntityScope(simulation));
-      memoizedYear = drawn.getAsInt();
-      memoizedYearStep = step;
-    }
-    return memoizedYear;
-  }
-
-  @Override
-  public String getPhase() {
-    return getPhase(currentStep.getAsInt());
-  }
-
-  @Override
-  public String getPhase(long step) {
-    if (step < observedLow) {
-      return "spinup";
-    }
-    if (step > observedHigh) {
-      return "spindown";
-    }
-    return "observed";
-  }
-
-  @Override
-  public long getEarliestTimestep() {
-    return observedLow - spinupSteps;
-  }
-
-  @Override
   public long getPriorTimestep() {
     return currentStep.getAsInt() - 1;
   }
@@ -421,38 +396,6 @@ public class MinimalEngineBridge implements EngineBridge {
     }
 
     return prototypeStore.get(name);
-  }
-
-  /**
-   * Read a phase duration (in steps) from a synthetic constant-substep attribute.
-   *
-   * <p>Must be called while the {@code "constant"} substep is open. Returns 0 when the phase is
-   * absent, which keeps the clock identical to a simulation without spin-up/spin-down.</p>
-   *
-   * @param attribute The synthetic duration attribute (e.g. {@code "__spinupSteps"}).
-   * @return The phase length in steps, or 0 if not declared.
-   */
-  private long readPhaseDuration(String attribute) {
-    return simulation.getAttributeValue(attribute).map(EngineValue::getAsInt).orElse(0L);
-  }
-
-  /**
-   * Retrieve the per-step year expression for a phase, if declared.
-   *
-   * <p>The handler is registered under a dedicated event so the stepper never runs it; the bridge
-   * evaluates it on demand only while that phase is active.</p>
-   *
-   * @param attribute The synthetic year attribute (e.g. {@code "__spinupYear"}).
-   * @param event The event under which the year handler is registered (the phase name).
-   * @return The compiled year expression, or empty if the phase is not declared.
-   */
-  private Optional<CompiledCallable> retrievePhaseYearCallable(String attribute, String event) {
-    Optional<EventHandlerGroup> group = simulation.getEventHandlers(EventKey.of(attribute, event));
-    if (group.isEmpty()) {
-      return Optional.empty();
-    }
-    Iterator<EventHandler> handlers = group.get().getEventHandlers().iterator();
-    return handlers.hasNext() ? Optional.of(handlers.next().getCallable()) : Optional.empty();
   }
 
   /**

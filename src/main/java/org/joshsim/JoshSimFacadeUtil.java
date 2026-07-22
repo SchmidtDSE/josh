@@ -26,9 +26,12 @@ import org.joshsim.lang.io.CombinedDebugOutputFacade;
 import org.joshsim.lang.io.CombinedExportFacade;
 import org.joshsim.lang.io.DebugOutputFacadeBuilder;
 import org.joshsim.lang.io.ExportFacadeFactory;
+import org.joshsim.lang.io.InputGetterStrategy;
 import org.joshsim.lang.io.InputOutputLayer;
+import org.joshsim.lang.parse.JoshImportPreprocessor;
 import org.joshsim.lang.parse.JoshParser;
 import org.joshsim.lang.parse.ParseResult;
+import org.joshsim.lang.parse.PreprocessResult;
 import org.joshsim.precompute.JshdExternalGetter;
 
 
@@ -50,6 +53,32 @@ public class JoshSimFacadeUtil {
   public static ParseResult parse(String code) {
     JoshParser parser = new JoshParser();
     return parser.parse(code);
+  }
+
+  /**
+   * Resolve {@code import} statements and then parse the combined Josh script.
+   *
+   * <p>Shared by every execution environment (CLI, WASM, cloud/remote) so imports behave
+   * identically wherever a Josh script is parsed, each supplying its own {@link
+   * InputGetterStrategy} for resolving imported files.</p>
+   *
+   * @param entryIdentifier path or identifier for the entry script, used to resolve its own
+   *     relative imports. Use an empty string when the entry script has no real file path (e.g.
+   *     code submitted directly by a WASM or remote caller); imports then resolve as root-relative
+   *     paths.
+   * @param code String code to parse as a Josh source.
+   * @param inputStrategy strategy used to open and check existence of imported files.
+   * @return The result of parsing the code (including any import-resolution errors) where
+   *     hasErrors and getErrors can report on issues found.
+   */
+  public static ParseResult parseWithImports(
+      String entryIdentifier, String code, InputGetterStrategy inputStrategy) {
+    PreprocessResult preprocessed =
+        new JoshImportPreprocessor(inputStrategy).preprocess(entryIdentifier, code);
+    if (preprocessed.hasErrors()) {
+      return new ParseResult(preprocessed.getErrors());
+    }
+    return parse(preprocessed.getSource().orElseThrow());
   }
 
   /**
@@ -87,15 +116,11 @@ public class JoshSimFacadeUtil {
    * @param outputSteps Optional set of step numbers to export. If empty, all steps are exported.
    *     If present, only steps contained in the set will have their output written to export files.
    *     All steps continue to execute for simulation state continuity regardless of this filter.
-   * @param outputPhases Optional set of phase names to export (spinup, observed, spindown). If
-   *     empty, all phases are exported. If present, only steps whose phase is contained in the set
-   *     will have their output written. ANDed with outputSteps.
    */
   public static void runSimulation(ValueSupportFactory valueFactory,
         EngineGeometryFactory geometryFactory, InputOutputLayer inputOutputLayer,
         JoshProgram program, String simulationName, SimulationStepCallback callback,
-        boolean serialPatches, Optional<Set<Integer>> outputSteps,
-        Optional<Set<String>> outputPhases) {
+        boolean serialPatches, Optional<Set<Integer>> outputSteps) {
     runSimulation(
         valueFactory,
         geometryFactory,
@@ -105,8 +130,7 @@ public class JoshSimFacadeUtil {
         simulationName,
         callback,
         serialPatches,
-        outputSteps,
-        outputPhases
+        outputSteps
     );
   }
 
@@ -127,15 +151,12 @@ public class JoshSimFacadeUtil {
    * @param callback A callback invoked after each simulation step.
    * @param serialPatches If true, patches are processed serially; otherwise in parallel.
    * @param outputSteps Optional set of step numbers to export.
-   * @param outputPhases Optional set of phase names to export (spinup, observed, spindown). ANDed
-   *     with outputSteps.
    */
   public static void runSimulation(ValueSupportFactory valueFactory,
         EngineGeometryFactory geometryFactory, InputOutputLayer inputOutputLayer,
         ExternalResourceGetter externalResourceGetter,
         JoshProgram program, String simulationName, SimulationStepCallback callback,
-        boolean serialPatches, Optional<Set<Integer>> outputSteps,
-        Optional<Set<String>> outputPhases) {
+        boolean serialPatches, Optional<Set<Integer>> outputSteps) {
 
     MutableEntity simEntityRaw = program.getSimulations().getProtoype(simulationName).build();
     MutableEntity simEntity = new ShadowingEntity(valueFactory, simEntityRaw, simEntityRaw);
@@ -177,10 +198,10 @@ public class JoshSimFacadeUtil {
     // Create incremental export callback if export configured
     Optional<PatchExportCallback> exportCallback = exportFacade.createIncrementalCallback();
 
-    // Pass callback + output filters to SimulationStepper so incremental patch exports honor the
-    // same step/phase filtering as the meta write path below.
+    // Pass callback + output filter to SimulationStepper so incremental patch exports honor the
+    // same step filtering as the meta write path below.
     SimulationStepper stepper =
-        new SimulationStepper(bridge, exportCallback, outputSteps, outputPhases);
+        new SimulationStepper(bridge, exportCallback, outputSteps);
 
     exportFacade.start();
     debugFacade.start();
@@ -190,9 +211,7 @@ public class JoshSimFacadeUtil {
 
       boolean stepIncluded = outputSteps.isEmpty()
           || outputSteps.get().contains((int) completedStep);
-      boolean phaseIncluded = outputPhases.isEmpty()
-          || outputPhases.get().contains(bridge.getPhase(completedStep));
-      if (stepIncluded && phaseIncluded) {
+      if (stepIncluded) {
         TimeStep completedTimeStep = bridge.getReplicate()
             .getTimeStep(completedStep)
             .orElseThrow();
@@ -207,10 +226,10 @@ public class JoshSimFacadeUtil {
 
       callback.onStep(completedStep);
 
-      // Prune the step two behind once it exists. Gated on the earliest saved step (which is
-      // negative during spin-up) rather than a hardcoded 0, so spin-up steps are freed too instead
-      // of accumulating for the whole warm-up.
-      if (completedStep - 2 >= bridge.getEarliestTimestep()) {
+      // Prune the step two behind once it exists. Gated on the true start (which is negative if
+      // the model widened steps.low itself) rather than a hardcoded 0, so those steps are freed
+      // too instead of accumulating for the whole run.
+      if (completedStep - 2 >= bridge.getStartTimestep()) {
         bridge.getReplicate().deleteTimeStep(completedStep - 2);
       }
     }
@@ -242,7 +261,7 @@ public class JoshSimFacadeUtil {
         JoshProgram program, String simulationName, SimulationStepCallback callback,
         boolean serialPatches) {
     runSimulation(valueFactory, geometryFactory, inputOutputLayer, program,
-        simulationName, callback, serialPatches, Optional.empty(), Optional.empty());
+        simulationName, callback, serialPatches, Optional.empty());
   }
 
   /**

@@ -468,6 +468,11 @@ public class SingleThreadEventHandlerMachine implements EventHandlerMachine {
 
   @Override
   public EventHandlerMachine createEntity(String entityType) {
+    return createEntity(entityType, "init");
+  }
+
+  @Override
+  public EventHandlerMachine createEntity(String entityType, String initEventName) {
     EntityPrototype prototype = bridge.getPrototype(entityType);
     MutableEntity parent = scope.get("current").getAsMutableEntity();
     EntityPrototype innerDecorated = new EmbeddedParentEntityPrototype(
@@ -509,18 +514,19 @@ public class SingleThreadEventHandlerMachine implements EventHandlerMachine {
     }
 
     String substep = parent.getSubstep().orElseThrow();
+    List<String> substepOrder = bridge.getSubstepOrder();
 
     EngineValue result;
     if (count == 1) {
       MutableEntity newEntity = decoratedPrototype.build();
-      EntityFastForwarder.fastForward(newEntity, substep);
+      EntityFastForwarder.fastForward(newEntity, substep, initEventName, substepOrder);
       result = valueFactory.build(newEntity);
     } else {
       // Pre-size ArrayList with known count to avoid growth overhead
       List<EngineValue> values = new ArrayList<>((int) count);
       for (int i = 0; i < count; i++) {
         MutableEntity newEntity = decoratedPrototype.build();
-        EntityFastForwarder.fastForward(newEntity, substep);
+        EntityFastForwarder.fastForward(newEntity, substep, initEventName, substepOrder);
         values.add(valueFactory.build(newEntity));
       }
       result = valueFactory.buildRealizedDistribution(values, Units.of(entityType));
@@ -577,8 +583,7 @@ public class SingleThreadEventHandlerMachine implements EventHandlerMachine {
                 String.format(
                     "Cannot resolve '%s' in spatial query. The attribute may not be available "
                     + "in the 'prior' context at this substep. Check that the attribute is "
-                    + "set in a substep that runs before the current one (e.g., 'init', 'start', "
-                    + "or 'step' run before 'end').",
+                    + "set in a substep that runs earlier in this simulation's step sequence.",
                     resolver
                 )
             )
@@ -633,17 +638,13 @@ public class SingleThreadEventHandlerMachine implements EventHandlerMachine {
   private Optional<EngineValue> getBuiltinMetaAttribute(String name) {
     return switch (name) {
       case "stepCount" -> Optional.of(
-          // Anchored at the observed period: 0 is the first observed step, spin-up is negative.
-          // For a run without spin-up this equals the old absolute step count.
+          // Anchored so 0 is the first step at steps.low; negative if the model widened steps.low
+          // itself (e.g. for its own spin-up convention).
           valueFactory.build(
               bridge.getCurrentTimestep() - bridge.getStartTimestep(), COUNT_UNITS)
       );
       case "year" -> Optional.of(
-          // The data year felt this step (resampled during spin-up/spin-down).
-          valueFactory.build(bridge.getDataTimestep(), Units.of("years"))
-      );
-      case "phase" -> Optional.of(
-          valueFactory.build(bridge.getPhase(), Units.EMPTY)
+          valueFactory.build(bridge.getCurrentTimestep(), Units.of("years"))
       );
       default -> Optional.empty();
     };
@@ -1003,12 +1004,8 @@ public class SingleThreadEventHandlerMachine implements EventHandlerMachine {
   }
 
   @Override
-  public long getDataTimestep() {
-    return bridge.getDataTimestep();
-  }
-
-  @Override
-  public void pushExternal(String name, long step) {
+  public void pushExternalAtStep(String name) {
+    long step = pop().getAsInt();
     push(bridge.getExternal(scope.get("here").getAsEntity().getKey().orElseThrow(), name, step));
   }
 

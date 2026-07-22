@@ -565,6 +565,28 @@ start unit year
 end unit
 ```
 
+### Imports
+
+`import "path"` splices another Josh file's contents in place of the import statement, before
+parsing, so the imported file's stanzas become part of the same program:
+
+```
+import "shared/tree.josh"
+```
+
+- Paths are always relative to the directory of the file that contains the `import` statement
+  (not the working directory or the entry file), joined with `/` and `..`. Absolute paths are
+  rejected, as are paths that escape above their own root.
+- The imported file must parse as a complete, standalone Josh program; its own imports (if any)
+  are resolved first, depth-first, before splicing into the file that imported it.
+- Importing the same file twice (directly or through different chains) is not deduplicated — a
+  resulting duplicate entity name surfaces as an ordinary duplicate-definition error.
+- Works the same way across every execution environment (CLI, WASM/browser, cloud/remote
+  workers); each environment resolves imported file contents through its own file-access
+  mechanism (local filesystem for the CLI, the supplied virtual file set for WASM/remote).
+- Combine with `replace`/`update` entity stanza openers to override or extend an entity declared
+  in an imported file, instead of `start` which requires the name to be new.
+
 ### Spatial / Temporal Configuration
 
 Set on the `simulation` stanza:
@@ -737,7 +759,11 @@ Built-in:
   ```
   create ExampleTree                    # Create single entity
   create 10 count of ExampleTree        # Create multiple entities
+  create 10 count of ExampleTree through "founding"   # Tag the cohort with a creation origin
   ```
+  The optional `through "<origin>"` clause tags the new entities with a creation origin. That origin
+  selects which `start init through "<origin>"` block (see **Creation origin dispatch**) supplies the
+  cohort's init handlers. See that section for the full semantics.
 - **force**: Relabel a value's units without conversion (no math applied). Prefer `as <unit>` (without `force`), which routes through `start unit` conversions and catches mismatches.
   ```
   force prior.temperature as degrees    # Relabel only; the number is unchanged
@@ -849,6 +875,56 @@ start state "dead"
 end state
 ```
 
+### Creation origin dispatch
+
+`create ... through "<origin>"` tags newly created entities with a creation origin, and a
+`start init through "<origin>" ... end init` block supplies the init handlers that run only for that
+cohort. This dispatches birth by *how* an entity was created (founding stock vs. natural recruit vs.
+management outplant) rather than by branching on the clock (`meta.stepCount`).
+
+```
+start patch Default
+  # Two cohorts of the same organism, distinguished by origin:
+  Trees.init = create 10 count of Tree through "founding"
+  Trees.step:if(meta.stepCount == 5 count) =
+    prior.Trees | create 3 count of Tree through "outplant"
+end patch
+
+start organism Tree
+  age.step = prior.age + 1 year
+
+  # Each origin block supplies the FULL birth state for its cohort (pure replace).
+  start init through "founding"
+    caged = false
+    age = 40 years
+    state = "Adult"
+  end init
+
+  start init through "outplant"
+    caged = false
+    age = config mgmt.outplantAge
+    state = "Adult"
+  end init
+end organism
+```
+
+Semantics:
+
+- Handlers inside `start init through` are written without an event suffix (e.g. `age = ...`); they
+  are implicitly `init` handlers for the tagged cohort.
+- Origin dispatch is a **pure replace**: a `create ... through "<origin>"` runs *only* that origin
+  block's handlers at init — the base `init` does **not** run for a tagged create. So each origin
+  block must supply the full birth state its cohort needs; shared defaults are repeated in each
+  block rather than left in a base `init`.
+- The origin tag is **stable** — chosen once at creation and never mutated — unlike `state`, which
+  changes over an entity's life. Origin is its own axis, not reused `state`.
+- Several origins created in the **same** substep are still told apart, because the tag lives on the
+  `create` call, not on the clock.
+- A `create` with no `through` runs the base `init`; existing models are unaffected. An origin with
+  no matching `start init through` block also falls back to the base `init`.
+- `start init through` blocks are only valid on entity types created via `create` (e.g. `organism`);
+  putting one on a `patch` or `simulation` is an error.
+
 ### External Data
 
 External data references let a simulation read preprocessed `.jshd` files at each patch using the `external` keyword. See the **Geospatial Data Preprocessing** section and the `preprocess` command for how `.jshd` files are produced.
@@ -958,11 +1034,10 @@ identifier within distance radial at prior
 
 Following reserved for future use and are not currently implemented:
 
-- Imports (`import`)
 - Named config (`config expression as identifier)`
 - Agent (`agent` and `organism` currently aliases)
 
-Following keywords are reserved and should not be used for user-defined entities or variables: `as`, `const`, `debug`, `disturbance`, `elif`, `else`, `end`, `if`, `management`, `limit`, `map`, `return`, `start`, `state`, `step`, `within`, `latitude`, `longitude`
+Following keywords are reserved and should not be used for user-defined entities or variables: `as`, `const`, `debug`, `disturbance`, `elif`, `else`, `end`, `if`, `management`, `limit`, `map`, `return`, `start`, `state`, `step`, `through`, `within`, `latitude`, `longitude`
 
 ## Other resources
 

@@ -14,7 +14,6 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import org.apache.commons.collections4.iterators.IteratorChain;
-import org.jetbrains.annotations.NotNull;
 import org.joshsim.engine.entity.base.Entity;
 import org.joshsim.engine.entity.base.GeoKey;
 import org.joshsim.engine.entity.base.MutableEntity;
@@ -179,16 +178,10 @@ public class ShadowingEntity implements MutableEntity {
     if (onBase) {
       return immediate;
     }
-    Iterable<EventHandlerGroup> inherited = getHandlersForAttribute(attribute, substep, "");
 
-    // Combine
-    return new Iterable<>() {
-      @NotNull
-      @Override
-      public Iterator<EventHandlerGroup> iterator() {
-        return new IteratorChain<>(inherited.iterator(), immediate.iterator());
-      }
-    };
+    // Chain state-specific handlers after the base handlers for this attribute / substep.
+    Iterable<EventHandlerGroup> inherited = getHandlersForAttribute(attribute, substep, "");
+    return () -> new IteratorChain<>(inherited.iterator(), immediate.iterator());
   }
 
   /**

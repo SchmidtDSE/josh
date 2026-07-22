@@ -1,0 +1,75 @@
+# @category: creation_origin
+# @subcategory: dispatch
+# @priority: critical
+# @description: create ... through "<origin>" dispatches per-cohort start-init-through handlers
+
+start simulation CreateThroughBasic
+
+  grid.size = 10 m
+  grid.low.x = 0 m
+  grid.low.y = 0 m
+  grid.high.x = 30 m
+  grid.high.y = 30 m
+
+  steps.low = 0 count
+  steps.high = 2 count
+
+end simulation
+
+start patch Default
+
+  # Founders at init; recruits appended at step 1. Two origins, same entity type.
+  Trees.init = create 3 count of Tree through "founding"
+  Trees.step:if(meta.stepCount == 1 count) =
+    prior.Trees | create 2 count of Tree through "recruitment"
+
+  # Origin dispatch: founders are Adult (age 40), recruits are Seedling (age 0).
+  assert.foundersAtInit.step:if(meta.stepCount == 0 count) =
+    count(Trees[Trees.provenance == "founding"]) == 3 count
+  assert.foundersAdult.step:if(meta.stepCount == 0 count) =
+    count(Trees[Trees.state == "Adult"]) == 3 count
+  # Founders start at age 40 (origin handler); step 0 applies one age.step (+1) -> 41.
+  assert.foundersAge.step:if(meta.stepCount == 0 count) =
+    mean(Trees[Trees.provenance == "founding"].age) == 41 years
+  assert.noRecruitsAtInit.step:if(meta.stepCount == 0 count) =
+    count(Trees[Trees.provenance == "recruitment"]) == 0 count
+
+  assert.foundersStable.step:if(meta.stepCount == 1 count) =
+    count(Trees[Trees.provenance == "founding"]) == 3 count
+  assert.recruitsCreated.step:if(meta.stepCount == 1 count) =
+    count(Trees[Trees.provenance == "recruitment"]) == 2 count
+  assert.recruitsSeedling.step:if(meta.stepCount == 1 count) =
+    count(Trees[Trees.state == "Seedling"]) == 2 count
+  # Recruits start at age 0 (origin handler); their creation step applies one age.step (+1) -> 1.
+  assert.recruitsAge.step:if(meta.stepCount == 1 count) =
+    mean(Trees[Trees.provenance == "recruitment"].age) == 1 years
+
+end patch
+
+start organism Tree
+
+  age.step = prior.age + 1 year
+
+  # Origin dispatch is a pure replace: each block supplies the full birth state (including the
+  # shared caged default), since a create ... through runs only its own init block.
+  start init through "founding"
+    caged = false
+    age = 40 years
+    state = "Adult"
+    provenance = "founding"
+  end init
+
+  start init through "recruitment"
+    caged = false
+    age = 0 years
+    state = "Seedling"
+    provenance = "recruitment"
+  end init
+
+end organism
+
+start unit year
+  alias years
+  alias yr
+  alias yrs
+end unit

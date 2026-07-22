@@ -8,6 +8,7 @@ package org.joshsim.lang.interpret.visitor.delegates;
 
 import org.joshsim.engine.value.engine.ValueSupportFactory;
 import org.joshsim.lang.interpret.BridgeGetter;
+import org.joshsim.lang.interpret.KnownEventSet;
 import org.joshsim.lang.interpret.visitor.JoshParserToMachineVisitor;
 
 
@@ -19,6 +20,7 @@ public class DelegateToolbox {
   private final JoshParserToMachineVisitor parent;
   private final ValueSupportFactory valueFactory;
   private final BridgeGetter bridgeGetter;
+  private final KnownEventSet knownEventSet;
 
   /**
    * Construct a new DelegateToolbox instance.
@@ -26,12 +28,14 @@ public class DelegateToolbox {
    * @param parent The parent visitor that this toolbox supports
    * @param valueFactory The factory used for creating engine values
    * @param bridgeGetter The bridge getter used for getting the current replicate executing.
+   * @param knownEventSet The set of event names declared by the program being interpreted.
    */
   public DelegateToolbox(JoshParserToMachineVisitor parent, ValueSupportFactory valueFactory,
-        BridgeGetter bridgeGetter) {
+        BridgeGetter bridgeGetter, KnownEventSet knownEventSet) {
     this.parent = parent;
     this.valueFactory = valueFactory;
     this.bridgeGetter = bridgeGetter;
+    this.knownEventSet = knownEventSet;
   }
 
 
@@ -60,6 +64,15 @@ public class DelegateToolbox {
    */
   public BridgeGetter getBridgeGetter() {
     return bridgeGetter;
+  }
+
+  /**
+   * Get the set of event names declared by the program being interpreted.
+   *
+   * @return The KnownEventSet instance
+   */
+  public KnownEventSet getKnownEventSet() {
+    return knownEventSet;
   }
 
 }

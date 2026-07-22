@@ -1,0 +1,49 @@
+# @category: creation_origin
+# @subcategory: origin_only_attribute
+# @priority: normal
+# @description: an attribute defined only in a start-init-through block still gets indexed and resolves
+
+start simulation CreateThroughOriginOnlyAttr
+
+  grid.size = 10 m
+  grid.low.x = 0 m
+  grid.low.y = 0 m
+  grid.high.x = 20 m
+  grid.high.y = 20 m
+
+  steps.low = 0 count
+  steps.high = 2 count
+
+end simulation
+
+start patch Default
+
+  # `watered` is defined ONLY in the outplant origin block (no base handler for it).
+  Trees.init = create 3 count of Tree through "outplant"
+
+  assert.count.step:if(meta.stepCount == 0 count) = count(Trees) == 3 count
+  assert.wateredResolves.step:if(meta.stepCount == 0 count) =
+    count(Trees[Trees.watered == true]) == 3 count
+  # Ordinary step behavior is unaffected: age advances each step.
+  assert.ageAdvances.step:if(meta.stepCount == 2 count) =
+    mean(Trees.age) == 3 years
+
+end patch
+
+start organism Tree
+
+  age.step = prior.age + 1 year
+
+  start init through "outplant"
+    age = 0 years
+    state = "Adult"
+    watered = true
+  end init
+
+end organism
+
+start unit year
+  alias years
+  alias yr
+  alias yrs
+end unit

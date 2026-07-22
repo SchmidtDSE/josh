@@ -26,6 +26,7 @@ import org.joshsim.engine.simulation.Simulation;
 import org.joshsim.engine.value.converter.Units;
 import org.joshsim.engine.value.engine.ValueSupportFactory;
 import org.joshsim.engine.value.type.EngineValue;
+import org.joshsim.lang.interpret.KnownEventSet;
 
 /**
  * Builder to assist in constructing entities.
@@ -35,9 +36,14 @@ import org.joshsim.engine.value.type.EngineValue;
  * way to pass initialization parameters to entity constructors.</p>
  */
 public class EntityBuilder implements EntityInitializationInfo {
-  private static final List<String> SUBSTEPS = List.of("init", "step", "start", "end", "constant");
+  private static final List<String> STRUCTURAL_EVENTS = List.of("init", "constant");
 
   private final ValueSupportFactory valueFactory;
+  // The program's declared init events (base "init" plus per-origin variants). Origin-dispatched
+  // init is a compile-time desugar: a `start init through "<origin>"` block registers ordinary
+  // handler groups keyed to the variant init event, and this set tells the builder which init
+  // events to build handler caches and default state handlers for.
+  private final KnownEventSet knownEventSet;
   private Optional<String> name;
   private Map<EventKey, EventHandlerGroup> eventHandlerGroups;
   private Map<String, EngineValue> attributes;
@@ -51,10 +57,25 @@ public class EntityBuilder implements EntityInitializationInfo {
   private int stateIndex;
 
   /**
-   * Create an empty builder.
+   * Create an empty builder recognizing only the base init event.
+   *
+   * <p>Use this where origin-dispatched init cannot occur (tests, non-interpret construction).</p>
+   *
+   * @param valueFactory The factory used for creating engine values.
    */
   public EntityBuilder(ValueSupportFactory valueFactory) {
+    this(valueFactory, new KnownEventSet());
+  }
+
+  /**
+   * Create an empty builder aware of the program's declared init events.
+   *
+   * @param valueFactory The factory used for creating engine values.
+   * @param knownEventSet The set of event names declared by the program being interpreted.
+   */
+  public EntityBuilder(ValueSupportFactory valueFactory, KnownEventSet knownEventSet) {
     this.valueFactory = valueFactory;
+    this.knownEventSet = knownEventSet;
 
     name = Optional.empty();
     eventHandlerGroups = new HashMap<>();
@@ -65,6 +86,27 @@ public class EntityBuilder implements EntityInitializationInfo {
     sharedAttributeNames = null; // Computed lazily
     usesState = false;
     stateIndex = -1;
+  }
+
+  /**
+   * Get the substep-like events for which handler caches and skip arrays are built.
+   *
+   * <p>The structural events plus the program's declared substep order (default {@code start}/
+   * {@code step}/{@code end}, or a simulation's declared {@code phases}) plus every per-origin init
+   * variant event <em>this entity</em> declared via its own {@code start init through} blocks, so a
+   * variant's handlers resolve when its init is fast-forwarded. Init variants are deliberately
+   * scoped to this entity's own declarations (not every origin declared anywhere in the program) so
+   * one entity's origins don't inflate every other entity's cache.</p>
+   *
+   * @return The set of event names to build per-substep structures for.
+   */
+  private Set<String> getCacheableEvents() {
+    Set<String> events = new HashSet<>(STRUCTURAL_EVENTS);
+    events.addAll(knownEventSet.getSubstepOrder());
+    for (String initEvent : knownEventSet.getInitEvents(name.orElse(""))) {
+      events.add(initEvent);
+    }
+    return events;
   }
 
   /**
@@ -199,7 +241,7 @@ public class EntityBuilder implements EntityInitializationInfo {
 
     Map<String, boolean[]> result = new HashMap<>();
 
-    for (String substep : SUBSTEPS) {
+    for (String substep : getCacheableEvents()) {
       // Create boolean array for this substep
       boolean[] attrsWithoutHandlers = new boolean[arraySize];
 
@@ -279,7 +321,7 @@ public class EntityBuilder implements EntityInitializationInfo {
     // Pre-compute all (attribute × substep × state) combinations
     Map<String, List<EventHandlerGroup>> result = new HashMap<>();
     for (String attribute : allAttributes) {
-      for (String substep : SUBSTEPS) {
+      for (String substep : getCacheableEvents()) {
         for (String state : allStates) {
           // Build cache key
           String cacheKey;
@@ -552,28 +594,71 @@ public class EntityBuilder implements EntityInitializationInfo {
   }
 
   /**
-   * Ensure a default state handler exists for entities that use state blocks.
+   * Combine this builder (as the base) with an {@code update} override.
    *
-   * <p>Creates a default state.init handler that returns an empty string if no state.init handler
-   * has been defined. This allows entities with state blocks to fall back to base handlers when
-   * no state-specific handler matches. Has no effect if base state state.init defined.</p>
+   * <p>Produces a new builder carrying every attribute and event handler group from this builder,
+   * with the override's attributes and handler groups layered on top: an override entry replaces a
+   * base entry with the same key, and every base entry the override does not redeclare survives
+   * unchanged. The new builder shares this builder's value factory and known event set, since both
+   * builders are expected to come from the same program interpretation pass.</p>
+   *
+   * @param override The builder whose attributes and handlers take priority.
+   * @return A new builder combining both.
    */
-  public void ensureStateDefaultHandler() {
-    EventKey key = new EventKey("state", "init");
-    if (eventHandlerGroups.containsKey(key)) {
-      return;
+  public EntityBuilder combineWith(EntityBuilder override) {
+    EntityBuilder combined = new EntityBuilder(valueFactory, knownEventSet);
+    combined.setName(getName());
+
+    for (Map.Entry<String, EngineValue> entry : attributes.entrySet()) {
+      combined.addAttribute(entry.getKey(), entry.getValue());
+    }
+    for (Map.Entry<EventKey, EventHandlerGroup> entry : eventHandlerGroups.entrySet()) {
+      combined.addEventHandlerGroup(entry.getKey(), entry.getValue());
     }
 
+    for (Map.Entry<String, EngineValue> entry : override.attributes.entrySet()) {
+      combined.addAttribute(entry.getKey(), entry.getValue());
+    }
+    for (Map.Entry<EventKey, EventHandlerGroup> entry : override.eventHandlerGroups.entrySet()) {
+      combined.addEventHandlerGroup(entry.getKey(), entry.getValue());
+    }
+
+    return combined;
+  }
+
+  /**
+   * Ensure a default state handler exists for each init event an entity may be born through.
+   *
+   * <p>Creates a default {@code state} handler returning an empty string for every init event
+   * <em>this entity</em> declared ({@code "init"} plus each of its own per-origin variants), so an
+   * entity gets a state even when the matching {@code start init through} block leaves
+   * {@code state} unset. Since origin dispatch is a pure replace (a {@code create ... through}
+   * runs only its variant init, not base {@code init}), every variant needs its own default. Any
+   * real {@code state} handler added later for the same event overwrites the default. Requires the
+   * builder's name to already be set (see {@link #setName(String)}) so the lookup is scoped to
+   * this entity and not some other entity's declared origins. Call before handler groups are
+   * registered.</p>
+   */
+  public void ensureStateDefaultHandler() {
     EngineValue defaultStateValue = valueFactory.build("", Units.EMPTY);
-    CompiledCallable callable = (scope) -> defaultStateValue;
-    EventHandler handler = new EventHandler(callable, "state", "init");
-
-    List<EventHandler> handlers = new ArrayList<>(1);
-    handlers.add(handler);
-    EventHandlerGroup group = new EventHandlerGroup(handlers, key);
-
     addAttribute("state", defaultStateValue);
-    addEventHandlerGroup(key, group);
+
+    for (String initEvent : knownEventSet.getInitEvents(name.orElse(""))) {
+      EventKey key = new EventKey("state", initEvent);
+      if (eventHandlerGroups.containsKey(key)) {
+        continue;
+      }
+
+      CompiledCallable callable = (scope) -> defaultStateValue;
+      EventHandler handler = new EventHandler(callable, "state", initEvent);
+
+      List<EventHandler> handlers = new ArrayList<>(1);
+      handlers.add(handler);
+      EventHandlerGroup group = new EventHandlerGroup(handlers, key);
+
+      addEventHandlerGroup(key, group);
+    }
+
     usesState = true;
   }
 

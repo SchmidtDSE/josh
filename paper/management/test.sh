@@ -37,8 +37,15 @@ trap cleanup EXIT
 josh() { java -Xmx6g -jar "$JAR" "$@"; }
 
 echo "Validating management models..."
-# The CLI model and its byte-for-byte web (WASM) twin differ only in the export
-# sink line; both must validate.
+# The model is layered across three imported files, each building on the last via `update`:
+#   forevertree.josh  - grid definition + basic ForeverTree ecology (climate-driven growth)
+#   invasive_grass.josh - imports forevertree.josh; adds invasive-grass competition and the
+#                         Juvenile/Adult maturity states that gate growth suppression
+#   management.josh   - imports invasive_grass.josh; adds fire, the outplant origin, the Burned
+#                       state, and the scenario export sink; this is the file actually run below
+# management_wasm.josh stays a single self-contained file (matching management.josh's simulated
+# behavior, but not its exact text) since the browser/WASM demo has no mechanism to bundle
+# multiple imported files alongside the one pasted into the editor.
 josh validate "$EX/management.josh"
 josh validate "$EX/management_wasm.josh"
 

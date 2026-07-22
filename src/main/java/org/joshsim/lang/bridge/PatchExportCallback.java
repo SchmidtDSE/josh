@@ -24,9 +24,8 @@ public interface PatchExportCallback {
    *
    * <p>Implementations always freeze the mutable patch and return it (so it can be saved to the
    * Replicate for "prior" state access in the next timestep), but only serialize and queue it to
-   * the writer thread when {@code write} is true. This lets output filters (e.g.
-   * {@code --output-steps} / {@code --output-phases}) suppress a step's output without breaking
-   * state continuity.</p>
+   * the writer thread when {@code write} is true. This lets the {@code --output-steps} filter
+   * suppress a step's output without breaking state continuity.</p>
    *
    * @param patch The mutable patch that has just completed its substep
    * @param currentStep The current timestep number

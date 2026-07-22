@@ -11,6 +11,7 @@ import java.util.ArrayList;
 import java.util.List;
 import org.antlr.v4.runtime.tree.ParseTree;
 import org.joshsim.engine.entity.handler.EventHandlerGroupBuilder;
+import org.joshsim.engine.entity.prototype.EntityOverwriteBehavior;
 import org.joshsim.engine.entity.prototype.EntityPrototype;
 import org.joshsim.engine.value.converter.Conversion;
 import org.joshsim.engine.value.converter.Units;
@@ -22,6 +23,7 @@ import org.joshsim.lang.antlr.JoshLangParser.ImportStatementContext;
 import org.joshsim.lang.antlr.JoshLangParser.ProgramContext;
 import org.joshsim.lang.antlr.JoshLangParser.StateStanzaContext;
 import org.joshsim.lang.antlr.JoshLangParser.UnitStanzaContext;
+import org.joshsim.lang.interpret.KnownEventSet;
 import org.joshsim.lang.interpret.fragment.FragmentType;
 import org.joshsim.lang.interpret.fragment.josh.ConversionsFragment;
 import org.joshsim.lang.interpret.fragment.josh.EntityFragment;
@@ -47,6 +49,7 @@ class JoshStanzaVisitorTest {
 
     when(toolbox.getParent()).thenReturn(parent);
     when(toolbox.getValueFactory()).thenReturn(valueFactory);
+    when(toolbox.getKnownEventSet()).thenReturn(new KnownEventSet());
 
     visitor = new JoshStanzaVisitor(toolbox);
   }
@@ -81,7 +84,6 @@ class JoshStanzaVisitorTest {
   void testVisitEntityStanza() {
     // Mock
     EntityStanzaContext context = mock(EntityStanzaContext.class);
-    ParseTree entityTypeNode = mock(ParseTree.class);
     final ParseTree identifierNode = mock(ParseTree.class);
     final ParseTree closeEntityTypeNode = mock(ParseTree.class);
     final ParseTree childNode = mock(ParseTree.class);
@@ -91,6 +93,10 @@ class JoshStanzaVisitorTest {
     groupBuilders.add(groupBuilder);
 
     when(context.getChildCount()).thenReturn(6); // entity + name + 1 inner + 3 other nodes
+    ParseTree openerNode = mock(ParseTree.class);
+    when(context.getChild(0)).thenReturn(openerNode);
+    when(openerNode.getText()).thenReturn("start");
+    ParseTree entityTypeNode = mock(ParseTree.class);
     when(context.getChild(1)).thenReturn(entityTypeNode);
     when(context.getChild(2)).thenReturn(identifierNode);
     when(context.getChild(3)).thenReturn(childNode);
@@ -170,6 +176,8 @@ class JoshStanzaVisitorTest {
     when(childNode.accept(parent)).thenReturn(childFragment);
     when(childFragment.getFragmentType()).thenReturn(FragmentType.ENTITY);
     when(childFragment.getEntity()).thenReturn(entityPrototype);
+    when(childFragment.getOverwriteBehavior()).thenReturn(EntityOverwriteBehavior.NOT_SPECIFIED);
+    when(entityPrototype.getIdentifier()).thenReturn("testEntity");
 
     // Test
     JoshFragment result = visitor.visitProgram(context);

@@ -1,0 +1,67 @@
+# Integration test for create ... through "<origin>" creation-origin dispatch.
+#
+# Founders (created at init) get age 40 / state Adult; recruits (created at step 1) get age 0 /
+# state Seedling. Origin dispatch is a pure replace: each block supplies the full birth state
+# (including the caged default), since a create ... through runs only its own init block. In-script
+# asserts throw mid-run if origin dispatch misbehaves.
+
+start simulation Main
+
+  grid.size = 10 m
+  grid.low.x = 0 m
+  grid.low.y = 0 m
+  grid.high.x = 30 m
+  grid.high.y = 30 m
+
+  steps.low = 0 count
+  steps.high = 2 count
+
+end simulation
+
+start patch Default
+
+  Trees.init = create 3 count of Tree through "founding"
+  Trees.step:if(meta.stepCount == 1 count) =
+    prior.Trees | create 2 count of Tree through "recruitment"
+
+  assert.foundersAdult.step:if(meta.stepCount == 0 count) =
+    count(Trees[Trees.state == "Adult"]) == 3 count
+  assert.foundersTagged.step:if(meta.stepCount == 0 count) =
+    count(Trees[Trees.provenance == "founding"]) == 3 count
+  assert.cagedDefault.step:if(meta.stepCount == 0 count) =
+    count(Trees[Trees.caged == false]) == 3 count
+
+  assert.recruitsSeedling.step:if(meta.stepCount == 1 count) =
+    count(Trees[Trees.state == "Seedling"]) == 2 count
+  assert.recruitsTagged.step:if(meta.stepCount == 1 count) =
+    count(Trees[Trees.provenance == "recruitment"]) == 2 count
+  assert.foundersStable.step:if(meta.stepCount == 1 count) =
+    count(Trees[Trees.provenance == "founding"]) == 3 count
+
+end patch
+
+start organism Tree
+
+  age.step = prior.age + 1 year
+
+  start init through "founding"
+    caged = false
+    age = 40 years
+    state = "Adult"
+    provenance = "founding"
+  end init
+
+  start init through "recruitment"
+    caged = false
+    age = 0 years
+    state = "Seedling"
+    provenance = "recruitment"
+  end init
+
+end organism
+
+start unit year
+  alias years
+  alias yr
+  alias yrs
+end unit

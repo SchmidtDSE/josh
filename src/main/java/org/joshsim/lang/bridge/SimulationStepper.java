@@ -1,7 +1,6 @@
 package org.joshsim.lang.bridge;
 
 import java.util.ArrayList;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -9,8 +8,6 @@ import java.util.Set;
 import java.util.stream.StreamSupport;
 import org.joshsim.engine.entity.base.Entity;
 import org.joshsim.engine.entity.base.MutableEntity;
-import org.joshsim.engine.entity.handler.EventHandlerGroup;
-import org.joshsim.engine.entity.handler.EventKey;
 import org.joshsim.engine.value.type.EngineValue;
 
 
@@ -20,10 +17,10 @@ import org.joshsim.engine.value.type.EngineValue;
 public class SimulationStepper {
 
   private final EngineBridge target;
-  private final Set<String> events;
   private final Optional<PatchExportCallback> exportCallback;
   private final Optional<Set<Integer>> outputSteps;
-  private final Optional<Set<String>> outputPhases;
+  private final List<String> substepOrder;
+  private final String lastActiveSubstep;
 
   /**
    * Create a new stepper around a bridge without export callback.
@@ -44,42 +41,25 @@ public class SimulationStepper {
    * @param exportCallback Optional callback for incremental patch export
    */
   public SimulationStepper(EngineBridge target, Optional<PatchExportCallback> exportCallback) {
-    this(target, exportCallback, Optional.empty(), Optional.empty());
+    this(target, exportCallback, Optional.empty());
   }
 
   /**
-   * Create a new stepper around a bridge with optional export callback and output filters.
-   *
-   * <p>Collects all unique event names from patch event handlers using direct iteration
-   * instead of streams for better performance.</p>
+   * Create a new stepper around a bridge with optional export callback and output filter.
    *
    * @param target EngineBridge in which to perform this operation.
    * @param exportCallback Optional callback for incremental patch export
    * @param outputSteps Optional set of step numbers to export; empty means all steps. Applies to
    *     incremental patch exports so suppressed steps are still simulated but not written.
-   * @param outputPhases Optional set of phase names to export; empty means all phases. ANDed with
-   *     outputSteps.
    */
   public SimulationStepper(EngineBridge target, Optional<PatchExportCallback> exportCallback,
-        Optional<Set<Integer>> outputSteps, Optional<Set<String>> outputPhases) {
+        Optional<Set<Integer>> outputSteps) {
     this.target = target;
     this.exportCallback = exportCallback;
     this.outputSteps = outputSteps;
-    this.outputPhases = outputPhases;
 
-    MutableEntity simulation = target.getSimulation();
-    Iterable<MutableEntity> patches = target.getCurrentPatches();
-
-    // Collect unique event names from all patches
-    Set<String> eventSet = new HashSet<>();
-    for (MutableEntity patch : patches) {
-      for (EventHandlerGroup group : patch.getEventHandlers()) {
-        EventKey key = group.getEventKey();
-        String event = key.getEvent();
-        eventSet.add(event);
-      }
-    }
-    events = eventSet;
+    substepOrder = target.getSubstepOrder();
+    lastActiveSubstep = substepOrder.get(substepOrder.size() - 1);
   }
 
   /**
@@ -101,19 +81,9 @@ public class SimulationStepper {
       performStream(patches, "init", serialPatches);
     }
 
-    if (events.contains("start")) {
-      performStream(simulation, "start");
-      performStream(patches, "start", serialPatches);
-    }
-
-    if (events.contains("step")) {
-      performStream(simulation, "step");
-      performStream(patches, "step", serialPatches);
-    }
-
-    if (events.contains("end")) {
-      performStream(simulation, "end");
-      performStream(patches, "end", serialPatches);
+    for (String subStep : substepOrder) {
+      performStream(simulation, subStep);
+      performStream(patches, subStep, serialPatches);
     }
 
     long timestepCompleted = target.getCurrentTimestep();
@@ -182,17 +152,13 @@ public class SimulationStepper {
   }
 
   /**
-   * Determine whether the current step's output passes the step and phase filters.
+   * Determine whether the current step's output passes the step filter.
    *
    * @param currentStep the step about to be written
-   * @return true if both filters include this step (or are absent)
+   * @return true if the filter includes this step (or is absent)
    */
   private boolean isOutputIncluded(long currentStep) {
-    boolean stepIncluded = outputSteps.isEmpty()
-        || outputSteps.get().contains((int) currentStep);
-    boolean phaseIncluded = outputPhases.isEmpty()
-        || outputPhases.get().contains(target.getPhase());
-    return stepIncluded && phaseIncluded;
+    return outputSteps.isEmpty() || outputSteps.get().contains((int) currentStep);
   }
 
   /**
@@ -270,24 +236,15 @@ public class SimulationStepper {
   /**
    * Determine if patches should be exported in the given substep.
    *
-   * <p>Only export after the final substep to ensure the patch is fully resolved.
-   * The final substep is determined by checking which events are defined, with
-   * priority: end > step > start > init.</p>
+   * <p>Only export after the final substep to ensure the patch is fully resolved, where "final" is
+   * the last substep in the declared order (default or custom), since every declared substep now
+   * always runs regardless of which entities define handlers for it.</p>
    *
    * @param subStep the substep to check
    * @return true if patches should be exported after this substep
    */
   private boolean shouldExportInSubstep(String subStep) {
-    // Only export after final substep (usually "step", but could be "end")
-    if (events.contains("end")) {
-      return subStep.equals("end");
-    } else if (events.contains("step")) {
-      return subStep.equals("step");
-    } else if (events.contains("start")) {
-      return subStep.equals("start");
-    } else {
-      return subStep.equals("init");
-    }
+    return subStep.equals(lastActiveSubstep);
   }
 
   /**

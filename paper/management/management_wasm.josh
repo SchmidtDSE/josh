@@ -27,8 +27,8 @@ start patch Default
   inMgmtPlanted.step = inMgmt and (config scenario.outplantCount > 0 count)
   inMgmtInvasives.step = inMgmt and (config scenario.removeInvasives > 0 count)
 
-  ForeverTree.init = create 10 count of ForeverTree
-  ForeverTree.step:if(inMgmtPlanted) = prior.ForeverTree | (create config scenario.outplantCount of ForeverTree)
+  ForeverTree.init = create 10 count of ForeverTree through "founding"
+  ForeverTree.step:if(inMgmtPlanted) = prior.ForeverTree | (create config scenario.outplantCount of ForeverTree through "outplant")
 
   nLiveTrees.init = count(ForeverTree)
   nLiveTrees.step = count(ForeverTree[ForeverTree.state != "Burned"])
@@ -76,16 +76,21 @@ end patch
 
 start organism ForeverTree
 
-  age.init
-    :if(meta.stepCount == 0 count) = 0 year
-    :else = config scenario.outplantAge
   age.step = prior.age + 1 year
 
-  height.init
-    :if(meta.stepCount == 0 count) = 0 m
-    :else = config scenario.outplantHeight
+  # Founders (planted at init) start as bare seedlings; outplants (added by management) arrive as
+  # established stock. Birth is dispatched by creation origin, not by the simulation clock.
+  start init through "founding"
+    age = 0 year
+    height = 0 m
+    state = "Adult" if height >= config scenario.smallTreeHeight else "Juvenile"
+  end init
 
-  state.init = "Adult" if height >= config scenario.smallTreeHeight else "Juvenile"
+  start init through "outplant"
+    age = config scenario.outplantAge
+    height = config scenario.outplantHeight
+    state = "Adult" if height >= config scenario.smallTreeHeight else "Juvenile"
+  end init
 
   # One burn draw per tree; only true inside the fire footprint on the fire step.
   burned.step = here.onFire and ((sample uniform from 0% to 100%) < config scenario.burnLikelihood)
