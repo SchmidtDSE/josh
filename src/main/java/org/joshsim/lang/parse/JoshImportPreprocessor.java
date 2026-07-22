@@ -13,9 +13,13 @@ import java.nio.charset.StandardCharsets;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.Deque;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
+import org.antlr.v4.runtime.ParserRuleContext;
 import org.joshsim.lang.antlr.JoshLangParser;
 import org.joshsim.lang.interpret.StringLiteralUtil;
 import org.joshsim.lang.io.InputGetterStrategy;
@@ -72,7 +76,8 @@ public class JoshImportPreprocessor {
 
     try {
       String combined = spliceImports(
-          entryContent, parsed.getProgram().orElseThrow(), normalizedEntry, stack
+          entryContent, parsed.getProgram().orElseThrow(), normalizedEntry, stack,
+          new ArrayList<>()
       );
       return new PreprocessResult(combined);
     } catch (ImportResolutionException e) {
@@ -80,18 +85,76 @@ public class JoshImportPreprocessor {
     }
   }
 
-  private String spliceImports(String content, JoshLangParser.ProgramContext program,
-        String identifier, Deque<String> stack) {
-    List<JoshLangParser.ImportStatementContext> imports = program.importStatement();
-    if (imports.isEmpty()) {
-      return content;
+  /**
+   * Flatten a Josh source into a single self-contained script by inlining every import.
+   *
+   * <p>Behaves like {@link #preprocess} — the same recursive, order-preserving, verbatim splicing,
+   * with the same handling of missing imports, circular imports, and rejected protocol/absolute
+   * paths — but additionally enforces the duplicate-entity condition ahead of interpretation so the
+   * offending name can be attributed to its originating file and line rather than being lost once
+   * the sources are merged. {@code config} references are left untouched; flattening is purely
+   * structural.</p>
+   *
+   * @param entryIdentifier path identifying the entry file, used to resolve its own relative
+   *     imports and as the base for nested import resolution.
+   * @param entryContent the entry file's raw source text.
+   * @return the flattened, self-contained source, or the errors encountered.
+   */
+  public FlattenResult flatten(String entryIdentifier, String entryContent) {
+    ParseResult parsed = new JoshParser().parse(entryContent);
+    if (parsed.hasErrors()) {
+      return new FlattenResult(parsed.getErrors());
     }
+
+    String normalizedEntry = entryIdentifier.replace('\\', '/');
+    Deque<String> stack = new ArrayDeque<>();
+    stack.push(normalizedEntry);
+
+    List<FlattenedStanza> stanzas = new ArrayList<>();
+    String combined;
+    try {
+      combined = spliceImports(
+          entryContent, parsed.getProgram().orElseThrow(), normalizedEntry, stack, stanzas
+      );
+    } catch (ImportResolutionException e) {
+      return new FlattenResult(e.getErrors());
+    }
+
+    Optional<ParseError> duplicate = findDuplicateEntity(stanzas);
+    if (duplicate.isPresent()) {
+      return new FlattenResult(List.of(duplicate.get()));
+    }
+
+    return new FlattenResult(combined);
+  }
+
+  private String spliceImports(String content, JoshLangParser.ProgramContext program,
+        String identifier, Deque<String> stack, List<FlattenedStanza> collected) {
+    // Walk imports and entity declarations together in source order so collected entities land in
+    // the same order they occupy in the flattened output (nested imports expand in place).
+    List<ParserRuleContext> topLevel = new ArrayList<>();
+    topLevel.addAll(program.importStatement());
+    topLevel.addAll(program.entityStanza());
+    topLevel.sort(Comparator.comparingInt(ctx -> ctx.getStart().getStartIndex()));
 
     String currentDir = dirOf(identifier);
     StringBuilder result = new StringBuilder();
     int cursor = 0;
 
-    for (JoshLangParser.ImportStatementContext importCtx : imports) {
+    for (ParserRuleContext topLevelCtx : topLevel) {
+      if (topLevelCtx instanceof JoshLangParser.EntityStanzaContext entityCtx) {
+        // Entity text stays verbatim in the output; only record it for duplicate detection.
+        collected.add(new FlattenedStanza(
+            entityCtx.getChild(2).getText(),
+            entityCtx.getChild(0).getText(),
+            entityCtx.getStart().getLine(),
+            identifier
+        ));
+        continue;
+      }
+
+      JoshLangParser.ImportStatementContext importCtx =
+          (JoshLangParser.ImportStatementContext) topLevelCtx;
       String literal = StringLiteralUtil.stripQuotes(importCtx.path.getText());
       String targetId;
       try {
@@ -123,7 +186,7 @@ public class JoshImportPreprocessor {
 
       stack.push(targetId);
       String expandedChild = spliceImports(
-          importedContent, importedParsed.getProgram().orElseThrow(), targetId, stack
+          importedContent, importedParsed.getProgram().orElseThrow(), targetId, stack, collected
       );
       stack.pop();
 
@@ -135,6 +198,37 @@ public class JoshImportPreprocessor {
 
     result.append(content, cursor, content.length());
     return result.toString();
+  }
+
+  /**
+   * Find the first entity name that a {@code start} stanza redeclares after it was already defined.
+   *
+   * <p>Mirrors the store semantics enforced at interpretation time (see
+   * {@code EntityPrototypeStoreBuilder}): a {@code start} stanza declares a new entity and collides
+   * with any prior same-named entity, whereas {@code replace} and {@code update} intentionally
+   * refer back to an existing one and so are never themselves the offending declaration. Reported
+   * ahead of the merge so the duplicate can name its originating file and line.</p>
+   *
+   * @param stanzas the declarations collected in flattened order.
+   * @return the duplicate-entity error, or empty if every declaration is consistent.
+   */
+  private static Optional<ParseError> findDuplicateEntity(List<FlattenedStanza> stanzas) {
+    Map<String, FlattenedStanza> defined = new HashMap<>();
+    for (FlattenedStanza stanza : stanzas) {
+      FlattenedStanza prior = defined.get(stanza.name);
+      if ("start".equals(stanza.keyword) && prior != null) {
+        String message = String.format(
+            "Duplicate entity \"%s\": redeclared at %s line %d (first defined at %s line %d). "
+                + "Use \"replace\" or \"update\" to modify an imported entity.",
+            stanza.name, stanza.sourceFile, stanza.line, prior.sourceFile, prior.line
+        );
+        return Optional.of(new ParseError(stanza.line, message, Optional.of(stanza.sourceFile)));
+      }
+      // start / replace / update all leave the name defined in the store; register the earliest
+      // location so a later duplicate can point back to it.
+      defined.putIfAbsent(stanza.name, stanza);
+    }
+    return Optional.empty();
   }
 
   private String readFile(String identifier, JoshLangParser.ImportStatementContext importCtx,
@@ -190,6 +284,27 @@ public class JoshImportPreprocessor {
         JoshLangParser.ImportStatementContext ctx, String identifier, String message) {
     return new ImportResolutionException(
         List.of(new ParseError(ctx.getStart().getLine(), message, Optional.of(identifier))));
+  }
+
+  /**
+   * A top-level stanza declaration recorded during splicing, with the file it originated in.
+   *
+   * <p>Carries just enough to enforce the duplicate-entity condition and attribute a violation to
+   * its source: the declared name, the opening keyword ({@code start} / {@code replace} /
+   * {@code update}), the line within its originating file, and that file's identifier.</p>
+   */
+  private static final class FlattenedStanza {
+    private final String name;
+    private final String keyword;
+    private final int line;
+    private final String sourceFile;
+
+    FlattenedStanza(String name, String keyword, int line, String sourceFile) {
+      this.name = name;
+      this.keyword = keyword;
+      this.line = line;
+      this.sourceFile = sourceFile;
+    }
   }
 
   /**

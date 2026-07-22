@@ -17,6 +17,7 @@ import java.util.List;
 import java.util.Optional;
 import org.joshsim.command.BatchRemoteCommand;
 import org.joshsim.command.DiscoverConfigCommand;
+import org.joshsim.command.FlattenCommand;
 import org.joshsim.command.InspectExportsCommand;
 import org.joshsim.command.InspectJshdCommand;
 import org.joshsim.command.McpCommand;
@@ -66,6 +67,7 @@ import picocli.CommandLine;
         RunRemoteCommand.class,
         ServerCommand.class,
         PreprocessCommand.class,
+        FlattenCommand.class,
         DiscoverConfigCommand.class,
         InspectJshdCommand.class,
         InspectExportsCommand.class,

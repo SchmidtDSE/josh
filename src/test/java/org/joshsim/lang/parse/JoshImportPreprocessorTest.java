@@ -167,4 +167,115 @@ class JoshImportPreprocessorTest {
     assertTrue(result.getErrors().get(0).getSourceName().isEmpty());
   }
 
+  @Test
+  void flattenInlinesImportsIntoParsableSingleSource() {
+    JoshImportPreprocessor preprocessor = preprocessorFor(Map.of("b.josh", ENTITY_B));
+    String entry = ENTITY_A + " import \"b.josh\"";
+
+    FlattenResult result = preprocessor.flatten("main.josh", entry);
+
+    assertFalse(result.hasErrors(), "should flatten: " + result.getErrors());
+    ParseResult reparsed = new JoshParser().parse(result.getSource().orElseThrow());
+    assertFalse(reparsed.hasErrors(), "flattened source should parse: " + reparsed.getErrors());
+    assertEquals(2, reparsed.getProgram().orElseThrow().entityStanza().size());
+  }
+
+  @Test
+  void flattenMatchesPreprocessOutputWhenThereAreNoDuplicates() {
+    JoshImportPreprocessor preprocessor = preprocessorFor(Map.of("b.josh", ENTITY_B));
+    String entry = ENTITY_A + " import \"b.josh\"";
+
+    FlattenResult flattened = preprocessor.flatten("main.josh", entry);
+    PreprocessResult preprocessed = preprocessor.preprocess("main.josh", entry);
+
+    assertEquals(preprocessed.getSource().orElseThrow(), flattened.getSource().orElseThrow());
+  }
+
+  @Test
+  void flattenIsDeterministic() {
+    JoshImportPreprocessor preprocessor = preprocessorFor(Map.of(
+        "b.josh", ENTITY_B + " import \"c.josh\"",
+        "c.josh", "start organism C height.init = 3 m end organism"
+    ));
+    String entry = ENTITY_A + " import \"b.josh\"";
+
+    String first = preprocessor.flatten("main.josh", entry).getSource().orElseThrow();
+    String second = preprocessor.flatten("main.josh", entry).getSource().orElseThrow();
+
+    assertEquals(first, second);
+  }
+
+  @Test
+  void flattenReportsDuplicateEntityWithOffendingSourceAndLine() {
+    JoshImportPreprocessor preprocessor = preprocessorFor(Map.of("b.josh", ENTITY_A));
+    String entry = ENTITY_A + " import \"b.josh\"";
+
+    FlattenResult result = preprocessor.flatten("main.josh", entry);
+
+    assertTrue(result.hasErrors());
+    ParseError error = result.getErrors().get(0);
+    assertTrue(error.getMessage().contains("Duplicate entity"), error.getMessage());
+    assertTrue(error.getMessage().contains("\"A\""), error.getMessage());
+    assertEquals("b.josh", error.getSourceName().orElseThrow());
+  }
+
+  @Test
+  void flattenDoesNotFlagReplaceOfAnImportedEntity() {
+    JoshImportPreprocessor preprocessor = preprocessorFor(Map.of(
+        "b.josh", "replace organism A height.init = 9 m end organism"
+    ));
+    String entry = ENTITY_A + " import \"b.josh\"";
+
+    FlattenResult result = preprocessor.flatten("main.josh", entry);
+
+    assertFalse(result.hasErrors(), "replace should not be a duplicate: " + result.getErrors());
+  }
+
+  @Test
+  void flattenDoesNotFlagUpdateOfAnImportedEntity() {
+    JoshImportPreprocessor preprocessor = preprocessorFor(Map.of(
+        "b.josh", "update organism A height.init = 9 m end organism"
+    ));
+    String entry = ENTITY_A + " import \"b.josh\"";
+
+    FlattenResult result = preprocessor.flatten("main.josh", entry);
+
+    assertFalse(result.hasErrors(), "update should not be a duplicate: " + result.getErrors());
+  }
+
+  @Test
+  void flattenRejectsProtocolImports() {
+    JoshImportPreprocessor preprocessor = preprocessorFor(Map.of());
+    String entry = ENTITY_A + " import \"https://example.com/remote.josh\"";
+
+    FlattenResult result = preprocessor.flatten("main.josh", entry);
+
+    assertTrue(result.hasErrors());
+    assertTrue(result.getErrors().get(0).getMessage().contains("relative"));
+  }
+
+  @Test
+  void flattenRejectsCircularImports() {
+    JoshImportPreprocessor preprocessor = preprocessorFor(Map.of(
+        "a.josh", ENTITY_A + " import \"b.josh\"",
+        "b.josh", ENTITY_B + " import \"a.josh\""
+    ));
+
+    FlattenResult result = preprocessor.flatten("a.josh", ENTITY_A + " import \"b.josh\"");
+
+    assertTrue(result.hasErrors());
+    assertTrue(result.getErrors().get(0).getMessage().contains("Circular import"));
+  }
+
+  @Test
+  void flattenReportsMissingImportTarget() {
+    JoshImportPreprocessor preprocessor = preprocessorFor(Map.of());
+    String entry = ENTITY_A + " import \"missing.josh\"";
+
+    FlattenResult result = preprocessor.flatten("main.josh", entry);
+
+    assertTrue(result.hasErrors());
+    assertTrue(result.getErrors().get(0).getMessage().contains("missing.josh"));
+  }
+
 }
