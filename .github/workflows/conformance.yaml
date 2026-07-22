@@ -38,6 +38,9 @@ jobs:
         continue-on-error: true
         run: ./gradlew conformanceTest
 
+      - name: Run critical conformance tests (gating)
+        run: ./gradlew conformanceTestCritical
+
       - name: Parse test results
         if: always()
         id: parse

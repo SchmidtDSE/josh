@@ -477,3 +477,27 @@ task conformanceTest(type: Test) {
         html.required = true
     }
 }
+
+// Task to run only critical-priority conformance tests (used to gate CI merges)
+task conformanceTestCritical(type: Test) {
+    description = 'Runs critical-priority conformance tests only'
+    group = 'verification'
+    dependsOn preprocessTestData  // Ensure test data is preprocessed before running
+
+    useJUnitPlatform {
+        includeTags 'critical'
+    }
+
+    include 'org/joshsim/conformance/**'
+
+    testLogging {
+        events "passed", "skipped", "failed"
+        showStandardStreams = false
+        exceptionFormat = "full"
+    }
+
+    reports {
+        junitXml.required = true
+        html.required = true
+    }
+}
