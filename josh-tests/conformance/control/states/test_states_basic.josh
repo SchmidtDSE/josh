@@ -34,21 +34,19 @@ start organism Tree
   # Initialize state to Seedling
   state.init = "Seedling"
 
-  # State transition from Seedling to Sapling at age 10
-  state.step:if(current.age >= 10 years and current.state == "Seedling") = "Sapling"
-
-  # State transition from Sapling to Mature at age 30
-  state.step:if(current.age >= 30 years and current.state == "Sapling") = "Mature"
-
-  # State transition from Mature to Dead at age 60
-  state.step:if(current.age >= 60 years and current.state == "Mature") = "Dead"
+  # State transitions: Seedling -> Sapling -> Mature -> Dead by age
+  state.step
+    :if(current.age >= 10 years and prior.state == "Seedling") = "Sapling"
+    :elif(current.age >= 30 years and prior.state == "Sapling") = "Mature"
+    :elif(current.age >= 60 years and prior.state == "Mature") = "Dead"
 
   # Height grows differently based on state
   height.init = 0.1 m
-  height.step:if(current.state == "Seedling") = prior.height + 0.1 m
-  height.step:if(current.state == "Sapling") = prior.height + 0.5 m
-  height.step:if(current.state == "Mature") = prior.height + 0.2 m
-  height.step:if(current.state == "Dead") = prior.height  # No growth when dead
+  height.step
+    :if(prior.state == "Seedling") = prior.height + 0.1 m
+    :elif(prior.state == "Sapling") = prior.height + 0.5 m
+    :elif(prior.state == "Mature") = prior.height + 0.2 m
+    :elif(prior.state == "Dead") = prior.height  # No growth when dead
 
   # Assert initial state
   assert.initialState.step:if(meta.stepCount == 0 count) = current.state == "Seedling"

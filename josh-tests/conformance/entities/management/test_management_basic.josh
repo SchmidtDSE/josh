@@ -40,8 +40,9 @@ start management Thinning
 
   # Active status based on timing
   active.init = false
-  active.step:if(meta.stepCount == current.scheduledTime) = true
-  active.step:if(meta.stepCount != current.scheduledTime) = false
+  active.step
+    :if(meta.stepCount == current.scheduledTime) = true
+    :else = false
 
   # Management intensity
   intensity.init = 50 count
@@ -49,8 +50,9 @@ start management Thinning
 
   # Operation counter - increments when active
   operationCount.init = 0 count
-  operationCount.step:if(current.active == true) = prior.operationCount + 1 count
-  operationCount.step:if(current.active == false) = prior.operationCount
+  operationCount.step
+    :if(current.active == true) = prior.operationCount + 1 count
+    :else = prior.operationCount
 
   # Lifecycle assertions - init phase
   assert.centerXInit.init = current.centerX == 30 m

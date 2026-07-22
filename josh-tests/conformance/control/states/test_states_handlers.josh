@@ -99,37 +99,41 @@ start organism Tree
   # Energy after 10 steps in Seedling: 100 - 10*5 = 50
   assert.seedlingEnergyAt9.step:if(meta.stepCount == 9 count) = current.energy == 55 count
 
-  # Assert transition to Sapling at step 10
+  # Assert transition to Sapling at step 10. The transition itself runs inside the Seedling
+  # block (dispatch for a step is chosen by the state entering it), so lastHandler still reads
+  # "Seedling" on the very step "state" flips to "Sapling"; lastHandler only reads "Sapling"
+  # starting the following step.
   assert.saplingStateAt10.step:if(meta.stepCount == 10 count) = current.state == "Sapling"
-  assert.saplingHandlerAt10.step:if(meta.stepCount == 10 count) = current.lastHandler == "Sapling"
+  assert.saplingHandlerAt10.step:if(meta.stepCount == 10 count) = current.lastHandler == "Seedling"
 
   # Assert Sapling handlers execute (steps 10-19)
   assert.saplingStateAt15.step:if(meta.stepCount == 15 count) = current.state == "Sapling"
   assert.saplingHandlerAt15.step:if(meta.stepCount == 15 count) = current.lastHandler == "Sapling"
 
-  # After 10 more steps in Sapling: 2.5 + 10*0.8 = 10.5 m
+  # 9 Sapling-dispatched steps (11-19) after the transition step: 2.5 + 9*0.8 = 9.7 m
   assert.saplingHeightAt19.step:if(meta.stepCount == 19 count) = current.height == 9.7 m
 
-  # Energy after 10 more steps in Sapling: 50 - 10*15 = -100 (can go negative)
-  assert.saplingEnergyAt19.step:if(meta.stepCount == 19 count) = current.energy == -95 count
+  # Energy after 9 Sapling-dispatched steps: 50 - 9*15 = -85
+  assert.saplingEnergyAt19.step:if(meta.stepCount == 19 count) = current.energy == -85 count
 
-  # Assert transition to Mature at step 20
+  # Assert transition to Mature at step 20 (same same-step dispatch lag as the Sapling transition)
   assert.matureStateAt20.step:if(meta.stepCount == 20 count) = current.state == "Mature"
-  assert.matureHandlerAt20.step:if(meta.stepCount == 20 count) = current.lastHandler == "Mature"
+  assert.matureHandlerAt20.step:if(meta.stepCount == 20 count) = current.lastHandler == "Sapling"
 
-  # Assert Mature handlers execute (steps 20+)
+  # Assert Mature handlers execute (steps 21+)
   assert.matureStateAt25.step:if(meta.stepCount == 25 count) = current.state == "Mature"
   assert.matureHandlerAt25.step:if(meta.stepCount == 25 count) = current.lastHandler == "Mature"
 
-  # After 6 more steps in Mature: 10.5 + 6*0.3 = 12.3 m
-  assert.matureHeightAt25.step:if(meta.stepCount == 25 count) = current.height == 12.3 m
+  # 6 Mature-dispatched steps (21-26): 10.5 + 6*0.3 = 12.3 m
+  assert.matureHeightAt26.step:if(meta.stepCount == 26 count) = current.height == 12.3 m
 
-  # Energy after 6 more steps in Mature: -100 - 6*8 = -148
-  assert.matureEnergyAt25.step:if(meta.stepCount == 25 count) = current.energy == -143 count
+  # Energy after 6 Mature-dispatched steps: -100 - 6*8 = -148
+  assert.matureEnergyAt26.step:if(meta.stepCount == 26 count) = current.energy == -148 count
 
-  # Verify that only the current state's handlers execute
-  # (lastHandler should always match current.state after step 0)
-  assert.handlerMatchesState.step:if(meta.stepCount > 0 count) = current.lastHandler == current.state
+  # Verify that only the current state's handlers execute. Compare against prior.state (the
+  # state entering this step, which is what selects the block) rather than current.state, since
+  # "state" itself can flip mid-step ahead of lastHandler (see above).
+  assert.handlerMatchesState.step:if(meta.stepCount > 0 count) = current.lastHandler == prior.state
 
 end organism
 

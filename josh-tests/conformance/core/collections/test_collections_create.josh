@@ -6,10 +6,8 @@
 start simulation CollectionsCreate
 
   grid.size = 10 m
-  grid.low.x = 0 m
-  grid.low.y = 0 m
-  grid.high.x = 100 m
-  grid.high.y = 100 m  # 10x10 grid
+  grid.low = 0 m latitude, 0 m longitude
+  grid.high = 100 m latitude, 100 m longitude  # 10x10 grid
 
   steps.low = 0 count
   steps.high = 3 count
@@ -41,10 +39,12 @@ start organism Tree
   age.init = 0 year
   age.step = prior.age + 1 year
 
-  # Assert age increases correctly
-  assert.ageStep1.step:if(meta.stepCount == 1 count) = mean(current.age) == 0 years
-  assert.ageStep2.step:if(meta.stepCount == 2 count) = mean(current.age) == 1 year
-  assert.ageStep3.step:if(meta.stepCount == 3 count) = mean(current.age) == 2 years
+  # Assert age increases correctly. A newly created organism is fast-forwarded through every
+  # substep already elapsed in its creation timestep (including that timestep's own "step"), so
+  # age is already 1 year - not 0 - by the time stepCount==1 is observed.
+  assert.ageStep1.step:if(meta.stepCount == 1 count) = mean(current.age) == 1 year
+  assert.ageStep2.step:if(meta.stepCount == 2 count) = mean(current.age) == 2 years
+  assert.ageStep3.step:if(meta.stepCount == 3 count) = mean(current.age) == 3 years
 
 end organism
 

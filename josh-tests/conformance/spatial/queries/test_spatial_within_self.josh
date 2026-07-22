@@ -7,10 +7,8 @@ start simulation SpatialWithinSelf
 
   # Create a small grid
   grid.size = 10 m
-  grid.low.x = 0 m
-  grid.low.y = 0 m
-  grid.high.x = 20 m
-  grid.high.y = 20 m  # 2x2 grid
+  grid.low = 0 m latitude, 0 m longitude
+  grid.high = 20 m latitude, 20 m longitude  # 2x2 grid
   grid.patch = "Default"
 
   steps.low = 0 count
@@ -43,17 +41,17 @@ start organism Tree
   neighborsLarge.step = count(Tree within 100 m radial at prior)
 
   # With small radius, should find at least 1 (self)
-  assert.findsSelf.step:if(meta.stepCount == 1 count) = current.neighborsSmall >= 1 count
+  assert.findsSelf.step:if(meta.stepCount == 2 count) = current.neighborsSmall >= 1 count
 
-  # With large radius, should find all 4 trees
-  assert.findsAll.step:if(meta.stepCount == 1 count) = current.neighborsLarge == 4 count
+  # With large radius, should find all trees (4 per patch x 4 patches in this 2x2 grid = 16)
+  assert.findsAll.step:if(meta.stepCount == 2 count) = current.neighborsLarge == 16 count
 
   # Verify that biomass sum includes self
   biomassSelf.init = 10 kg
   totalBiomassNearby.step = sum(Tree within 5 m radial at prior.biomassSelf)
 
   # Should find at least own biomass
-  assert.biomassIncludesSelf.step:if(meta.stepCount == 1 count) = current.totalBiomassNearby >= 10 kg
+  assert.biomassIncludesSelf.step:if(meta.stepCount == 2 count) = current.totalBiomassNearby >= 10 kg
 
 end organism
 

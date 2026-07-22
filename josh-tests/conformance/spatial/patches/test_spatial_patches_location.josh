@@ -7,10 +7,8 @@ start simulation SpatialPatchesLocation
 
   # Create a 3x3 grid with known bounds
   grid.size = 10 m
-  grid.low.x = 0 m
-  grid.low.y = 0 m
-  grid.high.x = 30 m
-  grid.high.y = 30 m  # 3x3 grid
+  grid.low = 0 m latitude, 0 m longitude
+  grid.high = 30 m latitude, 30 m longitude  # 3x3 grid
   grid.patch = "Default"
 
   steps.low = 0 count
@@ -41,22 +39,23 @@ start organism Tree
   # Test that we can access our position indirectly through neighbors
   neighborsNearby.step = count(Tree within 15 m radial at prior)
 
-  # All organisms are in defined grid bounds
-  # Assert that neighbor queries work (implies location tracking)
-  assert.locationWorks.step:if(meta.stepCount == 1 count) = current.neighborsNearby >= 1 count
+  # All organisms are in defined grid bounds. Checked at stepCount==2 (not 1): a spatial "at
+  # prior" query has nothing to find during stepCount==1, the engine's very first timestep, which
+  # by definition has no prior timestep to query.
+  assert.locationWorks.step:if(meta.stepCount == 2 count) = current.neighborsNearby >= 1 count
 
   # Test spatial queries work across the grid
   neighborsAll.step = count(Tree within 50 m radial at prior)
 
   # Should find organisms across multiple patches
-  assert.crossPatch.step:if(meta.stepCount == 1 count) = current.neighborsAll >= 1 count
+  assert.crossPatch.step:if(meta.stepCount == 2 count) = current.neighborsAll >= 1 count
 
   # Test that organisms maintain their location over time
   neighborsStep1.init = 0 count
-  neighborsStep1.step:if(meta.stepCount == 1 count) = current.neighborsNearby
+  neighborsStep1.step:if(meta.stepCount == 2 count) = current.neighborsNearby
 
   # Location should be stable - same neighbors found
-  assert.stableLocation.step:if(meta.stepCount == 2 count) = current.neighborsNearby == current.neighborsStep1
+  assert.stableLocation.step:if(meta.stepCount == 3 count) = current.neighborsNearby == current.neighborsStep1
 
 end organism
 

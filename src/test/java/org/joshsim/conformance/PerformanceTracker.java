@@ -67,11 +67,11 @@ public class PerformanceTracker implements BeforeTestExecutionCallback, AfterTes
     String testName = context.getDisplayName();
     boolean passed = !context.getExecutionException().isPresent();
 
-    recordPerformance(testName, durationMs, passed);
-
     if (passed && durationMs > 0) {
       checkPerformanceRegression(testName, durationMs);
     }
+
+    recordPerformance(testName, durationMs, passed);
   }
 
   /**

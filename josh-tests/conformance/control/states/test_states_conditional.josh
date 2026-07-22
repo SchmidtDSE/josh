@@ -38,25 +38,22 @@ start organism Tree
   # Initialize to Growing state
   state.init = "Growing"
 
-  # Transition to Stressed if height exceeds 10m (stress from being too tall)
-  state.step:if(current.height > 10 m and current.state == "Growing") = "Stressed"
-
-  # Transition to Mature if age exceeds 15 years and still growing
-  state.step:if(current.age > 15 years and current.state == "Growing") = "Mature"
-
-  # Transition from Stressed to Dead if age exceeds 25 years
-  state.step:if(current.age > 25 years and current.state == "Stressed") = "Dead"
-
-  # Transition from Mature to Declining if both age > 20 and height > 12m
-  state.step:if(current.age > 20 years and current.height > 12 m and current.state == "Mature") = "Declining"
+  # Transitions: Growing -> Stressed/Mature -> Dead/Declining, checked against the state entering
+  # this step (prior.state), since state.step's own result is what's being computed here.
+  state.step
+    :if(current.height > 10 m and prior.state == "Growing") = "Stressed"
+    :elif(current.age > 15 years and prior.state == "Growing") = "Mature"
+    :elif(current.age > 25 years and prior.state == "Stressed") = "Dead"
+    :elif(current.age > 20 years and current.height > 12 m and prior.state == "Mature") = "Declining"
 
   # Mark different growth rates per state
   growthRate.init = 0 m
-  growthRate.step:if(current.state == "Growing") = 0.5 m
-  growthRate.step:if(current.state == "Stressed") = 0.1 m
-  growthRate.step:if(current.state == "Mature") = 0.3 m
-  growthRate.step:if(current.state == "Declining") = 0.05 m
-  growthRate.step:if(current.state == "Dead") = 0 m
+  growthRate.step
+    :if(current.state == "Growing") = 0.5 m
+    :elif(current.state == "Stressed") = 0.1 m
+    :elif(current.state == "Mature") = 0.3 m
+    :elif(current.state == "Declining") = 0.05 m
+    :elif(current.state == "Dead") = 0 m
 
   # Assert all trees start in Growing state
   assert.allGrowingInit.step:if(meta.stepCount == 0 count) = current.state == "Growing"

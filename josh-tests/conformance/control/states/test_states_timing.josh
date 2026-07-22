@@ -34,15 +34,18 @@ start organism Tree
   # Initial state set at init
   state.init = "Juvenile"
 
-  # State transitions happen at step
-  state.step:if(current.age >= 5 years and current.state == "Juvenile") = "Adolescent"
-  state.step:if(current.age >= 10 years and current.state == "Adolescent") = "Adult"
-  state.step:if(current.age >= 15 years and current.state == "Adult") = "Elder"
+  # State transitions happen at step. Checked against prior.state (the state entering this step),
+  # since state.step's own result is what's being computed here.
+  state.step
+    :if(current.age >= 5 years and prior.state == "Juvenile") = "Adolescent"
+    :elif(current.age >= 10 years and prior.state == "Adolescent") = "Adult"
+    :elif(current.age >= 15 years and prior.state == "Adult") = "Elder"
 
   # Track when state changes occurred (use a counter that increments on transition)
   transitionCount.init = 0 count
-  transitionCount.step:if(current.state != prior.state) = prior.transitionCount + 1 count
-  transitionCount.step:if(current.state == prior.state) = prior.transitionCount
+  transitionCount.step
+    :if(current.state != prior.state) = prior.transitionCount + 1 count
+    :else = prior.transitionCount
 
   # Track height at init, step, and end phases
   height.init = 1 m

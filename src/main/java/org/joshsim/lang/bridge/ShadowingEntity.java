@@ -413,9 +413,15 @@ public class ShadowingEntity implements MutableEntity {
   }
 
   /**
-   * Get the current state of this entity.
+   * Get the state of this entity as of the start of the current substep.
    *
-   * @return State of this entity after current resolution.
+   * <p>Always uses the entering state for handler dispatch, even after state's own transition
+   * has resolved and cached a new value this substep. This keeps every attribute in a
+   * {@code start state "X"} block - including state's own transition line - governed by the same
+   * state value for the whole substep, rather than having later-resolved attributes see a state
+   * that just changed underneath them.</p>
+   *
+   * @return State of this entity as of the start of this substep.
    */
   private String getState() {
     // Use precomputed usesState to avoid hashmap lookup
@@ -429,17 +435,11 @@ public class ShadowingEntity implements MutableEntity {
       return DEFAULT_STATE_STR;
     }
 
-    // If state is resolved, use it. Otherwise use prior state for handler lookup.
-    EngineValue stateValue = resolvedCacheByIndex[stateIndex];
-    if (stateValue == null) {
-      Optional<EngineValue> priorState = inner.getAttributeValue(stateIndex);
-      if (priorState.isPresent()) {
-        stateValue = priorState.get();
-      }
-    }
-
-    if (stateValue != null) {
-      return stateValue.getAsString();
+    // inner is only written back at endSubstep(), so this always reflects the state as it stood
+    // entering this substep, regardless of whether state has since resolved this substep.
+    Optional<EngineValue> priorState = inner.getAttributeValue(stateIndex);
+    if (priorState.isPresent()) {
+      return priorState.get().getAsString();
     }
     return DEFAULT_STATE_STR;
   }

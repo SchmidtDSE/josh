@@ -18,10 +18,8 @@
 
 start simulation TestSpatialNeighborsFoundBeyondSelf
   grid.size = 10 m
-  grid.low.x = 0 m
-  grid.low.y = 0 m
-  grid.high.x = 70 m
-  grid.high.y = 70 m
+  grid.low = 0 m latitude, 0 m longitude
+  grid.high = 70 m latitude, 70 m longitude
   grid.patch = "Default"
 
   steps.low = 0 count

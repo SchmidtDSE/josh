@@ -39,13 +39,15 @@ start disturbance Fire
 
   # Active status based on timing
   active.init = false
-  active.step:if(meta.stepCount == current.occurTime) = true
-  active.step:if(meta.stepCount > current.occurTime) = false
+  active.step
+    :if(meta.stepCount == current.occurTime) = true
+    :else = false
 
   # Intensity that increases when active
   intensity.init = 0 count
-  intensity.step:if(current.active == true) = prior.intensity + 10 count
-  intensity.step:if(current.active == false) = prior.intensity
+  intensity.step
+    :if(current.active == true) = prior.intensity + 10 count
+    :else = prior.intensity
 
   # Lifecycle assertions - init phase
   assert.centerXInit.init = current.centerX == 50 m

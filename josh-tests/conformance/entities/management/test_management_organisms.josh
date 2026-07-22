@@ -6,10 +6,8 @@
 start simulation ManagementOrganisms
 
   grid.size = 10 m
-  grid.low.x = 0 m
-  grid.low.y = 0 m
-  grid.high.x = 100 m
-  grid.high.y = 100 m  # 10x10 grid
+  grid.low = 0 m latitude, 0 m longitude
+  grid.high = 100 m latitude, 100 m longitude  # 10x10 grid
   grid.patch = "Default"
 
   steps.low = 0 count
@@ -51,8 +49,9 @@ start management Thinning
 
   # Active status
   active.init = false
-  active.step:if(meta.stepCount == current.scheduledTime) = true
-  active.step:if(meta.stepCount != current.scheduledTime) = false
+  active.step
+    :if(meta.stepCount == current.scheduledTime) = true
+    :else = false
 
   # Selection criteria - target small trees
   diameterThreshold.init = 15 cm
@@ -92,20 +91,22 @@ start organism Tree
 
   # Management status
   thinned.init = false
-  thinned.step = prior.thinned
 
   # Count management nearby
   managementNearby.init = 0 count
   managementNearby.step = count(Thinning within 60 m radial at prior)
 
-  # Mark as thinned if management is nearby and diameter is small
+  # Mark as thinned if management is nearby and diameter is small (stays thinned once true).
   # Note: Use prior.diameter to avoid circular dependency (diameter -> growthRate -> thinned -> diameter)
-  thinned.step:if(current.managementNearby > 0 count and prior.diameter < 15 cm) = true
+  thinned.step
+    :if(current.managementNearby > 0 count and prior.diameter < 15 cm) = true
+    :else = prior.thinned
 
   # Growth rate increases after thinning (less competition)
   growthRate.init = 0.5 cm
-  growthRate.step:if(current.thinned == true) = 1.0 cm
-  growthRate.step:if(current.thinned == false) = 0.5 cm
+  growthRate.step
+    :if(current.thinned == true) = 1.0 cm
+    :else = 0.5 cm
 
   # Assertions
   assert.notThinnedInitially.init = current.thinned == false

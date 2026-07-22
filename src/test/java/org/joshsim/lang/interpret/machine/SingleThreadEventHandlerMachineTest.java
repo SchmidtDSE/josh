@@ -1059,6 +1059,8 @@ public class SingleThreadEventHandlerMachineTest {
     when(mockBridge.getPriorPatches(any(EngineGeometry.class))).thenReturn(queryResults);
     when(mockBridge.getGeometryFactory()).thenReturn(new GridGeometryFactory());
     when(mockEntity.getAttributeValue(any())).thenReturn(Optional.of(mockValue));
+    when(mockValue.getAsDistribution()).thenReturn(mockDistribution);
+    when(mockDistribution.getContents(1, false)).thenReturn(List.of(mockValue));
 
     // When
     BigDecimal queryDistance = BigDecimal.valueOf(10.0);
