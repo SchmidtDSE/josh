@@ -201,6 +201,20 @@ java -jar joshsim-fat.jar inspect-exports <script.josh> <SimulationName> [OPTION
 **Options:**
 - `--json`: Output in JSON format (default: true), otherwise plain text
 
+### `inspect-imports` - Import Path Discovery
+Parses a Josh script and lists every `import "path"` reachable from it (including nested imports), without running the simulation. Useful for build systems, CI/CD pipelines, and tooling (such as joshpy) that needs to know which files make up a model.
+
+```bash
+java -jar joshsim-fat.jar inspect-imports <script.josh> [OPTIONS]
+```
+
+**Parameters:**
+- `<script.josh>`: Path to Josh script file to inspect
+
+**Options:**
+- `--import-base <path>`: Resolution root for the entry file's relative imports (default: the entry file's own directory)
+- `--json`: Output in JSON format (default: true), otherwise plain text
+
 ### `mcp` - Model Context Protocol (MCP) Server
 Runs Josh as a [Model Context Protocol](https://modelcontextprotocol.io) server over stdio, letting LLM clients (Claude Desktop, opencode, etc.) drive Josh against files on the local disk. This is the recommended way for an AI agent to operate Josh.
 ```bash

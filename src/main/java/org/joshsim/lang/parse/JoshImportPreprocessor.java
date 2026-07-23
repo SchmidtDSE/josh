@@ -77,7 +77,7 @@ public class JoshImportPreprocessor {
     try {
       String combined = spliceImports(
           entryContent, parsed.getProgram().orElseThrow(), normalizedEntry, stack,
-          new ArrayList<>()
+          new ArrayList<>(), new ArrayList<>()
       );
       return new PreprocessResult(combined);
     } catch (ImportResolutionException e) {
@@ -114,7 +114,8 @@ public class JoshImportPreprocessor {
     String combined;
     try {
       combined = spliceImports(
-          entryContent, parsed.getProgram().orElseThrow(), normalizedEntry, stack, stanzas
+          entryContent, parsed.getProgram().orElseThrow(), normalizedEntry, stack, stanzas,
+          new ArrayList<>()
       );
     } catch (ImportResolutionException e) {
       return new FlattenResult(e.getErrors());
@@ -128,8 +129,47 @@ public class JoshImportPreprocessor {
     return new FlattenResult(combined);
   }
 
+  /**
+   * List every {@code import} reachable from an entry source, transitively.
+   *
+   * <p>Walks the same recursive, order-preserving traversal used by {@link #preprocess} and
+   * {@link #flatten}, recording each {@code import "path"} statement (including those nested inside
+   * imported files) with its literal path, the path resolved relative to the entry file, the file
+   * that contains the statement, and the line number within that file. Diamond imports are listed
+   * once per occurrence, matching the splicing semantics (no deduplication). Resolution failures
+   * (missing import, circular import, rejected protocol/absolute path) are reported through the
+   * same {@link ParseError} channel used by {@code flatten}.</p>
+   *
+   * @param entryIdentifier path identifying the entry file, used to resolve its own relative
+   *     imports and as the base for nested import resolution.
+   * @param entryContent the entry file's raw source text.
+   * @return the imports reachable from the entry file, or the errors encountered.
+   */
+  public ImportsResult listImports(String entryIdentifier, String entryContent) {
+    ParseResult parsed = new JoshParser().parse(entryContent);
+    if (parsed.hasErrors()) {
+      return new ImportsResult(parsed.getErrors());
+    }
+
+    String normalizedEntry = entryIdentifier.replace('\\', '/');
+    Deque<String> stack = new ArrayDeque<>();
+    stack.push(normalizedEntry);
+
+    List<ImportRecord> imports = new ArrayList<>();
+    try {
+      spliceImports(
+          entryContent, parsed.getProgram().orElseThrow(), normalizedEntry, stack,
+          new ArrayList<>(), imports
+      );
+    } catch (ImportResolutionException e) {
+      return new ImportsResult(e.getErrors());
+    }
+    return ImportsResult.of(imports);
+  }
+
   private String spliceImports(String content, JoshLangParser.ProgramContext program,
-        String identifier, Deque<String> stack, List<FlattenedStanza> collected) {
+        String identifier, Deque<String> stack, List<FlattenedStanza> collected,
+        List<ImportRecord> imports) {
     // Walk imports and entity declarations together in source order so collected entities land in
     // the same order they occupy in the flattened output (nested imports expand in place).
     List<ParserRuleContext> topLevel = new ArrayList<>();
@@ -163,6 +203,8 @@ public class JoshImportPreprocessor {
         throw errorAt(importCtx, identifier, e.getMessage());
       }
 
+      imports.add(new ImportRecord(literal, targetId, identifier, importCtx.getStart().getLine()));
+
       if (stack.contains(targetId)) {
         List<String> chain = new ArrayList<>(stack);
         Collections.reverse(chain);
@@ -186,7 +228,8 @@ public class JoshImportPreprocessor {
 
       stack.push(targetId);
       String expandedChild = spliceImports(
-          importedContent, importedParsed.getProgram().orElseThrow(), targetId, stack, collected
+          importedContent, importedParsed.getProgram().orElseThrow(), targetId, stack, collected,
+          imports
       );
       stack.pop();
 
