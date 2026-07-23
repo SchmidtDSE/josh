@@ -49,6 +49,7 @@ public class JoshInterpreter {
     JoshFragment fragment = visitor.visit(programContext);
 
     JoshProgram program = fragment.getProgram();
+    program.setSubstepOrder(knownEventSet.getSubstepOrder());
     bridgeGetter.setProgram(program);
     bridgeGetter.setGeometryFactory(geometryFactory);
     bridgeGetter.setInputOutputLayer(inputOutputLayer);
@@ -91,6 +92,7 @@ public class JoshInterpreter {
     JoshFragment fragment = visitor.visit(programContext);
 
     JoshProgram program = fragment.getProgram();
+    program.setSubstepOrder(knownEventSet.getSubstepOrder());
     bridgeGetter.setProgram(program);
     bridgeGetter.setSimulationName(simulationName);
     bridgeGetter.setGeometryFactory(geometryFactory);

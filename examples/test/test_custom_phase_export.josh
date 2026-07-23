@@ -1,0 +1,31 @@
+start simulation CustomPhaseExport
+
+  grid.size = 10 m
+  grid.low.x = 0 m
+  grid.low.y = 0 m
+  grid.high.x = 10 m
+  grid.high.y = 10 m
+
+  steps.low = 0 count
+  steps.high = 1 count
+
+  start phases
+    with phase base
+    then phase disturb
+    then phase manage
+  end phases
+
+  exportFiles.patch = "file:///tmp/test_custom_phase_export.csv"
+
+end simulation
+
+start patch Default
+
+  value.init = 0 count
+  value.base = prior.value + 1 count
+  value.disturb = prior.value + 1 count
+  value.manage = prior.value + 1 count
+
+  export.value.manage = current.value
+
+end patch

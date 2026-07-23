@@ -61,6 +61,41 @@ public class QueryCacheEngineBridge extends MinimalEngineBridge {
   }
 
   /**
+   * Constructs a caching EngineBridge to manipulate simulation and converter with a declared
+   * substep order.
+   *
+   * @param valueFactory Factory to use in constructing engine values.
+   * @param geometryFactory Factory to use in constructing engine geometries.
+   * @param simulation The simulation instance to be used for retrieving or manipulating simulation
+   *     data.
+   * @param converter The converter for handling unit conversions between different engine values.
+   * @param prototypeStore The set of prototypes to use to build new entities.
+   * @param externalResourceGetter Strategy to get external resources.
+   * @param configGetter Strategy to get configuration resources.
+   * @param substepOrder The ordered substep sequence declared by the simulation, if any. Passing
+   *     the program's actual order here (rather than relying on the no-substep-order overload's
+   *     hardcoded {@code start}/{@code step}/{@code end} default) is required for a program's
+   *     declared {@code start phases ... end phases} to run at all.
+   */
+  public QueryCacheEngineBridge(ValueSupportFactory valueFactory,
+        EngineGeometryFactory geometryFactory, MutableEntity simulation, Converter converter,
+        EntityPrototypeStore prototypeStore, ExternalResourceGetter externalResourceGetter,
+        ConfigGetter configGetter, List<String> substepOrder) {
+
+    super(
+        valueFactory,
+        geometryFactory,
+        simulation,
+        converter,
+        prototypeStore,
+        externalResourceGetter,
+        configGetter,
+        substepOrder
+    );
+    cachedPatchesByGeometry = new ConcurrentHashMap<>();
+  }
+
+  /**
    * Constructs a caching EngineBridge with a given Replicate for testing.
    *
    * @param valueFactory Factory to use in constructing engine values.

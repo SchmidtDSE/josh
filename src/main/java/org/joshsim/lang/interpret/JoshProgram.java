@@ -9,6 +9,7 @@
 
 package org.joshsim.lang.interpret;
 
+import java.util.List;
 import org.joshsim.engine.entity.prototype.EntityPrototypeStore;
 import org.joshsim.engine.value.converter.Converter;
 import org.joshsim.lang.bridge.EngineBridgeSimulationStore;
@@ -22,10 +23,14 @@ import org.joshsim.lang.bridge.EngineBridgeSimulationStore;
  */
 public class JoshProgram {
 
+  /** The default per-timestep substep order, used unless a simulation declares its own phases. */
+  private static final List<String> DEFAULT_SUBSTEP_ORDER = List.of("start", "step", "end");
+
   private final Converter converter;
   private final EngineBridgeSimulationStore simulations;
   private final EntityPrototypeStore prototypes;
   private BridgeGetter bridgeGetter;
+  private List<String> substepOrder;
 
   /**
    * Creates a new Josh program instance.
@@ -39,6 +44,7 @@ public class JoshProgram {
     this.converter = converter;
     this.simulations = simulations;
     this.prototypes = prototypes;
+    this.substepOrder = DEFAULT_SUBSTEP_ORDER;
   }
 
   /**
@@ -87,6 +93,31 @@ public class JoshProgram {
    */
   public void setBridgeGetter(BridgeGetter bridgeGetter) {
     this.bridgeGetter = bridgeGetter;
+  }
+
+  /**
+   * Gets the ordered per-timestep substep sequence this program executes.
+   *
+   * <p>This is the program's declared {@code start phases ... end phases} order if it declared
+   * one, or the default {@code start}/{@code step}/{@code end} otherwise. A caller building the
+   * {@code EngineBridge} that drives the actual simulation step loop must pass this through;
+   * otherwise every declared phase silently never runs, since the bridge falls back to its own
+   * hardcoded default substep order.</p>
+   *
+   * @return The ordered substep names to execute each timestep.
+   */
+  public List<String> getSubstepOrder() {
+    return substepOrder;
+  }
+
+  /**
+   * Sets the ordered per-timestep substep sequence this program executes.
+   *
+   * @param substepOrder The ordered substep names, from the program's parsed
+   *     {@link KnownEventSet}.
+   */
+  public void setSubstepOrder(List<String> substepOrder) {
+    this.substepOrder = substepOrder;
   }
 
 }

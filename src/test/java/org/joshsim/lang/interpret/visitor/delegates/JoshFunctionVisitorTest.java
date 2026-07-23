@@ -1,11 +1,13 @@
 package org.joshsim.lang.interpret.visitor.delegates;
 
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import java.util.List;
 import java.util.Optional;
 import org.joshsim.engine.entity.handler.EventHandlerGroupBuilder;
 import org.joshsim.engine.func.CompiledCallable;
@@ -292,6 +294,31 @@ class JoshFunctionVisitorTest {
 
     EventHandlerGroupBuilder builder = result.getEventHandlerGroup();
     assertNotNull(builder);
+  }
+
+  @Test
+  void testVisitEventHandlerGroupSingleRejectsStaleDefaultSubstepAfterDeclaredPhases() {
+    // Mock: a program that has migrated to declared phases but still has a handler suffixed
+    // with the old default "step" substep, which is no longer a recognized event.
+    KnownEventSet declaredPhases = new KnownEventSet();
+    declaredPhases.declarePhases(List.of("base", "disturb"));
+    when(toolbox.getKnownEventSet()).thenReturn(declaredPhases);
+
+    EventHandlerGroupSingleContext context = mock(EventHandlerGroupSingleContext.class);
+    context.name = mock(IdentifierContext.class);
+    JoshFragment innerFragment = mock(JoshFragment.class);
+    EventHandlerAction innerAction = mock(EventHandlerAction.class);
+
+    when(context.name.getText()).thenReturn("value.step");
+    when(context.getChild(1)).thenReturn(context);
+    when(context.accept(parent)).thenReturn(innerFragment);
+    when(innerFragment.getCurrentAction()).thenReturn(innerAction);
+
+    JoshFunctionVisitor visitorWithPhases = new JoshFunctionVisitor(toolbox);
+
+    // Test & Validate
+    assertThrows(IllegalArgumentException.class,
+        () -> visitorWithPhases.visitEventHandlerGroupSingle(context));
   }
 
   @Test

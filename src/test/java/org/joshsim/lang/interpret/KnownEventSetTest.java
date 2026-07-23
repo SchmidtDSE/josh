@@ -184,6 +184,33 @@ class KnownEventSetTest {
   }
 
   @Test
+  void isStaleDefaultSubstepFalseWithoutDeclaredPhases() {
+    KnownEventSet events = new KnownEventSet();
+    assertFalse(events.isStaleDefaultSubstep("step"));
+    assertFalse(events.isStaleDefaultSubstep("start"));
+    assertFalse(events.isStaleDefaultSubstep("end"));
+  }
+
+  @Test
+  void isStaleDefaultSubstepTrueForDroppedDefaultsAfterDeclaringPhases() {
+    KnownEventSet events = new KnownEventSet();
+    events.declarePhases(List.of("base", "disturb"));
+
+    assertTrue(events.isStaleDefaultSubstep("step"));
+    assertTrue(events.isStaleDefaultSubstep("start"));
+    assertTrue(events.isStaleDefaultSubstep("end"));
+  }
+
+  @Test
+  void isStaleDefaultSubstepFalseForDeclaredPhaseNames() {
+    KnownEventSet events = new KnownEventSet();
+    events.declarePhases(List.of("base", "disturb"));
+
+    assertFalse(events.isStaleDefaultSubstep("base"));
+    assertFalse(events.isStaleDefaultSubstep("disturb"));
+  }
+
+  @Test
   void combineKeepsTheDeclaredPhasesFromEitherSide() {
     KnownEventSet withPhases = new KnownEventSet();
     withPhases.declarePhases(List.of("base", "disturbance"));

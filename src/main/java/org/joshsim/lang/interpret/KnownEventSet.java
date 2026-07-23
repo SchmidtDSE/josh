@@ -222,6 +222,26 @@ public class KnownEventSet {
   }
 
   /**
+   * Determine whether a candidate is a default substep name left over from before this program
+   * declared its own phases.
+   *
+   * <p>Once a {@code start phases ... end phases} block replaces the default substep order,
+   * {@code start}/{@code step}/{@code end} are no longer valid trailing event segments. Without
+   * this check, a handler name like {@code value.step} written before the migration would
+   * silently fold {@code "step"} into the attribute name instead of failing, since
+   * {@link #isEventName(String)} simply returns false for it like any other non-event segment.
+   * This lets callers tell that specific, likely-unintentional case apart from a genuine
+   * multi-part attribute name.</p>
+   *
+   * @param candidate The final dot-separated segment of a handler name.
+   * @return True if {@code candidate} is one of {@code start}/{@code step}/{@code end} and this
+   *     program declared custom phases that do not include it.
+   */
+  public boolean isStaleDefaultSubstep(String candidate) {
+    return customSubstepOrder.isPresent() && DEFAULT_SUBSTEP_ORDER.contains(candidate);
+  }
+
+  /**
    * Merge this set with another, producing a new combined set.
    *
    * @param other The set to merge in.
