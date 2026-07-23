@@ -335,6 +335,15 @@ public class JoshFunctionVisitor implements JoshVisitorDelegate {
     String candidateEventName = namePieces[namePieces.length - 1];
     boolean endsWithEventName = isEventName(candidateEventName);
 
+    if (!endsWithEventName
+        && namePieces.length > 1
+        && knownEventSet.isStaleDefaultSubstep(candidateEventName)) {
+      throw new IllegalArgumentException(String.format(
+          "\"%s\" ends with \"%s\", a default substep name, but this program declared its own "
+              + "phases which do not include it. Use one of the declared phases instead: %s.",
+          fullName, candidateEventName, knownEventSet.getSubstepOrder()));
+    }
+
     CompatibleStringJoiner attributeNameJoiner = CompatibilityLayerKeeper
         .get()
         .createStringJoiner(".");

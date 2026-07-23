@@ -167,7 +167,8 @@ public class JoshSimFacadeUtil {
         program.getConverter(),
         program.getPrototypes(),
         externalResourceGetter,
-        new JshcConfigGetter(inputOutputLayer.getInputStrategy(), valueFactory)
+        new JshcConfigGetter(inputOutputLayer.getInputStrategy(), valueFactory),
+        program.getSubstepOrder()
     );
 
     // Inject the main simulation bridge into the program's bridge getter
