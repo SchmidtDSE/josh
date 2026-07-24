@@ -12,6 +12,7 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import org.joshsim.lang.io.SandboxInputGetter;
 import org.joshsim.lang.io.VirtualFile;
@@ -276,6 +277,110 @@ class JoshImportPreprocessorTest {
 
     assertTrue(result.hasErrors());
     assertTrue(result.getErrors().get(0).getMessage().contains("missing.josh"));
+  }
+
+  @Test
+  void listImportsReturnsEmptyForProgramWithoutImports() {
+    JoshImportPreprocessor preprocessor = preprocessorFor(Map.of());
+
+    ImportsResult result = preprocessor.listImports("main.josh", ENTITY_A);
+
+    assertFalse(result.hasErrors());
+    assertTrue(result.getImports().orElseThrow().isEmpty());
+  }
+
+  @Test
+  void listImportsRecordsSingleImportWithLiteralAndResolvedPath() {
+    JoshImportPreprocessor preprocessor = preprocessorFor(Map.of("b.josh", ENTITY_B));
+    String entry = ENTITY_A + " import \"b.josh\"";
+
+    ImportsResult result = preprocessor.listImports("main.josh", entry);
+
+    assertFalse(result.hasErrors(), "should list: " + result.getErrors());
+    List<ImportRecord> imports = result.getImports().orElseThrow();
+    assertEquals(1, imports.size());
+    ImportRecord record = imports.get(0);
+    assertEquals("b.josh", record.getPath());
+    assertEquals("b.josh", record.getResolvedPath());
+    assertEquals("main.josh", record.getSourceFile());
+  }
+
+  @Test
+  void listImportsWalksNestedImportsTransitively() {
+    JoshImportPreprocessor preprocessor = preprocessorFor(Map.of(
+        "sub/b.josh", ENTITY_B + " import \"c.josh\"",
+        "sub/c.josh", "start organism C height.init = 3 m end organism"
+    ));
+    String entry = ENTITY_A + " import \"sub/b.josh\"";
+
+    ImportsResult result = preprocessor.listImports("main.josh", entry);
+
+    assertFalse(result.hasErrors(), "should list: " + result.getErrors());
+    List<ImportRecord> imports = result.getImports().orElseThrow();
+    assertEquals(2, imports.size());
+    assertEquals("sub/b.josh", imports.get(0).getResolvedPath());
+    assertEquals("main.josh", imports.get(0).getSourceFile());
+    assertEquals("sub/c.josh", imports.get(1).getResolvedPath());
+    assertEquals("sub/b.josh", imports.get(1).getSourceFile());
+  }
+
+  @Test
+  void listImportsRecordsLineNumberWithinSourceFile() {
+    JoshImportPreprocessor preprocessor = preprocessorFor(Map.of("b.josh", ENTITY_B));
+    String entry = "start organism A\n  height.init = 1 m\nend organism\nimport \"b.josh\"\n";
+
+    ImportsResult result = preprocessor.listImports("main.josh", entry);
+
+    assertFalse(result.hasErrors(), "should list: " + result.getErrors());
+    List<ImportRecord> imports = result.getImports().orElseThrow();
+    assertEquals(1, imports.size());
+    assertEquals(4, imports.get(0).getLine());
+  }
+
+  @Test
+  void listImportsDoesNotDeduplicateDiamondImports() {
+    JoshImportPreprocessor preprocessor = preprocessorFor(Map.of(
+        "b.josh", ENTITY_B + " import \"c.josh\"",
+        "d.josh", "start organism D height.init = 4 m end organism import \"c.josh\"",
+        "c.josh", "start organism C height.init = 3 m end organism"
+    ));
+    String entry = ENTITY_A + " import \"b.josh\" import \"d.josh\"";
+
+    ImportsResult result = preprocessor.listImports("main.josh", entry);
+
+    assertFalse(result.hasErrors(), "should list: " + result.getErrors());
+    List<ImportRecord> imports = result.getImports().orElseThrow();
+    // b.josh, c.josh (via b), d.josh, c.josh (via d) — c.josh appears twice, not deduplicated.
+    assertEquals(4, imports.size());
+    long countC = imports.stream()
+        .filter(r -> r.getResolvedPath().equals("c.josh"))
+        .count();
+    assertEquals(2, countC);
+  }
+
+  @Test
+  void listImportsReportsMissingImportAsError() {
+    JoshImportPreprocessor preprocessor = preprocessorFor(Map.of());
+    String entry = ENTITY_A + " import \"missing.josh\"";
+
+    ImportsResult result = preprocessor.listImports("main.josh", entry);
+
+    assertTrue(result.hasErrors());
+    assertTrue(result.getErrors().get(0).getMessage().contains("missing.josh"));
+    assertTrue(result.getImports().isEmpty());
+  }
+
+  @Test
+  void listImportsReportsCircularImportAsError() {
+    JoshImportPreprocessor preprocessor = preprocessorFor(Map.of(
+        "a.josh", ENTITY_A + " import \"b.josh\"",
+        "b.josh", ENTITY_B + " import \"a.josh\""
+    ));
+
+    ImportsResult result = preprocessor.listImports("a.josh", ENTITY_A + " import \"b.josh\"");
+
+    assertTrue(result.hasErrors());
+    assertTrue(result.getErrors().get(0).getMessage().contains("Circular import"));
   }
 
 }

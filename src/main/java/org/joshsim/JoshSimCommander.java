@@ -19,6 +19,7 @@ import org.joshsim.command.BatchRemoteCommand;
 import org.joshsim.command.DiscoverConfigCommand;
 import org.joshsim.command.FlattenCommand;
 import org.joshsim.command.InspectExportsCommand;
+import org.joshsim.command.InspectImportsCommand;
 import org.joshsim.command.InspectJshdCommand;
 import org.joshsim.command.McpCommand;
 import org.joshsim.command.PollBatchCommand;
@@ -71,6 +72,7 @@ import picocli.CommandLine;
         DiscoverConfigCommand.class,
         InspectJshdCommand.class,
         InspectExportsCommand.class,
+        InspectImportsCommand.class,
         StageToMinioCommand.class,
         StageFromMinioCommand.class,
         BatchRemoteCommand.class,
