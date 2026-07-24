@@ -600,6 +600,27 @@ public interface EventHandlerMachine {
    */
   void pushExternalAtStep(String name);
 
+  /** Resolves an external resource through a legacy implicit raw-index expression. */
+  void pushExternalAtImplicitStep(String name, String expression);
+
+  /** Resolves an external resource at a typed count coordinate on the stack. */
+  void pushExternalAtCoordinate(String name, String unit);
+
+  /** Resolves an external resource at an ISO date string on the stack. */
+  void pushExternalAtIsoTime(String name);
+
+  /** Pushes the first declared external coordinate. */
+  void pushExternalFirstCoordinate(String name, String unit);
+
+  /** Pushes the last declared external coordinate. */
+  void pushExternalLastCoordinate(String name, String unit);
+
+  /** Pushes the number of declared external coordinates. */
+  void pushExternalTimeLength(String name);
+
+  /** Pushes the declared external coordinate-unit label. */
+  void pushExternalTimeUnit(String name);
+
   /**
    * Push a config value onto the stack.
    *

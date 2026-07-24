@@ -12,6 +12,7 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import java.math.BigDecimal;
@@ -20,6 +21,7 @@ import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 import org.joshsim.engine.entity.base.Entity;
+import org.joshsim.engine.entity.base.GeoKey;
 import org.joshsim.engine.entity.base.MutableEntity;
 import org.joshsim.engine.entity.prototype.EntityPrototype;
 import org.joshsim.engine.func.Scope;
@@ -54,6 +56,7 @@ public class SingleThreadEventHandlerMachineTest {
   @Mock(lenient = true) private EngineValue mockEntityValue;
   @Mock(lenient = true) private EngineGeometry mockGeometry;
   @Mock(lenient = true) private Entity mockEntity;
+  @Mock(lenient = true) private GeoKey mockGeoKey;
   @Mock(lenient = true) private MutableEntity mockMutableEntity;
   @Mock(lenient = true) private Query mockQuery;
   @Mock(lenient = true) private Distribution mockDistribution;
@@ -955,6 +958,27 @@ public class SingleThreadEventHandlerMachineTest {
     machine.end();
     assertEquals(100L, machine.getResult().getAsInt());
     assertEquals(targetUnits, machine.getResult().getUnits());
+  }
+
+  @Test
+  void externalAtCoordinate_convertsThroughTheDeclaredClauseUnit() {
+    EngineValue coordinate = factory.build(2L, Units.of("years"));
+    EngineValue clauseCoordinate = factory.build(2L, Units.of("year"));
+    EngineValue externalValue = factory.build(14L, Units.of("mm"));
+    when(mockScope.get("here")).thenReturn(mockEntityValue);
+    when(mockEntityValue.getAsEntity()).thenReturn(mockEntity);
+    when(mockEntity.getKey()).thenReturn(Optional.of(mockGeoKey));
+    when(mockBridge.convert(coordinate, Units.of("year"))).thenReturn(clauseCoordinate);
+    when(mockBridge.getExternalAtCoordinate(mockGeoKey, "rainfall", clauseCoordinate))
+        .thenReturn(externalValue);
+
+    machine.push(coordinate);
+    machine.pushExternalAtCoordinate("rainfall", "year");
+    machine.end();
+
+    verify(mockBridge).convert(coordinate, Units.of("year"));
+    verify(mockBridge).getExternalAtCoordinate(mockGeoKey, "rainfall", clauseCoordinate);
+    assertEquals(externalValue, machine.getResult());
   }
 
   @Test

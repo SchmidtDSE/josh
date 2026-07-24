@@ -50,7 +50,7 @@ public class JoshExternalVisitor implements JoshVisitorDelegate {
     String name = ctx.name.getText();
     EventHandlerAction action = (machine) -> {
       machine.push(valueFactory.build(machine.getCurrentTimestep(), Units.of("count")));
-      machine.pushExternalAtStep(name);
+      machine.pushExternalAtImplicitStep(name, "current simulation timestep");
       return machine;
     };
     return new ActionFragment(action);
@@ -71,10 +71,73 @@ public class JoshExternalVisitor implements JoshVisitorDelegate {
     EventHandlerAction stepAction = ctx.step.accept(parent).getCurrentAction();
     EventHandlerAction action = (machine) -> {
       stepAction.apply(machine);
-      machine.pushExternalAtStep(name);
+      machine.pushExternalAtImplicitStep(name, ctx.step.getText());
       return machine;
     };
     return new ActionFragment(action);
+  }
+
+  /** Parses an external read at an explicit unit coordinate or ISO calendar date. */
+  public JoshFragment visitExternalValueAtCoordinate(
+      JoshLangParser.ExternalValueAtCoordinateContext ctx) {
+    String name = ctx.name.getText();
+    String unit = ctx.unit.getText();
+    EventHandlerAction coordinateAction = ctx.coordinate.accept(parent).getCurrentAction();
+    EventHandlerAction action = (machine) -> {
+      coordinateAction.apply(machine);
+      if (unit.equals("time")) {
+        machine.pushExternalAtIsoTime(name);
+      } else if (unit.equals("index")) {
+        machine.pushExternalAtStep(name);
+      } else {
+        machine.pushExternalAtCoordinate(name, unit);
+      }
+      return machine;
+    };
+    return new ActionFragment(action);
+  }
+
+  /** Parses the first declared coordinate of an external temporal axis. */
+  public JoshFragment visitExternalFirstCoordinate(
+      JoshLangParser.ExternalFirstCoordinateContext ctx) {
+    return externalMetadataAction(
+        machine -> {
+          machine.pushExternalFirstCoordinate(ctx.name.getText(), ctx.unit.getText());
+          return machine;
+        });
+  }
+
+  /** Parses the last declared coordinate of an external temporal axis. */
+  public JoshFragment visitExternalLastCoordinate(
+      JoshLangParser.ExternalLastCoordinateContext ctx) {
+    return externalMetadataAction(
+        machine -> {
+          machine.pushExternalLastCoordinate(ctx.name.getText(), ctx.unit.getText());
+          return machine;
+        });
+  }
+
+  /** Parses the declared temporal-axis length of an external resource. */
+  public JoshFragment visitExternalTimeLength(JoshLangParser.ExternalTimeLengthContext ctx) {
+    return externalMetadataAction(machine -> {
+      machine.pushExternalTimeLength(ctx.name.getText());
+      return machine;
+    });
+  }
+
+  /** Parses the declared coordinate-unit label of an external resource. */
+  public JoshFragment visitExternalTimeUnit(JoshLangParser.ExternalTimeUnitContext ctx) {
+    return externalMetadataAction(machine -> {
+      machine.pushExternalTimeUnit(ctx.name.getText());
+      return machine;
+    });
+  }
+
+  private JoshFragment externalMetadataAction(EventHandlerAction action) {
+    return new ActionFragment(machine -> {
+      action.apply(machine);
+      return machine;
+    });
   }
 
 }

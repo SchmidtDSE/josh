@@ -33,4 +33,9 @@ public class OutputOptions {
       System.err.println(message);
     }
   }
+
+  /** Prints a warning through the normal diagnostic output route. */
+  public void printWarning(String message) {
+    printError("Warning: " + message);
+  }
 }

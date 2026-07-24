@@ -8,6 +8,10 @@ package org.joshsim.precompute;
 
 import java.math.BigDecimal;
 import java.nio.ByteBuffer;
+import java.nio.charset.StandardCharsets;
+import java.time.LocalDate;
+import java.time.Period;
+import java.util.Optional;
 import org.joshsim.engine.geometry.PatchBuilderExtents;
 import org.joshsim.engine.geometry.PatchBuilderExtentsBuilder;
 import org.joshsim.engine.value.converter.Units;
@@ -28,7 +32,8 @@ import org.joshsim.engine.value.engine.ValueSupportFactory;
  */
 public class JshdUtil {
 
-  private static final int JSHD_VERSION = 1;
+  private static final int JSHD_VERSION = 2;
+  private static final int LEGACY_JSHD_VERSION = 1;
 
   /**
    * Load a DoublePrecomputedGrid from the given bytes serialization.
@@ -49,7 +54,7 @@ public class JshdUtil {
 
     // Read version
     int version = buffer.getInt();
-    if (version != JSHD_VERSION) {
+    if (version != LEGACY_JSHD_VERSION && version != JSHD_VERSION) {
       throw new IllegalArgumentException("Unsupported JSHD version: " + version);
     }
 
@@ -67,6 +72,9 @@ public class JshdUtil {
     int timesteps = (int) (maxTimestep - minTimestep + 1);
 
     readUnitsStr(buffer, gridBuilder);
+    if (version == JSHD_VERSION) {
+      gridBuilder.setTimeAxis(readTimeAxis(buffer));
+    }
 
     // Read grid data
     double[][][] output = new double[timesteps][height][width];
@@ -113,7 +121,9 @@ public class JshdUtil {
     }
 
     // Calculate buffer size
-    int headerSize = Integer.BYTES + (6 * Long.BYTES) + Integer.BYTES + unitsBytes.length;
+    byte[] timeAxisBytes = serializeTimeAxis(target.getTimeAxis());
+    int headerSize = Integer.BYTES + (6 * Long.BYTES) + Integer.BYTES + unitsBytes.length
+        + timeAxisBytes.length;
     int bodySize = width * height * timesteps * Double.BYTES;
     int bufferSize = headerSize + bodySize;
     ByteBuffer buffer = ByteBuffer.allocate(bufferSize);
@@ -132,6 +142,7 @@ public class JshdUtil {
     // Write units
     buffer.putInt(unitsBytes.length);
     buffer.put(unitsBytes);
+    buffer.put(timeAxisBytes);
 
     // Write grid data
     long maxTimestep = target.getMaxTimestep();
@@ -164,8 +175,75 @@ public class JshdUtil {
     }
     byte[] unitsBytes = new byte[unitsLength];
     buffer.get(unitsBytes);
-    String unitsStr = new String(unitsBytes);
+    String unitsStr = new String(unitsBytes, StandardCharsets.UTF_8);
     Units units = Units.of(unitsStr);
     builder.setUnits(units);
+  }
+
+  private static byte[] serializeTimeAxis(Optional<TimeAxis> timeAxis) {
+    if (timeAxis.isEmpty()) {
+      return new byte[] {0};
+    }
+
+    TimeAxis axis = timeAxis.get();
+    byte[] coordinateName = axis.getCoordinateName().getBytes(StandardCharsets.UTF_8);
+    byte[] first = axis.getType() == TimeAxis.Type.COUNT
+        ? axis.getCountStart().toPlainString().getBytes(StandardCharsets.UTF_8)
+        : axis.getIsoStart().toString().getBytes(StandardCharsets.UTF_8);
+    byte[] increment = axis.getType() == TimeAxis.Type.COUNT
+        ? axis.getCountIncrement().toPlainString().getBytes(StandardCharsets.UTF_8)
+        : axis.getIsoInterval().toString().getBytes(StandardCharsets.UTF_8);
+    byte[] unit = axis.getType() == TimeAxis.Type.COUNT
+        ? axis.getCountUnit().getBytes(StandardCharsets.UTF_8) : new byte[0];
+    int size = 1 + Integer.BYTES * 6 + coordinateName.length + first.length + increment.length
+        + unit.length + Long.BYTES;
+    ByteBuffer buffer = ByteBuffer.allocate(size);
+    buffer.put((byte) 1);
+    buffer.putInt(axis.getType().ordinal());
+    buffer.putInt(axis.getKind().ordinal());
+    putBytes(buffer, coordinateName);
+    putBytes(buffer, unit);
+    putBytes(buffer, first);
+    putBytes(buffer, increment);
+    buffer.putLong(axis.getCount());
+    return buffer.array();
+  }
+
+  private static Optional<TimeAxis> readTimeAxis(ByteBuffer buffer) {
+    if (buffer.get() == 0) {
+      return Optional.empty();
+    }
+    TimeAxis.Type type = TimeAxis.Type.values()[buffer.getInt()];
+    TimeAxis.Kind kind = TimeAxis.Kind.values()[buffer.getInt()];
+    String coordinateName = readBytes(buffer);
+    String unit = readBytes(buffer);
+    String first = readBytes(buffer);
+    String increment = readBytes(buffer);
+    long count = buffer.getLong();
+    if (type == TimeAxis.Type.COUNT) {
+      return Optional.of(kind == TimeAxis.Kind.INSTANT
+          ? TimeAxis.countInstant(coordinateName, unit, new BigDecimal(first))
+          : TimeAxis.countRange(coordinateName, unit, new BigDecimal(first),
+              new BigDecimal(increment), count));
+    }
+    return Optional.of(kind == TimeAxis.Kind.INSTANT
+        ? TimeAxis.isoInstant(coordinateName, LocalDate.parse(first))
+        : TimeAxis.isoRange(
+            coordinateName, LocalDate.parse(first), Period.parse(increment), count));
+  }
+
+  private static void putBytes(ByteBuffer buffer, byte[] bytes) {
+    buffer.putInt(bytes.length);
+    buffer.put(bytes);
+  }
+
+  private static String readBytes(ByteBuffer buffer) {
+    int length = buffer.getInt();
+    if (length < 0 || length > buffer.remaining()) {
+      throw new IllegalArgumentException("Invalid JSHD temporal metadata string length");
+    }
+    byte[] bytes = new byte[length];
+    buffer.get(bytes);
+    return new String(bytes, StandardCharsets.UTF_8);
   }
 }

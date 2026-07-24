@@ -19,6 +19,7 @@ import org.joshsim.engine.geometry.EngineGeometryFactory;
 import org.joshsim.engine.simulation.Replicate;
 import org.joshsim.engine.value.converter.Converter;
 import org.joshsim.engine.value.engine.ValueSupportFactory;
+import org.joshsim.util.SimulationWarningReporter;
 
 
 /**
@@ -57,6 +58,17 @@ public class QueryCacheEngineBridge extends MinimalEngineBridge {
         externalResourceGetter,
         configGetter
     );
+    cachedPatchesByGeometry = new ConcurrentHashMap<>();
+  }
+
+  /** Constructs a caching bridge with a run-scoped warning reporter. */
+  public QueryCacheEngineBridge(ValueSupportFactory valueFactory,
+        EngineGeometryFactory geometryFactory, MutableEntity simulation, Converter converter,
+        EntityPrototypeStore prototypeStore, ExternalResourceGetter externalResourceGetter,
+        ConfigGetter configGetter, List<String> substepOrder,
+        SimulationWarningReporter warningReporter) {
+    super(valueFactory, geometryFactory, simulation, converter, prototypeStore,
+        externalResourceGetter, configGetter, substepOrder, warningReporter);
     cachedPatchesByGeometry = new ConcurrentHashMap<>();
   }
 

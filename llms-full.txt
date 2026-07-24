@@ -1073,3 +1073,16 @@ Following keywords are reserved and should not be used for user-defined entities
 
  - [Additional documentation](https://www.joshsim.org/llms.txt)
  - [Latest Josh jar](https://www.joshsim.org/dist/main/joshsim-fat.jar)
+# Explicit Simulation Time and JSHD Time Axes
+
+Simulation loop position, optional ISO clock, and external-data coordinates are separate. The
+default count clock preserves `steps.low` / `steps.high`; `meta.stepCount` is zero-based and the
+`meta.year` fallback is the raw timestep. ISO mode is opt-in through `time.type = "ISO"` with
+date-only `time.low`, `time.high`, and positive `time.interval`; it exposes `meta.time` without
+changing `meta.year`.
+
+JSHD v2 may declare exact COUNT or ISO coordinates. Read them with `external X at <unit> expr` or
+`external X at time expr`; use `at index` for explicit raw indexing. JSHD v1 is timeless and only
+supports index access. No CF calendar interpretation, resampling, nearest-neighbor lookup, or
+annual repetition occurs. Bare and legacy implicit index reads warn once per resource. Unit aliases
+and conversions must support both expression-to-clause and clause-to-axis conversions.

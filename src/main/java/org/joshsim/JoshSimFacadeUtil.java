@@ -33,6 +33,7 @@ import org.joshsim.lang.parse.JoshParser;
 import org.joshsim.lang.parse.ParseResult;
 import org.joshsim.lang.parse.PreprocessResult;
 import org.joshsim.precompute.JshdExternalGetter;
+import org.joshsim.util.SimulationWarningReporter;
 
 
 /**
@@ -130,7 +131,8 @@ public class JoshSimFacadeUtil {
         simulationName,
         callback,
         serialPatches,
-        outputSteps
+        outputSteps,
+        SimulationWarningReporter.noOp()
     );
   }
 
@@ -157,6 +159,17 @@ public class JoshSimFacadeUtil {
         ExternalResourceGetter externalResourceGetter,
         JoshProgram program, String simulationName, SimulationStepCallback callback,
         boolean serialPatches, Optional<Set<Integer>> outputSteps) {
+    runSimulation(valueFactory, geometryFactory, inputOutputLayer, externalResourceGetter, program,
+        simulationName, callback, serialPatches, outputSteps, SimulationWarningReporter.noOp());
+  }
+
+  /** Runs a simulation with run-scoped warnings routed by the caller. */
+  public static void runSimulation(ValueSupportFactory valueFactory,
+        EngineGeometryFactory geometryFactory, InputOutputLayer inputOutputLayer,
+        ExternalResourceGetter externalResourceGetter,
+        JoshProgram program, String simulationName, SimulationStepCallback callback,
+        boolean serialPatches, Optional<Set<Integer>> outputSteps,
+        SimulationWarningReporter warningReporter) {
 
     MutableEntity simEntityRaw = program.getSimulations().getProtoype(simulationName).build();
     MutableEntity simEntity = new ShadowingEntity(valueFactory, simEntityRaw, simEntityRaw);
@@ -168,7 +181,8 @@ public class JoshSimFacadeUtil {
         program.getPrototypes(),
         externalResourceGetter,
         new JshcConfigGetter(inputOutputLayer.getInputStrategy(), valueFactory),
-        program.getSubstepOrder()
+        program.getSubstepOrder(),
+        warningReporter
     );
 
     // Inject the main simulation bridge into the program's bridge getter

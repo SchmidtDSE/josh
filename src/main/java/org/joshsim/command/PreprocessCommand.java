@@ -114,6 +114,28 @@ public class PreprocessCommand implements Callable<Integer> {
   )
   private boolean parallel;
 
+  @Option(names = "--time-type", description = "Declared JSHD time axis type: count or ISO",
+      defaultValue = "count")
+  private String timeType;
+
+  @Option(names = "--time-start", description = "Declared count coordinate or ISO start date")
+  private String timeStart;
+
+  @Option(names = "--time-unit", description = "Declared count-axis unit")
+  private String timeUnit;
+
+  @Option(names = "--time-count", description = "Number of declared temporal coordinates")
+  private String timeCount;
+
+  @Option(names = "--time-increment", description = "Count-axis coordinate increment")
+  private String timeIncrement;
+
+  @Option(names = "--time-interval", description = "ISO-8601 date period, for example P1M")
+  private String timeInterval;
+
+  @Option(names = "--time-instant", description = "Single count coordinate or ISO date")
+  private String timeInstant;
+
   @Mixin
   private OutputOptions output = new OutputOptions();
 
@@ -122,7 +144,8 @@ public class PreprocessCommand implements Callable<Integer> {
     try {
       PreprocessUtil.PreprocessOptions options = new PreprocessUtil.PreprocessOptions(
           crsCode, horizCoordName, vertCoordName, timeName,
-          timestep, defaultValue, parallel, amend
+          timestep, defaultValue, parallel, amend, timeType, timeStart, timeUnit, timeCount,
+          timeIncrement, timeInterval, timeInstant
       );
       PreprocessUtil.preprocess(
           scriptFile, simulation, dataFile, variable, unitsStr, outputFile, options, output

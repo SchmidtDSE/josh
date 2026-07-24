@@ -102,6 +102,34 @@ public class JoshParserToMachineVisitor extends JoshLangBaseVisitor<JoshFragment
     return externalVisitor.visitExternalValueAtTime(ctx);
   }
 
+  @Override
+  public JoshFragment visitExternalValueAtCoordinate(
+      JoshLangParser.ExternalValueAtCoordinateContext ctx) {
+    return externalVisitor.visitExternalValueAtCoordinate(ctx);
+  }
+
+  @Override
+  public JoshFragment visitExternalFirstCoordinate(
+      JoshLangParser.ExternalFirstCoordinateContext ctx) {
+    return externalVisitor.visitExternalFirstCoordinate(ctx);
+  }
+
+  @Override
+  public JoshFragment visitExternalLastCoordinate(
+      JoshLangParser.ExternalLastCoordinateContext ctx) {
+    return externalVisitor.visitExternalLastCoordinate(ctx);
+  }
+
+  @Override
+  public JoshFragment visitExternalTimeLength(JoshLangParser.ExternalTimeLengthContext ctx) {
+    return externalVisitor.visitExternalTimeLength(ctx);
+  }
+
+  @Override
+  public JoshFragment visitExternalTimeUnit(JoshLangParser.ExternalTimeUnitContext ctx) {
+    return externalVisitor.visitExternalTimeUnit(ctx);
+  }
+
   public JoshFragment visitConfigValue(JoshLangParser.ConfigValueContext ctx) {
     return configVisitor.visitConfigValue(ctx);
   }

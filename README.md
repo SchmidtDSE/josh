@@ -24,6 +24,31 @@ The easiest way to get started locally is to simply [get yourself a copy of open
 $ java -jar joshsim.jar run simulation.josh
 ```
 
+### Explicit simulation time and external time axes
+
+The default simulation clock is backward-compatible count mode: `steps.low` / `steps.high` define
+the engine timestep range. `meta.stepCount` is the zero-based loop position and `meta.year` remains
+the legacy raw-timestep fallback. For a date-only ISO simulation clock, explicitly declare
+`time.type = "ISO"`, `time.low`, `time.high`, and a positive ISO `time.interval` such as `P1M`.
+In ISO mode, `meta.time` provides the current `YYYY-MM-DD` coordinate; it does not change
+`meta.year`.
+
+Preprocessed JSHD/JSHDZ files can store exact count or ISO external coordinates:
+
+```
+$ java -jar joshsim.jar preprocess simulation.josh Main rainfall.nc rain mm rainfall.jshd \
+    --time-type ISO --time-start 2026-01-01 --time-interval P1M --time-count 900
+```
+
+Use `external rainfall at time meta.time` for ISO data, `external temperature at year forcingYear`
+for typed count coordinates, and `external temperature at index forcingStep` for an intentional raw
+zero-based slice index. Coordinates must match exactly: Josh does not resample, find nearest dates,
+expand annual data, or infer CF calendars. Legacy JSHD v1 files remain index-readable but have no
+declared coordinate metadata. Bare external reads and the legacy `external X at expr` form remain
+supported as raw indexes and issue a once-per-resource warning; migrate them to `at index` or a
+declared coordinate. Count-coordinate units follow normal Josh conversion, so define required unit
+aliases/conversions (for example `years -> year -> yr`).
+
 While COGs, geotiffs, and netCDF files can be provided directly, the preferred approach is to provide a jshd file which preprocesses these geospatial inputs for speed. These jshd files are loaded from the working directory or included with the request:
 
 ```

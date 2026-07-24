@@ -55,6 +55,7 @@ import org.joshsim.util.ReplicateSelection;
 import org.joshsim.util.SharedRandom;
 import org.joshsim.util.SimulationMetadata;
 import org.joshsim.util.SimulationMetadataExtractor;
+import org.joshsim.util.SimulationWarningReporter;
 
 /**
  * Static utility that runs a Josh simulation end-to-end.
@@ -715,7 +716,8 @@ public final class RunUtil {
         simulation,
         stepCallback(progressCalculator, output, lastStep),
         serialPatches,
-        parsedOutputSteps
+        parsedOutputSteps,
+        SimulationWarningReporter.forOutput(output)
     );
   }
 

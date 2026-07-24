@@ -15,6 +15,8 @@ import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.math.BigDecimal;
+import java.time.LocalDate;
+import java.time.Period;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -50,6 +52,7 @@ import org.joshsim.lang.io.InputGetterStrategy;
 import org.joshsim.lang.io.JvmInputOutputLayerBuilder;
 import org.joshsim.precompute.BinaryGridSerializationStrategy;
 import org.joshsim.precompute.DataGridLayer;
+import org.joshsim.precompute.DoublePrecomputedGrid;
 import org.joshsim.precompute.ExtentsTransformer;
 import org.joshsim.precompute.GridCombiner;
 import org.joshsim.precompute.GridSerializationStrategy;
@@ -58,6 +61,7 @@ import org.joshsim.precompute.JshdzExternalGetter;
 import org.joshsim.precompute.MultiFormatExternalGetter;
 import org.joshsim.precompute.PatchKeyConverter;
 import org.joshsim.precompute.StreamToPrecomputedGridUtil;
+import org.joshsim.precompute.TimeAxis;
 import org.joshsim.precompute.XzGridSerializationStrategy;
 import org.joshsim.util.OutputOptions;
 import org.opengis.referencing.crs.CoordinateReferenceSystem;
@@ -87,6 +91,13 @@ public class PreprocessUtil {
     private final String defaultValue;
     private final boolean parallel;
     private final boolean amend;
+    private final String timeType;
+    private final String timeStart;
+    private final String timeUnit;
+    private final String timeCount;
+    private final String timeIncrement;
+    private final String timeInterval;
+    private final String timeInstant;
 
     /**
      * Constructs PreprocessOptions with all parameters.
@@ -102,6 +113,17 @@ public class PreprocessUtil {
      */
     public PreprocessOptions(String crsCode, String horizCoordName, String vertCoordName,
         String timeName, String timestep, String defaultValue, boolean parallel, boolean amend) {
+      this(crsCode, horizCoordName, vertCoordName, timeName, timestep, defaultValue, parallel,
+          amend, "count", "", "", "", "", "", "");
+    }
+
+    /**
+     * Constructs options including an optional declared JSHD time axis.
+     */
+    public PreprocessOptions(String crsCode, String horizCoordName, String vertCoordName,
+        String timeName, String timestep, String defaultValue, boolean parallel, boolean amend,
+        String timeType, String timeStart, String timeUnit, String timeCount,
+        String timeIncrement, String timeInterval, String timeInstant) {
       this.crsCode = crsCode;
       this.horizCoordName = horizCoordName;
       this.vertCoordName = vertCoordName;
@@ -110,6 +132,13 @@ public class PreprocessUtil {
       this.defaultValue = defaultValue;
       this.parallel = parallel;
       this.amend = amend;
+      this.timeType = timeType == null || timeType.isBlank() ? "count" : timeType;
+      this.timeStart = timeStart == null ? "" : timeStart;
+      this.timeUnit = timeUnit == null ? "" : timeUnit;
+      this.timeCount = timeCount == null ? "" : timeCount;
+      this.timeIncrement = timeIncrement == null ? "" : timeIncrement;
+      this.timeInterval = timeInterval == null ? "" : timeInterval;
+      this.timeInstant = timeInstant == null ? "" : timeInstant;
     }
 
     /**
@@ -149,6 +178,34 @@ public class PreprocessUtil {
 
     public boolean isAmend() {
       return amend;
+    }
+
+    public String getTimeType() {
+      return timeType;
+    }
+
+    public String getTimeStart() {
+      return timeStart;
+    }
+
+    public String getTimeUnit() {
+      return timeUnit;
+    }
+
+    public String getTimeCount() {
+      return timeCount;
+    }
+
+    public String getTimeIncrement() {
+      return timeIncrement;
+    }
+
+    public String getTimeInterval() {
+      return timeInterval;
+    }
+
+    public String getTimeInstant() {
+      return timeInstant;
     }
   }
 
@@ -328,6 +385,14 @@ public class PreprocessUtil {
         parsedDefaultValue
     );
 
+    Optional<TimeAxis> declaredTimeAxis = buildTimeAxis(options, startTimestep, endTimestep);
+    if (declaredTimeAxis.isPresent()) {
+      if (!(grid instanceof DoublePrecomputedGrid)) {
+        throw new IllegalStateException("Temporal metadata requires a DoublePrecomputedGrid");
+      }
+      grid = ((DoublePrecomputedGrid) grid).withTimeAxis(declaredTimeAxis.get());
+    }
+
     boolean useCompression = outputFile.getName().endsWith(".jshdz");
 
     // If amending, combine with existing grid
@@ -338,8 +403,15 @@ public class PreprocessUtil {
           : new BinaryGridSerializationStrategy(valueFactory);
       try (FileInputStream inputStream = new FileInputStream(outputFile)) {
         DataGridLayer existingGrid = deserializer.deserialize(inputStream);
+        Optional<TimeAxis> mergedAxis = composeAmendedTimeAxis(existingGrid, grid);
         GridCombiner combiner = new GridCombiner(valueFactory, geometryFactory);
         finalGrid = combiner.combine(existingGrid, grid);
+        if (mergedAxis.isPresent()) {
+          if (!(finalGrid instanceof DoublePrecomputedGrid)) {
+            throw new IllegalStateException("Temporal metadata requires a DoublePrecomputedGrid");
+          }
+          finalGrid = ((DoublePrecomputedGrid) finalGrid).withTimeAxis(mergedAxis.get());
+        }
       } catch (IOException e) {
         throw new IOException("Error reading existing grid file: " + e.getMessage(), e);
       }
@@ -363,6 +435,122 @@ public class PreprocessUtil {
 
   private static boolean unitsSupported(String unitsStr) {
     return unitsStr.equals("m") || unitsStr.equals("meter") || unitsStr.equals("meters");
+  }
+
+  private static Optional<TimeAxis> composeAmendedTimeAxis(
+      DataGridLayer existing, DataGridLayer added) {
+    Optional<TimeAxis> existingAxis = existing instanceof DoublePrecomputedGrid
+        ? ((DoublePrecomputedGrid) existing).getTimeAxis() : Optional.empty();
+    Optional<TimeAxis> addedAxis = added instanceof DoublePrecomputedGrid
+        ? ((DoublePrecomputedGrid) added).getTimeAxis() : Optional.empty();
+    if (existingAxis.isEmpty() && addedAxis.isEmpty()) {
+      return Optional.empty();
+    }
+    if (existingAxis.isEmpty() || addedAxis.isEmpty()) {
+      throw new IllegalArgumentException(
+          "Cannot amend temporal metadata onto a timeless JSHD or combine it with timeless data");
+    }
+    if (existing.getMaxTimestep() >= added.getMinTimestep()) {
+      throw new IllegalArgumentException(
+          "Amended temporal grids must not overlap in timestep slices");
+    }
+    if (existing.getMaxTimestep() + 1 != added.getMinTimestep()) {
+      throw new IllegalArgumentException(
+          "Amended temporal grids must be exactly contiguous in timestep slices");
+    }
+    TimeAxis merged = existingAxis.get().append(addedAxis.get());
+    long mergedSliceCount = Math.max(existing.getMaxTimestep(), added.getMaxTimestep())
+        - Math.min(existing.getMinTimestep(), added.getMinTimestep()) + 1;
+    if (merged.getCount() != mergedSliceCount) {
+      throw new IllegalArgumentException(
+          "Merged time axis count must equal merged grid slice count");
+    }
+    return Optional.of(merged);
+  }
+
+  private static Optional<TimeAxis> buildTimeAxis(
+      PreprocessOptions options, long startTimestep, long endTimestep) {
+    boolean hasDeclaration = !options.getTimeStart().isBlank()
+        || !options.getTimeUnit().isBlank()
+        || !options.getTimeCount().isBlank()
+        || !options.getTimeInterval().isBlank()
+        || !options.getTimeInstant().isBlank();
+    if (!hasDeclaration) {
+      return Optional.empty();
+    }
+
+    long outputCount = endTimestep - startTimestep + 1;
+    String type = options.getTimeType().toUpperCase();
+    if (type.equals("COUNT")) {
+      return Optional.of(buildCountTimeAxis(options, outputCount));
+    }
+    if (type.equals("ISO")) {
+      return Optional.of(buildIsoTimeAxis(options, outputCount));
+    }
+    throw new IllegalArgumentException("Unsupported --time-type: " + options.getTimeType());
+  }
+
+  private static TimeAxis buildCountTimeAxis(PreprocessOptions options, long outputCount) {
+    requireEmpty(
+        options.getTimeInterval(), "--time-interval is only valid for ISO time metadata");
+    if (!options.getTimeInstant().isBlank()) {
+      requireEmpty(options.getTimeStart(), "--time-start cannot accompany --time-instant");
+      requireEmpty(options.getTimeCount(), "--time-count cannot accompany --time-instant");
+      requirePresent(options.getTimeUnit(), "--time-unit is required with --time-instant");
+      if (outputCount != 1) {
+        throw new IllegalArgumentException(
+            "A count time instant requires exactly one output slice");
+      }
+      return TimeAxis.countInstant("time", options.getTimeUnit(),
+          new BigDecimal(options.getTimeInstant()));
+    }
+    requirePresent(options.getTimeStart(), "--time-start is required for count time metadata");
+    requirePresent(options.getTimeUnit(), "--time-unit is required for count time metadata");
+    requirePresent(options.getTimeCount(), "--time-count is required for count time metadata");
+    long declaredCount = Long.parseLong(options.getTimeCount());
+    if (declaredCount != outputCount) {
+      throw new IllegalArgumentException("--time-count must equal the number of output slices");
+    }
+    BigDecimal increment = options.getTimeIncrement().isBlank()
+        ? BigDecimal.ONE : new BigDecimal(options.getTimeIncrement());
+    return TimeAxis.countRange("time", options.getTimeUnit(),
+        new BigDecimal(options.getTimeStart()), increment, declaredCount);
+  }
+
+  private static TimeAxis buildIsoTimeAxis(PreprocessOptions options, long outputCount) {
+    if (!options.getTimeUnit().isBlank() || !options.getTimeIncrement().isBlank()) {
+      throw new IllegalArgumentException(
+          "ISO time metadata uses --time-interval rather than --time-unit or --time-increment");
+    }
+    if (!options.getTimeInstant().isBlank()) {
+      requireEmpty(options.getTimeStart(), "--time-start cannot accompany --time-instant");
+      requireEmpty(options.getTimeCount(), "--time-count cannot accompany --time-instant");
+      if (outputCount != 1) {
+        throw new IllegalArgumentException("An ISO time instant requires exactly one output slice");
+      }
+      return TimeAxis.isoInstant("time", LocalDate.parse(options.getTimeInstant()));
+    }
+    requirePresent(options.getTimeStart(), "--time-start is required for ISO time metadata");
+    requirePresent(options.getTimeInterval(), "--time-interval is required for ISO time metadata");
+    requirePresent(options.getTimeCount(), "--time-count is required for ISO time metadata");
+    long declaredCount = Long.parseLong(options.getTimeCount());
+    if (declaredCount != outputCount) {
+      throw new IllegalArgumentException("--time-count must equal the number of output slices");
+    }
+    return TimeAxis.isoRange("time", LocalDate.parse(options.getTimeStart()),
+        Period.parse(options.getTimeInterval()), declaredCount);
+  }
+
+  private static void requirePresent(String value, String message) {
+    if (value.isBlank()) {
+      throw new IllegalArgumentException(message);
+    }
+  }
+
+  private static void requireEmpty(String value, String message) {
+    if (!value.isBlank()) {
+      throw new IllegalArgumentException(message);
+    }
   }
 
   /**
