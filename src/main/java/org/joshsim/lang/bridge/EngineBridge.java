@@ -6,6 +6,7 @@
 
 package org.joshsim.lang.bridge;
 
+import java.time.LocalDate;
 import java.util.List;
 import java.util.Optional;
 import org.joshsim.engine.entity.base.Entity;
@@ -139,18 +140,9 @@ public interface EngineBridge {
   /**
    * Gets the current ISO calendar coordinate for an ISO-mode simulation.
    *
-   * @return Optional ISO-8601 date string; empty for count-mode simulations.
+   * @return Optional ISO-8601 date; empty for count-mode simulations.
    */
-  default Optional<String> getCurrentIsoTime() {
-    return Optional.empty();
-  }
-
-  /**
-   * Gets the calendar year for an ISO-mode simulation.
-   *
-   * @return Optional year; empty for count-mode simulations.
-   */
-  default Optional<Long> getCurrentIsoYear() {
+  default Optional<LocalDate> getCurrentIsoTime() {
     return Optional.empty();
   }
 
@@ -206,8 +198,18 @@ public interface EngineBridge {
    * @param isoDate Requested ISO-8601 date.
    * @return External value at the exact declared date.
    */
-  default EngineValue getExternalAtIsoTime(GeoKey key, String name, String isoDate) {
+  default EngineValue getExternalAtIsoTime(GeoKey key, String name, LocalDate isoDate) {
     throw new UnsupportedOperationException("ISO external coordinates are not supported");
+  }
+
+  /** Reports a legacy implicit-index external read, if the execution host enables warnings. */
+  default void warnImplicitExternalIndex(String name, String expression) {
+    // Low-level bridge implementations remain usable without an output host.
+  }
+
+  /** Reports use of the built-in raw-timestep {@code meta.year} fallback. */
+  default void warnRawMetaYear(long timestep) {
+    // Low-level bridge implementations remain usable without an output host.
   }
 
   /** Gets the first declared coordinate of an external resource. */

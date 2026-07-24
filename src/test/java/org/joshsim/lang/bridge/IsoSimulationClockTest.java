@@ -9,6 +9,7 @@ package org.joshsim.lang.bridge;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
+import java.time.LocalDate;
 import org.junit.jupiter.api.Test;
 
 
@@ -20,10 +21,9 @@ class IsoSimulationClockTest {
     IsoSimulationClock clock = new IsoSimulationClock("2026-01-01", "2026-03-01", "P1M");
 
     assertEquals(3, clock.getCount());
-    assertEquals("2026-01-01", clock.getAt(0));
-    assertEquals("2026-02-01", clock.getAt(1));
-    assertEquals("2026-03-01", clock.getAt(2));
-    assertEquals(2026, clock.getYearAt(1));
+    assertEquals(LocalDate.of(2026, 1, 1), clock.getAt(0));
+    assertEquals(LocalDate.of(2026, 2, 1), clock.getAt(1));
+    assertEquals(LocalDate.of(2026, 3, 1), clock.getAt(2));
   }
 
   @Test
@@ -42,8 +42,7 @@ class IsoSimulationClockTest {
   void singleStepClockHasCountOne() {
     IsoSimulationClock clock = new IsoSimulationClock("2026-01-01", "2026-01-01", "P1Y");
     assertEquals(1, clock.getCount());
-    assertEquals("2026-01-01", clock.getAt(0));
-    assertEquals(2026, clock.getYearAt(0));
+    assertEquals(LocalDate.of(2026, 1, 1), clock.getAt(0));
   }
 
   @Test
@@ -62,6 +61,6 @@ class IsoSimulationClockTest {
 
     // A valid monthly sequence starting on the first of each month.
     IsoSimulationClock valid = new IsoSimulationClock("2026-01-01", "2026-03-01", "P1M");
-    assertEquals("2026-02-01", valid.getAt(1));
+    assertEquals(LocalDate.of(2026, 2, 1), valid.getAt(1));
   }
 }

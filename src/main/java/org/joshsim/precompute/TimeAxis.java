@@ -129,6 +129,49 @@ public final class TimeAxis {
     return count;
   }
 
+  /**
+   * Combines this axis with its immediately following compatible axis.
+   *
+   * <p>Composition is intentionally strict: temporal metadata represents exact stored
+   * coordinates, not a resampling request. Both operands must therefore have the same coordinate
+   * representation and name, be ranges with the same unit or period, and be exactly contiguous.</p>
+   *
+   * @param following the axis immediately following this one
+   * @return one range axis covering both sequences
+   */
+  public TimeAxis append(TimeAxis following) {
+    Objects.requireNonNull(following);
+    if (type != following.type || kind != Kind.RANGE || following.kind != Kind.RANGE) {
+      throw new IllegalArgumentException("Temporal axes must have the same range type to amend");
+    }
+    if (!coordinateName.equals(following.coordinateName)) {
+      throw new IllegalArgumentException("Temporal axes must use the same coordinate name to amend");
+    }
+    if (type == Type.COUNT) {
+      if (!countUnit.equals(following.countUnit)
+          || countIncrement.compareTo(following.countIncrement) != 0) {
+        throw new IllegalArgumentException("Count temporal axes must have the same unit and increment");
+      }
+      BigDecimal expectedStart = countStart.add(countIncrement.multiply(BigDecimal.valueOf(count)));
+      if (expectedStart.compareTo(following.countStart) != 0) {
+        throw new IllegalArgumentException("Count temporal axes must be exactly contiguous and non-overlapping");
+      }
+      return countRange(coordinateName, countUnit, countStart, countIncrement,
+          Math.addExact(count, following.count));
+    }
+    if (!isoInterval.equals(following.isoInterval)) {
+      throw new IllegalArgumentException("ISO temporal axes must have the same period");
+    }
+    LocalDate expectedStart = isoStart;
+    for (long index = 0; index < count; index++) {
+      expectedStart = expectedStart.plus(isoInterval);
+    }
+    if (!expectedStart.equals(following.isoStart)) {
+      throw new IllegalArgumentException("ISO temporal axes must be exactly contiguous and non-overlapping");
+    }
+    return isoRange(coordinateName, isoStart, isoInterval, Math.addExact(count, following.count));
+  }
+
   /** Resolves an exact numeric coordinate to its zero-based stored index. */
   public long getCountIndex(BigDecimal coordinate) {
     if (type != Type.COUNT) {

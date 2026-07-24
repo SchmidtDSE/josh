@@ -55,6 +55,10 @@ public class ExternalTimeAxisIntegrationTest {
           export.year.step = meta.year
           export.temperature.step = external temperature at year meta.year
         end patch
+
+        start unit year
+          alias years
+        end unit
         """.formatted(csvTarget));
 
     Path jshd = tempDir.resolve("temperature.jshd");
@@ -124,7 +128,8 @@ public class ExternalTimeAxisIntegrationTest {
     Path csv = outDir.resolve("results_0.csv");
     assertTrue(Files.exists(csv));
     RunResult parsed = parseCsv(csv);
-    assertEquals(new TreeSet<>(List.of(2024L, 2025L, 2026L)), parsed.years);
+    // meta.year remains the legacy raw simulation timestep even when the ISO clock is enabled.
+    assertEquals(new TreeSet<>(List.of(0L, 1L, 2L)), parsed.years);
     assertTrue(parsed.temperatures.stream().anyMatch(t -> t > 250.0));
   }
 

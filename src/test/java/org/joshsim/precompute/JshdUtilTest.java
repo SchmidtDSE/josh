@@ -241,6 +241,36 @@ class JshdUtilTest {
   }
 
   @Test
+  void appendsOnlyContiguousCompatibleTemporalRanges() {
+    TimeAxis first = TimeAxis.countRange(
+        "year", "year", BigDecimal.valueOf(2015), BigDecimal.ONE, 2);
+    TimeAxis following = TimeAxis.countRange(
+        "year", "year", BigDecimal.valueOf(2017), BigDecimal.ONE, 2);
+
+    TimeAxis merged = first.append(following);
+
+    assertEquals(4, merged.getCount());
+    assertEquals(3, merged.getCountIndex(BigDecimal.valueOf(2018)));
+    assertThrows(IllegalArgumentException.class, () -> first.append(TimeAxis.countRange(
+        "year", "year", BigDecimal.valueOf(2018), BigDecimal.ONE, 2)));
+    assertThrows(IllegalArgumentException.class, () -> first.append(TimeAxis.countRange(
+        "year", "month", BigDecimal.valueOf(2017), BigDecimal.ONE, 2)));
+  }
+
+  @Test
+  void appendsContiguousIsoRangesUsingCalendarArithmetic() {
+    TimeAxis first = TimeAxis.isoRange(
+        "time", LocalDate.of(2026, 1, 31), Period.ofMonths(1), 2);
+    TimeAxis following = TimeAxis.isoRange(
+        "time", LocalDate.of(2026, 3, 28), Period.ofMonths(1), 2);
+
+    TimeAxis merged = first.append(following);
+
+    assertEquals(4, merged.getCount());
+    assertEquals(3, merged.getIsoIndex(LocalDate.of(2026, 4, 28)));
+  }
+
+  @Test
   void v1JshdLoadsAsTimeless() {
     // Build a v1-format buffer manually (version=1, no temporal metadata block)
     String testUnits = "meters";

@@ -7,6 +7,7 @@
 package org.joshsim.lang.bridge;
 
 import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.util.IdentityHashMap;
 import java.util.Iterator;
 import java.util.List;
@@ -35,6 +36,7 @@ import org.joshsim.engine.value.type.EngineValue;
 import org.joshsim.precompute.DataGridLayer;
 import org.joshsim.precompute.DoublePrecomputedGrid;
 import org.joshsim.precompute.TimeAxis;
+import org.joshsim.util.SimulationWarningReporter;
 
 
 /**
@@ -59,6 +61,7 @@ public class MinimalEngineBridge implements EngineBridge {
   private final ConfigGetter configGetter;
   private final List<String> substepOrder;
   private final Optional<IsoSimulationClock> isoClock;
+  private final SimulationWarningReporter warningReporter;
 
   private Optional<Replicate> replicate;
   private long absoluteStep;
@@ -88,7 +91,7 @@ public class MinimalEngineBridge implements EngineBridge {
         Converter converter, EntityPrototypeStore prototypeStore,
         ExternalResourceGetter externalResourceGetter, ConfigGetter configGetter) {
     this(engineValueFactory, geometryFactory, simulation, converter, prototypeStore,
-        externalResourceGetter, configGetter, DEFAULT_SUBSTEP_ORDER);
+        externalResourceGetter, configGetter, DEFAULT_SUBSTEP_ORDER, SimulationWarningReporter.noOp());
   }
 
   /**
@@ -118,36 +121,50 @@ public class MinimalEngineBridge implements EngineBridge {
     this.configGetter = configGetter;
     this.configData = new ConcurrentHashMap<>();
     this.substepOrder = substepOrder;
+    this.warningReporter = SimulationWarningReporter.noOp();
 
     replicate = Optional.empty();
 
     simulation.startSubstep("constant");
 
-    String timeType = simulation.getAttributeValue("time.type")
-        .map(EngineValue::getAsString).orElse("count");
-    if (timeType.equalsIgnoreCase("ISO")) {
-      IsoSimulationClock clock = new IsoSimulationClock(
-          requiredSimulationString("time.low"), requiredSimulationString("time.high"),
-          requiredSimulationString("time.interval"));
-      isoClock = Optional.of(clock);
-      startStep = engineValueFactory.build(0, Units.of("count"));
-      endStep = engineValueFactory.build(clock.getCount() - 1, Units.of("count"));
-    } else if (timeType.equalsIgnoreCase("count")) {
-      isoClock = Optional.empty();
-      startStep = simulation
-        .getAttributeValue("steps.low")
-        .orElseGet(() -> engineValueFactory.build(DEFAULT_START_STEP, Units.of("count")));
-      endStep = simulation
-        .getAttributeValue("steps.high")
-        .orElseGet(() -> engineValueFactory.build(DEFAULT_END_STEP, Units.of("count")));
-    } else {
-      throw new IllegalArgumentException("Unsupported time.type: " + timeType);
-    }
+    ClockConfiguration clockConfiguration = initializeClock();
+    isoClock = clockConfiguration.isoClock;
+    startStep = clockConfiguration.startStep;
+    endStep = clockConfiguration.endStep;
 
     simulation.endSubstep();
 
     currentStep = engineValueFactory.build(startStep.getAsInt(), Units.of("count"));
 
+    absoluteStep = 0;
+    inStep = false;
+    externalData = new ConcurrentHashMap<>();
+  }
+
+  /** Constructs an EngineBridge with a run-scoped warning reporter. */
+  public MinimalEngineBridge(ValueSupportFactory engineValueFactory,
+        EngineGeometryFactory geometryFactory, MutableEntity simulation,
+        Converter converter, EntityPrototypeStore prototypeStore,
+        ExternalResourceGetter externalResourceGetter, ConfigGetter configGetter,
+        List<String> substepOrder, SimulationWarningReporter warningReporter) {
+    this.engineValueFactory = engineValueFactory;
+    this.geometryFactory = geometryFactory;
+    this.simulation = simulation;
+    this.converter = converter;
+    this.prototypeStore = prototypeStore;
+    this.externalResourceGetter = externalResourceGetter;
+    this.configGetter = configGetter;
+    this.configData = new ConcurrentHashMap<>();
+    this.substepOrder = substepOrder;
+    this.warningReporter = warningReporter;
+    replicate = Optional.empty();
+    simulation.startSubstep("constant");
+    ClockConfiguration clockConfiguration = initializeClock();
+    isoClock = clockConfiguration.isoClock;
+    startStep = clockConfiguration.startStep;
+    endStep = clockConfiguration.endStep;
+    simulation.endSubstep();
+    currentStep = engineValueFactory.build(startStep.getAsInt(), Units.of("count"));
     absoluteStep = 0;
     inStep = false;
     externalData = new ConcurrentHashMap<>();
@@ -198,30 +215,15 @@ public class MinimalEngineBridge implements EngineBridge {
     this.configGetter = configGetter;
     this.configData = new ConcurrentHashMap<>();
     this.substepOrder = substepOrder;
+    this.warningReporter = SimulationWarningReporter.noOp();
     this.replicate = Optional.of(replicate);
 
     simulation.startSubstep("constant");
 
-    String timeType = simulation.getAttributeValue("time.type")
-        .map(EngineValue::getAsString).orElse("count");
-    if (timeType.equalsIgnoreCase("ISO")) {
-      IsoSimulationClock clock = new IsoSimulationClock(
-          requiredSimulationString("time.low"), requiredSimulationString("time.high"),
-          requiredSimulationString("time.interval"));
-      isoClock = Optional.of(clock);
-      startStep = engineValueFactory.build(0, Units.of("count"));
-      endStep = engineValueFactory.build(clock.getCount() - 1, Units.of("count"));
-    } else if (timeType.equalsIgnoreCase("count")) {
-      isoClock = Optional.empty();
-      startStep = simulation
-        .getAttributeValue("steps.low")
-        .orElseGet(() -> engineValueFactory.build(DEFAULT_START_STEP, Units.of("count")));
-      endStep = simulation
-        .getAttributeValue("steps.high")
-        .orElseGet(() -> engineValueFactory.build(DEFAULT_END_STEP, Units.of("count")));
-    } else {
-      throw new IllegalArgumentException("Unsupported time.type: " + timeType);
-    }
+    ClockConfiguration clockConfiguration = initializeClock();
+    isoClock = clockConfiguration.isoClock;
+    startStep = clockConfiguration.startStep;
+    endStep = clockConfiguration.endStep;
 
     simulation.endSubstep();
 
@@ -272,13 +274,8 @@ public class MinimalEngineBridge implements EngineBridge {
   }
 
   @Override
-  public Optional<String> getCurrentIsoTime() {
+  public Optional<LocalDate> getCurrentIsoTime() {
     return isoClock.map(clock -> clock.getAt(absoluteStep));
-  }
-
-  @Override
-  public Optional<Long> getCurrentIsoYear() {
-    return isoClock.map(clock -> clock.getYearAt(absoluteStep));
   }
 
   private String requiredSimulationString(String attributeName) {
@@ -288,11 +285,88 @@ public class MinimalEngineBridge implements EngineBridge {
             attributeName + " is required when time.type is ISO"));
   }
 
+  private ClockConfiguration initializeClock() {
+    String timeType = simulation.getAttributeValue("time.type")
+        .map(EngineValue::getAsString).orElse("count");
+    if (timeType.equalsIgnoreCase("ISO")) {
+      return initializeIsoClock();
+    }
+    if (timeType.equalsIgnoreCase("count")) {
+      return initializeCountClock();
+    }
+    throw new IllegalArgumentException("Unsupported time.type: " + timeType);
+  }
+
+  private ClockConfiguration initializeCountClock() {
+    EngineValue start = simulation.getAttributeValue("steps.low")
+        .orElseGet(() -> engineValueFactory.build(DEFAULT_START_STEP, Units.of("count")));
+    EngineValue end = simulation.getAttributeValue("steps.high")
+        .orElseGet(() -> engineValueFactory.build(DEFAULT_END_STEP, Units.of("count")));
+    return new ClockConfiguration(Optional.empty(), start, end);
+  }
+
+  private ClockConfiguration initializeIsoClock() {
+    IsoSimulationClock clock = new IsoSimulationClock(
+        requiredSimulationString("time.low"), requiredSimulationString("time.high"),
+        requiredSimulationString("time.interval"));
+    return new ClockConfiguration(Optional.of(clock),
+        engineValueFactory.build(0, Units.of("count")),
+        engineValueFactory.build(clock.getCount() - 1, Units.of("count")));
+  }
+
+  private static final class ClockConfiguration {
+    private final Optional<IsoSimulationClock> isoClock;
+    private final EngineValue startStep;
+    private final EngineValue endStep;
+
+    private ClockConfiguration(Optional<IsoSimulationClock> isoClock, EngineValue startStep,
+        EngineValue endStep) {
+      this.isoClock = isoClock;
+      this.startStep = startStep;
+      this.endStep = endStep;
+    }
+  }
+
   @Override
   public EngineValue getExternal(GeoKey key, String name, long step) {
     DataGridLayer layer = externalData.computeIfAbsent(name,
         k -> externalResourceGetter.getResource(name));
     return normalizePercent(layer.getAt(key, step));
+  }
+
+  @Override
+  public void warnImplicitExternalIndex(String name, String expression) {
+    DataGridLayer layer = externalData.computeIfAbsent(name,
+        key -> externalResourceGetter.getResource(name));
+    String detail = "External resource " + name
+        + " has no declared time axis; prefer external " + name + " at index " + expression + ".";
+    if (layer instanceof DoublePrecomputedGrid) {
+      Optional<TimeAxis> axis = ((DoublePrecomputedGrid) layer).getTimeAxis();
+      if (axis.isPresent()) {
+        TimeAxis value = axis.get();
+        String span = value.getType() == TimeAxis.Type.COUNT
+            ? value.getCountStart().toPlainString() + " " + value.getCountUnit() + " through "
+                + value.getCountStart().add(value.getCountIncrement().multiply(
+                    BigDecimal.valueOf(value.getCount() - 1))).toPlainString() + " "
+                + value.getCountUnit()
+            : value.getIsoStart() + " through " + value.getIsoStart().plus(value.getIsoInterval()
+                .multipliedBy(Math.toIntExact(value.getCount() - 1)));
+        detail = "Resource " + name + " declares " + value.getType().name().toLowerCase()
+            + " axis " + value.getCoordinateName() + ": " + span + ", " + value.getCount()
+            + " coordinates. Prefer external " + name + " at index " + expression + ".";
+      }
+    }
+    warningReporter.warnOnce("implicit-external-index:" + name,
+        "external " + name + " at " + expression
+            + " is interpreted as a zero-based JSHD index. " + detail);
+  }
+
+  @Override
+  public void warnRawMetaYear(long timestep) {
+    warningReporter.warnOnce("raw-meta-year",
+        "meta.year is using raw simulation timestep " + timestep + ", not a declared calendar.\n"
+        + "Define time.type = \"ISO\" with time.low, time.high, and time.interval,\n"
+        + "or use an explicit model-owned calendar attribute.");
   }
 
   @Override
@@ -310,7 +384,7 @@ public class MinimalEngineBridge implements EngineBridge {
   }
 
   @Override
-  public EngineValue getExternalAtIsoTime(GeoKey key, String name, String isoDate) {
+  public EngineValue getExternalAtIsoTime(GeoKey key, String name, LocalDate isoDate) {
     DoublePrecomputedGrid grid = getTimedExternalGrid(name);
     TimeAxis axis = grid.getTimeAxis().orElseThrow(() -> new IllegalArgumentException(
         "External resource " + name + " has no declared temporal metadata"));
@@ -318,7 +392,7 @@ public class MinimalEngineBridge implements EngineBridge {
       throw new IllegalArgumentException(
           "External resource " + name + " uses count time; use 'at <unit>' instead");
     }
-    long gridStep = grid.getMinTimestep() + axis.getIsoIndex(java.time.LocalDate.parse(isoDate));
+    long gridStep = grid.getMinTimestep() + axis.getIsoIndex(isoDate);
     return normalizePercent(grid.getAt(key, gridStep));
   }
 

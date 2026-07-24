@@ -70,7 +70,7 @@ class JoshExternalVisitorTest {
     action.apply(mockMachine);
 
     verify(mockMachine).push(stepValue);
-    verify(mockMachine).pushExternalAtStep("externalVar");
+    verify(mockMachine).pushExternalAtImplicitStep("externalVar", "current simulation timestep");
   }
 
   @Test
@@ -86,6 +86,7 @@ class JoshExternalVisitorTest {
     JoshFragment stepFragment = mock(JoshFragment.class);
     EventHandlerAction stepAction = mock(EventHandlerAction.class);
     context.step = stepContext;
+    when(stepContext.getText()).thenReturn("forcingStep");
     when(stepContext.accept(parent)).thenReturn(stepFragment);
     when(stepFragment.getCurrentAction()).thenReturn(stepAction);
 
@@ -100,11 +101,11 @@ class JoshExternalVisitorTest {
     assertNotNull(action);
 
     // The step expression (e.g. a literal, `prior`, or a model attribute) is evaluated first,
-    // pushing its value; pushExternalAtStep then pops it to resolve the external read.
+    // pushing its value; the legacy path then resolves the raw index and emits a warning.
     EventHandlerMachine mockMachine = mock(EventHandlerMachine.class);
     action.apply(mockMachine);
 
     verify(stepAction).apply(mockMachine);
-    verify(mockMachine).pushExternalAtStep("externalVar");
+    verify(mockMachine).pushExternalAtImplicitStep("externalVar", "forcingStep");
   }
 }

@@ -46,14 +46,10 @@ final class IsoSimulationClock {
     return count;
   }
 
-  String getAt(long zeroBasedIndex) {
+  LocalDate getAt(long zeroBasedIndex) {
     if (zeroBasedIndex < 0 || zeroBasedIndex >= count) {
       throw new IllegalArgumentException("ISO simulation time index is out of range: " + zeroBasedIndex);
     }
-    return low.plus(interval.multipliedBy(Math.toIntExact(zeroBasedIndex))).toString();
-  }
-
-  long getYearAt(long zeroBasedIndex) {
-    return LocalDate.parse(getAt(zeroBasedIndex)).getYear();
+    return low.plus(interval.multipliedBy(Math.toIntExact(zeroBasedIndex)));
   }
 }

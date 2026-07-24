@@ -50,7 +50,7 @@ public class JoshExternalVisitor implements JoshVisitorDelegate {
     String name = ctx.name.getText();
     EventHandlerAction action = (machine) -> {
       machine.push(valueFactory.build(machine.getCurrentTimestep(), Units.of("count")));
-      machine.pushExternalAtStep(name);
+      machine.pushExternalAtImplicitStep(name, "current simulation timestep");
       return machine;
     };
     return new ActionFragment(action);
@@ -71,7 +71,7 @@ public class JoshExternalVisitor implements JoshVisitorDelegate {
     EventHandlerAction stepAction = ctx.step.accept(parent).getCurrentAction();
     EventHandlerAction action = (machine) -> {
       stepAction.apply(machine);
-      machine.pushExternalAtStep(name);
+      machine.pushExternalAtImplicitStep(name, ctx.step.getText());
       return machine;
     };
     return new ActionFragment(action);
@@ -87,6 +87,8 @@ public class JoshExternalVisitor implements JoshVisitorDelegate {
       coordinateAction.apply(machine);
       if (unit.equals("time")) {
         machine.pushExternalAtIsoTime(name);
+      } else if (unit.equals("index")) {
+        machine.pushExternalAtStep(name);
       } else {
         machine.pushExternalAtCoordinate(name, unit);
       }

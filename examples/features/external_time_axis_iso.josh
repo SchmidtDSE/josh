@@ -21,6 +21,8 @@ end simulation
 
 start patch Default
   export.time.step = meta.time
+  # meta.year remains the legacy raw timestep (0, 1, 2); use meta.time or a model attribute for
+  # calendar semantics.
   export.year.step = meta.year
   export.temperature.step = external temperature at time meta.time
   export.start.step = first time of external temperature

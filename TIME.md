@@ -1,4 +1,50 @@
-# Calendar / Clock (and Spin-up) Options
+# Explicit Simulation Time and External Time Axes
+
+## Implemented contract
+
+Josh separates the engine loop position, optional ISO simulation clock, and declared JSHD external
+coordinates. `meta.stepCount` is always a zero-based loop counter. Legacy count simulations keep
+their existing `steps.low` / `steps.high` behavior. `meta.year` remains the raw simulation timestep
+fallback in both modes; define a model-owned calendar attribute when calendar-year semantics are
+required.
+
+Use date-only ISO simulation time explicitly:
+
+```josh
+time.type = "ISO"
+time.low = "2026-01-01"
+time.high = "2100-12-01"
+time.interval = "P1M"
+```
+
+Then `meta.time` is an ISO date string. ISO time supports `LocalDate` and positive `Period` values
+such as `P1D`, `P1M`, and `P1Y`; it does not support times of day, time zones, non-Gregorian
+calendars, implicit resampling, or CF calendar conversion.
+
+Preprocess external grids with an explicit declared axis and make exact reads:
+
+```text
+external rainfall at time meta.time
+external temperature at year forcingYear
+external temperature at index forcingStep
+```
+
+Coordinate reads are exact and never use nearest-neighbor matching, repeated-year expansion, or
+index fallbacks. The source `--time-dim` only selects source slice order. It does not inspect or
+translate CF metadata. Legacy JSHD v1 files remain index-readable but cannot serve coordinate or
+metadata queries.
+
+Count-coordinate expressions are converted first to the declared clause unit and then to the JSHD
+axis unit. Define aliases/conversions for every required hop (for example `years -> year -> yr`).
+Bare `external X` and legacy `external X at expr` remain available as raw zero-based index access,
+but emit a once-per-resource migration warning. Use `at index` to make that behavior explicit.
+
+The engine does not own spin-up, spindown, forcing policy, scenarios, or model calendars. Keep
+those policies in model state and explicit model-owned attributes.
+
+---
+
+# Historical Calendar / Clock (and Spin-up) Options
 
 ## The Problem
 

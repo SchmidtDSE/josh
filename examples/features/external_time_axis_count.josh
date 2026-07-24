@@ -26,3 +26,10 @@ start patch Default
   export.nYears.step = length of external temperature
   export.axisUnit.step = unit of external temperature
 end patch
+
+# Typed coordinate reads preserve units. The clause's `year` unit is resolved through this alias
+# before it is converted to the persisted JSHD axis unit.
+start unit year
+  alias years
+  alias yr
+end unit

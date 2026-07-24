@@ -600,6 +600,9 @@ public interface EventHandlerMachine {
    */
   void pushExternalAtStep(String name);
 
+  /** Resolves an external resource through a legacy implicit raw-index expression. */
+  void pushExternalAtImplicitStep(String name, String expression);
+
   /** Resolves an external resource at a typed count coordinate on the stack. */
   void pushExternalAtCoordinate(String name, String unit);
 
