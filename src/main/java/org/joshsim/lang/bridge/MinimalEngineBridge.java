@@ -6,6 +6,7 @@
 
 package org.joshsim.lang.bridge;
 
+import java.math.BigDecimal;
 import java.util.IdentityHashMap;
 import java.util.Iterator;
 import java.util.List;
@@ -32,6 +33,8 @@ import org.joshsim.engine.value.converter.Units;
 import org.joshsim.engine.value.engine.ValueSupportFactory;
 import org.joshsim.engine.value.type.EngineValue;
 import org.joshsim.precompute.DataGridLayer;
+import org.joshsim.precompute.DoublePrecomputedGrid;
+import org.joshsim.precompute.TimeAxis;
 
 
 /**
@@ -55,6 +58,7 @@ public class MinimalEngineBridge implements EngineBridge {
   private final Map<String, Optional<Config>> configData;
   private final ConfigGetter configGetter;
   private final List<String> substepOrder;
+  private final Optional<IsoSimulationClock> isoClock;
 
   private Optional<Replicate> replicate;
   private long absoluteStep;
@@ -119,13 +123,26 @@ public class MinimalEngineBridge implements EngineBridge {
 
     simulation.startSubstep("constant");
 
-    startStep = simulation
-      .getAttributeValue("steps.low")
-      .orElseGet(() -> engineValueFactory.build(DEFAULT_START_STEP, Units.of("count")));
-
-    endStep = simulation
-      .getAttributeValue("steps.high")
-      .orElseGet(() -> engineValueFactory.build(DEFAULT_END_STEP, Units.of("count")));
+    String timeType = simulation.getAttributeValue("time.type")
+        .map(EngineValue::getAsString).orElse("count");
+    if (timeType.equalsIgnoreCase("ISO")) {
+      IsoSimulationClock clock = new IsoSimulationClock(
+          requiredSimulationString("time.low"), requiredSimulationString("time.high"),
+          requiredSimulationString("time.interval"));
+      isoClock = Optional.of(clock);
+      startStep = engineValueFactory.build(0, Units.of("count"));
+      endStep = engineValueFactory.build(clock.getCount() - 1, Units.of("count"));
+    } else if (timeType.equalsIgnoreCase("count")) {
+      isoClock = Optional.empty();
+      startStep = simulation
+        .getAttributeValue("steps.low")
+        .orElseGet(() -> engineValueFactory.build(DEFAULT_START_STEP, Units.of("count")));
+      endStep = simulation
+        .getAttributeValue("steps.high")
+        .orElseGet(() -> engineValueFactory.build(DEFAULT_END_STEP, Units.of("count")));
+    } else {
+      throw new IllegalArgumentException("Unsupported time.type: " + timeType);
+    }
 
     simulation.endSubstep();
 
@@ -185,13 +202,26 @@ public class MinimalEngineBridge implements EngineBridge {
 
     simulation.startSubstep("constant");
 
-    startStep = simulation
-      .getAttributeValue("steps.low")
-      .orElseGet(() -> engineValueFactory.build(DEFAULT_START_STEP, Units.of("count")));
-
-    endStep = simulation
-      .getAttributeValue("steps.high")
-      .orElseGet(() -> engineValueFactory.build(DEFAULT_END_STEP, Units.of("count")));
+    String timeType = simulation.getAttributeValue("time.type")
+        .map(EngineValue::getAsString).orElse("count");
+    if (timeType.equalsIgnoreCase("ISO")) {
+      IsoSimulationClock clock = new IsoSimulationClock(
+          requiredSimulationString("time.low"), requiredSimulationString("time.high"),
+          requiredSimulationString("time.interval"));
+      isoClock = Optional.of(clock);
+      startStep = engineValueFactory.build(0, Units.of("count"));
+      endStep = engineValueFactory.build(clock.getCount() - 1, Units.of("count"));
+    } else if (timeType.equalsIgnoreCase("count")) {
+      isoClock = Optional.empty();
+      startStep = simulation
+        .getAttributeValue("steps.low")
+        .orElseGet(() -> engineValueFactory.build(DEFAULT_START_STEP, Units.of("count")));
+      endStep = simulation
+        .getAttributeValue("steps.high")
+        .orElseGet(() -> engineValueFactory.build(DEFAULT_END_STEP, Units.of("count")));
+    } else {
+      throw new IllegalArgumentException("Unsupported time.type: " + timeType);
+    }
 
     simulation.endSubstep();
 
@@ -242,10 +272,106 @@ public class MinimalEngineBridge implements EngineBridge {
   }
 
   @Override
+  public Optional<String> getCurrentIsoTime() {
+    return isoClock.map(clock -> clock.getAt(absoluteStep));
+  }
+
+  @Override
+  public Optional<Long> getCurrentIsoYear() {
+    return isoClock.map(clock -> clock.getYearAt(absoluteStep));
+  }
+
+  private String requiredSimulationString(String attributeName) {
+    return simulation.getAttributeValue(attributeName)
+        .map(EngineValue::getAsString)
+        .orElseThrow(() -> new IllegalArgumentException(
+            attributeName + " is required when time.type is ISO"));
+  }
+
+  @Override
   public EngineValue getExternal(GeoKey key, String name, long step) {
     DataGridLayer layer = externalData.computeIfAbsent(name,
         k -> externalResourceGetter.getResource(name));
     return normalizePercent(layer.getAt(key, step));
+  }
+
+  @Override
+  public EngineValue getExternalAtCoordinate(GeoKey key, String name, EngineValue coordinate) {
+    DoublePrecomputedGrid grid = getTimedExternalGrid(name);
+    TimeAxis axis = grid.getTimeAxis().orElseThrow(() -> new IllegalArgumentException(
+        "External resource " + name + " has no declared temporal metadata"));
+    if (axis.getType() != TimeAxis.Type.COUNT) {
+      throw new IllegalArgumentException(
+          "External resource " + name + " uses ISO time; use 'at time' instead");
+    }
+    EngineValue normalized = convert(coordinate, Units.of(axis.getCountUnit()));
+    long gridStep = grid.getMinTimestep() + axis.getCountIndex(normalized.getAsDecimal());
+    return normalizePercent(grid.getAt(key, gridStep));
+  }
+
+  @Override
+  public EngineValue getExternalAtIsoTime(GeoKey key, String name, String isoDate) {
+    DoublePrecomputedGrid grid = getTimedExternalGrid(name);
+    TimeAxis axis = grid.getTimeAxis().orElseThrow(() -> new IllegalArgumentException(
+        "External resource " + name + " has no declared temporal metadata"));
+    if (axis.getType() != TimeAxis.Type.ISO) {
+      throw new IllegalArgumentException(
+          "External resource " + name + " uses count time; use 'at <unit>' instead");
+    }
+    long gridStep = grid.getMinTimestep() + axis.getIsoIndex(java.time.LocalDate.parse(isoDate));
+    return normalizePercent(grid.getAt(key, gridStep));
+  }
+
+  @Override
+  public EngineValue getExternalFirstCoordinate(String name, String unit) {
+    return getExternalCoordinate(name, unit, false);
+  }
+
+  @Override
+  public EngineValue getExternalLastCoordinate(String name, String unit) {
+    return getExternalCoordinate(name, unit, true);
+  }
+
+  @Override
+  public EngineValue getExternalTimeLength(String name) {
+    TimeAxis axis = getTimedExternalGrid(name).getTimeAxis().orElseThrow(() ->
+        new IllegalArgumentException("External resource " + name + " has no declared temporal metadata"));
+    return engineValueFactory.build(axis.getCount(), Units.of("count"));
+  }
+
+  @Override
+  public EngineValue getExternalTimeUnit(String name) {
+    TimeAxis axis = getTimedExternalGrid(name).getTimeAxis().orElseThrow(() ->
+        new IllegalArgumentException("External resource " + name + " has no declared temporal metadata"));
+    String unit = axis.getType() == TimeAxis.Type.ISO ? "time" : axis.getCountUnit();
+    return engineValueFactory.build(unit, Units.of("string"));
+  }
+
+  private DoublePrecomputedGrid getTimedExternalGrid(String name) {
+    DataGridLayer layer = externalData.computeIfAbsent(name,
+        key -> externalResourceGetter.getResource(name));
+    if (!(layer instanceof DoublePrecomputedGrid)) {
+      throw new IllegalArgumentException("External resource " + name + " is not a JSHD grid");
+    }
+    return (DoublePrecomputedGrid) layer;
+  }
+
+  private EngineValue getExternalCoordinate(String name, String unit, boolean last) {
+    TimeAxis axis = getTimedExternalGrid(name).getTimeAxis().orElseThrow(() ->
+        new IllegalArgumentException("External resource " + name + " has no declared temporal metadata"));
+    if (axis.getType() == TimeAxis.Type.ISO) {
+      if (!unit.equals("time")) {
+        throw new IllegalArgumentException(
+            "External resource " + name + " uses ISO time; query it with 'first time' or 'last time'");
+      }
+      long index = last ? axis.getCount() - 1 : 0;
+      String value = axis.getIsoStart().plus(axis.getIsoInterval().multipliedBy(
+          Math.toIntExact(index))).toString();
+      return engineValueFactory.build(value, Units.of("string"));
+    }
+    BigDecimal value = axis.getCountStart().add(axis.getCountIncrement().multiply(
+        BigDecimal.valueOf(last ? axis.getCount() - 1 : 0)));
+    return convert(engineValueFactory.build(value, Units.of(axis.getCountUnit())), Units.of(unit));
   }
 
   /**

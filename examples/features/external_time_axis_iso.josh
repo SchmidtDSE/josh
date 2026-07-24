@@ -1,0 +1,30 @@
+# Demonstrates ISO time mode for simulations and ISO temporal metadata for external data.
+#
+# Preprocess (example):
+# java -jar joshsim-fat.jar preprocess external_time_axis_iso.josh Main maxtemp_tulare_annual.nc \
+#   Maximum_air_temperature_at_2m K temperature.jshd \
+#   --time-type ISO --time-start 2024-01-01 --time-interval P1Y --time-count 3
+
+start simulation Main
+  grid.size = 16000 m
+  grid.low = 36.73 degrees latitude, -119.52 degrees longitude
+  grid.high = 35.80 degrees latitude, -117.98 degrees longitude
+  grid.patch = "Default"
+
+  time.type = "ISO"
+  time.low = "2024-01-01"
+  time.high = "2026-01-01"
+  time.interval = "P1Y"
+
+  exportFiles.patch = "memory://editor/patches"
+end simulation
+
+start patch Default
+  export.time.step = meta.time
+  export.year.step = meta.year
+  export.temperature.step = external temperature at time meta.time
+  export.start.step = first time of external temperature
+  export.end.step = last time of external temperature
+  export.n.step = length of external temperature
+  export.axisUnit.step = unit of external temperature
+end patch

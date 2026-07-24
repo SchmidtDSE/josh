@@ -661,7 +661,8 @@ public class SingleThreadEventHandlerMachine implements EventHandlerMachine {
    * Get a built-in meta attribute value if the name matches a built-in.
    *
    * <p>Built-in meta attributes are available without user definition per the language spec:
-   * meta.stepCount (0-based step counter), meta.year/meta.step (current step value).</p>
+   * meta.stepCount (0-based step counter), meta.year (current calendar/count year), and
+   * meta.time (ISO calendar coordinate in ISO-mode simulations).</p>
    *
    * @param name the attribute name to check.
    * @return Optional containing the value if it's a built-in, empty otherwise.
@@ -674,9 +675,10 @@ public class SingleThreadEventHandlerMachine implements EventHandlerMachine {
           valueFactory.build(
               bridge.getCurrentTimestep() - bridge.getStartTimestep(), COUNT_UNITS)
       );
-      case "year" -> Optional.of(
-          valueFactory.build(bridge.getCurrentTimestep(), Units.of("years"))
-      );
+      case "year" -> Optional.of(valueFactory.build(
+          bridge.getCurrentIsoYear().orElse(bridge.getCurrentTimestep()), Units.of("years")));
+      case "time" -> bridge.getCurrentIsoTime().map(
+          value -> valueFactory.build(value, Units.of("string")));
       default -> Optional.empty();
     };
   }
@@ -1038,6 +1040,42 @@ public class SingleThreadEventHandlerMachine implements EventHandlerMachine {
   public void pushExternalAtStep(String name) {
     long step = pop().getAsInt();
     push(bridge.getExternal(scope.get("here").getAsEntity().getKey().orElseThrow(), name, step));
+  }
+
+  @Override
+  public void pushExternalAtCoordinate(String name, String unit) {
+    EngineValue coordinate = pop();
+    EngineValue typedCoordinate = valueFactory.build(
+        coordinate.getAsDecimal(), Units.of(unit));
+    push(bridge.getExternalAtCoordinate(
+        scope.get("here").getAsEntity().getKey().orElseThrow(), name, typedCoordinate));
+  }
+
+  @Override
+  public void pushExternalAtIsoTime(String name) {
+    String isoDate = pop().getAsString();
+    push(bridge.getExternalAtIsoTime(
+        scope.get("here").getAsEntity().getKey().orElseThrow(), name, isoDate));
+  }
+
+  @Override
+  public void pushExternalFirstCoordinate(String name, String unit) {
+    push(bridge.getExternalFirstCoordinate(name, unit));
+  }
+
+  @Override
+  public void pushExternalLastCoordinate(String name, String unit) {
+    push(bridge.getExternalLastCoordinate(name, unit));
+  }
+
+  @Override
+  public void pushExternalTimeLength(String name) {
+    push(bridge.getExternalTimeLength(name));
+  }
+
+  @Override
+  public void pushExternalTimeUnit(String name) {
+    push(bridge.getExternalTimeUnit(name));
   }
 
   @Override

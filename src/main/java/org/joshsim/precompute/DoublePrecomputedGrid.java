@@ -10,6 +10,7 @@ import org.joshsim.engine.geometry.PatchBuilderExtents;
 import org.joshsim.engine.value.converter.Units;
 import org.joshsim.engine.value.engine.ValueSupportFactory;
 import org.joshsim.engine.value.type.EngineValue;
+import java.util.Optional;
 
 
 /**
@@ -18,8 +19,10 @@ import org.joshsim.engine.value.type.EngineValue;
 public class DoublePrecomputedGrid extends UniformPrecomputedGrid<Double> {
 
   private final ValueSupportFactory factory;
+  private final PatchBuilderExtents extents;
   private final Units units;
   private final double[][][] innerValues;
+  private final Optional<TimeAxis> timeAxis;
 
   /**
    * Create a new precomputed grid.
@@ -32,16 +35,30 @@ public class DoublePrecomputedGrid extends UniformPrecomputedGrid<Double> {
    */
   DoublePrecomputedGrid(ValueSupportFactory engineValueFactory, PatchBuilderExtents extents,
         long minTimestep, long maxTimestep, Units units) {
+    this(engineValueFactory, extents, minTimestep, maxTimestep, units, Optional.empty());
+  }
+
+  /** Creates an empty grid with optional persisted temporal metadata. */
+  DoublePrecomputedGrid(ValueSupportFactory engineValueFactory, PatchBuilderExtents extents,
+      long minTimestep, long maxTimestep, Units units, Optional<TimeAxis> timeAxis) {
     super(extents, minTimestep, maxTimestep);
 
     this.factory = engineValueFactory;
+    this.extents = extents;
     this.units = units;
+    this.timeAxis = timeAxis;
 
     int width = (int) getWidth();
     int height = (int) getHeight();
     int timestepsCut = (int) (getMaxTimestep() - getMinTimestep() + 1);
 
     innerValues = new double[timestepsCut][height][width];
+    timeAxis.ifPresent(axis -> {
+      if (axis.getCount() != timestepsCut) {
+        throw new IllegalArgumentException(
+            "Time axis count must equal the number of grid timesteps");
+      }
+    });
   }
 
   /**
@@ -56,12 +73,39 @@ public class DoublePrecomputedGrid extends UniformPrecomputedGrid<Double> {
    */
   public DoublePrecomputedGrid(ValueSupportFactory engineValueFactory, PatchBuilderExtents extents,
         long minTimestep, long maxTimestep, Units units, double[][][] innerValues) {
+    this(engineValueFactory, extents, minTimestep, maxTimestep, units, innerValues,
+        Optional.empty());
+  }
+
+  /**
+   * Creates a new grid with optional persisted temporal metadata.
+   *
+   * @param engineValueFactory Factory used to create returned values.
+   * @param extents Grid extents.
+   * @param minTimestep Minimum stored grid timestep.
+   * @param maxTimestep Maximum stored grid timestep.
+   * @param units Units of grid values.
+   * @param innerValues Grid values.
+   * @param timeAxis Declared temporal coordinate system, if present.
+   */
+  public DoublePrecomputedGrid(ValueSupportFactory engineValueFactory, PatchBuilderExtents extents,
+      long minTimestep, long maxTimestep, Units units, double[][][] innerValues,
+      Optional<TimeAxis> timeAxis) {
     super(extents, minTimestep, maxTimestep);
 
     this.factory = engineValueFactory;
+    this.extents = extents;
     this.units = units;
 
     this.innerValues = innerValues;
+    this.timeAxis = timeAxis;
+    timeAxis.ifPresent(axis -> {
+      long gridCount = maxTimestep - minTimestep + 1;
+      if (axis.getCount() != gridCount) {
+        throw new IllegalArgumentException(
+            "Time axis count must equal the number of grid timesteps");
+      }
+    });
   }
 
   /**
@@ -161,5 +205,26 @@ public class DoublePrecomputedGrid extends UniformPrecomputedGrid<Double> {
   @Override
   public Units getUnits() {
     return units;
+  }
+
+  /** Returns the declared temporal coordinate system, if this grid has one. */
+  public Optional<TimeAxis> getTimeAxis() {
+    return timeAxis;
+  }
+
+  /**
+   * Creates a copy of this grid with the supplied temporal metadata.
+   *
+   * <p>Preprocessing constructs numeric grid values before it has finalized the declared temporal
+   * axis. This method keeps that pipeline immutable while attaching the validated axis just before
+   * serialization.</p>
+   *
+   * @param newTimeAxis Temporal metadata to attach.
+   * @return A grid with identical values and the supplied metadata.
+   */
+  public DoublePrecomputedGrid withTimeAxis(TimeAxis newTimeAxis) {
+    return new DoublePrecomputedGrid(
+        factory, extents, getMinTimestep(), getMaxTimestep(), units, innerValues,
+        Optional.of(newTimeAxis));
   }
 }

@@ -59,7 +59,8 @@ ELIF_: 'elif';
 ELSE_: 'else';
 END_: 'end';
 EXTERNAL_: 'external';
-FALSE_: 'false';
+  FALSE_: 'false';
+  FIRST_: 'first';
 FORCE_: 'force';
 FROM_: 'from';
 HERE_: 'here';
@@ -67,7 +68,9 @@ IF_: 'if';
 IMPORT_: 'import';
 INIT_: 'init';
 LATITUDE_: 'latitude';
-LIMIT_: 'limit';
+  LIMIT_: 'limit';
+  LAST_: 'last';
+  LENGTH_: 'length';
 LONGITUDE_: 'longitude';
 MANAGEMENT_: 'management';
 MAP_: 'map';
@@ -111,7 +114,7 @@ IDENTIFIER_: [A-Za-z][A-Za-z0-9_]*;
 WHITE_SPACE: [ \u000B\t\r\n] -> channel(HIDDEN);
 
 // Identifiers
-nakedIdentifier: (IDENTIFIER_|DEBUG_|INIT_|START_|STEP_|END_|HERE_|CURRENT_|PRIOR_|STATE_|ASSERT_|PATCH_|SIMULATION_|AGENT_|ORGANISM_|N_|P_|DISCRETE_);
+  nakedIdentifier: (IDENTIFIER_|DEBUG_|INIT_|START_|STEP_|END_|HERE_|CURRENT_|PRIOR_|STATE_|ASSERT_|PATCH_|SIMULATION_|AGENT_|ORGANISM_|N_|P_|DISCRETE_|FIRST_|LAST_|LENGTH_);
 identifier: nakedIdentifier (DOT_ (nakedIdentifier))*;
 
 // Values
@@ -132,6 +135,11 @@ expression: unitsValue # simpleExpression
   | expression DOT_ identifier # attrExpression
   | unitsValue (LATITUDE_ | LONGITUDE_) COMMA_ unitsValue (LATITUDE_ | LONGITUDE_) # position
   | EXTERNAL_ name=identifier # externalValue
+  | FIRST_ unit=identifier OF_ EXTERNAL_ name=identifier # externalFirstCoordinate
+  | LAST_ unit=identifier OF_ EXTERNAL_ name=identifier # externalLastCoordinate
+  | LENGTH_ OF_ EXTERNAL_ name=identifier # externalTimeLength
+  | UNIT_ OF_ EXTERNAL_ name=identifier # externalTimeUnit
+  | EXTERNAL_ name=identifier AT_ unit=identifier coordinate=expression # externalValueAtCoordinate
   | EXTERNAL_ name=identifier AT_ step=expression # externalValueAtTime
   | CONFIG_ name=identifier # configValue
   | CONFIG_ name=identifier ELSE_ defaultValue=expression # configValueWithDefault

@@ -15,6 +15,7 @@ import org.joshsim.geo.external.ExternalDataReader;
 import org.joshsim.geo.external.ExternalSpatialDimensions;
 import org.joshsim.precompute.DoublePrecomputedGrid;
 import org.joshsim.precompute.JshdUtil;
+import org.joshsim.precompute.TimeAxis;
 
 /**
  * Implementation of ExternalDataReader for JSHD files.
@@ -259,6 +260,18 @@ public class JshdExternalDataReader implements ExternalDataReader {
       return null;
     }
     return new BigDecimal(grid.getMaxY());
+  }
+
+  /**
+   * Gets the declared temporal metadata stored in the JSHD file.
+   *
+   * @return Optional time axis; empty for legacy or timeless JSHD files.
+   */
+  public Optional<TimeAxis> getTimeAxis() {
+    if (grid == null) {
+      return Optional.empty();
+    }
+    return grid.getTimeAxis();
   }
 
   /**

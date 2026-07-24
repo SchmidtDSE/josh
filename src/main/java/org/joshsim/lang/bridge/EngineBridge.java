@@ -137,6 +137,24 @@ public interface EngineBridge {
   long getAbsoluteTimestep();
 
   /**
+   * Gets the current ISO calendar coordinate for an ISO-mode simulation.
+   *
+   * @return Optional ISO-8601 date string; empty for count-mode simulations.
+   */
+  default Optional<String> getCurrentIsoTime() {
+    return Optional.empty();
+  }
+
+  /**
+   * Gets the calendar year for an ISO-mode simulation.
+   *
+   * @return Optional year; empty for count-mode simulations.
+   */
+  default Optional<Long> getCurrentIsoYear() {
+    return Optional.empty();
+  }
+
+  /**
    * Get the replicate being modified by this EngineBridge.
    *
    * @return Replicate being manipulated by this bridge.
@@ -167,6 +185,50 @@ public interface EngineBridge {
    * @return The value from the external resource at the given step.
    */
   EngineValue getExternal(GeoKey key, String name, long step);
+
+  /**
+   * Gets an external value at an explicit count-mode coordinate.
+   *
+   * @param key Spatial location at which to read.
+   * @param name External resource name.
+   * @param coordinate Requested coordinate value.
+   * @return External value at the exact declared coordinate.
+   */
+  default EngineValue getExternalAtCoordinate(GeoKey key, String name, EngineValue coordinate) {
+    throw new UnsupportedOperationException("Explicit external coordinates are not supported");
+  }
+
+  /**
+   * Gets an external value at an exact ISO-8601 date coordinate.
+   *
+   * @param key Spatial location at which to read.
+   * @param name External resource name.
+   * @param isoDate Requested ISO-8601 date.
+   * @return External value at the exact declared date.
+   */
+  default EngineValue getExternalAtIsoTime(GeoKey key, String name, String isoDate) {
+    throw new UnsupportedOperationException("ISO external coordinates are not supported");
+  }
+
+  /** Gets the first declared coordinate of an external resource. */
+  default EngineValue getExternalFirstCoordinate(String name, String unit) {
+    throw new UnsupportedOperationException("External temporal metadata is not supported");
+  }
+
+  /** Gets the last declared coordinate of an external resource. */
+  default EngineValue getExternalLastCoordinate(String name, String unit) {
+    throw new UnsupportedOperationException("External temporal metadata is not supported");
+  }
+
+  /** Gets the number of declared temporal coordinates of an external resource. */
+  default EngineValue getExternalTimeLength(String name) {
+    throw new UnsupportedOperationException("External temporal metadata is not supported");
+  }
+
+  /** Gets the declared coordinate-unit label of an external resource. */
+  default EngineValue getExternalTimeUnit(String name) {
+    throw new UnsupportedOperationException("External temporal metadata is not supported");
+  }
 
   /**
    * Get a configuration value by name, returning empty if not found.

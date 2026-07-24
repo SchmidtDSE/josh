@@ -1,0 +1,28 @@
+# Demonstrates declared external temporal metadata with the default (count) simulation clock.
+#
+# Preprocess (example):
+# java -jar joshsim-fat.jar preprocess external_time_axis_count.josh Main maxtemp_tulare_annual.nc \
+#   Maximum_air_temperature_at_2m K temperature.jshd \
+#   --time-type count --time-start 2024 --time-unit year --time-count 3
+
+start simulation Main
+  grid.size = 16000 m
+  grid.low = 36.73 degrees latitude, -119.52 degrees longitude
+  grid.high = 35.80 degrees latitude, -117.98 degrees longitude
+  grid.patch = "Default"
+
+  # Using steps.low as the author-controlled calendar anchor.
+  steps.low = 2024 count
+  steps.high = 2026 count
+
+  exportFiles.patch = "memory://editor/patches"
+end simulation
+
+start patch Default
+  export.year.step = meta.year
+  export.temperature.step = external temperature at year meta.year
+  export.startYear.step = first year of external temperature
+  export.endYear.step = last year of external temperature
+  export.nYears.step = length of external temperature
+  export.axisUnit.step = unit of external temperature
+end patch

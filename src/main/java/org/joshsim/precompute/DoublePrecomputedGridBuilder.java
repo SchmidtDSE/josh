@@ -6,6 +6,7 @@
 
 package org.joshsim.precompute;
 
+import java.util.Optional;
 import org.joshsim.engine.geometry.PatchBuilderExtents;
 import org.joshsim.engine.value.converter.Units;
 import org.joshsim.engine.value.engine.ValueSupportFactory;
@@ -20,6 +21,7 @@ public class DoublePrecomputedGridBuilder {
   private long maxTimestep;
   private Units units;
   private double[][][] innerValues;
+  private Optional<TimeAxis> timeAxis = Optional.empty();
 
   /**
    * Sets the engine value factory for the grid.
@@ -78,6 +80,12 @@ public class DoublePrecomputedGridBuilder {
     return this;
   }
 
+  /** Sets optional temporal metadata for the grid. */
+  public DoublePrecomputedGridBuilder setTimeAxis(Optional<TimeAxis> timeAxis) {
+    this.timeAxis = timeAxis;
+    return this;
+  }
+
   /**
    * Builds and returns a configured DoublePrecomputedGrid instance.
    *
@@ -100,17 +108,19 @@ public class DoublePrecomputedGridBuilder {
           engineValueFactory,
           extents,
           minTimestep,
-          maxTimestep,
-          units,
-          innerValues
-      );
+           maxTimestep,
+           units,
+           innerValues,
+           timeAxis
+       );
     } else {
       return new DoublePrecomputedGrid(
           engineValueFactory,
           extents,
           minTimestep,
           maxTimestep,
-          units
+          units,
+          timeAxis
       );
     }
   }
