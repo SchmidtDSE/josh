@@ -8,6 +8,7 @@ package org.joshsim.lang.interpret;
 
 import java.util.Optional;
 import org.joshsim.lang.bridge.EngineBridge;
+import org.joshsim.lang.bridge.ExternalResourceGetter;
 import org.joshsim.lang.io.CombinedDebugOutputFacade;
 
 
@@ -33,6 +34,16 @@ public interface BridgeGetter {
    */
   default void setBridge(EngineBridge bridge) {
     throw new UnsupportedOperationException("setBridge not supported by this implementation");
+  }
+
+  /**
+   * Sets the external-resource getter to use when lazily constructing a bridge.
+   *
+   * @param externalResourceGetter getter used to resolve external grid resources
+   */
+  default void setExternalResourceGetter(ExternalResourceGetter externalResourceGetter) {
+    throw new UnsupportedOperationException(
+        "setExternalResourceGetter not supported by this implementation");
   }
 
   /**
