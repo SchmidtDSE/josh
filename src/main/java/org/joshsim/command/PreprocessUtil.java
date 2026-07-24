@@ -437,7 +437,8 @@ public class PreprocessUtil {
     return unitsStr.equals("m") || unitsStr.equals("meter") || unitsStr.equals("meters");
   }
 
-  private static Optional<TimeAxis> composeAmendedTimeAxis(DataGridLayer existing, DataGridLayer added) {
+  private static Optional<TimeAxis> composeAmendedTimeAxis(
+      DataGridLayer existing, DataGridLayer added) {
     Optional<TimeAxis> existingAxis = existing instanceof DoublePrecomputedGrid
         ? ((DoublePrecomputedGrid) existing).getTimeAxis() : Optional.empty();
     Optional<TimeAxis> addedAxis = added instanceof DoublePrecomputedGrid
@@ -450,16 +451,19 @@ public class PreprocessUtil {
           "Cannot amend temporal metadata onto a timeless JSHD or combine it with timeless data");
     }
     if (existing.getMaxTimestep() >= added.getMinTimestep()) {
-      throw new IllegalArgumentException("Amended temporal grids must not overlap in timestep slices");
+      throw new IllegalArgumentException(
+          "Amended temporal grids must not overlap in timestep slices");
     }
     if (existing.getMaxTimestep() + 1 != added.getMinTimestep()) {
-      throw new IllegalArgumentException("Amended temporal grids must be exactly contiguous in timestep slices");
+      throw new IllegalArgumentException(
+          "Amended temporal grids must be exactly contiguous in timestep slices");
     }
     TimeAxis merged = existingAxis.get().append(addedAxis.get());
     long mergedSliceCount = Math.max(existing.getMaxTimestep(), added.getMaxTimestep())
         - Math.min(existing.getMinTimestep(), added.getMinTimestep()) + 1;
     if (merged.getCount() != mergedSliceCount) {
-      throw new IllegalArgumentException("Merged time axis count must equal merged grid slice count");
+      throw new IllegalArgumentException(
+          "Merged time axis count must equal merged grid slice count");
     }
     return Optional.of(merged);
   }
@@ -487,13 +491,15 @@ public class PreprocessUtil {
   }
 
   private static TimeAxis buildCountTimeAxis(PreprocessOptions options, long outputCount) {
-    requireEmpty(options.getTimeInterval(), "--time-interval is only valid for ISO time metadata");
+    requireEmpty(
+        options.getTimeInterval(), "--time-interval is only valid for ISO time metadata");
     if (!options.getTimeInstant().isBlank()) {
       requireEmpty(options.getTimeStart(), "--time-start cannot accompany --time-instant");
       requireEmpty(options.getTimeCount(), "--time-count cannot accompany --time-instant");
       requirePresent(options.getTimeUnit(), "--time-unit is required with --time-instant");
       if (outputCount != 1) {
-        throw new IllegalArgumentException("A count time instant requires exactly one output slice");
+        throw new IllegalArgumentException(
+            "A count time instant requires exactly one output slice");
       }
       return TimeAxis.countInstant("time", options.getTimeUnit(),
           new BigDecimal(options.getTimeInstant()));

@@ -48,7 +48,8 @@ final class IsoSimulationClock {
 
   LocalDate getAt(long zeroBasedIndex) {
     if (zeroBasedIndex < 0 || zeroBasedIndex >= count) {
-      throw new IllegalArgumentException("ISO simulation time index is out of range: " + zeroBasedIndex);
+      throw new IllegalArgumentException(
+          "ISO simulation time index is out of range: " + zeroBasedIndex);
     }
     return low.plus(interval.multipliedBy(Math.toIntExact(zeroBasedIndex)));
   }

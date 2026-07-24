@@ -91,7 +91,8 @@ public class MinimalEngineBridge implements EngineBridge {
         Converter converter, EntityPrototypeStore prototypeStore,
         ExternalResourceGetter externalResourceGetter, ConfigGetter configGetter) {
     this(engineValueFactory, geometryFactory, simulation, converter, prototypeStore,
-        externalResourceGetter, configGetter, DEFAULT_SUBSTEP_ORDER, SimulationWarningReporter.noOp());
+        externalResourceGetter, configGetter, DEFAULT_SUBSTEP_ORDER,
+        SimulationWarningReporter.noOp());
   }
 
   /**
@@ -409,15 +410,19 @@ public class MinimalEngineBridge implements EngineBridge {
   @Override
   public EngineValue getExternalTimeLength(String name) {
     TimeAxis axis = getTimedExternalGrid(name).getTimeAxis().orElseThrow(() ->
-        new IllegalArgumentException("External resource " + name + " has no declared temporal metadata"));
+        new IllegalArgumentException(
+            "External resource " + name + " has no declared temporal metadata"));
     return engineValueFactory.build(axis.getCount(), Units.of("count"));
   }
 
   @Override
   public EngineValue getExternalTimeUnit(String name) {
     TimeAxis axis = getTimedExternalGrid(name).getTimeAxis().orElseThrow(() ->
-        new IllegalArgumentException("External resource " + name + " has no declared temporal metadata"));
-    String unit = axis.getType() == TimeAxis.Type.ISO ? "time" : axis.getCountUnit();
+        new IllegalArgumentException(
+            "External resource " + name + " has no declared temporal metadata"));
+    String unit = axis.getType() == TimeAxis.Type.ISO
+        ? "time"
+        : axis.getCountUnit();
     return engineValueFactory.build(unit, Units.of("string"));
   }
 
@@ -432,11 +437,13 @@ public class MinimalEngineBridge implements EngineBridge {
 
   private EngineValue getExternalCoordinate(String name, String unit, boolean last) {
     TimeAxis axis = getTimedExternalGrid(name).getTimeAxis().orElseThrow(() ->
-        new IllegalArgumentException("External resource " + name + " has no declared temporal metadata"));
+        new IllegalArgumentException(
+            "External resource " + name + " has no declared temporal metadata"));
     if (axis.getType() == TimeAxis.Type.ISO) {
       if (!unit.equals("time")) {
         throw new IllegalArgumentException(
-            "External resource " + name + " uses ISO time; query it with 'first time' or 'last time'");
+            "External resource " + name
+                + " uses ISO time; query it with 'first time' or 'last time'");
       }
       long index = last ? axis.getCount() - 1 : 0;
       String value = axis.getIsoStart().plus(axis.getIsoInterval().multipliedBy(

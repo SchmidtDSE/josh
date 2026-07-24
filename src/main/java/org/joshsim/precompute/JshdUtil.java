@@ -228,7 +228,8 @@ public class JshdUtil {
     }
     return Optional.of(kind == TimeAxis.Kind.INSTANT
         ? TimeAxis.isoInstant(coordinateName, LocalDate.parse(first))
-        : TimeAxis.isoRange(coordinateName, LocalDate.parse(first), Period.parse(increment), count));
+        : TimeAxis.isoRange(
+            coordinateName, LocalDate.parse(first), Period.parse(increment), count));
   }
 
   private static void putBytes(ByteBuffer buffer, byte[] bytes) {

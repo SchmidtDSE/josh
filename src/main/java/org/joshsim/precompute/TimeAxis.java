@@ -58,7 +58,8 @@ public final class TimeAxis {
       throw new IllegalArgumentException("Time axis count must be at least one");
     }
     if (kind == Kind.INSTANT && count != 1) {
-      throw new IllegalArgumentException("An instant time axis must contain exactly one coordinate");
+      throw new IllegalArgumentException(
+          "An instant time axis must contain exactly one coordinate");
     }
   }
 
@@ -145,16 +146,19 @@ public final class TimeAxis {
       throw new IllegalArgumentException("Temporal axes must have the same range type to amend");
     }
     if (!coordinateName.equals(following.coordinateName)) {
-      throw new IllegalArgumentException("Temporal axes must use the same coordinate name to amend");
+      throw new IllegalArgumentException(
+          "Temporal axes must use the same coordinate name to amend");
     }
     if (type == Type.COUNT) {
       if (!countUnit.equals(following.countUnit)
           || countIncrement.compareTo(following.countIncrement) != 0) {
-        throw new IllegalArgumentException("Count temporal axes must have the same unit and increment");
+        throw new IllegalArgumentException(
+            "Count temporal axes must have the same unit and increment");
       }
       BigDecimal expectedStart = countStart.add(countIncrement.multiply(BigDecimal.valueOf(count)));
       if (expectedStart.compareTo(following.countStart) != 0) {
-        throw new IllegalArgumentException("Count temporal axes must be exactly contiguous and non-overlapping");
+        throw new IllegalArgumentException(
+            "Count temporal axes must be exactly contiguous and non-overlapping");
       }
       return countRange(coordinateName, countUnit, countStart, countIncrement,
           Math.addExact(count, following.count));
@@ -167,7 +171,8 @@ public final class TimeAxis {
       expectedStart = expectedStart.plus(isoInterval);
     }
     if (!expectedStart.equals(following.isoStart)) {
-      throw new IllegalArgumentException("ISO temporal axes must be exactly contiguous and non-overlapping");
+      throw new IllegalArgumentException(
+          "ISO temporal axes must be exactly contiguous and non-overlapping");
     }
     return isoRange(coordinateName, isoStart, isoInterval, Math.addExact(count, following.count));
   }

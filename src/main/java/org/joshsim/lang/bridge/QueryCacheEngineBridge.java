@@ -65,7 +65,8 @@ public class QueryCacheEngineBridge extends MinimalEngineBridge {
   public QueryCacheEngineBridge(ValueSupportFactory valueFactory,
         EngineGeometryFactory geometryFactory, MutableEntity simulation, Converter converter,
         EntityPrototypeStore prototypeStore, ExternalResourceGetter externalResourceGetter,
-        ConfigGetter configGetter, List<String> substepOrder, SimulationWarningReporter warningReporter) {
+        ConfigGetter configGetter, List<String> substepOrder,
+        SimulationWarningReporter warningReporter) {
     super(valueFactory, geometryFactory, simulation, converter, prototypeStore,
         externalResourceGetter, configGetter, substepOrder, warningReporter);
     cachedPatchesByGeometry = new ConcurrentHashMap<>();

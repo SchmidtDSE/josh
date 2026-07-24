@@ -1,62 +1,48 @@
-# Time Axis and External Metadata Implementation Plan
+# Explicit Simulation Time and JSHD Time Axes — Complete Implementation Plan
 
-## Goal
+## Status and review context
 
-Separate three concepts that are presently coupled through `meta.stepCount`:
+The initial implementation is on PR [#492](https://github.com/SchmidtDSE/josh/pull/492), targeting `dev`.
 
-1. engine-loop position;
-2. simulation calendar coordinate; and
-3. external-data slice selection.
+Already implemented:
 
-The engine will provide an explicit, validated clock and external temporal metadata. Model authors retain ownership of spin-up, spindown, state transitions, scenarios, and forcing policies.
+- JSHD v2 time-axis serialization with v1 read compatibility.
+- Count and ISO range/instant metadata in `TimeAxis`.
+- Preprocess CLI declarations for count and ISO axes.
+- Initial ISO simulation clock and explicit external lookup syntax.
+- Count/ISO examples and preprocessing-to-run integration tests.
 
-## Decisions
+This plan supersedes the original implementation details where PR review identified correctness or maintainability issues.
 
-### Two explicit time modes
+## Goals
 
-| Mode | Default | Purpose | Clock behavior |
-|---|---:|---|---|
-| `count` | Yes | Preserve existing simulations and support model-native numeric coordinates | `meta.stepCount` remains the loop/index coordinate |
-| `ISO` | No | Support annual, monthly, daily, and dated-event series without ordinal month counters | Engine advances exact ISO calendar coordinates |
+Separate three currently conflated concepts:
 
-No `time.type` declaration means `count` mode. This is the compatibility guarantee for existing simulations and JSHD v1 files.
+1. **Engine-loop position:** `meta.stepCount` remains a zero-based loop counter.
+2. **Simulation clock:** legacy count mode remains default; ISO mode is opt-in.
+3. **External-data coordinate:** JSHD stores declared coordinates and resolves them exactly.
 
-### Boundary of responsibility
+The engine owns clocks, serialized external metadata, exact coordinate lookup, validation, and warnings. Model authors retain ownership of `state`, spin-up/spindown, forcing policy, scenarios, and calendar-like model attributes.
 
-- **Preprocessing author:** prepares/aggregates raw sources, selects source slices, and declares one canonical output axis.
-- **JSHD/JSHDZ:** persists the declared axis with the output grid.
-- **Engine:** validates the selected mode, advances the ISO clock when enabled, resolves metadata, and rejects unavailable external coordinates.
-- **Model author:** defines `state`, spin-up/spindown behavior, forcing selection, and external-read policy.
+## User-facing contract
 
-Preprocessing does not automatically interpret CF calendars, convert raw CF coordinates to a Josh calendar, aggregate slices, or infer a source time dimension. A source dimension may be selected with `--time-dim` only to control source slice order.
+### Count mode — default and backward compatible
 
-## Author-facing contracts
-
-### Count mode
-
-Count mode uses numeric coordinates with a declared Josh unit. The unit is part of the JSHD axis contract, not a special language feature.
-
-```josh
-start simulation Main
-  steps.low = 0 count
-  steps.high = 85 count
-end simulation
-
-scenarioStart.constant = first year of external precipitation
-scenarioEnd.constant = last year of external precipitation
-precip.step = external precipitation at year meta.forcingYear
-```
+Without `time.type`, existing `steps.low`/`steps.high` behavior is unchanged.
 
 ```bash
-java -jar joshsim.jar preprocess sim.josh Main futureTemp.nc temp celsius futureTemp.jshdz \
+java -jar joshsim.jar preprocess sim.josh Main temp.nc temperature K temperature.jshd \
   --time-type count --time-start 2015 --time-unit year --time-count 86
 ```
 
-An external coordinate request is converted through Josh's ordinary unit system, then must match a stored coordinate exactly. Aliases such as `yr` and `years` work only when the simulation unit definitions make them aliases/conversions of the declared axis unit; source dimension names never participate in matching.
+```josh
+external temperature at index forcingIndex
+external temperature at year forcingYear
+```
 
-### ISO mode
+Count metadata stores the coordinate name, unit, start, increment, count, and whether the resource is a range or instant.
 
-ISO mode is enabled explicitly in the simulation and preprocessing declarations.
+### ISO mode — explicit date-only calendar clock
 
 ```josh
 start simulation Main
@@ -65,135 +51,266 @@ start simulation Main
   time.high = "2100-12-01"
   time.interval = "P1M"
 end simulation
-
-rain.step = external rainfall at time meta.time
-forcingYear.step = meta.year
 ```
 
 ```bash
-java -jar joshsim.jar preprocess sim.josh Main rainfall.nc rain mm rainfall.jshdz \
+java -jar joshsim.jar preprocess sim.josh Main rainfall.nc rain mm rainfall.jshd \
   --time-type ISO --time-start 2026-01-01 --time-interval P1M --time-count 900
 ```
 
-For a dated snapshot or event:
-
-```bash
-java -jar joshsim.jar preprocess sim.josh Main fire.tiff rbr rbr fire.jshdz \
-  --time-type ISO --time-instant 2020-09-01
+```josh
+external rainfall at time meta.time
 ```
 
-ISO mode uses date-only ISO-8601 values for the first release:
+Initial ISO scope is date-only: `java.time.LocalDate` and `java.time.Period` support ISO dates and periods such as `P1Y`, `P1M`, and `P1D`. No dependency is added.
 
-- coordinates: `YYYY-MM-DD`;
-- intervals: ISO periods accepted by `java.time.Period`, such as `P1Y`, `P1M`, `P7D`, or `P1D`;
-- `meta.time`: current ISO coordinate;
-- `meta.year`: year extracted from `meta.time`, returned as a Josh `year` value.
+### `meta.year` and `meta.time`
 
-`time.low` and `time.high` alone are insufficient for monthly data; they must be full ISO dates so every simulated coordinate is unambiguous.
+- `meta.time` is the explicit ISO coordinate in ISO mode.
+- `meta.year` retains its pre-feature raw-timestep fallback. It must **not** become ISO-derived.
+- Normal model-defined `year` attributes continue to resolve before the built-in fallback.
+- The built-in `meta.year` fallback emits a once-per-run warning because authors likely intended a declared clock or model-owned calendar attribute.
 
-## External read syntax and compatibility
+## JSHD v2 format
 
-New explicit forms:
+Extend `src/main/java/org/joshsim/precompute/JshdUtil.java` with optional v2 temporal metadata:
+
+- type: `COUNT` or `ISO`;
+- kind: `RANGE` or `INSTANT`;
+- coordinate/source name;
+- count: unit, start, increment, count;
+- ISO: start date and period/count, or instant date.
+
+Requirements:
+
+- JSHD v1 files load as timeless and retain index access compatibility.
+- Timeless files reject metadata query and coordinate access with actionable errors.
+- JSHD and JSHDZ carry identical metadata.
+- Coordinate lookup is exact: no nearest-neighbor lookup, implicit resampling, repeated-year expansion, or index fallback.
+
+## Required refactors
+
+### Preprocess time-axis construction
+
+In `src/main/java/org/joshsim/command/PreprocessUtil.java`:
+
+1. Keep one mode dispatch point in `buildTimeAxis(...)`.
+2. Move count logic into `buildCountTimeAxis(...)`.
+3. Move ISO logic into `buildIsoTimeAxis(...)`.
+4. Keep shared declaration detection and count validation separate.
+
+Validation rules:
+
+| Axis form | Required options | Invalid combinations |
+|---|---|---|
+| Count range | `--time-start`, `--time-unit`, `--time-count` | `--time-interval` |
+| Count instant | `--time-instant`, `--time-unit` | `--time-start`, `--time-count` |
+| ISO range | `--time-start`, `--time-interval`, `--time-count` | `--time-unit`, `--time-increment` |
+| ISO instant | `--time-instant` | `--time-start`, `--time-count` |
+
+The declared count must equal generated grid slices. ISO bounds must align exactly to the generated sequence. Source `--time-dim` selects source slice order only; preprocessing does not infer CF calendar semantics, aggregate source values, or translate raw CF time coordinates.
+
+### Amend behavior
+
+Replace current rejection of temporal-metadata amend operations with composition validation:
+
+- same mode;
+- same coordinate unit or ISO period;
+- compatible axis kind;
+- no overlap;
+- exact contiguity;
+- merged axis count equals merged grid slice count.
+
+Reject invalid composition before writing output and preserve metadata after a valid grid combine.
+
+### Simulation-clock initialization
+
+In `src/main/java/org/joshsim/lang/bridge/MinimalEngineBridge.java`:
+
+1. Keep a single `time.type` dispatch point.
+2. Extract `initializeCountClock()` for legacy `steps.low`/`steps.high` behavior.
+3. Extract `initializeIsoClock()` for `time.low`/`time.high`/`time.interval` behavior.
+4. Remove duplicated constructor branches by using a compact immutable clock configuration or common initialization helper.
+
+ISO mode derives engine steps `0..count-1`. Count mode remains exactly compatible with existing simulations.
+
+## Typed ISO-date boundary
+
+Raw ISO strings must not cross bridge APIs.
+
+1. Change `IsoSimulationClock` to return `LocalDate`.
+2. Change `EngineBridge.getCurrentIsoTime()` to return `Optional<LocalDate>`.
+3. Change `EngineBridge.getExternalAtIsoTime(...)` to take `LocalDate`.
+4. Parse a Josh string scalar into `LocalDate` once in `SingleThreadEventHandlerMachine`.
+5. Format `LocalDate` back to a string scalar only for `meta.time` compatibility.
+6. Keep `TimeAxis` and JSHD ISO resolution typed as `LocalDate`.
+
+Invalid author strings must fail with a resource-aware message such as:
+
+```text
+Invalid ISO date for external rainfall: 2026-13-01
+```
+
+## Type-safe count-coordinate reads
+
+The original implementation incorrectly stripped a coordinate expression to its raw number and reattached the unit named in `at <unit>`. Replace this with normal Josh conversion.
+
+Required conversion pipeline:
+
+```text
+expression actual unit
+  -> `at <unit>` clause unit
+  -> persisted JSHD axis unit
+  -> exact coordinate index
+```
+
+Implementation:
+
+1. In `SingleThreadEventHandlerMachine.pushExternalAtCoordinate(...)`, call `bridge.convert(coordinate, Units.of(clauseUnit))` instead of rebuilding an `EngineValue` from `getAsDecimal()`.
+2. In `MinimalEngineBridge.getExternalAtCoordinate(...)`, keep conversion from clause unit to `TimeAxis` unit.
+3. Use existing `MapConverter` alias, direct, inverse, and transitive conversion behavior.
+4. Fail if either conversion is unavailable.
+
+Required tests:
+
+- alias success: `years -> year -> yr`;
+- active conversion that changes numeric magnitude;
+- source-expression to clause conversion failure;
+- clause to JSHD-axis conversion failure;
+- ISO lookup bypasses numeric unit conversion.
+
+## Runtime warning system
+
+### Infrastructure
+
+1. Add `OutputOptions.printWarning(...)` in `src/main/java/org/joshsim/util/OutputOptions.java`.
+2. Add a run-scoped `SimulationWarningReporter` with no-op default and deduplication keys.
+3. Thread the reporter through `RunUtil`, facade startup, bridge construction, and compatible MCP/browser adapters.
+4. Keep low-level constructors usable with a no-op reporter.
+
+Warnings should use normal command output routing and be test-capturable. They should not be emitted through ad hoc `System.err` calls from the engine.
+
+### `meta.year` warning
+
+On actual built-in fallback resolution only, emit once per run:
+
+```text
+Warning: meta.year is using raw simulation timestep 42, not a declared calendar.
+Define time.type = "ISO" with time.low, time.high, and time.interval,
+or use an explicit model-owned calendar attribute.
+```
+
+No warning when a model-defined `year` attribute resolves normally.
+
+### Implicit external-index warnings
+
+| Form | Meaning | Warning |
+|---|---|---|
+| `external X` | current raw simulation timestep used as an index | yes, once per resource |
+| legacy `external X at expr` | `expr` interpreted as raw zero-based index | yes, once per resource |
+| `external X at index expr` | explicit raw index | no |
+| `external X at unit expr` | typed count coordinate | no |
+| `external X at time expr` | typed ISO date coordinate | no |
+
+When metadata exists, include mode, unit/period, available range, coordinate count, and a safe suggested replacement:
+
+```text
+Warning: external precipitation at forcingStep is interpreted as a zero-based JSHD index.
+Resource precipitation declares count axis time: 2015 year through 2100 year, 86 coordinates.
+Prefer external precipitation at year forcingYear or external precipitation at index forcingStep.
+```
+
+For JSHD v1/timeless data, state that no declared time axis is available and recommend explicit `at index` access.
+
+## Explicit external syntax and metadata queries
+
+Maintain these forms in `src/main/antlr/org/joshsim/lang/antlr/JoshLang.g4`:
 
 ```josh
 external precipitation at index 10
-external precipitation at year 2050
+external precipitation at year forcingYear
 external rainfall at time meta.time
 first year of external precipitation
 last year of external precipitation
 length of external precipitation
+unit of external precipitation
 ```
 
-Semantics:
+Metadata queries fail clearly for legacy/timeless JSHD. Exact typed reads fail with requested coordinate, resource name, mode, and available span.
 
-- `at index N`: explicit zero-based record position; works for every JSHD.
-- `at <unit> value`: count-mode coordinate lookup, converted to the JSHD declared axis unit and matched exactly.
-- `at time value`: ISO-mode coordinate lookup, matched exactly against a stored ISO date.
-- `first`, `last`, and `length`: JSHD temporal metadata queries; unavailable for legacy/timeless JSHD resources.
+## Test matrix
 
-Compatibility forms remain valid but warn once per source location:
+### Serialization
 
-```josh
-external precipitation
-external precipitation at 10
-```
+- v1 JSHD timeless load compatibility.
+- v2 count range, count instant, ISO range, ISO instant round trips.
+- JSHDZ parity.
+- malformed metadata rejection.
 
-They are interpreted as index reads. The warning states the interpretation and points authors to `at index`, `at <unit>`, or `at time`.
+### Preprocessing
 
-Every failed coordinate lookup is a hard error that includes the resource name, requested value, selected mode, and available index/coordinate range. There is no nearest-neighbor or silent fallback behavior.
+- valid count and ISO command paths;
+- flag incompatibilities;
+- slice-count mismatch;
+- malformed date/period;
+- non-aligned ISO endpoint;
+- instant with incorrect slice count;
+- valid and invalid amend-axis composition.
 
-## JSHD v2 temporal metadata
+### Simulation and external reads
 
-Extend the existing v1 binary format in `src/main/java/org/joshsim/precompute/JshdUtil.java` to version 2. The v2 header carries an optional temporal-axis block before grid values.
+- count mode remains unchanged;
+- ISO yearly, monthly, daily, and instant clocks;
+- month-end behavior;
+- `meta.time` progression;
+- unchanged `meta.year` fallback in count and ISO modes;
+- model-owned `year` override;
+- exact count and ISO hits/misses;
+- JSHD v1 coordinate-read failure;
+- alias and conversion behavior.
 
-The metadata model contains:
+### Warnings
 
-- presence flag;
-- `timeType`: `COUNT` or `ISO`;
-- `axisKind`: `RANGE` or `INSTANT`;
-- coordinate/dimension name for provenance;
-- for count mode: unit, numeric start, numeric increment, count;
-- for ISO mode: ISO start, ISO interval, count, or ISO instant;
-- enough canonical coordinate information to validate exact lookup and amend operations.
+- `meta.year` fallback warning once only;
+- no warning for model-defined `year`;
+- bare external warning once per resource;
+- legacy `at expr` warning once per resource;
+- metadata-rich and timeless warning messages;
+- no warning for explicit index, count-coordinate, or ISO-coordinate reads.
 
-A v1 JSHD deserializes with no temporal metadata. It preserves legacy index behavior and produces a clear error for metadata-query or coordinate-based reads.
+### End-to-end
 
-The same serialized v2 payload must work through uncompressed JSHD and compressed JSHDZ paths.
+Extend `src/test/java/org/joshsim/command/ExternalTimeAxisIntegrationTest.java` to preprocess fixture data, run count and ISO simulations, assert exported values, and capture warnings.
 
-## Implementation sequence
+Run `./gradlew test` and the existing TeaVM/WebAssembly-safe build path after every implementation phase.
 
-1. **Metadata domain model**
-   - Add immutable time-axis types near `src/main/java/org/joshsim/precompute/DoublePrecomputedGrid.java`.
-   - Validate count and ISO invariants independently.
-   - Use `java.time.LocalDate`, `java.time.Period`, and `java.time.format.DateTimeFormatter`; add no library dependency.
+## Documentation and examples
 
-2. **Format and serialization**
-   - Bump serialization in `src/main/java/org/joshsim/precompute/JshdUtil.java` to v2.
-   - Retain complete v1 deserialization.
-   - Thread metadata through `src/main/java/org/joshsim/precompute/BinaryGridSerializationStrategy.java` and the JSHDZ serialization path.
+Update:
 
-3. **Preprocessing declaration**
-   - Extend `src/main/java/org/joshsim/command/PreprocessCommand.java` and `src/main/java/org/joshsim/command/PreprocessUtil.java` with `--time-type`.
-   - Count mode: accept `--time-start`, `--time-unit`, `--time-count`, and optional numeric increment.
-   - ISO mode: accept `--time-start`, `--time-interval`, `--time-count`, or mutually exclusive `--time-instant`.
-   - Validate that the declared count equals output slices; validate ISO sequence bounds and interval progression.
-   - In amend mode, require mode-compatible, contiguous, non-overlapping axes.
+- `llms-full.txt`;
+- `README.md`;
+- `TIME.md`;
+- `examples/features/external_time_axis_count.josh`;
+- `examples/features/external_time_axis_iso.josh`.
 
-4. **Simulation ISO clock**
-   - Interpret `time.type`, `time.low`, `time.high`, and `time.interval` in the simulation stanza.
-   - Update bridge/clock infrastructure to derive step count, `meta.time`, and `meta.year` in ISO mode.
-   - Preserve `steps.low`/`steps.high`, `meta.stepCount`, and all count-mode behavior unchanged.
-   - Keep the ISO implementation isolated and verify the used `java.time` subset under the existing TeaVM build; provide a narrow compatible implementation only if needed.
-
-5. **Runtime external metadata and lookup**
-   - Extend `src/main/java/org/joshsim/lang/bridge/ExternalResourceGetter.java`, `src/main/java/org/joshsim/lang/bridge/EngineBridge.java`, and their implementations to cache resource plus metadata.
-   - Add exact count-coordinate and ISO-date-to-index resolution.
-   - Surface stored metadata through `src/main/java/org/joshsim/geo/external/readers/JshdExternalDataReader.java` and inspection tooling.
-
-6. **Grammar, interpreter, and diagnostics**
-   - Extend `src/main/antlr/org/joshsim/lang/antlr/JoshLang.g4` for explicit index, unit-coordinate, ISO-time, and metadata-query expressions.
-   - Implement actions in `src/main/java/org/joshsim/lang/interpret/visitor/delegates/JoshExternalVisitor.java`.
-   - Add runtime operations in `src/main/java/org/joshsim/lang/interpret/machine/SingleThreadEventHandlerMachine.java`.
-   - Emit migration warnings for bare and legacy implicit-index reads without changing their semantics.
-
-7. **Tests**
-   - JSHD v1 read compatibility and v2 count/ISO/instant round trips.
-   - JSHDZ parity.
-   - Count- and ISO-mode preprocessing validation, including malformed dates/periods, count mismatch, and amend discontinuity.
-   - ISO annual, monthly, daily, and instant clocks; inclusive endpoint behavior; `meta.time` and `meta.year` values.
-   - Exact coordinate success and unavailable-coordinate failures.
-   - Parser/visitor coverage for new syntax and warnings.
-   - Preserve existing behavior covered by `src/test/java/org/joshsim/command/ExternalTimestepAlignmentIntegrationTest.java`.
-   - Run tests on JVM and the existing WebAssembly-safe path.
-
-8. **Documentation**
-   - Update `llms-full.txt`, `README.md`, and `TIME.md` with time modes, preprocessing options, JSHD compatibility guarantees, warnings, and spin-up examples.
-   - Document the intentional prepared-data boundary: raw CF calendar conversion and aggregation occur before preprocessing, not during simulation runtime.
+Document default count compatibility, explicit ISO scope, exact-match behavior, JSHD v1 limitations, warning migration guidance, unit-alias requirements, prepared-data/CF boundary, and spin-up patterns.
 
 ## Non-goals for the first release
 
 - Engine-owned eras, spin-up, spindown, or forcing policies.
-- Automatic CF/UDUNITS parsing, calendar conversion, aggregation, or time-dimension inference.
-- Time-of-day, time zones, ISO durations, or non-Gregorian calendars in ISO mode.
-- Implicit resampling, nearest-neighbor time lookup, or repeating annual values across monthly steps.
-- Removal of existing bare or `at <expression>` external reads.
+- Automatic CF/UDUNITS parsing, calendar conversion, aggregation, or source time-dimension inference.
+- Time-of-day, time zones, non-Gregorian calendars, and general duration values.
+- Implicit resampling, nearest-neighbor lookup, or automatic annual-to-monthly repetition.
+- Removal of legacy implicit-index syntax; it remains supported with warnings.
+
+## Delivery sequence
+
+1. Refactor preprocessing and bridge branches.
+2. Establish typed `LocalDate` bridge boundary.
+3. Restore `meta.year` semantics.
+4. Correct count-coordinate unit conversion.
+5. Add warning infrastructure and warning behavior.
+6. Implement amend composition.
+7. Expand tests and update docs/examples.
+8. Push review-sized commits to PR #492 and reply to review threads with tests.

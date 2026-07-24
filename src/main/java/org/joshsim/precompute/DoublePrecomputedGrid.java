@@ -6,11 +6,11 @@
 
 package org.joshsim.precompute;
 
+import java.util.Optional;
 import org.joshsim.engine.geometry.PatchBuilderExtents;
 import org.joshsim.engine.value.converter.Units;
 import org.joshsim.engine.value.engine.ValueSupportFactory;
 import org.joshsim.engine.value.type.EngineValue;
-import java.util.Optional;
 
 
 /**
