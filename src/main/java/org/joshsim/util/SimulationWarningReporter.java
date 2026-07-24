@@ -1,7 +1,7 @@
 package org.joshsim.util;
 
+import java.util.HashSet;
 import java.util.Set;
-import java.util.concurrent.ConcurrentHashMap;
 
 /** Emits deduplicated, run-scoped simulation warnings. */
 public final class SimulationWarningReporter {
@@ -9,7 +9,7 @@ public final class SimulationWarningReporter {
   private static final SimulationWarningReporter NO_OP = new SimulationWarningReporter(null);
 
   private final OutputOptions output;
-  private final Set<String> emittedKeys = ConcurrentHashMap.newKeySet();
+  private final Set<String> emittedKeys = new HashSet<>();
 
   private SimulationWarningReporter(OutputOptions output) {
     this.output = output;
