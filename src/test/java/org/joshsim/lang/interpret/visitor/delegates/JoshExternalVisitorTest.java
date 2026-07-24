@@ -84,7 +84,7 @@ class JoshExternalVisitorTest {
 
     ExpressionContext stepContext = mock(ExpressionContext.class);
     JoshFragment stepFragment = mock(JoshFragment.class);
-    EventHandlerAction stepAction = mock(EventHandlerAction.class);
+    final EventHandlerAction stepAction = mock(EventHandlerAction.class);
     context.step = stepContext;
     when(stepContext.getText()).thenReturn("forcingStep");
     when(stepContext.accept(parent)).thenReturn(stepFragment);
