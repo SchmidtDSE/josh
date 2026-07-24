@@ -117,6 +117,13 @@ java -jar joshsim-fat.jar preprocess <script.josh> <SimulationName> <dataFile> <
 - `--parallel`: Enable parallel patch processing
 - `--serial-patches`: Run patches serially
 - `--time-dim <name>`: Time dimension name
+- `--time-type <count|ISO>`: Persist a declared count or ISO temporal axis in the output JSHD
+- `--time-start <value>`: First count coordinate or first ISO date
+- `--time-unit <unit>`: Unit for a count axis (required for count ranges and instants)
+- `--time-count <N>`: Number of declared coordinates; must match output slices
+- `--time-increment <value>`: Count-axis increment (default `1`)
+- `--time-interval <period>`: ISO-8601 date period for an ISO range (for example `P1Y` or `P1M`)
+- `--time-instant <value>`: Declare a single count coordinate or ISO date; requires exactly one output slice
 - `--timestep <value>`: Process single timestep
 - `--use-float-64`: Use double precision instead of BigDecimal
 - `--x-coord <name>`: X coordinate dimension name
@@ -135,6 +142,18 @@ java -jar joshsim-fat.jar preprocess simulation.josh Main precip.nc rainfall mm 
 
 # Parallel preprocessing for faster execution on multi-core machines
 java -jar joshsim-fat.jar preprocess simulation.josh Main precip.nc rainfall mm precip.jshd --parallel
+
+# Persist yearly count coordinates for a prepared annual source
+java -jar joshsim-fat.jar preprocess simulation.josh Main temperature.nc temp K temperature.jshd \
+  --time-type count --time-start 2015 --time-unit year --time-count 86
+
+# Persist monthly ISO coordinates for a prepared monthly source
+java -jar joshsim-fat.jar preprocess simulation.josh Main rainfall.nc rain mm rainfall.jshd \
+  --time-type ISO --time-start 2026-01-01 --time-interval P1M --time-count 900
+
+# Declare a dated static event or snapshot
+java -jar joshsim-fat.jar preprocess simulation.josh Main fire.tiff rbr rbr fire.jshd \
+  --time-type ISO --time-instant 2020-09-01
 ```
 
 ### `validate` - Syntax Validation
@@ -986,12 +1005,85 @@ end organism
 
 The `wm2 → mjday` conversion fires automatically because `map`'s `from` clause expects `mjday`. The organism reads `external solar` directly.
 
-**Timestep access:**
+### External Time Axes and Explicit Reads
+
+JSHD v2 files can carry a declared temporal axis. Count axes use a numeric start, unit, increment,
+and count; ISO axes use date-only ISO-8601 dates and periods. JSHD v1 files and JSHD files made
+without time declarations are **timeless**: they support explicit index access but not coordinate
+or metadata access.
+
+The simulation loop, simulation clock, and external coordinate are distinct:
+
+- `meta.stepCount` is always the zero-based engine-loop counter relative to the simulation start.
+- In the default count mode, `steps.low` / `steps.high` remain the simulation window.
+- `meta.year` retains its legacy raw-timestep fallback. It warns once per run because this is not a
+  declared calendar; prefer a model-owned calendar attribute or ISO `meta.time` when appropriate.
+- ISO mode is opt-in with `time.type = "ISO"`, date-only `time.low`, `time.high`, and positive
+  `time.interval`. It exposes `meta.time` as the current ISO date string without changing
+  `meta.year` semantics.
 
 ```
-external variableName              # Current timestep
-external variableName at prior     # Previous timestep
-external variableName at N         # Timestep N (0-based)
+start simulation Main
+  time.type = "ISO"
+  time.low = "2026-01-01"
+  time.high = "2026-03-01"
+  time.interval = "P1M"
+end simulation
+```
+
+**Read forms:**
+
+```
+external variableName                         # Legacy: current raw timestep used as index; warns
+external variableName at expression           # Legacy: expression used as raw zero-based index; warns
+external variableName at index expression     # Explicit raw zero-based index
+external variableName at step expression      # Explicit count coordinate in the `step` unit
+external variableName at year expression      # Explicit count coordinate in the `year` unit
+external variableName at month expression     # Explicit count coordinate in the `month` unit
+external variableName at time expression      # Exact ISO date coordinate, e.g. `at time meta.time`
+```
+
+`at <unit> expression` first converts the expression through normal Josh unit aliases/conversions
+to the clause unit, then converts that value to the JSHD axis unit. Both conversions must exist.
+For example, if a resource axis is `yr`, declare aliases/conversions that make `years`, `year`, and
+`yr` compatible before using `external X at year someValue`.
+
+Use `at index` when raw record layout is genuinely intended. It is the only explicit index form and
+does not warn. Bare reads and legacy `at expression` reads warn once per resource; when metadata is
+available, the warning reports the declared range and suggests a coordinate-based replacement.
+
+ISO reads require an exact date match; they do not perform nearest-neighbor matching, resampling,
+or annual-to-monthly repetition. Invalid or unavailable coordinates are hard errors.
+
+**External temporal metadata:**
+
+```
+first year of external precipitation
+last year of external precipitation
+length of external precipitation
+unit of external precipitation
+
+first time of external rainfall
+last time of external rainfall
+```
+
+`first` and `last` return the requested count coordinate converted through Josh units, or ISO date
+strings when queried with `time`. `length` returns a count. `unit` returns the declared axis-unit
+label (`time` for ISO axes). These queries fail clearly for timeless JSHD files.
+
+**Examples:**
+
+```
+# Prepared annual data with a count axis declared as 2015..2100 year:
+scenarioStart.constant = first year of external precipitation
+scenarioEnd.constant = last year of external precipitation
+precip.step = external precipitation at year forcingYear
+
+# Prepared monthly data with an ISO axis matching the simulation clock:
+rain.step = external rainfall at time meta.time
+
+# A dated static event:
+fireImpact.step = external fireRbr at time "2020-09-01"
 ```
 
 **Patch-level mediation.** Introduce a patch attribute when the computation is genuinely patch-scale: combining multiple externals into a derived variable, applying shared threshold logic, sampling once per patch per step (e.g. a stochastic disturbance affecting all organisms on the patch), or aggregating across the patch's organisms. Organisms then read it via `here.<name>`.
