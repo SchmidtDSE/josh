@@ -30,6 +30,7 @@ import org.joshsim.engine.value.engine.ValueSupportFactory;
 import org.joshsim.engine.value.type.EngineValue;
 import org.joshsim.lang.bridge.GridInfoExtractor;
 import org.joshsim.lang.bridge.ShadowingEntity;
+import org.joshsim.lang.interpret.BridgeGetter;
 import org.joshsim.lang.interpret.JoshProgram;
 import org.joshsim.lang.interpret.RecursiveValueResolverFactory;
 import org.joshsim.lang.interpret.TimedRecursiveValueResolverFactory;
@@ -475,6 +476,7 @@ public final class RunUtil {
     configureCompatibilityLayer(opts);
     ProgressCalculator progressCalculator =
         createProgressCalculator(opts, jobs, effectiveReplicates, output);
+    configureInitialExternalGetter(program, valueFactory, createInputStrategy(jobs.get(0)));
     GridSpatialInfo spatialInfo = extractSpatialInfo(program, opts.simulation, valueFactory);
 
     ExecutionSummary summary = executeJobs(opts, jobs, valueFactory, geometryFactory, program,
@@ -591,6 +593,23 @@ public final class RunUtil {
         metadata.getTotalSteps(),
         jobs.size() * effectiveReplicates // Total simulations = jobs × replicates
     );
+  }
+
+  /**
+   * Configures the lazy bridge used while resolving simulation attributes before execution.
+   *
+   * <p>Grid extraction evaluates attributes such as {@code steps.high} before the runtime bridge is
+   * injected. JVM runs must therefore use the same multi-format external lookup at this stage as
+   * they do during simulation execution.</p>
+   */
+  private static void configureInitialExternalGetter(JoshProgram program,
+      ValueSupportFactory valueFactory, InputGetterStrategy inputStrategy) {
+    BridgeGetter bridgeGetter = program.getBridgeGetter();
+    if (bridgeGetter != null) {
+      bridgeGetter.setExternalResourceGetter(new MultiFormatExternalGetter(
+          new JshdExternalGetter(inputStrategy, valueFactory),
+          new JshdzExternalGetter(inputStrategy, valueFactory)));
+    }
   }
 
   /**

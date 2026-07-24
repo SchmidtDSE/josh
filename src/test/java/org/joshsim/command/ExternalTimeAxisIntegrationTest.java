@@ -133,6 +133,68 @@ public class ExternalTimeAxisIntegrationTest {
     assertTrue(parsed.temperatures.stream().anyMatch(t -> t > 250.0));
   }
 
+  @Test
+  public void isoAxis_externalAtTimeAndMetadataReadCompressedLogicalMapping() throws Exception {
+    Path outDir = Files.createDirectories(tempDir.resolve("iso_jshdz_run"));
+    Path csvTarget = outDir.resolve("results_{replicate}.csv");
+    Path script = tempDir.resolve("iso_jshdz.josh");
+    String scriptTemplate = """
+        start simulation Test
+          grid.size = 16000 m
+          grid.low = 36.73 degrees latitude, -119.52 degrees longitude
+          grid.high = 35.80 degrees latitude, -117.98 degrees longitude
+          grid.patch = "Default"
+
+          time.type = "ISO"
+          time.low = "2024-01-01"
+          time.high = "2026-01-01"
+          time.interval = "P1Y"
+
+        %s
+
+          exportFiles.patch = "file://%s"
+        end simulation
+
+        start patch Default
+          export.time.step = meta.time
+          export.year.step = meta.year
+          export.axisLength.step = length of external temperature
+          export.temperature.step = external temperature at time meta.time
+        end patch
+        """;
+    Files.writeString(script, scriptTemplate.formatted("", csvTarget));
+
+    Path jshdz = tempDir.resolve("temperature.jshdz");
+    PreprocessUtil.PreprocessOptions preprocessOptions = new PreprocessUtil.PreprocessOptions(
+        "EPSG:4326", "lon", "lat", "calendar_year", "", null, false, false,
+        "ISO", "2024-01-01", "", "3", "", "P1Y", "");
+    PreprocessUtil.preprocess(script.toFile(), "Test", fixture().toString(), VARIABLE, "K",
+        jshdz.toFile(), preprocessOptions, new OutputOptions());
+
+    Files.writeString(script, scriptTemplate.formatted("""
+          axisLength.constant = length of external temperature
+          steps.high = axisLength - 1 count
+        """, csvTarget));
+
+    // GridSpec mappings use the logical external name, not a filename with a format extension.
+    RunUtil.RunOptions runOptions = RunUtil.RunOptions.builder(script.toFile(), "Test")
+        .replicates(1)
+        .dataFiles(new String[] {"temperature=" + jshdz})
+        .seed(Optional.of(42L))
+        .build();
+    RunUtil.RunResult result = RunUtil.run(runOptions, new OutputOptions());
+    assertTrue(result.isSuccess(), "run should succeed: " + result.getMessage());
+
+    Path csv = outDir.resolve("results_0.csv");
+    assertTrue(Files.exists(csv));
+    RunResult parsed = parseCsv(csv);
+    assertTrue(parsed.temperatures.stream().anyMatch(t -> t > 250.0),
+        "external ... at time must read compressed temporal data");
+    List<Double> lengths = parseNumericColumn(csv, "axisLength");
+    assertTrue(!lengths.isEmpty() && lengths.stream().allMatch(length -> length == 3.0),
+        "metadata lookup must use the same compressed logical mapping");
+  }
+
   private static RunResult parseCsv(Path csv) throws Exception {
     List<String> lines = Files.readAllLines(csv);
     String[] header = lines.get(0).split(",", -1);
@@ -156,6 +218,25 @@ public class ExternalTimeAxisIntegrationTest {
     }
     temperatures.sort(Double::compareTo);
     return new RunResult(years, temperatures);
+  }
+
+  private static List<Double> parseNumericColumn(Path csv, String column) throws Exception {
+    List<String> lines = Files.readAllLines(csv);
+    String[] header = lines.get(0).split(",", -1);
+    int columnIndex = -1;
+    for (int i = 0; i < header.length; i++) {
+      if (header[i].equals(column)) {
+        columnIndex = i;
+        break;
+      }
+    }
+    assertTrue(columnIndex >= 0, "CSV must have " + column + " column");
+
+    List<Double> values = new ArrayList<>();
+    for (int i = 1; i < lines.size(); i++) {
+      values.add(Double.parseDouble(lines.get(i).split(",", -1)[columnIndex]));
+    }
+    return values;
   }
 
   private record RunResult(TreeSet<Long> years, List<Double> temperatures) {}

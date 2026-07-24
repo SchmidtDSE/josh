@@ -17,6 +17,7 @@ import org.joshsim.engine.value.converter.Converter;
 import org.joshsim.engine.value.engine.ValueSupportFactory;
 import org.joshsim.lang.bridge.EngineBridge;
 import org.joshsim.lang.bridge.EngineBridgeSimulationStore;
+import org.joshsim.lang.bridge.ExternalResourceGetter;
 import org.joshsim.lang.bridge.MinimalEngineBridge;
 import org.joshsim.lang.io.CombinedDebugOutputFacade;
 import org.joshsim.lang.io.InputOutputLayer;
@@ -39,6 +40,7 @@ public class FutureBridgeGetter implements BridgeGetter {
   private Optional<InputOutputLayer> inputOutputLayer;
   private Optional<CombinedDebugOutputFacade> debugOutputFacade;
   private Optional<KnownEventSet> knownEventSet;
+  private Optional<ExternalResourceGetter> externalResourceGetter;
 
   /**
    * Creates a new future bridge getter with no initial configuration.
@@ -54,6 +56,7 @@ public class FutureBridgeGetter implements BridgeGetter {
     this.inputOutputLayer = Optional.empty();
     this.debugOutputFacade = Optional.empty();
     this.knownEventSet = Optional.empty();
+    this.externalResourceGetter = Optional.empty();
   }
 
   /**
@@ -148,6 +151,14 @@ public class FutureBridgeGetter implements BridgeGetter {
   }
 
   @Override
+  public void setExternalResourceGetter(ExternalResourceGetter newExternalResourceGetter) {
+    if (builtBridge.isPresent()) {
+      throw new IllegalStateException("Bridge already built.");
+    }
+    externalResourceGetter = Optional.of(newExternalResourceGetter);
+  }
+
+  @Override
   public EngineBridge get() {
     if (builtBridge.isEmpty()) {
       buildBridge();
@@ -192,7 +203,8 @@ public class FutureBridgeGetter implements BridgeGetter {
         simulation,
         converter,
         prototypeStore,
-        new JshdExternalGetter(inputOutputLayerRealized.getInputStrategy(), valueFactory),
+        externalResourceGetter.orElseGet(() -> new JshdExternalGetter(
+            inputOutputLayerRealized.getInputStrategy(), valueFactory)),
         new JshcConfigGetter(inputOutputLayerRealized.getInputStrategy(), valueFactory),
         knownEventSet.map(KnownEventSet::getSubstepOrder).orElse(List.of("start", "step", "end"))
     );
