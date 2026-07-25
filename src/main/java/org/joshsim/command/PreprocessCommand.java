@@ -89,10 +89,17 @@ public class PreprocessCommand implements Callable<Integer> {
 
   @Option(
       names = "--time-dim",
-      description = "Time dimension.",
+      description = "Time dimension. Ignored if --no-time-dim is given.",
       defaultValue = "calendar_year"
   )
   private String timeName;
+
+  @Option(
+      names = "--no-time-dim",
+      description = "Treat the source as having no time dimension, such as a flat raster.",
+      defaultValue = "false"
+  )
+  private boolean noTimeDim;
 
   @Option(
       names = "--timestep",
@@ -143,7 +150,7 @@ public class PreprocessCommand implements Callable<Integer> {
   public Integer call() {
     try {
       PreprocessUtil.PreprocessOptions options = new PreprocessUtil.PreprocessOptions(
-          crsCode, horizCoordName, vertCoordName, timeName,
+          crsCode, horizCoordName, vertCoordName, noTimeDim ? "" : timeName,
           timestep, defaultValue, parallel, amend, timeType, timeStart, timeUnit, timeCount,
           timeIncrement, timeInterval, timeInstant
       );

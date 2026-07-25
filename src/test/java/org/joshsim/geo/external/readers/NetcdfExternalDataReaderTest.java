@@ -14,6 +14,7 @@ import java.math.BigDecimal;
 import java.net.URL;
 import java.util.List;
 import java.util.Optional;
+import org.joshsim.engine.value.converter.Units;
 import org.joshsim.engine.value.engine.ValueSupportFactory;
 import org.joshsim.engine.value.type.EngineValue;
 import org.joshsim.geo.external.ExternalSpatialDimensions;
@@ -28,6 +29,11 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.opengis.referencing.crs.CoordinateReferenceSystem;
 import org.opengis.util.FactoryException;
+import ucar.ma2.ArrayDouble;
+import ucar.ma2.ArrayFloat;
+import ucar.ma2.DataType;
+import ucar.nc2.Dimension;
+import ucar.nc2.write.NetcdfFormatWriter;
 
 /**
  * Unit tests for the {@link NetcdfExternalDataReader} class.
@@ -217,6 +223,74 @@ public class NetcdfExternalDataReaderTest {
 
     // Additional assertions on the real value
     assertNotNull(value.get().getInnerValue(), "Value from NetCDF should not be null");
+  }
+
+  @Test
+  public void testReadValueAtVariableWithoutUnitsAttribute() throws Exception {
+    // The CF "units" attribute is optional, so a variable that omits it must still be readable
+    // rather than failing while resolving units.
+    File dataFile = writeUnitlessNetcdf();
+
+    reader = new NetcdfExternalDataReader(valueFactory);
+    reader.open(dataFile.getAbsolutePath());
+    reader.setDimensions(DIM_X, DIM_Y, Optional.of("time"));
+
+    Optional<EngineValue> value = reader.readValueAt(
+        "temperature", new BigDecimal("-116.0010"), new BigDecimal("33.9010"), 0);
+
+    assertTrue(value.isPresent(), "Should read a value despite the missing units attribute");
+    assertEquals(0, new BigDecimal("10").compareTo(value.get().getAsDecimal()));
+    assertEquals(Units.EMPTY, value.get().getUnits(),
+        "A variable without a units attribute should yield empty units");
+  }
+
+  /**
+   * Writes a two-by-two, two-timestep NetCDF whose data variable carries no units attribute.
+   *
+   * @return The file that was written.
+   */
+  private File writeUnitlessNetcdf() throws Exception {
+    File dataFile = File.createTempFile("joshsim-unitless", ".nc");
+    dataFile.deleteOnExit();
+
+    NetcdfFormatWriter.Builder builder =
+        NetcdfFormatWriter.createNewNetcdf3(dataFile.getAbsolutePath());
+    Dimension timeDim = builder.addDimension("time", 2);
+    Dimension latDim = builder.addDimension(DIM_Y, 2);
+    Dimension lonDim = builder.addDimension(DIM_X, 2);
+    builder.addVariable("time", DataType.DOUBLE, List.of(timeDim));
+    builder.addVariable(DIM_Y, DataType.DOUBLE, List.of(latDim));
+    builder.addVariable(DIM_X, DataType.DOUBLE, List.of(lonDim));
+    builder.addVariable("temperature", DataType.FLOAT, List.of(timeDim, latDim, lonDim));
+
+    try (NetcdfFormatWriter writer = builder.build()) {
+      ArrayDouble.D1 times = new ArrayDouble.D1(2);
+      times.set(0, 2015);
+      times.set(1, 2016);
+      writer.write(writer.findVariable("time"), times);
+
+      ArrayDouble.D1 lats = new ArrayDouble.D1(2);
+      lats.set(0, 33.901);
+      lats.set(1, 33.9);
+      writer.write(writer.findVariable(DIM_Y), lats);
+
+      ArrayDouble.D1 lons = new ArrayDouble.D1(2);
+      lons.set(0, -116.001);
+      lons.set(1, -116.0);
+      writer.write(writer.findVariable(DIM_X), lons);
+
+      ArrayFloat.D3 values = new ArrayFloat.D3(2, 2, 2);
+      for (int t = 0; t < 2; t++) {
+        for (int y = 0; y < 2; y++) {
+          for (int x = 0; x < 2; x++) {
+            values.set(t, y, x, 10 + (t * 10) + (y * 2) + x);
+          }
+        }
+      }
+      writer.write(writer.findVariable("temperature"), values);
+    }
+
+    return dataFile;
   }
 
   @Test

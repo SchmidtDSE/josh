@@ -105,7 +105,7 @@ public class PreprocessUtil {
      * @param crsCode Coordinate reference system code (e.g., {@code EPSG:4326}).
      * @param horizCoordName Name of the horizontal coordinate dimension.
      * @param vertCoordName Name of the vertical coordinate dimension.
-     * @param timeName Name of the time dimension.
+     * @param timeName Name of the time dimension, or empty for a source with no time dimension.
      * @param timestep Single timestep to process, or empty string for all.
      * @param defaultValue Default fill value for grid spaces, or null.
      * @param parallel Whether to enable parallel patch processing.

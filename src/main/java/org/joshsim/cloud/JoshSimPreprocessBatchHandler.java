@@ -55,7 +55,8 @@ import org.joshsim.util.OutputOptions;
  *   <li>{@code crs} (default {@code EPSG:4326})</li>
  *   <li>{@code xCoord} (default {@code lon})</li>
  *   <li>{@code yCoord} (default {@code lat})</li>
- *   <li>{@code timeDim} (default {@code calendar_year})</li>
+ *   <li>{@code timeDim} (default {@code calendar_year}; empty for a source with no time
+ *       dimension)</li>
  *   <li>{@code timestep} — single timestep for parallel preprocessing</li>
  *   <li>{@code defaultValue} — default fill value</li>
  *   <li>{@code parallel} (default {@code false})</li>

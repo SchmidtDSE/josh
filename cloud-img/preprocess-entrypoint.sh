@@ -67,6 +67,10 @@ if [ -n "$JOSH_Y_COORD" ]; then
 fi
 if [ -n "$JOSH_TIME_DIM" ]; then
   OPTS="$OPTS --time-dim=$JOSH_TIME_DIM"
+elif [ -n "${JOSH_TIME_DIM+set}" ]; then
+  # Set but empty means the dispatcher declared a source with no time dimension. Leaving the
+  # flag off instead would silently fall back to the jar's default dimension name.
+  OPTS="$OPTS --no-time-dim"
 fi
 if [ -n "$JOSH_TIMESTEP" ]; then
   OPTS="$OPTS --timestep=$JOSH_TIMESTEP"

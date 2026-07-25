@@ -428,15 +428,14 @@ public class NetcdfExternalDataReader implements ExternalDataReader {
         return Optional.empty();
       }
 
-      // Get the unit if available
-      String unit = null;
+      // Get the unit if available. The CF "units" attribute is optional and getStringValue
+      // returns null for a non-textual attribute, so fall back to empty units as the CSV reader
+      // does rather than handing null to Units.of, whose cache lookup rejects a null key.
       Attribute unitAttr = var.findAttribute("units");
-      if (unitAttr != null) {
-        unit = unitAttr.getStringValue();
-      }
+      String unit = unitAttr == null ? null : unitAttr.getStringValue();
 
       // Create units and BigDecimal value
-      Units units = Units.of(unit);
+      Units units = unit == null ? Units.EMPTY : Units.of(unit);
       BigDecimal bigDecimalValue = new BigDecimal(value);
 
       // Create an EngineValue with the result
