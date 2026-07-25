@@ -122,10 +122,17 @@ public class PreprocessBatchCommand implements Callable<Integer> {
 
   @Option(
       names = "--time-dim",
-      description = "Time dimension.",
+      description = "Time dimension. Ignored if --no-time-dim is given.",
       defaultValue = "calendar_year"
   )
   private String timeDim = "calendar_year";
+
+  @Option(
+      names = "--no-time-dim",
+      description = "Treat the source as having no time dimension, such as a flat raster.",
+      defaultValue = "false"
+  )
+  private boolean noTimeDim = false;
 
   @Option(
       names = "--timestep",
@@ -204,7 +211,7 @@ public class PreprocessBatchCommand implements Callable<Integer> {
       final String relativeDataFile = resolveDataFileRelativeToInputDir(dataFile, inputDir);
       final PreprocessParams params = new PreprocessParams(
           relativeDataFile, variable, units, outputFile.getName(),
-          crs, horizCoordName, vertCoordName, timeDim,
+          crs, horizCoordName, vertCoordName, noTimeDim ? "" : timeDim,
           timestep.isBlank() ? null : timestep,
           defaultValue, parallel, amend
       );

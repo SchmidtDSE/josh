@@ -37,7 +37,8 @@ public class ExternalGeoMapper {
    * @param interpolationStrategy Strategy for interpolating values from data to patches
    * @param dimensionX The name of the X dimension (can be null for auto-detection)
    * @param dimensionY The name of the Y dimension (can be null for auto-detection)
-   * @param timeDimension The name of the time dimension (can be null)
+   * @param timeDimension The name of the time dimension (can be null for data with no time
+   *     dimension)
    * @param crsCode The coordinate reference system code (can be null)
    */
   public ExternalGeoMapper(
@@ -49,14 +50,8 @@ public class ExternalGeoMapper {
       String timeDimension,
       String crsCode
   ) {
-    this.valueFactory = valueFactory;
-    this.coordinateTransformer = coordinateTransformer;
-    this.interpolationStrategy = interpolationStrategy;
-    this.dimensionX = dimensionX;
-    this.dimensionY = dimensionY;
-    this.timeDimension = timeDimension;
-    this.crsCode = crsCode;
-    this.forcedTimestep = Optional.empty();
+    this(valueFactory, coordinateTransformer, interpolationStrategy, dimensionX, dimensionY,
+        timeDimension, crsCode, Optional.empty());
   }
 
   /**
@@ -67,7 +62,8 @@ public class ExternalGeoMapper {
    * @param interpolationStrategy Strategy for interpolating values from data to patches
    * @param dimensionX The name of the X dimension (can be null for auto-detection)
    * @param dimensionY The name of the Y dimension (can be null for auto-detection)
-   * @param timeDimension The name of the time dimension (can be null)
+   * @param timeDimension The name of the time dimension (can be null for data with no time
+   *     dimension)
    * @param crsCode The coordinate reference system code (can be null)
    * @param forcedTimestep If provided, all values read will be assumed to have this timestep
    */
@@ -294,7 +290,10 @@ public class ExternalGeoMapper {
       }
       return Stream.empty();
     } catch (Exception e) {
-      throw new RuntimeException("Error interpolating value for patch: " + patch, e);
+      // Callers such as the preprocess CLI report only getMessage(), so restate the cause here
+      // instead of leaving an identity-hash patch name as the sole diagnostic.
+      throw new RuntimeException(
+          "Error interpolating value for patch: " + patch + ": " + e.getMessage(), e);
     }
   }
 

@@ -44,7 +44,7 @@ public class PreprocessParams {
    * @param crs Coordinate reference system code (e.g., {@code EPSG:4326}).
    * @param horizCoord Name of the horizontal coordinate dimension.
    * @param vertCoord Name of the vertical coordinate dimension.
-   * @param timeDim Name of the time dimension.
+   * @param timeDim Name of the time dimension, or empty for a source with no time dimension.
    * @param timestep Single timestep to process, or null/empty for all.
    * @param defaultValue Default fill value, or null.
    * @param parallel Whether to enable parallel patch processing.
