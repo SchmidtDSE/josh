@@ -105,7 +105,8 @@ public class PreprocessUtil {
      * @param crsCode Coordinate reference system code (e.g., {@code EPSG:4326}).
      * @param horizCoordName Name of the horizontal coordinate dimension.
      * @param vertCoordName Name of the vertical coordinate dimension.
-     * @param timeName Name of the time dimension, or empty for a source with no time dimension.
+     * @param timeName Name of the time dimension, or null/empty for a source with no time
+     *     dimension.
      * @param timestep Single timestep to process, or empty string for all.
      * @param defaultValue Default fill value for grid spaces, or null.
      * @param parallel Whether to enable parallel patch processing.
@@ -127,7 +128,7 @@ public class PreprocessUtil {
       this.crsCode = crsCode;
       this.horizCoordName = horizCoordName;
       this.vertCoordName = vertCoordName;
-      this.timeName = timeName;
+      this.timeName = timeName != null ? timeName : "";
       this.timestep = timestep != null ? timestep : "";
       this.defaultValue = defaultValue;
       this.parallel = parallel;
@@ -265,10 +266,14 @@ public class PreprocessUtil {
         ? Optional.empty()
         : Optional.of(Long.parseLong(options.getTimestep()));
 
+    // Options carry CLI and form strings, where blank means absent. Readers take an absent time
+    // dimension as "this source has no time dimension", which is what --no-time-dim requests.
+    String timeName = options.getTimeName().isBlank() ? null : options.getTimeName();
+
     geoMapperBuilder.addDimensions(
         options.getHorizCoordName(),
         options.getVertCoordName(),
-        options.getTimeName()
+        timeName
     );
     if (forcedTimestep.isPresent()) {
       geoMapperBuilder.forceTimestep(forcedTimestep.get());

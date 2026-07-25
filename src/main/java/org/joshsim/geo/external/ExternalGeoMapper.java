@@ -37,8 +37,8 @@ public class ExternalGeoMapper {
    * @param interpolationStrategy Strategy for interpolating values from data to patches
    * @param dimensionX The name of the X dimension (can be null for auto-detection)
    * @param dimensionY The name of the Y dimension (can be null for auto-detection)
-   * @param timeDimension The name of the time dimension (can be null or blank for data with no
-   *     time dimension)
+   * @param timeDimension The name of the time dimension (can be null for data with no time
+   *     dimension)
    * @param crsCode The coordinate reference system code (can be null)
    */
   public ExternalGeoMapper(
@@ -62,8 +62,8 @@ public class ExternalGeoMapper {
    * @param interpolationStrategy Strategy for interpolating values from data to patches
    * @param dimensionX The name of the X dimension (can be null for auto-detection)
    * @param dimensionY The name of the Y dimension (can be null for auto-detection)
-   * @param timeDimension The name of the time dimension (can be null or blank for data with no
-   *     time dimension)
+   * @param timeDimension The name of the time dimension (can be null for data with no time
+   *     dimension)
    * @param crsCode The coordinate reference system code (can be null)
    * @param forcedTimestep If provided, all values read will be assumed to have this timestep
    */
@@ -82,10 +82,7 @@ public class ExternalGeoMapper {
     this.interpolationStrategy = interpolationStrategy;
     this.dimensionX = dimensionX;
     this.dimensionY = dimensionY;
-    // A blank name is how the preprocess --no-time-dim flag reaches this layer: the data has no
-    // time dimension, which readers express as an absent name. Normalizing here covers every
-    // reader plus the parallel pool, all of which take their time dimension from this field.
-    this.timeDimension = (timeDimension == null || timeDimension.isBlank()) ? null : timeDimension;
+    this.timeDimension = timeDimension;
     this.crsCode = crsCode;
     this.forcedTimestep = forcedTimestep;
   }

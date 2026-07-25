@@ -69,9 +69,9 @@ preprocess a timeless NetCDF — the defaulted `calendar_year` was required to e
 - GeoTIFF and CSV readers ignore the time-dimension name entirely, so they worked without the flag
   before and still do. Passing `--no-time-dim` for them is harmless and more honest.
 
-> **Do not** emit `--time-dim ""` as a substitute. The empty string is an internal encoding between
-> the CLI and `ExternalGeoMapper`, not part of this contract, and the Kubernetes entrypoint's `-n`
-> guard would drop it.
+> **Do not** emit `--time-dim ""` as a substitute. Blank is how `PreprocessOptions` transports an
+> absent value internally — the same convention as a blank `--timestep` — not part of this contract,
+> and the Kubernetes entrypoint's `-n` guard would drop it anyway.
 
 ### Mode C — forced single timestep
 
