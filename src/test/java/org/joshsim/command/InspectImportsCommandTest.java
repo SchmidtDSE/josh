@@ -1,6 +1,7 @@
 package org.joshsim.command;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.io.ByteArrayOutputStream;
@@ -14,6 +15,7 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
+import picocli.CommandLine;
 
 /**
  * Unit tests for the {@link InspectImportsCommand} class.
@@ -83,17 +85,62 @@ public class InspectImportsCommandTest {
   public void testListsImportsAsPlainText() throws IOException {
     Path entry = writeEntryWithImports();
 
-    InspectImportsCommand command = new InspectImportsCommand();
-    setField(command, "entryFile", entry.toFile());
-    setField(command, "jsonOutput", false);
-
-    Integer result = command.call();
-    assertEquals(0, result);
+    // Parsed through picocli rather than by setting a field, so the flag semantics are covered.
+    int exitCode = new CommandLine(new InspectImportsCommand())
+        .execute(entry.toString(), "--no-json");
+    assertEquals(0, exitCode);
 
     String output = outContent.toString();
     assertTrue(output.contains("Imports:"), output);
     assertTrue(output.contains("- b.josh"), output);
     assertTrue(output.contains("- sub/c.josh"), output);
+  }
+
+  @Test
+  public void testJsonFlagIsNotInverted() throws IOException {
+    // Regression: `--json` used to emit plain text, because picocli sets a matched boolean flag to
+    // the opposite of its default and the option was declared with defaultValue = "true".
+    Path entry = writeEntryWithImports();
+
+    int exitCode = new CommandLine(new InspectImportsCommand())
+        .execute(entry.toString(), "--json");
+
+    assertEquals(0, exitCode);
+    String output = outContent.toString();
+    assertTrue(output.contains("\"imports\""), output);
+    assertFalse(output.contains("Imports:"), output);
+  }
+
+  @Test
+  public void testJsonIsStillTheDefault() throws IOException {
+    Path entry = writeEntryWithImports();
+
+    int exitCode = new CommandLine(new InspectImportsCommand()).execute(entry.toString());
+
+    assertEquals(0, exitCode);
+    assertTrue(outContent.toString().contains("\"imports\""), outContent.toString());
+  }
+
+  @Test
+  public void testPlainAliasSelectsPlainText() throws IOException {
+    Path entry = writeEntryWithImports();
+
+    int exitCode = new CommandLine(new InspectImportsCommand())
+        .execute(entry.toString(), "--plain");
+
+    assertEquals(0, exitCode);
+    assertTrue(outContent.toString().contains("Imports:"), outContent.toString());
+  }
+
+  @Test
+  public void testConflictingFormatFlagsRejected() throws IOException {
+    Path entry = writeEntryWithImports();
+
+    int exitCode = new CommandLine(new InspectImportsCommand())
+        .execute(entry.toString(), "--json", "--no-json");
+
+    assertEquals(4, exitCode);
+    assertTrue(errContent.toString().contains("mutually exclusive"), errContent.toString());
   }
 
   @Test

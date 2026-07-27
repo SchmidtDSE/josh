@@ -21,10 +21,10 @@ import org.joshsim.lang.bridge.ShadowingEntity;
 import org.joshsim.lang.interpret.JoshProgram;
 import org.joshsim.lang.io.ExportTarget;
 import org.joshsim.lang.io.ExportTargetParser;
+import org.joshsim.util.JsonOutputOptions;
 import org.joshsim.util.OutputOptions;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Mixin;
-import picocli.CommandLine.Option;
 import picocli.CommandLine.Parameters;
 
 
@@ -41,6 +41,10 @@ import picocli.CommandLine.Parameters;
 )
 public class InspectExportsCommand implements Callable<Integer> {
 
+  // Exit code 4 already means "simulation not found" here and 5 "extraction failed", so a usage
+  // error gets its own code rather than overloading either.
+  private static final int USAGE_ERROR_CODE = 6;
+
   @Parameters(index = "0", description = "Path to Josh file to inspect")
   private File file;
 
@@ -50,15 +54,16 @@ public class InspectExportsCommand implements Callable<Integer> {
   @Mixin
   private OutputOptions output = new OutputOptions();
 
-  @Option(
-      names = "--json",
-      description = "Output in JSON format (default: true)",
-      defaultValue = "true"
-  )
-  private boolean jsonOutput = true;
+  @Mixin
+  private JsonOutputOptions format = new JsonOutputOptions();
 
   @Override
   public Integer call() {
+    if (format.hasConflict()) {
+      output.printError(format.getConflictMessage());
+      return USAGE_ERROR_CODE;
+    }
+
     JoshSimCommander.ProgramInitResult initResult = JoshSimCommander.getJoshProgram(
         new GridGeometryFactory(),
         file,
@@ -102,7 +107,7 @@ public class InspectExportsCommand implements Callable<Integer> {
 
       simEntityRaw.endSubstep();
 
-      if (jsonOutput) {
+      if (format.isJson()) {
         outputJson(patchExport, metaExport, entityExport,
             debugOrganism, debugPatch, debugAgent, debugDisturbance);
       } else {
