@@ -21,6 +21,7 @@ import org.joshsim.lang.parse.ImportRecord;
 import org.joshsim.lang.parse.ImportsResult;
 import org.joshsim.lang.parse.JoshImportPreprocessor;
 import org.joshsim.lang.parse.ParseError;
+import org.joshsim.util.JsonOutputOptions;
 import org.joshsim.util.OutputOptions;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Mixin;
@@ -45,6 +46,7 @@ public class InspectImportsCommand implements Callable<Integer> {
   private static final int FILE_NOT_FOUND_CODE = 1;
   private static final int IO_ERROR_CODE = 2;
   private static final int INSPECT_ERROR_CODE = 3;
+  private static final int USAGE_ERROR_CODE = 4;
 
   @Parameters(index = "0", description = "Path to the entry Josh file to inspect")
   private File entryFile;
@@ -59,15 +61,16 @@ public class InspectImportsCommand implements Callable<Integer> {
   @Mixin
   private OutputOptions output = new OutputOptions();
 
-  @Option(
-      names = "--json",
-      description = "Output in JSON format (default: true)",
-      defaultValue = "true"
-  )
-  private boolean jsonOutput = true;
+  @Mixin
+  private JsonOutputOptions format = new JsonOutputOptions();
 
   @Override
   public Integer call() {
+    if (format.hasConflict()) {
+      output.printError(format.getConflictMessage());
+      return USAGE_ERROR_CODE;
+    }
+
     if (!entryFile.exists()) {
       output.printError("Could not find file: " + entryFile);
       return FILE_NOT_FOUND_CODE;
@@ -96,7 +99,7 @@ public class InspectImportsCommand implements Callable<Integer> {
     }
 
     List<ImportRecord> imports = result.getImports().orElseThrow();
-    if (jsonOutput) {
+    if (format.isJson()) {
       outputJson(imports);
     } else {
       outputPlain(imports);
