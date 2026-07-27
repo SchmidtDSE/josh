@@ -11,6 +11,12 @@ bin/
 # Docs builder virtualenv (created on demand; see docs/build/requirements.txt)
 docs/build/.venv/
 
+# Python bytecode and tool caches, from the docs builder
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.ruff_cache/
+
 # IDE
 .idea/
 *.iml

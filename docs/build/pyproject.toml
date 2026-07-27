@@ -1,0 +1,31 @@
+# Tool configuration for the Josh docs builder.
+#
+# This file deliberately declares no build backend: joshdocs is never installed. It is run from
+# the source tree with `PYTHONPATH=docs/build/src python -m joshdocs ...`, which keeps the docs
+# build off the engine build path (see docs/build/requirements.txt).
+
+[tool.ruff]
+# Match the 100-column limit the Java (google_checks) and JS sources in this repo already use.
+line-length = 100
+target-version = "py312"
+src = ["src", "tests"]
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "I", "UP", "B", "SIM", "C4", "PTH", "RET", "D"]
+ignore = [
+  "D203",  # conflicts with D211 (no blank line before class docstring)
+  "D213",  # conflicts with D212 (multi-line summary on the first line)
+]
+
+[tool.ruff.lint.pydocstyle]
+convention = "google"
+
+[tool.ruff.lint.per-file-ignores]
+# Test functions document themselves by name, and a fake collaborator mirrors an API
+# documented on the real one.
+"tests/*" = ["D100", "D101", "D102", "D103", "D104", "D107"]
+
+[tool.pytest.ini_options]
+# joshdocs is imported from the source tree rather than installed.
+pythonpath = ["src"]
+testpaths = ["tests"]
