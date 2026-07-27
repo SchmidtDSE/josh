@@ -234,6 +234,37 @@ java -jar joshsim-fat.jar inspect-imports <script.josh> [OPTIONS]
 - `--import-base <path>`: Resolution root for the entry file's relative imports (default: the entry file's own directory)
 - `--json`: Output in JSON format (default: true), otherwise plain text
 
+### `inspect-externals` - External Data Discovery
+Parses a Josh script and lists every external data resource it reads, without running the simulation. Useful for build systems and tooling that need to know which preprocessed `.jshd` / `.jshdz` files a model requires before running it.
+
+```bash
+java -jar joshsim-fat.jar inspect-externals <script.josh> [OPTIONS]
+```
+
+Imports are resolved first, so a resource read only by an imported file is still reported. Every read form contributes its name, including the temporal metadata queries — `external precipitation`, `external precipitation at year forcingYear`, and `first year of external precipitation` all report `precipitation`. Names are reported as written in the script, without a file extension; the data file is that name plus `.jshd` or `.jshdz`.
+
+A `start external ...` stanza only declares a source and is not itself a read, so it is not reported. Because discovery walks the parse tree rather than matching text, commented-out reads are correctly ignored.
+
+**Parameters:**
+- `<script.josh>`: Path to Josh script file to inspect
+
+**Options:**
+- `--import-base <path>`: Resolution root for the entry file's relative imports (default: the entry file's own directory)
+- `--json`: Output in JSON format; this is the default and the flag is accepted for explicitness
+- `--no-json`, `--plain`: Output plain text instead of JSON
+
+**Example:**
+```bash
+$ java -jar joshsim-fat.jar inspect-externals examples/guide/two_trees.josh
+{
+  "entry": "examples/guide/two_trees.josh",
+  "externals": [
+    "precipitationTulare",
+    "temperatureTulare"
+  ]
+}
+```
+
 ### `mcp` - Model Context Protocol (MCP) Server
 Runs Josh as a [Model Context Protocol](https://modelcontextprotocol.io) server over stdio, letting LLM clients (Claude Desktop, opencode, etc.) drive Josh against files on the local disk. This is the recommended way for an AI agent to operate Josh.
 ```bash
