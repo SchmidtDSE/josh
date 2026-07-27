@@ -5,15 +5,11 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.io.ByteArrayOutputStream;
-import java.io.IOException;
 import java.io.PrintStream;
-import java.nio.charset.StandardCharsets;
-import java.nio.file.Files;
 import java.nio.file.Path;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.io.TempDir;
 import picocli.CommandLine;
 
 /**
@@ -25,27 +21,13 @@ import picocli.CommandLine;
  */
 public class InspectExportsCommandTest {
 
-  private static final String SIMULATION =
-      "start simulation Main\n"
-      + "  grid.size = 1000 m\n"
-      + "  grid.low = 33.7 degrees latitude, -115.4 degrees longitude\n"
-      + "  grid.high = 33.8 degrees latitude, -115.5 degrees longitude\n"
-      + "  steps.low = 0 count\n"
-      + "  steps.high = 1 count\n"
-      + "  exportFiles.patch = \"file:///tmp/inspect_exports_test.csv\"\n"
-      + "end simulation\n"
-      + "\n"
-      + "start patch Default\n"
-      + "  value.init = 1 count\n"
-      + "end patch\n";
+  private static final Path SCRIPT_PATH = Path.of("examples/guide/hello.josh");
+  private static final String SIMULATION_NAME = "Main";
 
   private ByteArrayOutputStream outContent;
   private ByteArrayOutputStream errContent;
   private PrintStream originalOut;
   private PrintStream originalErr;
-
-  @TempDir
-  Path tempDir;
 
   /**
    * Sets up output stream capture for both stdout and stderr.
@@ -70,24 +52,21 @@ public class InspectExportsCommandTest {
   }
 
   @Test
-  public void testJsonIsTheDefault() throws IOException {
-    Path script = writeScript();
-
-    int exitCode = new CommandLine(new InspectExportsCommand()).execute(script.toString(), "Main");
+  public void testJsonIsTheDefault() {
+    int exitCode = new CommandLine(new InspectExportsCommand())
+        .execute(SCRIPT_PATH.toString(), SIMULATION_NAME);
 
     assertEquals(0, exitCode);
     String output = outContent.toString();
     assertTrue(output.contains("\"exportFiles\""), output);
-    assertTrue(output.contains("inspect_exports_test.csv"), output);
+    assertTrue(output.contains("memory://editor/patches"), output);
   }
 
   @Test
-  public void testJsonFlagIsNotInverted() throws IOException {
+  public void testJsonFlagIsNotInverted() {
     // Regression: `--json` used to emit plain text.
-    Path script = writeScript();
-
     int exitCode = new CommandLine(new InspectExportsCommand())
-        .execute(script.toString(), "Main", "--json");
+        .execute(SCRIPT_PATH.toString(), SIMULATION_NAME, "--json");
 
     assertEquals(0, exitCode);
     String output = outContent.toString();
@@ -96,11 +75,9 @@ public class InspectExportsCommandTest {
   }
 
   @Test
-  public void testNoJsonSelectsPlainText() throws IOException {
-    Path script = writeScript();
-
+  public void testNoJsonSelectsPlainText() {
     int exitCode = new CommandLine(new InspectExportsCommand())
-        .execute(script.toString(), "Main", "--no-json");
+        .execute(SCRIPT_PATH.toString(), SIMULATION_NAME, "--no-json");
 
     assertEquals(0, exitCode);
     String output = outContent.toString();
@@ -109,31 +86,21 @@ public class InspectExportsCommandTest {
   }
 
   @Test
-  public void testConflictingFormatFlagsRejected() throws IOException {
-    Path script = writeScript();
-
+  public void testConflictingFormatFlagsRejected() {
     int exitCode = new CommandLine(new InspectExportsCommand())
-        .execute(script.toString(), "Main", "--json", "--no-json");
+        .execute(SCRIPT_PATH.toString(), SIMULATION_NAME, "--json", "--no-json");
 
     assertEquals(6, exitCode);
     assertTrue(errContent.toString().contains("mutually exclusive"), errContent.toString());
   }
 
   @Test
-  public void testMissingSimulationStillReturnsItsOwnCode() throws IOException {
+  public void testMissingSimulationStillReturnsItsOwnCode() {
     // The usage code must not collide with the pre-existing "simulation not found" code.
-    Path script = writeScript();
-
     int exitCode = new CommandLine(new InspectExportsCommand())
-        .execute(script.toString(), "NoSuchSimulation");
+        .execute(SCRIPT_PATH.toString(), "NoSuchSimulation");
 
     assertEquals(4, exitCode);
     assertTrue(errContent.toString().contains("Could not find simulation"), errContent.toString());
-  }
-
-  private Path writeScript() throws IOException {
-    Path script = tempDir.resolve("main.josh");
-    Files.writeString(script, SIMULATION, StandardCharsets.UTF_8);
-    return script;
   }
 }
