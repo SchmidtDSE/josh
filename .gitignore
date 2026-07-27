@@ -2,10 +2,14 @@
 .env
 
 # Gradle
+# Anchored to the repo root so it does not also swallow docs/build, the docs builder.
 .gradle/
 gradle/
-build/
+/build/
 bin/
+
+# Docs builder virtualenv (created on demand; see docs/build/requirements.txt)
+docs/build/.venv/
 
 # IDE
 .idea/
