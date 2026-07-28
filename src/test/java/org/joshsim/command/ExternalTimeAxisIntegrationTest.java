@@ -10,12 +10,19 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+import java.io.FileInputStream;
+import java.math.BigDecimal;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.TreeSet;
+import org.joshsim.engine.value.engine.ValueSupportFactory;
+import org.joshsim.precompute.BinaryGridSerializationStrategy;
+import org.joshsim.precompute.DoublePrecomputedGrid;
+import org.joshsim.precompute.GridSerializationStrategy;
+import org.joshsim.precompute.TimeAxis;
 import org.joshsim.util.OutputOptions;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
@@ -62,9 +69,9 @@ public class ExternalTimeAxisIntegrationTest {
         """.formatted(csvTarget));
 
     Path jshd = tempDir.resolve("temperature.jshd");
-    PreprocessUtil.PreprocessOptions preprocessOptions = new PreprocessUtil.PreprocessOptions(
-        "EPSG:4326", "lon", "lat", "calendar_year", "", null, false, false,
-        "count", "2024", "year", "3", "1", "", "");
+    PreprocessOptions preprocessOptions = PreprocessOptions.builder()
+            .timeAxis(TimeAxisParams.of("count", "2024", "year", "3", "1", "", ""))
+            .build();
     PreprocessUtil.preprocess(script.toFile(), "Test", fixture().toString(), VARIABLE, "K",
         jshd.toFile(), preprocessOptions, new OutputOptions());
 
@@ -111,9 +118,9 @@ public class ExternalTimeAxisIntegrationTest {
         """.formatted(csvTarget));
 
     Path jshd = tempDir.resolve("temperature.jshd");
-    PreprocessUtil.PreprocessOptions preprocessOptions = new PreprocessUtil.PreprocessOptions(
-        "EPSG:4326", "lon", "lat", "calendar_year", "", null, false, false,
-        "ISO", "2024-01-01", "", "3", "", "P1Y", "");
+    PreprocessOptions preprocessOptions = PreprocessOptions.builder()
+            .timeAxis(TimeAxisParams.of("ISO", "2024-01-01", "", "3", "", "P1Y", ""))
+            .build();
     PreprocessUtil.preprocess(script.toFile(), "Test", fixture().toString(), VARIABLE, "K",
         jshd.toFile(), preprocessOptions, new OutputOptions());
 
@@ -165,9 +172,9 @@ public class ExternalTimeAxisIntegrationTest {
     Files.writeString(script, scriptTemplate.formatted("", csvTarget));
 
     Path jshdz = tempDir.resolve("temperature.jshdz");
-    PreprocessUtil.PreprocessOptions preprocessOptions = new PreprocessUtil.PreprocessOptions(
-        "EPSG:4326", "lon", "lat", "calendar_year", "", null, false, false,
-        "ISO", "2024-01-01", "", "3", "", "P1Y", "");
+    PreprocessOptions preprocessOptions = PreprocessOptions.builder()
+            .timeAxis(TimeAxisParams.of("ISO", "2024-01-01", "", "3", "", "P1Y", ""))
+            .build();
     PreprocessUtil.preprocess(script.toFile(), "Test", fixture().toString(), VARIABLE, "K",
         jshdz.toFile(), preprocessOptions, new OutputOptions());
 
@@ -243,6 +250,16 @@ public class ExternalTimeAxisIntegrationTest {
 
   // --- Preprocessing validation edge cases ---
 
+  /**
+   * Writes a three-step script whose grid preprocessing can actually be built.
+   *
+   * <p>The {@code Default} patch has to be defined, not just named by {@code grid.patch}: without
+   * it preprocessing fails while building the grid, and a test asserting on a rejected time axis
+   * would pass on the wrong {@link IllegalArgumentException}.</p>
+   *
+   * @param name Base name for the script file and its unused export target.
+   * @return Path to the written script.
+   */
   private Path writeBasicScript(String name) throws Exception {
     Path csvTarget = tempDir.resolve(name + "_unused.csv");
     String script = """
@@ -255,6 +272,10 @@ public class ExternalTimeAxisIntegrationTest {
           steps.high = 2 count
           exportFiles.patch = "file://%s"
         end simulation
+
+        start patch Default
+          export.step.step = meta.stepCount
+        end patch
         """.formatted(csvTarget.toString());
     Path scriptFile = tempDir.resolve(name + ".josh");
     Files.writeString(scriptFile, script);
@@ -262,16 +283,66 @@ public class ExternalTimeAxisIntegrationTest {
   }
 
   @Test
+  public void forcedTimestepWithInstantWritesSingleSliceAxis() throws Exception {
+    // The batch fan-out shape: preprocessBatch dispatches one job per timestep, so each job writes
+    // a single slice and must declare an instant rather than a range.
+    Path script = writeBasicScript("forced_instant");
+    Path out = tempDir.resolve("forced_instant.jshd");
+    PreprocessOptions opts = PreprocessOptions.builder()
+            .timestep("1")
+            .timeAxis(TimeAxisParams.of("count", "", "year", "", "", "", "2025"))
+            .build();
+
+    PreprocessUtil.preprocess(script.toFile(), "Test", fixture().toString(), VARIABLE, "K",
+        out.toFile(), opts, new OutputOptions());
+
+    TimeAxis axis = readTimeAxis(out);
+    assertEquals(TimeAxis.Type.COUNT, axis.getType());
+    assertEquals(TimeAxis.Kind.INSTANT, axis.getKind());
+    assertEquals(1, axis.getCount());
+    assertEquals("year", axis.getCountUnit());
+    assertEquals(0, new BigDecimal("2025").compareTo(axis.getCountStart()));
+  }
+
+  @Test
+  public void forcedTimestepWithRangeFails() throws Exception {
+    // Declaring the full source range on a single-timestep job would silently mislabel the slice.
+    Path script = writeBasicScript("forced_range");
+    Path out = tempDir.resolve("forced_range.jshd");
+    PreprocessOptions opts = PreprocessOptions.builder()
+            .timestep("1")
+            .timeAxis(TimeAxisParams.of("count", "2024", "year", "3", "1", "", ""))
+            .build();
+
+    assertThrows(IllegalArgumentException.class, () ->
+        PreprocessUtil.preprocess(script.toFile(), "Test", fixture().toString(), VARIABLE, "K",
+            out.toFile(), opts, new OutputOptions()));
+  }
+
+  private static TimeAxis readTimeAxis(Path jshd) throws Exception {
+    GridSerializationStrategy deserializer = new BinaryGridSerializationStrategy(
+        new ValueSupportFactory());
+    DoublePrecomputedGrid grid;
+    try (FileInputStream stream = new FileInputStream(jshd.toFile())) {
+      grid = (DoublePrecomputedGrid) deserializer.deserialize(stream);
+    }
+    return grid.getTimeAxis().orElseThrow(
+        () -> new AssertionError("preprocessed file carries no time axis"));
+  }
+
+  @Test
   public void countMismatchFails() throws Exception {
     Path script = writeBasicScript("count_mismatch");
     Path out = tempDir.resolve("mismatch.jshd");
     // Script has 3 output slices (0..2) but we declare count=5
-    PreprocessUtil.PreprocessOptions opts = new PreprocessUtil.PreprocessOptions(
-        "EPSG:4326", "lon", "lat", "calendar_year", "", null, false, false,
-        "count", "2024", "year", "5", "1", "", "");
-    assertThrows(IllegalArgumentException.class, () ->
+    PreprocessOptions opts = PreprocessOptions.builder()
+            .timeAxis(TimeAxisParams.of("count", "2024", "year", "5", "1", "", ""))
+            .build();
+    IllegalArgumentException thrown = assertThrows(IllegalArgumentException.class, () ->
         PreprocessUtil.preprocess(script.toFile(), "Test", fixture().toString(), VARIABLE, "K",
             out.toFile(), opts, new OutputOptions()));
+    assertTrue(thrown.getMessage().contains("--time-count must equal the number of output slices"),
+        "unexpected failure: " + thrown.getMessage());
   }
 
   @Test
@@ -279,12 +350,14 @@ public class ExternalTimeAxisIntegrationTest {
     Path script = writeBasicScript("iso_unit_mismatch");
     Path out = tempDir.resolve("iso_unit.jshd");
     // ISO mode should not accept --time-unit
-    PreprocessUtil.PreprocessOptions opts = new PreprocessUtil.PreprocessOptions(
-        "EPSG:4326", "lon", "lat", "calendar_year", "", null, false, false,
-        "ISO", "2024-01-01", "year", "3", "", "P1Y", "");
-    assertThrows(IllegalArgumentException.class, () ->
+    PreprocessOptions opts = PreprocessOptions.builder()
+            .timeAxis(TimeAxisParams.of("ISO", "2024-01-01", "year", "3", "", "P1Y", ""))
+            .build();
+    IllegalArgumentException thrown = assertThrows(IllegalArgumentException.class, () ->
         PreprocessUtil.preprocess(script.toFile(), "Test", fixture().toString(), VARIABLE, "K",
             out.toFile(), opts, new OutputOptions()));
+    assertTrue(thrown.getMessage().contains("ISO time metadata uses --time-interval"),
+        "unexpected failure: " + thrown.getMessage());
   }
 
   @Test
@@ -292,12 +365,14 @@ public class ExternalTimeAxisIntegrationTest {
     Path script = writeBasicScript("count_interval_mismatch");
     Path out = tempDir.resolve("count_interval.jshd");
     // Count mode should not accept --time-interval
-    PreprocessUtil.PreprocessOptions opts = new PreprocessUtil.PreprocessOptions(
-        "EPSG:4326", "lon", "lat", "calendar_year", "", null, false, false,
-        "count", "2024", "year", "3", "1", "P1Y", "");
-    assertThrows(IllegalArgumentException.class, () ->
+    PreprocessOptions opts = PreprocessOptions.builder()
+            .timeAxis(TimeAxisParams.of("count", "2024", "year", "3", "1", "P1Y", ""))
+            .build();
+    IllegalArgumentException thrown = assertThrows(IllegalArgumentException.class, () ->
         PreprocessUtil.preprocess(script.toFile(), "Test", fixture().toString(), VARIABLE, "K",
             out.toFile(), opts, new OutputOptions()));
+    assertTrue(thrown.getMessage().contains("--time-interval is only valid for ISO time metadata"),
+        "unexpected failure: " + thrown.getMessage());
   }
 
   @Test
@@ -305,23 +380,28 @@ public class ExternalTimeAxisIntegrationTest {
     Path script = writeBasicScript("instant_multi");
     Path out = tempDir.resolve("instant_multi.jshd");
     // Script has 3 output slices but instant requires exactly 1
-    PreprocessUtil.PreprocessOptions opts = new PreprocessUtil.PreprocessOptions(
-        "EPSG:4326", "lon", "lat", "calendar_year", "", null, false, false,
-        "count", "", "year", "", "", "", "2024");
-    assertThrows(IllegalArgumentException.class, () ->
+    PreprocessOptions opts = PreprocessOptions.builder()
+            .timeAxis(TimeAxisParams.of("count", "", "year", "", "", "", "2024"))
+            .build();
+    IllegalArgumentException thrown = assertThrows(IllegalArgumentException.class, () ->
         PreprocessUtil.preprocess(script.toFile(), "Test", fixture().toString(), VARIABLE, "K",
             out.toFile(), opts, new OutputOptions()));
+    assertTrue(
+        thrown.getMessage().contains("A count time instant requires exactly one output slice"),
+        "unexpected failure: " + thrown.getMessage());
   }
 
   @Test
   public void unsupportedTimeTypeFails() throws Exception {
     Path script = writeBasicScript("bad_type");
     Path out = tempDir.resolve("bad_type.jshd");
-    PreprocessUtil.PreprocessOptions opts = new PreprocessUtil.PreprocessOptions(
-        "EPSG:4326", "lon", "lat", "calendar_year", "", null, false, false,
-        "julian", "2024", "year", "3", "1", "", "");
-    assertThrows(IllegalArgumentException.class, () ->
+    PreprocessOptions opts = PreprocessOptions.builder()
+            .timeAxis(TimeAxisParams.of("julian", "2024", "year", "3", "1", "", ""))
+            .build();
+    IllegalArgumentException thrown = assertThrows(IllegalArgumentException.class, () ->
         PreprocessUtil.preprocess(script.toFile(), "Test", fixture().toString(), VARIABLE, "K",
             out.toFile(), opts, new OutputOptions()));
+    assertTrue(thrown.getMessage().contains("Unsupported --time-type"),
+        "unexpected failure: " + thrown.getMessage());
   }
 }

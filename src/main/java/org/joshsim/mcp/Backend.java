@@ -15,6 +15,7 @@ import java.nio.file.Path;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import org.joshsim.command.PreprocessOptions;
 
 /**
  * Backend interface for the four Josh MCP tools.
@@ -165,7 +166,7 @@ public interface Backend {
    * @param variable variable name or band number to extract
    * @param unitsStr units of the data for use within simulations
    * @param outputFile path where the preprocessed {@code .jshd} file should be written
-   * @param options additional preprocessing options; pass {@code null} for defaults
+   * @param options additional preprocessing options; pass empty for CLI defaults
    * @return preprocess result
    */
   PreprocessResult preprocess(
@@ -203,83 +204,5 @@ public interface Backend {
       Optional<Long> seed,
       Map<String, Path> dataFiles
   );
-
-  /**
-   * Optional preprocessing parameters matching the CLI flags.
-   */
-  class PreprocessOptions {
-    private final String crsCode;
-    private final String horizCoordName;
-    private final String vertCoordName;
-    private final String timeName;
-    private final String timestep;
-    private final String defaultValue;
-    private final boolean parallel;
-    private final boolean amend;
-
-    /**
-     * Constructs PreprocessOptions.
-     *
-     * @param crsCode coordinate reference system code, e.g. {@code EPSG:4326}
-     * @param horizCoordName name of horizontal coordinate dimension
-     * @param vertCoordName name of vertical coordinate dimension
-     * @param timeName name of time dimension
-     * @param timestep single timestep to process, or empty string for all
-     * @param defaultValue default fill value, or {@code null}
-     * @param parallel whether to enable parallel patch processing
-     * @param amend whether to amend an existing output file
-     */
-    public PreprocessOptions(
-        String crsCode,
-        String horizCoordName,
-        String vertCoordName,
-        String timeName,
-        String timestep,
-        String defaultValue,
-        boolean parallel,
-        boolean amend
-    ) {
-      this.crsCode = crsCode;
-      this.horizCoordName = horizCoordName;
-      this.vertCoordName = vertCoordName;
-      this.timeName = timeName;
-      this.timestep = timestep;
-      this.defaultValue = defaultValue;
-      this.parallel = parallel;
-      this.amend = amend;
-    }
-
-    public String getCrsCode() {
-      return crsCode;
-    }
-
-    public String getHorizCoordName() {
-      return horizCoordName;
-    }
-
-    public String getVertCoordName() {
-      return vertCoordName;
-    }
-
-    public String getTimeName() {
-      return timeName;
-    }
-
-    public String getTimestep() {
-      return timestep;
-    }
-
-    public String getDefaultValue() {
-      return defaultValue;
-    }
-
-    public boolean isParallel() {
-      return parallel;
-    }
-
-    public boolean isAmend() {
-      return amend;
-    }
-  }
 
 }

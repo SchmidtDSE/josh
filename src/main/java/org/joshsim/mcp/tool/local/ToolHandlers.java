@@ -71,6 +71,51 @@ public final class ToolHandlers {
   }
 
   /**
+   * Extracts an optional string argument, falling back to a default when it is absent or blank.
+   *
+   * <p>Coerces numeric and boolean scalars the same way {@link #requireString(Map, String)} does,
+   * so a client that sends a bare number for a naturally numeric value such as a timestep or a
+   * temporal coordinate is accepted.</p>
+   *
+   * @param arguments    the tool call's argument map
+   * @param key          the argument key to extract
+   * @param defaultValue the value to return when the argument is absent, blank, or non-scalar
+   * @return the string value, or {@code defaultValue}
+   */
+  public static String optionalString(
+      Map<String, Object> arguments, String key, String defaultValue) {
+    try {
+      return requireString(arguments, key);
+    } catch (MissingArgument e) {
+      return defaultValue;
+    }
+  }
+
+  /**
+   * Extracts an optional boolean argument, falling back to a default when it is absent.
+   *
+   * <p>Accepts a real JSON boolean, and also the strings {@code "true"}/{@code "false"} since some
+   * clients stringify flag arguments.</p>
+   *
+   * @param arguments    the tool call's argument map
+   * @param key          the argument key to extract
+   * @param defaultValue the value to return when the argument is absent or not boolean-like
+   * @return the boolean value, or {@code defaultValue}
+   */
+  public static boolean optionalBoolean(
+      Map<String, Object> arguments, String key, boolean defaultValue) {
+    Object value = arguments.get(key);
+    if (value instanceof Boolean flag) {
+      return flag;
+    }
+    if (value instanceof String text && ("true".equalsIgnoreCase(text)
+        || "false".equalsIgnoreCase(text))) {
+      return Boolean.parseBoolean(text);
+    }
+    return defaultValue;
+  }
+
+  /**
    * Sentinel exception thrown by {@link #requireString(Map, String)} when a required argument is
    * missing or blank. Caught by tool handlers and translated to a {@link CallToolResult} via
    * {@link #errorResult(String)}.

@@ -161,6 +161,28 @@ public class PreprocessBatchCommand implements Callable<Integer> {
   )
   private boolean amend = false;
 
+  @Option(names = "--time-type", description = "Declared JSHD time axis type: count or ISO",
+      defaultValue = "count")
+  private String timeType;
+
+  @Option(names = "--time-start", description = "Declared count coordinate or ISO start date")
+  private String timeStart;
+
+  @Option(names = "--time-unit", description = "Declared count-axis unit")
+  private String timeUnit;
+
+  @Option(names = "--time-count", description = "Number of declared temporal coordinates")
+  private String timeCount;
+
+  @Option(names = "--time-increment", description = "Count-axis coordinate increment")
+  private String timeIncrement;
+
+  @Option(names = "--time-interval", description = "ISO-8601 date period, for example P1M")
+  private String timeInterval;
+
+  @Option(names = "--time-instant", description = "Single count coordinate or ISO date")
+  private String timeInstant;
+
   @Mixin
   private OutputOptions output = new OutputOptions();
 
@@ -209,11 +231,20 @@ public class PreprocessBatchCommand implements Callable<Integer> {
       // Dispatch
       output.printInfo("Dispatching to target...");
       final String relativeDataFile = resolveDataFileRelativeToInputDir(dataFile, inputDir);
+      final PreprocessOptions options = PreprocessOptions.builder()
+          .crsCode(crs)
+          .horizCoordName(horizCoordName)
+          .vertCoordName(vertCoordName)
+          .timeName(noTimeDim ? "" : timeDim)
+          .timestep(timestep)
+          .defaultValue(defaultValue)
+          .parallel(parallel)
+          .amend(amend)
+          .timeAxis(TimeAxisParams.of(
+              timeType, timeStart, timeUnit, timeCount, timeIncrement, timeInterval, timeInstant))
+          .build();
       final PreprocessParams params = new PreprocessParams(
-          relativeDataFile, variable, units, outputFile.getName(),
-          crs, horizCoordName, vertCoordName, noTimeDim ? "" : timeDim,
-          timestep.isBlank() ? null : timestep,
-          defaultValue, parallel, amend
+          relativeDataFile, variable, units, outputFile.getName(), options
       );
       target.dispatch(jobId, minioPrefix, simulation, params);
       output.printInfo("Dispatched.");

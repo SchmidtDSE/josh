@@ -14,7 +14,7 @@ import java.io.File;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.Duration;
-import org.joshsim.command.PreprocessUtil.PreprocessOptions;
+import org.joshsim.command.PreprocessOptions;
 import org.joshsim.util.OutputOptions;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
@@ -68,7 +68,7 @@ public class PreprocessUtilGridSizeUnitsTest {
                 "data",
                 "K",
                 outputFile,
-                new PreprocessOptions(),
+                PreprocessOptions.defaults(),
                 new OutputOptions()
             )
         )

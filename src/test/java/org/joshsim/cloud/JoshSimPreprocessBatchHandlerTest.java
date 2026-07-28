@@ -6,6 +6,8 @@
 
 package org.joshsim.cloud;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
@@ -22,6 +24,8 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.util.Optional;
+import org.joshsim.command.PreprocessOptions;
+import org.joshsim.command.TimeAxisParams;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
@@ -203,7 +207,81 @@ class JoshSimPreprocessBatchHandlerTest {
     assertTrue(body.contains("\"statusPath\":\"batch-status/pp-async-1/status.json\""));
   }
 
+  @Test
+  void buildOptionsAppliesCliDefaultsWhenNoOptionalFieldsSent() {
+    PreprocessOptions options =
+        JoshSimPreprocessBatchHandler.buildOptions(formData);
+
+    assertEquals("EPSG:4326", options.getCrsCode());
+    assertEquals("lon", options.getHorizCoordName());
+    assertEquals("lat", options.getVertCoordName());
+    assertEquals("calendar_year", options.getTimeName());
+    assertEquals("", options.getTimestep());
+    assertFalse(options.isParallel());
+    assertFalse(options.isAmend());
+    assertFalse(options.getTimeAxis().isDeclared());
+  }
+
+  @Test
+  void buildOptionsDecodesDeclaredTimeAxis() {
+    setupFormValue("timeType", "ISO");
+    setupFormValue("timeStart", "2026-01-01");
+    setupFormValue("timeCount", "900");
+    setupFormValue("timeInterval", "P1M");
+
+    TimeAxisParams axis = JoshSimPreprocessBatchHandler.buildOptions(formData).getTimeAxis();
+
+    assertTrue(axis.isDeclared());
+    assertEquals("ISO", axis.getType());
+    assertEquals("2026-01-01", axis.get(TimeAxisParams.Field.START));
+    assertEquals("900", axis.get(TimeAxisParams.Field.COUNT));
+    assertEquals("P1M", axis.get(TimeAxisParams.Field.INTERVAL));
+    assertEquals("", axis.get(TimeAxisParams.Field.UNIT));
+  }
+
+  @Test
+  void buildOptionsTreatsPresentButEmptyTimeDimAsNoTimeDimension() {
+    // How a dispatcher declares a flat raster: the field is sent, with no value.
+    setupFormValue("timeDim", "");
+
+    PreprocessOptions options =
+        JoshSimPreprocessBatchHandler.buildOptions(formData);
+
+    assertEquals("", options.getTimeName());
+  }
+
+  @Test
+  void buildOptionsReadsRemainingPreprocessFields() {
+    setupFormValue("crs", "EPSG:3310");
+    setupFormValue("xCoord", "longitude");
+    setupFormValue("yCoord", "latitude");
+    setupFormValue("timeDim", "time");
+    setupFormValue("timestep", "2020");
+    setupFormValue("defaultValue", "-999");
+    setupFormValue("parallel", "true");
+    setupFormValue("amend", "true");
+
+    PreprocessOptions options =
+        JoshSimPreprocessBatchHandler.buildOptions(formData);
+
+    assertEquals("EPSG:3310", options.getCrsCode());
+    assertEquals("longitude", options.getHorizCoordName());
+    assertEquals("latitude", options.getVertCoordName());
+    assertEquals("time", options.getTimeName());
+    assertEquals("2020", options.getTimestep());
+    assertEquals("-999", options.getDefaultValue());
+    assertTrue(options.isParallel());
+    assertTrue(options.isAmend());
+  }
+
   // --- Helpers ---
+
+  private void setupFormValue(String field, String value) {
+    FormData.FormValue formValue = mock(FormData.FormValue.class);
+    when(formValue.getValue()).thenReturn(value);
+    when(formData.contains(field)).thenReturn(true);
+    when(formData.getFirst(field)).thenReturn(formValue);
+  }
 
   private void setupValidApiKey() {
     FormData.FormValue apiKeyValue = mock(FormData.FormValue.class);

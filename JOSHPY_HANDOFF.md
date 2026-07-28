@@ -82,6 +82,11 @@ preprocess a timeless NetCDF — the defaulted `calendar_year` was required to e
 Reads source index `N` only, and writes it to grid timestep `N` (see §4 — this is the one case that
 does **not** rebase the index). Combine with `--time-dim`; produces exactly one output slice.
 
+Because it is one slice, a declared axis here must be the **instant** form (`--time-instant`), not a
+range: `--time-count` is checked against the slices actually written, so a range spanning the whole
+source is rejected. Fanning out one job per timestep and combining the results needs `--amend` in
+ascending order — see §7.
+
 ---
 
 ## 3. Declared JSHD time axis

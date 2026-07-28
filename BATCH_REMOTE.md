@@ -79,6 +79,27 @@ Client (CLI / joshpy)
 - `POST /runBatch` — async simulation execution, returns 202 + statusPath
 - `POST /preprocessBatch` — async preprocessing, returns 202 + statusPath, uploads .jshd to GCS
 
+### Preprocess time axis
+
+`preprocessBatch` accepts the same declared time axis as the `preprocess` command: `--time-type`,
+`--time-start`, `--time-unit`, `--time-count`, `--time-increment`, `--time-interval`,
+`--time-instant`. Field names are declared once in `TimeAxisParams.Field` and derived per transport,
+so all three surfaces stay in step:
+
+| Transport | Encoding |
+|---|---|
+| CLI | `--time-start=2015` |
+| HTTP form (`/preprocessBatch`) | `timeStart=2015` |
+| K8s pod env | one `JOSH_TIME_OPTS` holding the whole flag string |
+| MCP (`preprocess_data`) | `"timeStart": "2015"` |
+
+Blank values stay off the wire, and omitting them all writes a timeless .jshd.
+
+`--time-count` must equal the number of slices the job writes. A job dispatched with `--timestep`
+writes exactly one, so per-timestep fan-out must declare `--time-instant` rather than a
+`--time-start`/`--time-count` range, and combining those results with `--amend` requires ascending,
+contiguous timesteps.
+
 ### Batch worker image
 
 `ghcr.io/schmidtdse/josh/joshsim-batch:latest` — single image with both entrypoints:

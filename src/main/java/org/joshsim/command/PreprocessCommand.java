@@ -149,11 +149,18 @@ public class PreprocessCommand implements Callable<Integer> {
   @Override
   public Integer call() {
     try {
-      PreprocessUtil.PreprocessOptions options = new PreprocessUtil.PreprocessOptions(
-          crsCode, horizCoordName, vertCoordName, noTimeDim ? "" : timeName,
-          timestep, defaultValue, parallel, amend, timeType, timeStart, timeUnit, timeCount,
-          timeIncrement, timeInterval, timeInstant
-      );
+      PreprocessOptions options = PreprocessOptions.builder()
+          .crsCode(crsCode)
+          .horizCoordName(horizCoordName)
+          .vertCoordName(vertCoordName)
+          .timeName(noTimeDim ? "" : timeName)
+          .timestep(timestep)
+          .defaultValue(defaultValue)
+          .parallel(parallel)
+          .amend(amend)
+          .timeAxis(TimeAxisParams.of(
+              timeType, timeStart, timeUnit, timeCount, timeIncrement, timeInterval, timeInstant))
+          .build();
       PreprocessUtil.preprocess(
           scriptFile, simulation, dataFile, variable, unitsStr, outputFile, options, output
       );

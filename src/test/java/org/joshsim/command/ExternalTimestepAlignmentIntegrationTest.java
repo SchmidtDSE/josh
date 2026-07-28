@@ -72,7 +72,7 @@ public class ExternalTimestepAlignmentIntegrationTest {
   }
 
   private DoublePrecomputedGrid preprocessGrid(
-      long stepsLow, long stepsHigh, PreprocessUtil.PreprocessOptions options) throws Exception {
+      long stepsLow, long stepsHigh, PreprocessOptions options) throws Exception {
     Path script = writeScript("pre_" + stepsLow, stepsLow, stepsHigh,
         tempDir.resolve("unused.csv"));
     Path out = tempDir.resolve("grid_" + stepsLow + ".jshd");
@@ -102,7 +102,7 @@ public class ExternalTimestepAlignmentIntegrationTest {
    */
   @Test
   public void preprocessAlignsSourceRecordsToStepsLow() throws Exception {
-    PreprocessUtil.PreprocessOptions opts = new PreprocessUtil.PreprocessOptions();
+    PreprocessOptions opts = PreprocessOptions.defaults();
     DoublePrecomputedGrid base = preprocessGrid(0, 2, opts);
     DoublePrecomputedGrid calendar = preprocessGrid(2024, 2026, opts);
 
@@ -159,9 +159,8 @@ public class ExternalTimestepAlignmentIntegrationTest {
    */
   @Test
   public void forcedTimestepStillReadsAbsoluteSourceIndex() throws Exception {
-    final DoublePrecomputedGrid base = preprocessGrid(0, 2, new PreprocessUtil.PreprocessOptions());
-    PreprocessUtil.PreprocessOptions forced = new PreprocessUtil.PreprocessOptions(
-        "EPSG:4326", "lon", "lat", "calendar_year", "2", null, false, false);
+    final DoublePrecomputedGrid base = preprocessGrid(0, 2, PreprocessOptions.defaults());
+    PreprocessOptions forced = PreprocessOptions.builder().timestep("2").build();
     DoublePrecomputedGrid forcedGrid = preprocessGrid(2, 2, forced);
 
     assertEquals(2, forcedGrid.getMinTimestep());
@@ -273,7 +272,7 @@ public class ExternalTimestepAlignmentIntegrationTest {
 
   /** Preprocess a window's grid to a .jshd file without also running a simulation against it. */
   private Path preprocessToJshd(long stepsLow, long stepsHigh) throws Exception {
-    preprocessGrid(stepsLow, stepsHigh, new PreprocessUtil.PreprocessOptions());
+    preprocessGrid(stepsLow, stepsHigh, PreprocessOptions.defaults());
     Path jshd = tempDir.resolve("grid_" + stepsLow + ".jshd"); // written by preprocessGrid
     assertTrue(Files.exists(jshd));
     return jshd;

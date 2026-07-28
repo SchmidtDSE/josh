@@ -76,140 +76,6 @@ import org.opengis.referencing.crs.CoordinateReferenceSystem;
  */
 public class PreprocessUtil {
 
-  /**
-   * Options for preprocessing that correspond to optional CLI flags.
-   *
-   * <p>Immutable data class holding CRS, coordinate names, timestep filtering,
-   * parallel processing, amend mode, and default value parameters.</p>
-   */
-  public static class PreprocessOptions {
-    private final String crsCode;
-    private final String horizCoordName;
-    private final String vertCoordName;
-    private final String timeName;
-    private final String timestep;
-    private final String defaultValue;
-    private final boolean parallel;
-    private final boolean amend;
-    private final String timeType;
-    private final String timeStart;
-    private final String timeUnit;
-    private final String timeCount;
-    private final String timeIncrement;
-    private final String timeInterval;
-    private final String timeInstant;
-
-    /**
-     * Constructs PreprocessOptions with all parameters.
-     *
-     * @param crsCode Coordinate reference system code (e.g., {@code EPSG:4326}).
-     * @param horizCoordName Name of the horizontal coordinate dimension.
-     * @param vertCoordName Name of the vertical coordinate dimension.
-     * @param timeName Name of the time dimension, or null/empty for a source with no time
-     *     dimension.
-     * @param timestep Single timestep to process, or empty string for all.
-     * @param defaultValue Default fill value for grid spaces, or null.
-     * @param parallel Whether to enable parallel patch processing.
-     * @param amend Whether to amend an existing output file.
-     */
-    public PreprocessOptions(String crsCode, String horizCoordName, String vertCoordName,
-        String timeName, String timestep, String defaultValue, boolean parallel, boolean amend) {
-      this(crsCode, horizCoordName, vertCoordName, timeName, timestep, defaultValue, parallel,
-          amend, "count", "", "", "", "", "", "");
-    }
-
-    /**
-     * Constructs options including an optional declared JSHD time axis.
-     */
-    public PreprocessOptions(String crsCode, String horizCoordName, String vertCoordName,
-        String timeName, String timestep, String defaultValue, boolean parallel, boolean amend,
-        String timeType, String timeStart, String timeUnit, String timeCount,
-        String timeIncrement, String timeInterval, String timeInstant) {
-      this.crsCode = crsCode;
-      this.horizCoordName = horizCoordName;
-      this.vertCoordName = vertCoordName;
-      this.timeName = timeName != null ? timeName : "";
-      this.timestep = timestep != null ? timestep : "";
-      this.defaultValue = defaultValue;
-      this.parallel = parallel;
-      this.amend = amend;
-      this.timeType = timeType == null || timeType.isBlank() ? "count" : timeType;
-      this.timeStart = timeStart == null ? "" : timeStart;
-      this.timeUnit = timeUnit == null ? "" : timeUnit;
-      this.timeCount = timeCount == null ? "" : timeCount;
-      this.timeIncrement = timeIncrement == null ? "" : timeIncrement;
-      this.timeInterval = timeInterval == null ? "" : timeInterval;
-      this.timeInstant = timeInstant == null ? "" : timeInstant;
-    }
-
-    /**
-     * Constructs PreprocessOptions with default values.
-     */
-    public PreprocessOptions() {
-      this("EPSG:4326", "lon", "lat", "calendar_year", "", null, false, false);
-    }
-
-    public String getCrsCode() {
-      return crsCode;
-    }
-
-    public String getHorizCoordName() {
-      return horizCoordName;
-    }
-
-    public String getVertCoordName() {
-      return vertCoordName;
-    }
-
-    public String getTimeName() {
-      return timeName;
-    }
-
-    public String getTimestep() {
-      return timestep;
-    }
-
-    public String getDefaultValue() {
-      return defaultValue;
-    }
-
-    public boolean isParallel() {
-      return parallel;
-    }
-
-    public boolean isAmend() {
-      return amend;
-    }
-
-    public String getTimeType() {
-      return timeType;
-    }
-
-    public String getTimeStart() {
-      return timeStart;
-    }
-
-    public String getTimeUnit() {
-      return timeUnit;
-    }
-
-    public String getTimeCount() {
-      return timeCount;
-    }
-
-    public String getTimeIncrement() {
-      return timeIncrement;
-    }
-
-    public String getTimeInterval() {
-      return timeInterval;
-    }
-
-    public String getTimeInstant() {
-      return timeInstant;
-    }
-  }
-
   private PreprocessUtil() {
     // Static utility class
   }
@@ -475,75 +341,101 @@ public class PreprocessUtil {
 
   private static Optional<TimeAxis> buildTimeAxis(
       PreprocessOptions options, long startTimestep, long endTimestep) {
-    boolean hasDeclaration = !options.getTimeStart().isBlank()
-        || !options.getTimeUnit().isBlank()
-        || !options.getTimeCount().isBlank()
-        || !options.getTimeInterval().isBlank()
-        || !options.getTimeInstant().isBlank();
-    if (!hasDeclaration) {
+    TimeAxisParams declared = options.getTimeAxis();
+    if (!declared.isDeclared()) {
       return Optional.empty();
     }
 
     long outputCount = endTimestep - startTimestep + 1;
-    String type = options.getTimeType().toUpperCase();
+    String type = declared.getType().toUpperCase();
     if (type.equals("COUNT")) {
-      return Optional.of(buildCountTimeAxis(options, outputCount));
+      return Optional.of(buildCountTimeAxis(declared, outputCount));
     }
     if (type.equals("ISO")) {
-      return Optional.of(buildIsoTimeAxis(options, outputCount));
+      return Optional.of(buildIsoTimeAxis(declared, outputCount));
     }
-    throw new IllegalArgumentException("Unsupported --time-type: " + options.getTimeType());
+    throw new IllegalArgumentException("Unsupported --time-type: " + declared.getType());
   }
 
-  private static TimeAxis buildCountTimeAxis(PreprocessOptions options, long outputCount) {
-    requireEmpty(
-        options.getTimeInterval(), "--time-interval is only valid for ISO time metadata");
-    if (!options.getTimeInstant().isBlank()) {
-      requireEmpty(options.getTimeStart(), "--time-start cannot accompany --time-instant");
-      requireEmpty(options.getTimeCount(), "--time-count cannot accompany --time-instant");
-      requirePresent(options.getTimeUnit(), "--time-unit is required with --time-instant");
+  private static TimeAxis buildCountTimeAxis(TimeAxisParams declared, long outputCount) {
+    String unit = declared.get(TimeAxisParams.Field.UNIT);
+    requireEmpty(declared.get(TimeAxisParams.Field.INTERVAL),
+        "--time-interval is only valid for ISO time metadata");
+    String instant = declared.get(TimeAxisParams.Field.INSTANT);
+    if (!instant.isBlank()) {
+      requireEmpty(declared.get(TimeAxisParams.Field.START),
+          "--time-start cannot accompany --time-instant");
+      requireEmpty(declared.get(TimeAxisParams.Field.COUNT),
+          "--time-count cannot accompany --time-instant");
+      requirePresent(unit, "--time-unit is required with --time-instant");
       if (outputCount != 1) {
         throw new IllegalArgumentException(
             "A count time instant requires exactly one output slice");
       }
-      return TimeAxis.countInstant("time", options.getTimeUnit(),
-          new BigDecimal(options.getTimeInstant()));
+      return TimeAxis.countInstant("time", unit, new BigDecimal(instant));
     }
-    requirePresent(options.getTimeStart(), "--time-start is required for count time metadata");
-    requirePresent(options.getTimeUnit(), "--time-unit is required for count time metadata");
-    requirePresent(options.getTimeCount(), "--time-count is required for count time metadata");
-    long declaredCount = Long.parseLong(options.getTimeCount());
-    if (declaredCount != outputCount) {
-      throw new IllegalArgumentException("--time-count must equal the number of output slices");
-    }
-    BigDecimal increment = options.getTimeIncrement().isBlank()
-        ? BigDecimal.ONE : new BigDecimal(options.getTimeIncrement());
-    return TimeAxis.countRange("time", options.getTimeUnit(),
-        new BigDecimal(options.getTimeStart()), increment, declaredCount);
+    String start = declared.get(TimeAxisParams.Field.START);
+    requirePresent(start, "--time-start is required for count time metadata");
+    requirePresent(unit, "--time-unit is required for count time metadata");
+    long declaredCount = requireMatchingCount(declared, outputCount,
+        "--time-count is required for count time metadata");
+    String incrementStr = declared.get(TimeAxisParams.Field.INCREMENT);
+    BigDecimal increment = incrementStr.isBlank()
+        ? BigDecimal.ONE : new BigDecimal(incrementStr);
+    return TimeAxis.countRange("time", unit, new BigDecimal(start), increment, declaredCount);
   }
 
-  private static TimeAxis buildIsoTimeAxis(PreprocessOptions options, long outputCount) {
-    if (!options.getTimeUnit().isBlank() || !options.getTimeIncrement().isBlank()) {
+  private static TimeAxis buildIsoTimeAxis(TimeAxisParams declared, long outputCount) {
+    if (!declared.get(TimeAxisParams.Field.UNIT).isBlank()
+        || !declared.get(TimeAxisParams.Field.INCREMENT).isBlank()) {
       throw new IllegalArgumentException(
           "ISO time metadata uses --time-interval rather than --time-unit or --time-increment");
     }
-    if (!options.getTimeInstant().isBlank()) {
-      requireEmpty(options.getTimeStart(), "--time-start cannot accompany --time-instant");
-      requireEmpty(options.getTimeCount(), "--time-count cannot accompany --time-instant");
+    String instant = declared.get(TimeAxisParams.Field.INSTANT);
+    if (!instant.isBlank()) {
+      requireEmpty(declared.get(TimeAxisParams.Field.START),
+          "--time-start cannot accompany --time-instant");
+      requireEmpty(declared.get(TimeAxisParams.Field.COUNT),
+          "--time-count cannot accompany --time-instant");
       if (outputCount != 1) {
         throw new IllegalArgumentException("An ISO time instant requires exactly one output slice");
       }
-      return TimeAxis.isoInstant("time", LocalDate.parse(options.getTimeInstant()));
+      return TimeAxis.isoInstant("time", LocalDate.parse(instant));
     }
-    requirePresent(options.getTimeStart(), "--time-start is required for ISO time metadata");
-    requirePresent(options.getTimeInterval(), "--time-interval is required for ISO time metadata");
-    requirePresent(options.getTimeCount(), "--time-count is required for ISO time metadata");
-    long declaredCount = Long.parseLong(options.getTimeCount());
+    String start = declared.get(TimeAxisParams.Field.START);
+    String interval = declared.get(TimeAxisParams.Field.INTERVAL);
+    requirePresent(start, "--time-start is required for ISO time metadata");
+    requirePresent(interval, "--time-interval is required for ISO time metadata");
+    long declaredCount = requireMatchingCount(declared, outputCount,
+        "--time-count is required for ISO time metadata");
+    return TimeAxis.isoRange("time", LocalDate.parse(start), Period.parse(interval), declaredCount);
+  }
+
+  /**
+   * Parses {@code --time-count} and checks it against the number of slices being written.
+   *
+   * <p>The count is declared rather than inferred so that a mismatch between the source's time
+   * length and the simulation's step range surfaces as an error instead of a silently misaligned
+   * axis. Note that dispatching one timestep at a time - the {@code --timestep} path used by batch
+   * fan-out - always writes a single slice, so those jobs must declare an instant rather than a
+   * range.</p>
+   *
+   * @param declared The declared time axis params.
+   * @param outputCount The number of timestep slices being written.
+   * @param missingMessage Message to raise when no count was declared.
+   * @return The declared count.
+   * @throws IllegalArgumentException If the count is absent or does not match {@code outputCount}.
+   */
+  private static long requireMatchingCount(
+      TimeAxisParams declared, long outputCount, String missingMessage) {
+    String countStr = declared.get(TimeAxisParams.Field.COUNT);
+    requirePresent(countStr, missingMessage);
+    long declaredCount = Long.parseLong(countStr);
     if (declaredCount != outputCount) {
-      throw new IllegalArgumentException("--time-count must equal the number of output slices");
+      throw new IllegalArgumentException("--time-count must equal the number of output slices ("
+          + outputCount + ")");
     }
-    return TimeAxis.isoRange("time", LocalDate.parse(options.getTimeStart()),
-        Period.parse(options.getTimeInterval()), declaredCount);
+    return declaredCount;
   }
 
   private static void requirePresent(String value, String message) {

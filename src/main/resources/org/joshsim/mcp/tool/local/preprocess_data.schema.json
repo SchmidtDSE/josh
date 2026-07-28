@@ -24,6 +24,71 @@
     "outputFile": {
       "type": "string",
       "description": "Path where the preprocessed .jshd file should be written. Use .jshdz extension for compressed output."
+    },
+    "crs": {
+      "type": "string",
+      "description": "Coordinate reference system code used to read the source file. Defaults to 'EPSG:4326'."
+    },
+    "xCoord": {
+      "type": "string",
+      "description": "Name of the horizontal coordinate dimension in the source file. Defaults to 'lon'."
+    },
+    "yCoord": {
+      "type": "string",
+      "description": "Name of the vertical coordinate dimension in the source file. Defaults to 'lat'."
+    },
+    "timeDim": {
+      "type": "string",
+      "description": "Name of the time dimension in the source file. Defaults to 'calendar_year'. Set this whenever the source uses a different name (commonly 'time'); ignored when noTimeDim is true."
+    },
+    "noTimeDim": {
+      "type": "boolean",
+      "description": "Set true for a source with no time dimension, such as a flat raster. Defaults to false."
+    },
+    "timestep": {
+      "type": "string",
+      "description": "Process only this single timestep instead of the simulation's whole step range. Used to split a large source into per-timestep jobs that are later combined with amend."
+    },
+    "defaultValue": {
+      "type": "string",
+      "description": "Numeric value used to fill grid cells before copying data from the source, for cells the source does not cover. Ignored when amend is true."
+    },
+    "parallel": {
+      "type": "boolean",
+      "description": "Process patches within each timestep in parallel. Defaults to false."
+    },
+    "amend": {
+      "type": "boolean",
+      "description": "Add timestep slices to an existing output file instead of overwriting it. Amended slices must be contiguous with, and later than, those already in the file."
+    },
+    "timeType": {
+      "type": "string",
+      "enum": ["count", "ISO"],
+      "description": "Type of temporal metadata to record in the output .jshd: 'count' for numeric coordinates such as calendar years, 'ISO' for calendar dates. Defaults to 'count'. On its own this writes nothing; at least one of timeStart, timeUnit, timeCount, timeInterval, or timeInstant must also be given."
+    },
+    "timeStart": {
+      "type": "string",
+      "description": "First temporal coordinate of a range: a number when timeType is 'count' (e.g. '2015'), or an ISO date when timeType is 'ISO' (e.g. '2024-01-01'). Requires timeCount."
+    },
+    "timeUnit": {
+      "type": "string",
+      "description": "Unit of a count axis, e.g. 'year'. Required when timeType is 'count'; must be omitted when timeType is 'ISO'."
+    },
+    "timeCount": {
+      "type": "string",
+      "description": "Number of temporal coordinates in the axis. Must equal the number of timestep slices being written, which is the simulation's step range, or 1 when timestep is set."
+    },
+    "timeIncrement": {
+      "type": "string",
+      "description": "Spacing between count-axis coordinates. Defaults to 1. Only valid when timeType is 'count'."
+    },
+    "timeInterval": {
+      "type": "string",
+      "description": "ISO-8601 period between coordinates, e.g. 'P1D', 'P1M', 'P1Y'. Required when timeType is 'ISO' and a range is declared; must be omitted when timeType is 'count'."
+    },
+    "timeInstant": {
+      "type": "string",
+      "description": "Single temporal coordinate for a one-slice output, in place of timeStart/timeCount. Use this instead of a range when timestep is set. A count instant also requires timeUnit."
     }
   },
   "required": ["script", "simulation", "dataFile", "variable", "unitsStr", "outputFile"]

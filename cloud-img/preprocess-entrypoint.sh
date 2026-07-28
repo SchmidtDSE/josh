@@ -8,7 +8,8 @@
 #   JOSH_DATA_FILE, JOSH_VARIABLE, JOSH_UNITS, JOSH_OUTPUT_FILE
 # Optional env vars:
 #   JOSH_CRS, JOSH_X_COORD, JOSH_Y_COORD, JOSH_TIME_DIM,
-#   JOSH_TIMESTEP, JOSH_DEFAULT_VALUE, JOSH_PARALLEL, JOSH_AMEND
+#   JOSH_TIMESTEP, JOSH_DEFAULT_VALUE, JOSH_PARALLEL, JOSH_AMEND,
+#   JOSH_TIME_OPTS
 # MinIO creds (MINIO_ENDPOINT, etc.) are picked up automatically
 # by HierarchyConfig from the environment.
 #
@@ -83,6 +84,12 @@ if [ "$JOSH_PARALLEL" = "true" ]; then
 fi
 if [ "$JOSH_AMEND" = "true" ]; then
   OPTS="$OPTS --amend"
+fi
+# JOSH_TIME_OPTS already holds --time-* flags, built by TimeAxisParams.toCliFlags(). The dispatcher
+# owns that encoding so this script needs no knowledge of the individual time axis fields. Values
+# are single tokens (counts, units, ISO dates and periods), so appending is safe to word-split.
+if [ -n "$JOSH_TIME_OPTS" ]; then
+  OPTS="$OPTS $JOSH_TIME_OPTS"
 fi
 
 # Run preprocessing

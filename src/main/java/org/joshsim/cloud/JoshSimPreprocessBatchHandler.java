@@ -27,7 +27,10 @@ import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.function.Consumer;
+import org.joshsim.command.PreprocessOptions;
 import org.joshsim.command.PreprocessUtil;
+import org.joshsim.command.TimeAxisParams;
 import org.joshsim.util.MinioHandler;
 import org.joshsim.util.MinioOptions;
 import org.joshsim.util.MinioStagingUtil;
@@ -61,7 +64,16 @@ import org.joshsim.util.OutputOptions;
  *   <li>{@code defaultValue} — default fill value</li>
  *   <li>{@code parallel} (default {@code false})</li>
  *   <li>{@code amend} (default {@code false})</li>
+ *   <li>{@code timeType}, {@code timeStart}, {@code timeUnit}, {@code timeCount},
+ *       {@code timeIncrement}, {@code timeInterval}, {@code timeInstant} — declared temporal
+ *       metadata for the output .jshd, named after
+ *       {@link org.joshsim.command.TimeAxisParams.Field}. Omit them all to write a timeless
+ *       .jshd</li>
  * </ul>
+ *
+ * <p>Note that a job dispatched with {@code timestep} writes exactly one slice, so it must declare
+ * {@code timeInstant} rather than a {@code timeStart}/{@code timeCount} range. Fanning such jobs
+ * out and then combining them with {@code amend} requires ascending, contiguous timesteps.</p>
  */
 public class JoshSimPreprocessBatchHandler implements HttpHandler {
 
@@ -180,15 +192,7 @@ public class JoshSimPreprocessBatchHandler implements HttpHandler {
     String units = formData.getFirst("units").getValue();
     String outputFile = formData.getFirst("outputFile").getValue();
 
-    // Optional preprocess fields
-    String crs = getFormValue(formData, "crs", "EPSG:4326");
-    String horizCoord = getFormValue(formData, "xCoord", "lon");
-    String vertCoord = getFormValue(formData, "yCoord", "lat");
-    String timeDim = getFormValue(formData, "timeDim", "calendar_year");
-    String timestep = getFormValue(formData, "timestep", null);
-    String defaultValue = getFormValue(formData, "defaultValue", null);
-    boolean parallel = "true".equalsIgnoreCase(getFormValue(formData, "parallel", "false"));
-    boolean amend = "true".equalsIgnoreCase(getFormValue(formData, "amend", "false"));
+    PreprocessOptions options = buildOptions(formData);
 
     String statusPath = "batch-status/" + jobId + "/status.json";
     sendJsonAccepted(exchange, jobId, statusPath);
@@ -197,26 +201,69 @@ public class JoshSimPreprocessBatchHandler implements HttpHandler {
     CompletableFuture.runAsync(() -> {
       runPreprocessWithStatus(
           statusMinio, jobId, simulation, workDir, dataFile, variable, units,
-          outputFile, crs, horizCoord, vertCoord, timeDim, timestep, defaultValue,
-          parallel, amend, statusPath, capturedApiKey
+          outputFile, options, statusPath, capturedApiKey
       );
     }, BATCH_EXECUTOR);
 
     return Optional.of(apiKey);
   }
 
+  /**
+   * Resolves the optional preprocess form fields into preprocessing options.
+   *
+   * <p>An omitted field keeps {@link PreprocessOptions}' default, which is the {@code preprocess}
+   * CLI's default, so a job dispatched here and the same job run from a shell produce the same
+   * .jshd. Temporal metadata is read through {@link TimeAxisParams#fromLookup} so the accepted
+   * field names come from {@link TimeAxisParams.Field} rather than being restated here.</p>
+   *
+   * <p>Package-visible for testing.</p>
+   *
+   * @param formData The parsed form data containing request parameters.
+   * @return The resolved preprocessing options.
+   */
+  static PreprocessOptions buildOptions(FormData formData) {
+    PreprocessOptions.Builder builder = PreprocessOptions.builder()
+        .timestep(getFormValue(formData, "timestep", ""))
+        .defaultValue(getFormValue(formData, "defaultValue", null))
+        .parallel("true".equalsIgnoreCase(getFormValue(formData, "parallel", "false")))
+        .amend("true".equalsIgnoreCase(getFormValue(formData, "amend", "false")))
+        .timeAxis(TimeAxisParams.fromLookup(
+            field -> getFormValue(formData, field.getFieldName(), "")));
+
+    applyIfPresent(formData, "crs", builder::crsCode);
+    applyIfPresent(formData, "xCoord", builder::horizCoordName);
+    applyIfPresent(formData, "yCoord", builder::vertCoordName);
+
+    // A present-but-empty timeDim is how a dispatcher declares a source with no time dimension at
+    // all - the --no-time-dim case. getFormValue folds an empty value back to its default, so this
+    // field is read directly to keep the distinction preprocess-entrypoint.sh makes on the
+    // Kubernetes path.
+    if (formData.contains("timeDim")) {
+      String timeDim = formData.getFirst("timeDim").getValue();
+      builder.timeName(timeDim != null ? timeDim : "");
+    }
+
+    return builder.build();
+  }
+
+  private static void applyIfPresent(
+      FormData formData, String field, Consumer<String> setter) {
+    String value = getFormValue(formData, field, null);
+    if (value != null) {
+      setter.accept(value);
+    }
+  }
+
   private void runPreprocessWithStatus(MinioHandler statusMinio, String jobId,
       String simulation, File workDir, String dataFile, String variable, String units,
-      String outputFile, String crs, String horizCoord, String vertCoord, String timeDim,
-      String timestep, String defaultValue, boolean parallel, boolean amend,
+      String outputFile, PreprocessOptions options,
       String statusPath, String apiKey) {
     writeStatus(statusMinio, statusPath, buildStatusJson(
         "running", jobId, "startedAt", Instant.now().toString()
     ));
 
     try {
-      executePreprocessJob(jobId, simulation, workDir, dataFile, variable, units,
-          outputFile, crs, horizCoord, vertCoord, timeDim, timestep, defaultValue, parallel, amend);
+      executePreprocessJob(simulation, workDir, dataFile, variable, units, outputFile, options);
 
       // Upload result .jshd to MinIO
       uploadResult(jobId, workDir, outputFile);
@@ -237,20 +284,13 @@ public class JoshSimPreprocessBatchHandler implements HttpHandler {
     }
   }
 
-  private void executePreprocessJob(String jobId, String simulation, File workDir,
+  private void executePreprocessJob(String simulation, File workDir,
       String dataFile, String variable, String units, String outputFile,
-      String crs, String horizCoord, String vertCoord, String timeDim,
-      String timestep, String defaultValue, boolean parallel, boolean amend)
-      throws Exception {
+      PreprocessOptions options) throws Exception {
 
     File scriptFile = LocalFileUtil.findScriptFile(workDir);
     File dataFilePath = new File(workDir, dataFile);
     File outputFilePath = new File(workDir, outputFile);
-
-    PreprocessUtil.PreprocessOptions options = new PreprocessUtil.PreprocessOptions(
-        crs, horizCoord, vertCoord, timeDim,
-        timestep != null ? timestep : "", defaultValue, parallel, amend
-    );
 
     PreprocessUtil.preprocess(
         scriptFile, simulation, dataFilePath.getPath(), variable, units,
