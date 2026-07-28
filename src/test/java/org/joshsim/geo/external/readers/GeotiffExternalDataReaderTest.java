@@ -8,10 +8,12 @@ import java.io.File;
 import java.io.IOException;
 import java.math.BigDecimal;
 import java.net.URL;
+import java.util.List;
 import java.util.Optional;
 import org.joshsim.engine.value.converter.Units;
 import org.joshsim.engine.value.engine.ValueSupportFactory;
 import org.joshsim.engine.value.type.EngineValue;
+import org.joshsim.geo.external.ExternalSpatialDimensions;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -62,7 +64,9 @@ public class GeotiffExternalDataReaderTest {
 
   @Test
   public void testKnownPoint1() throws IOException {
-    // Test first specific point
+    // Test first specific point. This lands 0.638 of a pixel east of the west edge of column 58,
+    // so it belongs to column 58 (39.580078) and not to column 59 (45.040039). Anchoring the
+    // coordinate list on pixel edges instead of pixel centers used to hand back the neighbor.
     BigDecimal lat = new BigDecimal("37.871878");
     BigDecimal lon = new BigDecimal("-122.265088");
     String variableName = "0"; // First band
@@ -70,12 +74,71 @@ public class GeotiffExternalDataReaderTest {
     Optional<EngineValue> value = reader.readValueAt(variableName, lon, lat, 0);
 
     assertTrue(value.isPresent(), "Value should be present at test coordinates");
-    // Updated expected value based on correct coordinate calculation
     assertEquals(
-        45.040039,
+        39.580078,
         value.get().getAsDecimal().doubleValue(),
         0.0001,
         "Value at test coordinates does not match expected value"
+    );
+  }
+
+  /**
+   * Pin the reported coordinates to pixel centers spaced at the raster's own pixel scale.
+   *
+   * <p>The sample file declares a 1385x596 grid with a pixel scale of 0.04166667 degrees and its
+   * tie point at (-124.70833333, 49.37500127), which GeoTIFF places on the outer corner of the
+   * top-left pixel. Reporting edges rather than centers biases every nearest-neighbor lookup half
+   * a pixel toward the origin, and spacing the coordinates over n - 1 intervals rather than n
+   * stretches the axis enough to drift a full pixel by the far side of a large raster.</p>
+   */
+  @Test
+  public void testCoordinatesAreCellCenters() throws IOException {
+    final double pixelScale = 0.04166667;
+    final double tolerance = 1e-9;
+
+    ExternalSpatialDimensions dimensions = reader.getSpatialDimensions();
+    List<BigDecimal> coordsX = dimensions.getCoordinatesX();
+    List<BigDecimal> coordsY = dimensions.getCoordinatesY();
+
+    assertEquals(1385, coordsX.size(), "One X coordinate per raster column");
+    assertEquals(596, coordsY.size(), "One Y coordinate per raster row");
+
+    assertEquals(
+        pixelScale,
+        coordsX.get(1).subtract(coordsX.get(0)).doubleValue(),
+        tolerance,
+        "X spacing should equal the raster pixel scale"
+    );
+    assertEquals(
+        pixelScale,
+        coordsY.get(0).subtract(coordsY.get(1)).doubleValue(),
+        tolerance,
+        "Y spacing should equal the raster pixel scale"
+    );
+
+    assertEquals(
+        -124.70833333 + pixelScale / 2,
+        coordsX.get(0).doubleValue(),
+        tolerance,
+        "First X coordinate should be the center of the westmost column"
+    );
+    assertEquals(
+        49.37500127 - pixelScale / 2,
+        coordsY.get(0).doubleValue(),
+        tolerance,
+        "First Y coordinate should be the center of the northmost row"
+    );
+    assertEquals(
+        -124.70833333 + pixelScale * (1385 - 0.5),
+        coordsX.get(coordsX.size() - 1).doubleValue(),
+        tolerance,
+        "Last X coordinate should be the center of the eastmost column"
+    );
+    assertEquals(
+        49.37500127 - pixelScale * (596 - 0.5),
+        coordsY.get(coordsY.size() - 1).doubleValue(),
+        tolerance,
+        "Last Y coordinate should be the center of the southmost row"
     );
   }
 
