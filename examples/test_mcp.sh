@@ -12,9 +12,11 @@
 set -euo pipefail
 
 JAR="build/libs/joshsim-fat.jar"
-# Pin a version here (e.g. @modelcontextprotocol/inspector@0.x.y) once a known-good
-# release is confirmed, so the inspector's own CLI changes can't silently break CI.
-INSPECTOR="@modelcontextprotocol/inspector"
+# Pinned deliberately. Tracking @latest broke CI the day inspector 2.x was published: its CLI no
+# longer accepts `--cli <command> <args> --method ...`, so the server command was mangled and java
+# printed its own usage instead of starting. 1.0.1 is the last release this script is known to pass
+# against. Moving to 2.x means reworking the invocations below, not just bumping this.
+INSPECTOR="@modelcontextprotocol/inspector@1.0.1"
 
 if [ ! -f "$JAR" ]; then
   echo "ERROR: $JAR not found. Build it with: ./gradlew fatJar"
