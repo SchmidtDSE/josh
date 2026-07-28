@@ -241,6 +241,8 @@ For Josh itself, please use the [Google Java Style Guide](https://google.github.
 
 For the web interface, please use the [Google JavaScript Style Guide](https://google.github.io/styleguide/jsguide.html) with all public members having [JSDoc](https://jsdoc.app). Note that we use vanilla JavaScript which must be able to run directly in browser so code is not run through webpack or similar prior to deployment. Very limited production dependencies are simply included via minified JS. We do not consider production use of CDNs to be acceptable for privacy reasons.
 
+For the documentation builder in `docs/build`, please use the [Google Python Style Guide](https://google.github.io/styleguide/pyguide.html) with all public members having [Google-style docstrings](https://google.github.io/styleguide/pyguide.html#38-comments-and-docstrings), both enforced by [ruff](https://docs.astral.sh/ruff/). This is the only Python in the repository that has dependencies, it is not on the engine build path, and it is deliberately not baked into the container image. Note that it must not parse Josh: anything it needs to know about a model comes from the jar, through an `inspect-*` command wrapped by [joshpy](https://github.com/SchmidtDSE/joshpy).
+
 We require that our automated tests and checks pass prior to merging commits.
 
 ### Testing
@@ -304,14 +306,22 @@ We use the following open source technologies:
 - [D3](https://d3js.org/) for data visualization under [ISC](https://github.com/d3/d3/blob/main/LICENSE).
 - [GeoTools](https://geotools.org/) for geospatial data processing under [LGPL](https://github.com/geotools/geotools/blob/main/LICENSE.md).
 - [Gradle](https://gradle.org) under [Apache v2](https://github.com/gradle/gradle?tab=Apache-2.0-1-ov-file#readme).
+- [Jinja2](https://jinja.palletsprojects.com/) for documentation page templates under [BSD-3](https://github.com/pallets/jinja/blob/main/LICENSE.txt).
+- [joshpy](https://github.com/SchmidtDSE/joshpy) for invoking the Josh CLI from the documentation builder under [BSD-3](https://github.com/SchmidtDSE/joshpy/blob/main/LICENSE).
 - [JTS Topology Suite](https://locationtech.github.io/jts/) for geometry handling under [EDL](https://www.eclipse.org/org/documents/edl-v10.php).
 - [JUnit](https://junit.org/junit5/) under [EPL v2](https://github.com/junit-team/junit5).
+- [markdown-it-py](https://markdown-it-py.readthedocs.io/) for rendering documentation prose under [MIT](https://github.com/executablebooks/markdown-it-py/blob/master/LICENSE).
 - [Math.js](https://mathjs.org/) for mathematical expressions under [Apache v2](https://github.com/josdejong/mathjs/blob/develop/LICENSE).
+- [mdit-py-plugins](https://github.com/executablebooks/mdit-py-plugins) for Markdown extensions under [MIT](https://github.com/executablebooks/mdit-py-plugins/blob/master/LICENSE).
 - [Minio Java SDK](https://min.io/docs/minio/linux/developers/java/minio-java.html) under [Apache v2](https://github.com/minio/minio-java?tab=Apache-2.0-1-ov-file#readme).
 - [Mockito](https://site.mockito.org/) for testing under [MIT](https://github.com/mockito/mockito/blob/main/LICENSE).
 - [Picocli](https://picocli.info/) for command line parsing under [Apache v2](https://github.com/remkop/picocli/blob/main/LICENSE).
 - [Popper.js](https://popper.js.org/) for tooltip positioning under [MIT](https://github.com/floating-ui/floating-ui/blob/master/LICENSE).
 - [Public Sans](https://public-sans.digital.gov/) font under [OFL-1.1](https://github.com/uswds/public-sans/blob/master/LICENSE.md).
+- [pydantic](https://docs.pydantic.dev/) for the documentation authoring contract under [MIT](https://github.com/pydantic/pydantic/blob/main/LICENSE).
+- [pytest](https://pytest.org) for testing the documentation builder under [MIT](https://github.com/pytest-dev/pytest/blob/main/LICENSE).
+- [PyYAML](https://pyyaml.org/) for parsing documentation front matter under [MIT](https://github.com/yaml/pyyaml/blob/main/LICENSE).
+- [ruff](https://docs.astral.sh/ruff/) for linting the documentation builder under [MIT](https://github.com/astral-sh/ruff/blob/main/LICENSE).
 - [SLF4J](https://www.slf4j.org/) for logging under [MIT](https://github.com/qos-ch/slf4j/blob/master/LICENSE.txt).
 - [Spotless](https://github.com/diffplug/spotless) for code formatting under [Apache v2](https://github.com/diffplug/spotless/blob/main/LICENSE.txt).
 - [Tabby](https://github.com/cferdinandi/tabby) for tab interface management under [MIT](https://github.com/cferdinandi/tabby/blob/master/LICENSE.md).
@@ -319,6 +329,7 @@ We use the following open source technologies:
 - [Tippy.js](https://atomiks.github.io/tippyjs/) for tooltips under [MIT](https://github.com/atomiks/tippyjs/blob/master/LICENSE).
 - [UCAR NetCDF](https://www.unidata.ucar.edu/software/netcdf-java/) for NetCDF support under [BSD-3](https://github.com/Unidata/netcdf-java/blob/master/LICENSE).
 - [Undertow](https://undertow.io/) for the local web server under [Apache v2](https://github.com/undertow-io/undertow/blob/master/LICENSE.txt).
+- [uv](https://docs.astral.sh/uv/) for the documentation builder's Python environment under [Apache v2](https://github.com/astral-sh/uv/blob/main/LICENSE-APACHE).
 - [cdibase](https://github.com/sampottinger/cdibase) for automaton parsing patterns under [Apache v2](https://github.com/sampottinger/cdibase/blob/main/LICENSE).
 
 We recommend [Temurin](https://projects.eclipse.org/projects/adoptium.temurin).

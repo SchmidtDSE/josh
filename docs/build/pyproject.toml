@@ -1,0 +1,72 @@
+# The Josh docs builder.
+#
+# Dependencies are declared here with lower bounds and pinned exactly, with hashes, in uv.lock.
+# Install with `uv sync --project docs/build`; run with `uv run --project docs/build joshdocs`.
+#
+# The engine build does not depend on this and neither uv nor Python is baked into the container
+# image: both are installed on demand, and CI installs them per job.
+
+[project]
+name = "joshdocs"
+version = "0.1.0"
+description = "Harvests authored Josh models and conformance tests into the joshsim.org library."
+requires-python = ">=3.12"
+dependencies = [
+  "Jinja2>=3.1.6",          # page templates, incl. the shared base.html
+  "joshpy",                 # the Josh CLI, wrapped once; see [tool.uv.sources]
+  "markdown-it-py>=4.2.0",  # Markdown -> HTML (replaces pandoc for the docs tree)
+  "mdit-py-plugins>=0.6.1", # Markdown extensions (admonitions, anchors)
+  "pydantic>=2.13.4",       # front-matter schema with author-facing error messages
+  "PyYAML>=6.0.3",          # parses front-matter, reporting the line it objected to
+]
+
+[project.scripts]
+joshdocs = "joshdocs.__main__:main"
+
+[dependency-groups]
+dev = [
+  "pytest>=9.1.1",
+  "ruff>=0.16.0",
+]
+
+[tool.uv.sources]
+# joshpy is not on PyPI, so it is pinned by commit rather than by version -- a branch or tag would
+# let the docs build change without a commit in this repo. uv records the resolved commit in
+# uv.lock, so `uv sync --frozen` gets this exact tree or fails. Downstream joshpy users pin the same
+# way through pixi; bumping this pin is a deliberate PR, which is what keeps a CLI change in the
+# engine from breaking the docs build spontaneously.
+#
+# No extras: joshpy's default install is the jar/CLI wrappers and `requests`, nothing more. The
+# `minimal` extra is an empty alias for exactly this install and is named here for the reader.
+joshpy = { git = "https://github.com/SchmidtDSE/joshpy.git", rev = "57f14635f55b05ba20f45a25c61216f54816aa8a" }
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/joshdocs"]
+
+[tool.ruff]
+# Match the 100-column limit the Java (google_checks) and JS sources in this repo already use.
+line-length = 100
+target-version = "py312"
+src = ["src", "tests"]
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "I", "UP", "B", "SIM", "C4", "PTH", "RET", "D"]
+ignore = [
+  "D203",  # conflicts with D211 (no blank line before class docstring)
+  "D213",  # conflicts with D212 (multi-line summary on the first line)
+]
+
+[tool.ruff.lint.pydocstyle]
+convention = "google"
+
+[tool.ruff.lint.per-file-ignores]
+# Test functions document themselves by name, and a fake collaborator mirrors an API
+# documented on the real one.
+"tests/*" = ["D100", "D101", "D102", "D103", "D104", "D107"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]

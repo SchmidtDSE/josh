@@ -2,10 +2,20 @@
 .env
 
 # Gradle
+# Anchored to the repo root so it does not also swallow docs/build, the docs builder.
 .gradle/
 gradle/
-build/
+/build/
 bin/
+
+# Docs builder virtualenv, created on demand by `uv sync` from docs/build/uv.lock, which is tracked.
+docs/build/.venv/
+
+# Python bytecode and tool caches, from the docs builder
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.ruff_cache/
 
 # IDE
 .idea/
