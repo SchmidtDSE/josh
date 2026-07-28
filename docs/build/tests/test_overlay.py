@@ -86,6 +86,39 @@ def test_emit_writes_the_composed_model(tmp_path):
     assert "hello_patch.csv" in text
 
 
+def test_emit_creates_the_directory_the_overlay_points_at(tmp_path):
+    # The jar does not create an export target's parents, so a model emitted against a missing
+    # directory harvests cleanly and then dies on `run` with a bare FileNotFoundException.
+    source = tmp_path / "hello.josh"
+    source.write_text(AUTHORED, encoding="utf-8")
+    exports = tmp_path / "nested" / "exports"
+    emit_runnable(
+        source=source,
+        destination=tmp_path / "runnable",
+        simulation="Main",
+        slots=[ExportSlot.PATCH],
+        export_dir=exports,
+        unit_id="hello",
+    )
+    assert exports.is_dir()
+
+
+def test_emit_without_exports_makes_no_export_directory(tmp_path):
+    source = tmp_path / "hello.josh"
+    source.write_text(AUTHORED, encoding="utf-8")
+    exports = tmp_path / "exports"
+    written = emit_runnable(
+        source=source,
+        destination=tmp_path / "runnable",
+        simulation="Main",
+        slots=[],
+        export_dir=exports,
+        unit_id="hello",
+    )
+    assert written.read_text(encoding="utf-8") == AUTHORED
+    assert not exports.exists()
+
+
 def test_emit_overrides_an_authored_memory_target(tmp_path):
     # This is why the overlay works as a pure append: `update` replaces the handler the authored
     # file already declares, so a browser-targeted model runs on the CLI unmodified.

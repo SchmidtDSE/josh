@@ -107,6 +107,11 @@ def emit_runnable(
     """
     targets = {slot: export_target(export_dir, unit_id, slot) for slot in slots}
     composed = compose(source.read_text(encoding="utf-8"), render_overlay(simulation, targets))
+    if targets:
+        # The jar opens an export target without creating its parents, so a model emitted against a
+        # directory that does not exist yet fails at run time with a bare FileNotFoundException.
+        # The overlay names that directory, so this is the place that owes it.
+        export_dir.mkdir(parents=True, exist_ok=True)
     destination.mkdir(parents=True, exist_ok=True)
     written = destination / f"{unit_id}.josh"
     written.write_text(composed, encoding="utf-8")
