@@ -26,6 +26,8 @@ import io.fabric8.kubernetes.client.dsl.ScalableResource;
 import io.fabric8.kubernetes.client.dsl.V1BatchAPIGroupDSL;
 import java.util.List;
 import java.util.Map;
+import org.joshsim.command.PreprocessOptions;
+import org.joshsim.command.TimeAxisParams;
 import org.joshsim.util.MinioOptions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -169,9 +171,9 @@ class KubernetesPreprocessTargetTest {
     KubernetesPreprocessTarget target = buildTarget(config);
     PreprocessParams params = new PreprocessParams(
         "data.nc", "temp", "celsius", "output.jshd",
-        "EPSG:4326", "lon", "lat", "calendar_year",
-        "2020", null, false, false
-    );
+        PreprocessOptions.builder()
+            .timestep("2020")
+            .build());
 
     target.dispatch(JOB_ID, PREFIX, SIMULATION, params);
 
@@ -181,13 +183,44 @@ class KubernetesPreprocessTargetTest {
   }
 
   @Test
+  void dispatchOmitsTimeOptsWhenNoAxisDeclared() throws Exception {
+    KubernetesPreprocessTarget target = buildTarget(config);
+
+    target.dispatch(JOB_ID, PREFIX, SIMULATION, buildParams());
+
+    Job job = jobCaptor.getValue();
+    List<EnvVar> envVars = getContainer(job).getEnv();
+    assertTrue(
+        envVars.stream().noneMatch(envVar -> "JOSH_TIME_OPTS".equals(envVar.getName())),
+        "an undeclared axis must not reach the pod as an empty flag string");
+  }
+
+  @Test
+  void dispatchEncodesDeclaredTimeAxisAsTimeOpts() throws Exception {
+    KubernetesPreprocessTarget target = buildTarget(config);
+    PreprocessParams params = new PreprocessParams(
+        "data.nc", "temp", "celsius", "output.jshd",
+        PreprocessOptions.builder()
+            .timeName("time")
+            .timeAxis(TimeAxisParams.of("ISO", "2026-01-01", "", "900", "", "P1M", ""))
+            .build());
+
+    target.dispatch(JOB_ID, PREFIX, SIMULATION, params);
+
+    Job job = jobCaptor.getValue();
+    List<EnvVar> envVars = getContainer(job).getEnv();
+    assertPlainEnvVar(envVars, "JOSH_TIME_OPTS",
+        "--time-type=ISO --time-start=2026-01-01 --time-count=900 --time-interval=P1M");
+  }
+
+  @Test
   void dispatchIncludesParallelEnvVarWhenTrue() throws Exception {
     KubernetesPreprocessTarget target = buildTarget(config);
     PreprocessParams params = new PreprocessParams(
         "data.nc", "temp", "celsius", "output.jshd",
-        "EPSG:4326", "lon", "lat", "calendar_year",
-        null, null, true, false
-    );
+        PreprocessOptions.builder()
+            .parallel(true)
+            .build());
 
     target.dispatch(JOB_ID, PREFIX, SIMULATION, params);
 
@@ -313,9 +346,7 @@ class KubernetesPreprocessTargetTest {
   private PreprocessParams buildParams() {
     return new PreprocessParams(
         "data.nc", "temperature", "celsius", "output.jshd",
-        "EPSG:4326", "lon", "lat", "calendar_year",
-        null, null, false, false
-    );
+        PreprocessOptions.defaults());
   }
 
   private KubernetesPreprocessTarget buildTarget(KubernetesTargetConfig cfg) {

@@ -16,6 +16,7 @@ import java.time.Duration;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.stream.Collectors;
+import org.joshsim.command.PreprocessOptions;
 
 
 /**
@@ -88,22 +89,25 @@ public class HttpPreprocessTarget implements RemotePreprocessTarget {
     formFields.put("minioPrefix", minioPrefix);
 
     // Optional preprocess fields
-    formFields.put("crs", params.getCrs());
-    formFields.put("xCoord", params.getHorizCoord());
-    formFields.put("yCoord", params.getVertCoord());
-    formFields.put("timeDim", params.getTimeDim());
-    if (params.getTimestep() != null && !params.getTimestep().isEmpty()) {
-      formFields.put("timestep", params.getTimestep());
+    PreprocessOptions options = params.getOptions();
+    formFields.put("crs", options.getCrsCode());
+    formFields.put("xCoord", options.getHorizCoordName());
+    formFields.put("yCoord", options.getVertCoordName());
+    // Sent even when empty: the handler reads a present-but-empty timeDim as --no-time-dim.
+    formFields.put("timeDim", options.getTimeName());
+    if (!options.getTimestep().isEmpty()) {
+      formFields.put("timestep", options.getTimestep());
     }
-    if (params.getDefaultValue() != null && !params.getDefaultValue().isEmpty()) {
-      formFields.put("defaultValue", params.getDefaultValue());
+    if (options.getDefaultValue() != null && !options.getDefaultValue().isEmpty()) {
+      formFields.put("defaultValue", options.getDefaultValue());
     }
-    if (params.isParallel()) {
+    if (options.isParallel()) {
       formFields.put("parallel", "true");
     }
-    if (params.isAmend()) {
+    if (options.isAmend()) {
       formFields.put("amend", "true");
     }
+    formFields.putAll(options.getTimeAxis().toFormFields());
 
     String formBody = formFields.entrySet().stream()
         .map(e -> URLEncoder.encode(e.getKey(), StandardCharsets.UTF_8)

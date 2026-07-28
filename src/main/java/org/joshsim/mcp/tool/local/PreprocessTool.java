@@ -19,6 +19,9 @@ import io.modelcontextprotocol.spec.McpSchema.Tool;
 import java.nio.file.Path;
 import java.util.Map;
 import java.util.Optional;
+import java.util.function.Consumer;
+import org.joshsim.command.PreprocessOptions;
+import org.joshsim.command.TimeAxisParams;
 import org.joshsim.mcp.Backend;
 import org.joshsim.mcp.JoshPaths;
 import org.joshsim.mcp.tool.local.ToolHandlers.MissingArgument;
@@ -94,12 +97,55 @@ public final class PreprocessTool {
     Path outputFile = JoshPaths.resolve(outputArg);
 
     Backend.PreprocessResult result = backend.preprocess(
-        script, simArg, dataFile, variableArg, unitsArg, outputFile, Optional.empty()
+        script, simArg, dataFile, variableArg, unitsArg, outputFile,
+        Optional.of(buildOptions(args))
     );
     return CallToolResult.builder()
         .addTextContent(result.getMessage())
         .isError(!result.isSuccess())
         .build();
+  }
+
+  /**
+   * Builds preprocessing options from the tool call's optional arguments.
+   *
+   * <p>An omitted argument keeps {@link PreprocessOptions}' default, which is the
+   * {@code preprocess} CLI's default, so an MCP client and a shell get the same result from the
+   * same arguments. The time axis fields are read through {@link TimeAxisParams#fromLookup} keyed
+   * on the same names the {@code /preprocessBatch} form uses, so all three surfaces name them
+   * identically.</p>
+   *
+   * @param args the tool call's argument map
+   * @return the resolved preprocessing options
+   */
+  static PreprocessOptions buildOptions(Map<String, Object> args) {
+    PreprocessOptions.Builder builder = PreprocessOptions.builder()
+        .timestep(ToolHandlers.optionalString(args, "timestep", ""))
+        .defaultValue(ToolHandlers.optionalString(args, "defaultValue", null))
+        .parallel(ToolHandlers.optionalBoolean(args, "parallel", false))
+        .amend(ToolHandlers.optionalBoolean(args, "amend", false))
+        .timeAxis(TimeAxisParams.fromLookup(
+            field -> ToolHandlers.optionalString(args, field.getFieldName(), "")));
+
+    applyIfPresent(args, "crs", builder::crsCode);
+    applyIfPresent(args, "xCoord", builder::horizCoordName);
+    applyIfPresent(args, "yCoord", builder::vertCoordName);
+
+    if (ToolHandlers.optionalBoolean(args, "noTimeDim", false)) {
+      builder.noTimeDim();
+    } else {
+      applyIfPresent(args, "timeDim", builder::timeName);
+    }
+
+    return builder.build();
+  }
+
+  private static void applyIfPresent(
+      Map<String, Object> args, String key, Consumer<String> setter) {
+    String value = ToolHandlers.optionalString(args, key, null);
+    if (value != null) {
+      setter.accept(value);
+    }
   }
 
 }

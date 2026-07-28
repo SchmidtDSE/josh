@@ -11,13 +11,20 @@
 
 package org.joshsim.pipeline.target;
 
+import org.joshsim.command.PreprocessOptions;
+
 
 /**
  * Parameters for a remote preprocessing job.
  *
- * <p>Contains both required positional parameters (data file, variable, units,
- * output file) and optional preprocessing options (CRS, coordinate names,
- * timestep filtering, parallel mode, amend mode, default value).</p>
+ * <p>Holds what identifies the job - which file, which variable, where the result goes - alongside
+ * the {@link PreprocessOptions} the remote end will preprocess with. The options are the same type
+ * the local {@code preprocess} command uses, so a batch job and a local run are configured by one
+ * object rather than by two hand-synchronized mirrors of it.</p>
+ *
+ * <p>Unlike the local command, the file names here are relative to the job's {@code workDir}: the
+ * pod entrypoint and the {@code /preprocessBatch} handler each resolve them against the directory
+ * they staged inputs into.</p>
  */
 public class PreprocessParams {
 
@@ -25,46 +32,25 @@ public class PreprocessParams {
   private final String variable;
   private final String units;
   private final String outputFile;
-  private final String crs;
-  private final String horizCoord;
-  private final String vertCoord;
-  private final String timeDim;
-  private final String timestep;
-  private final String defaultValue;
-  private final boolean parallel;
-  private final boolean amend;
+  private final PreprocessOptions options;
 
   /**
-   * Constructs PreprocessParams with all fields.
+   * Constructs PreprocessParams.
    *
    * @param dataFile Filename of the data file within workDir.
    * @param variable Variable name or band number to extract.
    * @param units Units string for simulation use.
-   * @param outputFile Filename for the output .jshd file.
-   * @param crs Coordinate reference system code (e.g., {@code EPSG:4326}).
-   * @param horizCoord Name of the horizontal coordinate dimension.
-   * @param vertCoord Name of the vertical coordinate dimension.
-   * @param timeDim Name of the time dimension, or empty for a source with no time dimension.
-   * @param timestep Single timestep to process, or null/empty for all.
-   * @param defaultValue Default fill value, or null.
-   * @param parallel Whether to enable parallel patch processing.
-   * @param amend Whether to amend an existing output file.
+   * @param outputFile Filename for the output .jshd file, within workDir.
+   * @param options Preprocessing options; null falls back to
+   *     {@link PreprocessOptions#defaults()}.
    */
   public PreprocessParams(String dataFile, String variable, String units, String outputFile,
-      String crs, String horizCoord, String vertCoord, String timeDim, String timestep,
-      String defaultValue, boolean parallel, boolean amend) {
+      PreprocessOptions options) {
     this.dataFile = dataFile;
     this.variable = variable;
     this.units = units;
     this.outputFile = outputFile;
-    this.crs = crs != null ? crs : "EPSG:4326";
-    this.horizCoord = horizCoord != null ? horizCoord : "lon";
-    this.vertCoord = vertCoord != null ? vertCoord : "lat";
-    this.timeDim = timeDim != null ? timeDim : "calendar_year";
-    this.timestep = timestep;
-    this.defaultValue = defaultValue;
-    this.parallel = parallel;
-    this.amend = amend;
+    this.options = options != null ? options : PreprocessOptions.defaults();
   }
 
   public String getDataFile() {
@@ -83,35 +69,7 @@ public class PreprocessParams {
     return outputFile;
   }
 
-  public String getCrs() {
-    return crs;
-  }
-
-  public String getHorizCoord() {
-    return horizCoord;
-  }
-
-  public String getVertCoord() {
-    return vertCoord;
-  }
-
-  public String getTimeDim() {
-    return timeDim;
-  }
-
-  public String getTimestep() {
-    return timestep;
-  }
-
-  public String getDefaultValue() {
-    return defaultValue;
-  }
-
-  public boolean isParallel() {
-    return parallel;
-  }
-
-  public boolean isAmend() {
-    return amend;
+  public PreprocessOptions getOptions() {
+    return options;
   }
 }

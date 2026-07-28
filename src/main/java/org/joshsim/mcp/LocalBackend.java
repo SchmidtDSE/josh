@@ -22,6 +22,7 @@ import org.antlr.v4.runtime.CharStreams;
 import org.antlr.v4.runtime.CommonTokenStream;
 import org.antlr.v4.runtime.tree.ParseTree;
 import org.joshsim.JoshSimCommander;
+import org.joshsim.command.PreprocessOptions;
 import org.joshsim.command.PreprocessUtil;
 import org.joshsim.command.RunUtil;
 import org.joshsim.engine.config.ConfigDiscoverabilityOutputFormatter;
@@ -117,22 +118,7 @@ public class LocalBackend implements Backend {
       Path outputFile,
       Optional<PreprocessOptions> options
   ) {
-    PreprocessUtil.PreprocessOptions utilOptions;
-    if (options.isPresent()) {
-      PreprocessOptions o = options.get();
-      utilOptions = new PreprocessUtil.PreprocessOptions(
-          o.getCrsCode(),
-          o.getHorizCoordName(),
-          o.getVertCoordName(),
-          o.getTimeName(),
-          o.getTimestep(),
-          o.getDefaultValue(),
-          o.isParallel(),
-          o.isAmend()
-      );
-    } else {
-      utilOptions = new PreprocessUtil.PreprocessOptions();
-    }
+    PreprocessOptions utilOptions = options.orElseGet(PreprocessOptions::defaults);
 
     try {
       PreprocessUtil.preprocess(

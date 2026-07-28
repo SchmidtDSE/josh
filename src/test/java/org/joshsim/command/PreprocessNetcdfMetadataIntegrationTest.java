@@ -51,9 +51,10 @@ public class PreprocessNetcdfMetadataIntegrationTest {
     Path script = writeScript("no_units.josh");
     Path output = tempDir.resolve("no_units.jshdz");
 
-    PreprocessUtil.PreprocessOptions options = new PreprocessUtil.PreprocessOptions(
-        "EPSG:4326", "lon", "lat", "time", "", null, false, false,
-        "count", "2015", "year", "2", "1", "", "");
+    PreprocessOptions options = PreprocessOptions.builder()
+            .timeName("time")
+            .timeAxis(TimeAxisParams.of("count", "2015", "year", "2", "1", "", ""))
+            .build();
     PreprocessUtil.preprocess(script.toFile(), "Preprocess", data.toString(), VARIABLE,
         "celsius", output.toFile(), options, new OutputOptions());
 
@@ -69,9 +70,7 @@ public class PreprocessNetcdfMetadataIntegrationTest {
     Path script = writeScript("no_time.josh");
     Path output = tempDir.resolve("no_time.jshdz");
 
-    // An empty time name is what --no-time-dim resolves to.
-    PreprocessUtil.PreprocessOptions options = new PreprocessUtil.PreprocessOptions(
-        "EPSG:4326", "lon", "lat", "", "", null, false, false);
+    PreprocessOptions options = PreprocessOptions.builder().noTimeDim().build();
     PreprocessUtil.preprocess(script.toFile(), "Preprocess", data.toString(), VARIABLE,
         "celsius", output.toFile(), options, new OutputOptions());
 

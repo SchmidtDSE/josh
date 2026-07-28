@@ -25,6 +25,7 @@ import java.util.Base64;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import org.joshsim.command.PreprocessOptions;
 import org.joshsim.util.MinioOptions;
 
 
@@ -217,25 +218,34 @@ public class KubernetesPreprocessTarget implements RemotePreprocessTarget {
     envVars.add(plainEnvVar("JOSH_MINIO_PREFIX", minioPrefix));
     envVars.add(plainEnvVar("JOSH_SIMULATION", simulation));
     // Preprocess-specific parameters
+    PreprocessOptions options = params.getOptions();
     envVars.add(plainEnvVar("JOSH_DATA_FILE", params.getDataFile()));
     envVars.add(plainEnvVar("JOSH_VARIABLE", params.getVariable()));
     envVars.add(plainEnvVar("JOSH_UNITS", params.getUnits()));
     envVars.add(plainEnvVar("JOSH_OUTPUT_FILE", params.getOutputFile()));
-    envVars.add(plainEnvVar("JOSH_CRS", params.getCrs()));
-    envVars.add(plainEnvVar("JOSH_X_COORD", params.getHorizCoord()));
-    envVars.add(plainEnvVar("JOSH_Y_COORD", params.getVertCoord()));
-    envVars.add(plainEnvVar("JOSH_TIME_DIM", params.getTimeDim()));
-    if (params.getTimestep() != null && !params.getTimestep().isEmpty()) {
-      envVars.add(plainEnvVar("JOSH_TIMESTEP", params.getTimestep()));
+    envVars.add(plainEnvVar("JOSH_CRS", options.getCrsCode()));
+    envVars.add(plainEnvVar("JOSH_X_COORD", options.getHorizCoordName()));
+    envVars.add(plainEnvVar("JOSH_Y_COORD", options.getVertCoordName()));
+    // Set even when empty: the entrypoint reads set-but-empty as --no-time-dim.
+    envVars.add(plainEnvVar("JOSH_TIME_DIM", options.getTimeName()));
+    if (!options.getTimestep().isEmpty()) {
+      envVars.add(plainEnvVar("JOSH_TIMESTEP", options.getTimestep()));
     }
-    if (params.getDefaultValue() != null && !params.getDefaultValue().isEmpty()) {
-      envVars.add(plainEnvVar("JOSH_DEFAULT_VALUE", params.getDefaultValue()));
+    if (options.getDefaultValue() != null && !options.getDefaultValue().isEmpty()) {
+      envVars.add(plainEnvVar("JOSH_DEFAULT_VALUE", options.getDefaultValue()));
     }
-    if (params.isParallel()) {
+    if (options.isParallel()) {
       envVars.add(plainEnvVar("JOSH_PARALLEL", "true"));
     }
-    if (params.isAmend()) {
+    if (options.isAmend()) {
       envVars.add(plainEnvVar("JOSH_AMEND", "true"));
+    }
+    // The declared time axis travels as one pre-encoded flag string rather than seven env vars, so
+    // preprocess-entrypoint.sh does not have to restate the field names. Same reasoning as
+    // JOSH_CUSTOM_TAGS in run-entrypoint.sh: the encoding is the dispatcher's to own.
+    String timeOpts = options.getTimeAxis().toCliFlags();
+    if (!timeOpts.isEmpty()) {
+      envVars.add(plainEnvVar("JOSH_TIME_OPTS", timeOpts));
     }
     return envVars;
   }
