@@ -4,16 +4,21 @@ Every question about Josh semantics is answered by the jar, never by a regular e
 naive scan for ``external`` in ``test_external_netcdf_temperature.josh`` reports two data sets that
 do not exist, because that file's external block is entirely commented out. The parser reports none.
 
+The subprocess plumbing itself belongs to :mod:`joshpy`, this engine's Python interface, so the docs
+builder and joshpy cannot drift in how they spell a command line. What stays here is the part that
+joshpy should not own: the harvest's provably-empty shortcut, one timeout and one jar for the whole
+run, and error text aimed at someone writing documentation rather than someone writing Python.
+
 Keeping this in one module makes the boundary greppable. If a caller elsewhere in the package needs
 to know something about a model, it belongs behind a method here and, when the jar cannot answer it
-yet, behind an ``inspect-*`` command added to the jar.
+yet, behind an ``inspect-*`` command added to the jar and wrapped in joshpy.
 """
 
 from __future__ import annotations
 
-import json
-import subprocess
 from pathlib import Path
+
+from joshpy.cli import CLIResult, InspectExternalsConfig, JoshCLI, ValidateConfig
 
 #: The fat jar the CLI commands live in, relative to the repo root.
 DEFAULT_JAR = Path("build/libs/joshsim-fat.jar")
@@ -49,52 +54,33 @@ def may_read_externals(text: str) -> bool:
     return any(token in text for token in _EXTERNAL_TOKENS)
 
 
-class CommandResult:
-    """The outcome of one jar invocation.
+def first_error_line(result: CLIResult) -> str:
+    """Return the most useful single line of a result for an author-facing message.
 
-    Attributes:
-        args: The command line that was run.
-        returncode: Exit status, or None when the command timed out.
-        output: Combined stdout and stderr.
+    Args:
+        result: The outcome of one jar invocation.
+
+    Returns:
+        The first non-blank line of output, or a placeholder when there was none.
     """
-
-    __slots__ = ("args", "output", "returncode")
-
-    def __init__(self, args: list[str], returncode: int | None, output: str) -> None:
-        """Initialize a result.
-
-        Args:
-            args: The command line that was run.
-            returncode: Exit status, or None on timeout.
-            output: Combined stdout and stderr.
-        """
-        self.args = args
-        self.returncode = returncode
-        self.output = output
-
-    @property
-    def ok(self) -> bool:
-        """Return True when the command exited zero."""
-        return self.returncode == 0
-
-    def first_error_line(self) -> str:
-        """Return the most useful single line of output for an error message.
-
-        Returns:
-            The first non-blank output line, or a placeholder when there was no output.
-        """
-        for line in self.output.splitlines():
-            if line.strip():
-                return line.strip()
-        return "(no output)"
+    for line in (result.stdout + result.stderr).splitlines():
+        if line.strip():
+            return line.strip()
+    return "(no output)"
 
 
 class JoshJar:
-    """Runs the Josh CLI as a subprocess.
+    """Asks the engine the questions a harvest needs answered.
+
+    A thin adapter over :class:`joshpy.cli.JoshCLI`, which owns the command lines. This fixes the
+    jar and the timeout for a whole run so callers do not repeat them, and turns joshpy's failures
+    into the one exception this package reports.
+
+    Instances are safe to share across threads: the underlying client holds no state once
+    constructed, and each call is its own subprocess.
 
     Attributes:
         jar: Path to the fat jar.
-        java: The java executable to invoke.
         timeout: Seconds to allow one invocation.
     """
 
@@ -114,47 +100,34 @@ class JoshJar:
         Raises:
             JarUnavailable: If the jar does not exist.
         """
-        if not jar.is_file():
+        try:
+            # auto_download=False is not a detail: joshpy defaults to fetching a published jar, and
+            # a docs build must check the jar it was handed rather than one that may disagree with
+            # the working tree.
+            self._cli = JoshCLI(josh_jar=jar, java_path=java, auto_download=False)
+        except FileNotFoundError as exc:
             raise JarUnavailable(
                 f"{jar} not found: build it with './gradlew fatJar', or pass --skip-jar to harvest "
                 "without validating models"
-            )
+            ) from exc
         self.jar = jar
-        self.java = java
         self.timeout = timeout
 
-    def run(self, *args: str) -> CommandResult:
-        """Invoke a Josh CLI subcommand.
-
-        Args:
-            *args: The subcommand and its arguments.
-
-        Returns:
-            The result, with a None return code when the invocation timed out.
-        """
-        command = [self.java, "-jar", str(self.jar), *args]
-        try:
-            completed = subprocess.run(
-                command,
-                capture_output=True,
-                text=True,
-                timeout=self.timeout,
-                check=False,
-            )
-        except subprocess.TimeoutExpired:
-            return CommandResult(command, None, f"timed out after {self.timeout}s")
-        return CommandResult(command, completed.returncode, completed.stdout + completed.stderr)
-
-    def validate(self, path: Path) -> CommandResult:
+    def validate(self, path: Path) -> CLIResult:
         """Check that a model parses and interprets.
 
         Args:
             path: The ``.josh`` file to validate.
 
         Returns:
-            The result; a nonzero return code means the model was rejected.
+            The result; a nonzero exit code means the model was rejected.
+
+        Raises:
+            JarUnavailable: If the invocation itself failed rather than the model.
         """
-        return self.run("validate", str(path))
+        result = self._cli.validate(ValidateConfig(script=path), timeout=self.timeout)
+        self._check_invocation(result, path)
+        return result
 
     def inspect_externals(self, path: Path) -> list[str]:
         """List the external data sets a model reads.
@@ -183,18 +156,35 @@ class JoshJar:
             # Let the command report an unreadable file, so there is one error path rather than two.
             pass
 
-        # `--json` is the default; it is passed explicitly because it now means what it says on all
-        # three inspect commands (it used to select plain text on two of them).
-        result = self.run("inspect-externals", str(path), "--json")
-        if not result.ok:
-            raise JarUnavailable(
-                f"inspect-externals failed for {path}: {result.first_error_line()}"
-            )
         try:
-            payload = json.loads(result.output)
-        except json.JSONDecodeError as exc:
+            return self._cli.inspect_externals(
+                InspectExternalsConfig(entry=path), timeout=self.timeout
+            )
+        # JSONDecodeError is a ValueError, raised when the command's output is not the JSON it
+        # documents -- a jar older than the command, or a jar that printed something else.
+        except ValueError as exc:
             raise JarUnavailable(
                 f"inspect-externals produced unreadable output for {path}: {exc}"
             ) from exc
-        externals = payload.get("externals", [])
-        return [str(name) for name in externals]
+        except RuntimeError as exc:
+            raise JarUnavailable(f"inspect-externals failed for {path}: {exc}") from exc
+
+    def _check_invocation(self, result: CLIResult, path: Path) -> None:
+        """Fail loudly when the jar could not be run at all.
+
+        joshpy reports a timeout, a missing ``java``, or any other OS error as a result with a
+        negative exit code rather than as an exception. Left alone that would reach an author as
+        "is not valid Josh: [Errno 2] No such file or directory: 'java'", blaming their model for
+        the builder's environment.
+
+        Args:
+            result: The outcome to check.
+            path: The file the invocation was about, for the message.
+
+        Raises:
+            JarUnavailable: If the exit code says the process never ran to completion.
+        """
+        if result.exit_code < 0:
+            raise JarUnavailable(
+                f"could not run the jar for {path}: {first_error_line(result)}"
+            )

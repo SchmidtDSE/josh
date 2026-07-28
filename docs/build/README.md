@@ -4,22 +4,28 @@ Authored Josh models are the only source of truth for the code that ships on jos
 builder pairs each model with its prose, checks both, and writes a manifest that the conformance
 runner and the page renderer consume.
 
-The engine build does not depend on this. Python is installed on demand, and nothing here is baked
-into the container image.
+The engine build does not depend on this. Neither uv nor Python is baked into the container image;
+both are installed on demand, and CI installs them per job.
 
 ## Setup
 
+[uv](https://docs.astral.sh/uv/) manages the environment. It is a single static binary and brings
+its own Python, so this is the whole setup on a machine with neither:
+
 ```bash
-python3 -m venv docs/build/.venv
-docs/build/.venv/bin/pip install -r docs/build/requirements.txt
+curl -LsSf https://astral.sh/uv/install.sh | sh
+uv sync --project docs/build
 ```
+
+`uv.lock` pins every dependency to an exact version, with hashes. Add `--frozen` to fail rather than
+re-resolve when the lock and `pyproject.toml` disagree, which is what CI does.
 
 ## Harvesting
 
 From the repo root, with the jar built (`./gradlew fatJar`):
 
 ```bash
-PYTHONPATH=docs/build/src docs/build/.venv/bin/python -m joshdocs harvest
+uv run --project docs/build joshdocs harvest
 ```
 
 That writes `build/docs/docs-manifest.json`. Useful flags:
@@ -117,8 +123,8 @@ authored file byte for byte. Emitted models land in `build/docs/runnable/`.
 ## Working on the builder
 
 ```bash
-docs/build/.venv/bin/ruff check docs/build
-docs/build/.venv/bin/python -m pytest docs/build
+uv run --project docs/build ruff check docs/build
+uv run --project docs/build pytest docs/build
 ```
 
 One boundary is worth defending in review: **the jar owns Josh semantics.** Anything the builder
@@ -127,3 +133,11 @@ needs to know about a model — does it parse, what externals does it read — g
 jar. A regular expression over `.josh` here would be wrong: a scan for `external` in
 `test_external_netcdf_temperature.josh` finds two data sets that do not exist, because that file's
 external block is entirely commented out.
+
+The command lines behind that boundary are not written here either. They come from
+[joshpy](https://github.com/SchmidtDSE/joshpy), this engine's Python interface, pinned by commit in
+`pyproject.toml`; `joshjar.py` is the adapter that gives it one jar, one timeout, and error messages
+aimed at a documentation author. Two repos spelling the same command line is how a flag bug gets
+fixed twice — `--json` on the `inspect-*` commands was one, and it is why this borrows rather than
+reimplements. Bumping the pin is a deliberate commit, so an engine CLI change cannot break the docs
+build on its own.

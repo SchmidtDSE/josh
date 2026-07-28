@@ -19,7 +19,7 @@ from pydantic import ValidationError
 
 from .conformance import header_problems, read_header, title_from_stem
 from .errors import Problem, ProblemLog
-from .joshjar import JoshJar
+from .joshjar import JoshJar, first_error_line
 from .manifest import Manifest, Unit, summarize
 from .overlay import emit_runnable
 from .schema import (
@@ -376,9 +376,9 @@ def _inspect(
 
     if _needs_validation(unit, validate_tests):
         result = jar.validate(path)
-        if unit.expect is Expect.VALID and not result.ok:
-            problems.append(Problem(path, f"is not valid Josh: {result.first_error_line()}"))
-        elif unit.expect is Expect.PARSE_ERROR and result.ok:
+        if unit.expect is Expect.VALID and not result.success:
+            problems.append(Problem(path, f"is not valid Josh: {first_error_line(result)}"))
+        elif unit.expect is Expect.PARSE_ERROR and result.success:
             problems.append(
                 Problem(
                     path,

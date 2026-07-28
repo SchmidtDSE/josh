@@ -8,7 +8,7 @@ gradle/
 /build/
 bin/
 
-# Docs builder virtualenv (created on demand; see docs/build/requirements.txt)
+# Docs builder virtualenv, created on demand by `uv sync` from docs/build/uv.lock, which is tracked.
 docs/build/.venv/
 
 # Python bytecode and tool caches, from the docs builder

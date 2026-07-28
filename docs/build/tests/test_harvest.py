@@ -3,8 +3,9 @@
 import json
 from pathlib import Path
 
+from joshpy.cli import CLIResult
+
 from joshdocs.harvest import DEFAULT_TESTS, HarvestOptions, harvest
-from joshdocs.joshjar import CommandResult
 from joshdocs.schema import Expect, Kind, Status
 
 REPO_ROOT = Path(__file__).resolve().parents[3]
@@ -29,8 +30,8 @@ class FakeJar:
     def validate(self, path):
         self.validated.append(path)
         if self.valid:
-            return CommandResult(["validate"], 0, "Validated Josh code at " + str(path))
-        return CommandResult(["validate"], 3, "line 1:0 no viable alternative at input 'start'")
+            return CLIResult(0, "Validated Josh code at " + str(path), "", ["validate"])
+        return CLIResult(3, "", "line 1:0 no viable alternative at input 'start'", ["validate"])
 
     def inspect_externals(self, path):
         self.inspected.append(path)
