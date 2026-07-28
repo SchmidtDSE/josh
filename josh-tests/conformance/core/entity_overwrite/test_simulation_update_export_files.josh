@@ -1,0 +1,38 @@
+# @category: core
+# @subcategory: entity_overwrite
+# @priority: critical
+# @description: update simulation merges onto a prior simulation of the same name and replaces the
+#   exportFiles handler it redeclares - the base declares a memory target the JVM rejects, so the
+#   run only completes if the redeclared file target took its place
+
+start simulation SimulationUpdateExportFiles
+
+  grid.size = 10 m
+  grid.low.x = 0 m
+  grid.low.y = 0 m
+  grid.high.x = 10 m
+  grid.high.y = 10 m
+
+  steps.low = 0 count
+  steps.high = 0 count
+
+  exportFiles.patch = "memory://editor/patches"
+
+end simulation
+
+start patch Default
+
+  age.init = 0 count
+  age.step = prior.age + 5 count
+
+  export.age.step = age
+
+  assert.baseStanzaSurvivesTheUpdate.step = age == 5 count
+
+end patch
+
+update simulation SimulationUpdateExportFiles
+
+  exportFiles.patch = "file:///tmp/test_simulation_update_export_files.csv"
+
+end simulation
