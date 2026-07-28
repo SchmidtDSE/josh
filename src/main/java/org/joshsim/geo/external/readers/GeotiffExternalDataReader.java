@@ -41,6 +41,17 @@ import org.opengis.util.FactoryException;
  */
 public class GeotiffExternalDataReader implements ExternalDataReader {
 
+  /**
+   * Decimal places kept for coordinates derived from the raster envelope.
+   *
+   * <p>Six places quantizes to roughly 0.1 m in degrees, which is fine for a single coordinate but
+   * leaves enough error in a per-pixel step to accumulate past a whole pixel across a large
+   * raster, so keep more precision than the values are ultimately compared at.</p>
+   */
+  private static final int COORD_SCALE = 12;
+
+  private static final BigDecimal TWO = BigDecimal.valueOf(2);
+
   private final ValueSupportFactory valueFactory;
   private final Units units;
 
@@ -114,21 +125,29 @@ public class GeotiffExternalDataReader implements ExternalDataReader {
       long width = geometry.getExtent().getSize(0);
       long height = geometry.getExtent().getSize(1);
 
-      // Calculate step sizes
+      // Calculate step sizes. The envelope spans the outer edges of the raster, so a pixel is
+      // one nth of that span, not one (n-1)th: dividing by width - 1 stretches the axis by
+      // n / (n - 1) and drifts by a whole pixel or more by the far edge of a large raster.
       BigDecimal stepX = maxX.subtract(minX)
-          .divide(BigDecimal.valueOf(width - 1), 6, RoundingMode.HALF_UP);
+          .divide(BigDecimal.valueOf(width), COORD_SCALE, RoundingMode.HALF_UP);
       BigDecimal stepY = maxY.subtract(minY)
-          .divide(BigDecimal.valueOf(height - 1), 6, RoundingMode.HALF_UP);
+          .divide(BigDecimal.valueOf(height), COORD_SCALE, RoundingMode.HALF_UP);
+
+      // Report pixel centers rather than pixel edges. findClosestIndex treats these coordinates
+      // as the location of the sample, so anchoring them on the edge biases every lookup half a
+      // pixel toward the origin.
+      BigDecimal halfStepX = stepX.divide(TWO, COORD_SCALE, RoundingMode.HALF_UP);
+      BigDecimal halfStepY = stepY.divide(TWO, COORD_SCALE, RoundingMode.HALF_UP);
 
       // Generate coordinate lists
       for (int i = 0; i < width; i++) {
-        coordsX.add(minX.add(stepX.multiply(BigDecimal.valueOf(i))));
+        coordsX.add(minX.add(stepX.multiply(BigDecimal.valueOf(i))).add(halfStepX));
       }
 
       // For GeoTIFF, Y coordinates are often from top to bottom (inverted)
       // Generate Y coordinates from maxY to minY
       for (int i = 0; i < height; i++) {
-        coordsY.add(maxY.subtract(stepY.multiply(BigDecimal.valueOf(i))));
+        coordsY.add(maxY.subtract(stepY.multiply(BigDecimal.valueOf(i))).subtract(halfStepY));
       }
 
       return new ExternalSpatialDimensions("x", "y", null, crsCode, coordsX, coordsY);
@@ -263,10 +282,10 @@ public class GeotiffExternalDataReader implements ExternalDataReader {
     DirectPosition lower = geometry.getEnvelope().getLowerCorner();
     DirectPosition upper = geometry.getEnvelope().getUpperCorner();
 
-    minX = BigDecimal.valueOf(lower.getOrdinate(0)).setScale(6, RoundingMode.HALF_UP);
-    maxX = BigDecimal.valueOf(upper.getOrdinate(0)).setScale(6, RoundingMode.HALF_UP);
-    minY = BigDecimal.valueOf(lower.getOrdinate(1)).setScale(6, RoundingMode.HALF_UP);
-    maxY = BigDecimal.valueOf(upper.getOrdinate(1)).setScale(6, RoundingMode.HALF_UP);
+    minX = BigDecimal.valueOf(lower.getOrdinate(0)).setScale(COORD_SCALE, RoundingMode.HALF_UP);
+    maxX = BigDecimal.valueOf(upper.getOrdinate(0)).setScale(COORD_SCALE, RoundingMode.HALF_UP);
+    minY = BigDecimal.valueOf(lower.getOrdinate(1)).setScale(COORD_SCALE, RoundingMode.HALF_UP);
+    maxY = BigDecimal.valueOf(upper.getOrdinate(1)).setScale(COORD_SCALE, RoundingMode.HALF_UP);
   }
 
 }
