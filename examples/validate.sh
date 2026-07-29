@@ -1,5 +1,14 @@
 #!/bin/bash
 
+# CLI behavior assertions: what the `validate`, `discoverConfig`, `run --enable-profiler`, and
+# `run --output-steps` commands do, checked against models under examples/simulations and
+# docs/src/reference that serve as fixtures.
+#
+# The per-file `assert_ok` list for examples/features is gone. Those models moved to
+# docs/src/reference, where `./gradlew harvestDocs` discovers and validates every one of them by
+# walking the tree -- including the eight that had never been added to the list here, and the two
+# that were commented out with no recorded reason.
+
 if [ ! -f build/libs/joshsim-fat.jar ]; then
    gradle fatJar
 fi
@@ -21,20 +30,6 @@ assert_ok() {
     return 0
   else
     return $status
-  fi
-}
-
-assert_not_ok() {
-  if [ "$verbose" = true ]; then
-    java -jar build/libs/joshsim-fat.jar validate "$1"
-  else
-    java -jar build/libs/joshsim-fat.jar validate --suppress-info "$1"
-  fi
-  local status=$?
-  if [ $status -ne 0 ]; then
-    return 0
-  else
-    return 1
   fi
 }
 
@@ -94,32 +89,6 @@ test_discover_config() {
   return 0
 }
 
-assert_not_ok examples/features/error.josh || exit 1
-
-assert_ok examples/features/autobox_distribution.josh || exit 2
-assert_ok examples/features/autobox_scalar.josh || exit 3
-assert_ok examples/features/comments.josh || exit 4
-assert_ok examples/features/conditional_full.josh || exit 5
-assert_ok examples/features/conditional_lambda.josh || exit 6
-# assert_ok examples/features/config.josh || exit 7
-assert_ok examples/features/cyclic.josh || exit 8
-assert_ok examples/features/disturbance.josh || exit 9
-assert_ok examples/features/external.josh || exit 10
-assert_ok examples/features/here.josh || exit 11
-# assert_ok examples/features/import.josh || exit 12
-assert_ok examples/features/limit.josh || exit 13
-assert_ok examples/features/management.josh || exit 14
-assert_ok examples/features/map.josh || exit 15
-assert_ok examples/features/patch.josh || exit 16
-assert_ok examples/features/query_spatial.josh || exit 17
-assert_ok examples/features/query_temporal.josh || exit 18
-assert_ok examples/features/sample.josh || exit 19
-assert_ok examples/features/selector.josh || exit 20
-assert_ok examples/features/simulation.josh || exit 21
-assert_ok examples/features/slice.josh || exit 22
-assert_ok examples/features/units_custom.josh || exit 23
-assert_ok examples/features/units_default.josh || exit 24
-
 assert_ok examples/simulations/external.josh || exit 25
 assert_ok examples/simulations/interaction.josh || exit 26
 assert_ok examples/simulations/query.josh || exit 27
@@ -130,17 +99,12 @@ assert_ok examples/simulations/simple_netcdf.josh || exit 31
 assert_ok examples/simulations/state.josh || exit 32
 assert_ok examples/simulations/variables.josh || exit 33
 
-# Test config example validation
-assert_ok examples/features/config_example.josh || exit 34
-
-# Test discoverConfig command functionality
-test_discover_config examples/features/config_example.josh "example.testVar1 example.testVar2" || exit 35
+# Test discoverConfig command functionality. The model is a documentation unit, which harvestDocs
+# validates; what is asserted here is that discoverConfig reports the variables it reads.
+test_discover_config docs/src/reference/config/config_example.josh "example.testVar1 example.testVar2" || exit 35
 
 # Test discoverConfig on file with no config variables
 test_discover_config examples/simulations/simple.josh "" || exit 36
-
-assert_ok examples/features/eval_duration.josh || exit 37
-assert_not_ok examples/features/eval_duration_reserved.josh || exit 39
 
 # Test discoverConfig error handling with nonexistent file
 if [ "$verbose" = true ]; then
@@ -172,19 +136,19 @@ assert_run examples/simulations/profiler_multi.josh ProfilerMultiExample --enabl
 [ -f "/tmp/profiler_multi_josh.csv" ] || exit 50
 [ -s "/tmp/profiler_multi_josh.csv" ] || exit 51
 
-# Test spin-up / spin-down as a plain "state" recipe (widened steps.low/steps.high, no dedicated
-# engine machinery): resampled discrete years and re-anchored step count, asserted in-model.
-assert_run examples/features/spinup.josh SpinupExample --seed 42 || exit 52
-
-# Test that --output-steps still filters the incremental patch export down to just the observed
-# rows; the exported "state" column (an ordinary attribute, not a dedicated CLI concept) is what
-# a caller would filter on to select spinup/observed/spindown after the fact. Uses the inclusive
-# range syntax (0-2) rather than listing each index, since individually listing steps doesn't
-# scale to large step counts.
+# The spin-up recipe itself (widened steps.low/steps.high, phase marked by an ordinary "state"
+# attribute) asserts its own phase boundaries in-model, so it now runs in the conformance suite as
+# the "spinup" unit rather than as an exit code here.
+#
+# What remains is CLI behavior: --output-steps filters the incremental patch export down to just
+# the observed rows. The exported "state" column is an ordinary attribute, not a dedicated CLI
+# concept, and is what a caller would filter on to select spinup/observed/spindown after the fact.
+# Uses the inclusive range syntax (0-2) rather than listing each index, since individually listing
+# steps doesn't scale to large step counts.
 rm -f /tmp/spinup_export_josh.csv
-assert_run examples/features/spinup_export.josh SpinupExport --seed 1 || exit 54
+assert_run docs/src/reference/time/spinup_export.josh SpinupExport --seed 1 || exit 54
 grep -q "spinup" /tmp/spinup_export_josh.csv || exit 55
 rm -f /tmp/spinup_export_josh.csv
-assert_run examples/features/spinup_export.josh SpinupExport --seed 1 --output-steps 0-2 || exit 56
+assert_run docs/src/reference/time/spinup_export.josh SpinupExport --seed 1 --output-steps 0-2 || exit 56
 grep -q "observed" /tmp/spinup_export_josh.csv || exit 57
 ! grep -qE "spinup|spindown" /tmp/spinup_export_josh.csv || exit 58
