@@ -133,7 +133,7 @@ class PerformanceTrackerTest {
     }
 
     String stderrOutput = stderr.toString();
-    assertFalse(stderrOutput.contains("PERFORMANCE WARNING"));
+    assertFalse(stderrOutput.contains("PERFORMANCE REGRESSION"));
   }
 
   @Test
@@ -155,7 +155,7 @@ class PerformanceTrackerTest {
     tracker.afterTestExecution(mockContext);
 
     String stderrOutput = stderr.toString();
-    assertTrue(stderrOutput.contains("PERFORMANCE WARNING"));
+    assertTrue(stderrOutput.contains("PERFORMANCE REGRESSION"));
     assertTrue(stderrOutput.contains("test_method"));
     assertTrue(stderrOutput.contains("Slowdown:"));
   }
@@ -179,7 +179,7 @@ class PerformanceTrackerTest {
     tracker.afterTestExecution(mockContext);
 
     String stderrOutput = stderr.toString();
-    assertTrue(stderrOutput.contains("PERFORMANCE WARNING"));
+    assertTrue(stderrOutput.contains("PERFORMANCE REGRESSION"));
     assertTrue(stderrOutput.contains("Z-score:"));
   }
 
@@ -250,7 +250,7 @@ class PerformanceTrackerTest {
     tracker.afterTestExecution(mockContext);
 
     String stderrOutput = stderr.toString();
-    assertTrue(stderrOutput.contains("PERFORMANCE WARNING"));
+    assertTrue(stderrOutput.contains("PERFORMANCE REGRESSION"));
   }
 
   @Test
