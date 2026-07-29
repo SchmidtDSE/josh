@@ -99,6 +99,10 @@ demo.joshsim.org/management/data/
 demo.joshsim.org/content/*.html
 demo.joshsim.org/management/content/*.html
 
+# Documentation library rendered from docs/src by the docs builder. The manifest and the emitted
+# runnable models live under /build/, which is already ignored above.
+landing/library/
+
 # Jotr test files
 jotr
 
