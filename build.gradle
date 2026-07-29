@@ -126,7 +126,9 @@ test {
     events "skipped", "failed"
     exceptionFormat = "full"
   }
-  exclude 'org/joshsim/conformance/**'
+  // Only the runner itself is excluded, not the whole package: the helpers beside it are ordinary
+  // unit tests and belong in the fast suite rather than behind a few minutes of subprocess runs.
+  exclude 'org/joshsim/conformance/JoshConformanceTest*'
   exclude '**/MinioPollingStrategyIntegrationTest*'
 }
 
@@ -344,6 +346,46 @@ task generateTestData {
     dependsOn preprocessTestData
 }
 
+// Locates the uv executable that the Python docs builder runs under, or null when it is absent.
+def findUv() {
+    def windows = System.getProperty('os.name').toLowerCase().contains('win')
+    def names = windows ? ['uv.exe', 'uv'] : ['uv']
+    for (dir in (System.getenv('PATH') ?: '').split(File.pathSeparator)) {
+        for (name in names) {
+            def candidate = new File(dir, name)
+            if (candidate.isFile() && candidate.canExecute()) {
+                return candidate.absolutePath
+            }
+        }
+    }
+    return null
+}
+
+// Task to harvest authored documentation and the conformance suite into the docs manifest that
+// JoshConformanceTest reads. The builder is Python managed by uv while everything else here is
+// Java, so a missing uv warns and leaves the runner on its filesystem walk rather than failing a
+// build that has nothing to do with docs. CI installs uv and then checks the manifest exists, so
+// the manifest-driven path is never quietly skipped where it is the thing being tested.
+task harvestDocs {
+    description = 'Harvests authored models and conformance tests into the docs manifest'
+    group = 'documentation'
+    dependsOn fatJar
+
+    doLast {
+        def uv = findUv()
+        if (uv == null) {
+            logger.warn(
+                "harvestDocs: skipped because 'uv' is not on PATH. Conformance tests will be "
+                + "discovered by walking josh-tests, so any model authored under docs/src will "
+                + "not run. See https://docs.astral.sh/uv/ to build the docs manifest locally.")
+            return
+        }
+        exec {
+            commandLine uv, 'run', '--frozen', '--project', 'docs/build', 'joshdocs', 'harvest'
+        }
+    }
+}
+
 // Task to extract and debug a joshpy bottle with JDWP on port 5005.
 // Usage: ./gradlew debugBottle -Pbottle=<path-or-name.tar.gz>
 task debugBottle {
@@ -460,10 +502,11 @@ task conformanceTest(type: Test) {
     description = 'Runs conformance tests'
     group = 'verification'
     dependsOn preprocessTestData  // Ensure test data is preprocessed before running
+    dependsOn harvestDocs  // Ensure the manifest names every unit that should run
 
     useJUnitPlatform()
 
-    include 'org/joshsim/conformance/**'
+    include 'org/joshsim/conformance/JoshConformanceTest*'
 
     testLogging {
         events "passed", "skipped", "failed"
@@ -483,12 +526,13 @@ task conformanceTestCritical(type: Test) {
     description = 'Runs critical-priority conformance tests only'
     group = 'verification'
     dependsOn preprocessTestData  // Ensure test data is preprocessed before running
+    dependsOn harvestDocs  // Ensure the manifest names every unit that should run
 
     useJUnitPlatform {
         includeTags 'critical'
     }
 
-    include 'org/joshsim/conformance/**'
+    include 'org/joshsim/conformance/JoshConformanceTest*'
 
     testLogging {
         events "passed", "skipped", "failed"

@@ -2,7 +2,7 @@
 
 Run from the repo root:
 
-    PYTHONPATH=docs/build/src docs/build/.venv/bin/python -m joshdocs harvest
+    uv run --frozen --project docs/build joshdocs harvest
 
 Exit codes: 0 when the harvest is clean, 1 when any unit has a problem, and 2 when the builder
 itself could not run -- a missing jar, an unreadable tree. Rendering arrives with the page
