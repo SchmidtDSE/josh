@@ -83,6 +83,11 @@ a unit.
 Conformance tests under `josh-tests/` need no sidecar: their `# @category:` header already carries
 the metadata, and their id is the filename stem, which is what already lands in the JUnit results.
 
+`docs/src/reference/` holds the worked examples of every field below, including the three cases that
+are not simply "this should validate": an asserting unit (`time/spinup`), a unit that must fail to
+parse (`testing/error`), and units for syntax the engine does not implement yet
+(`config/config`, `imports/import`, `testing/test`).
+
 ## Sidecar fields
 
 Only `title` is required; `kind` is inferred from the directory (`guides/`, `recipes/`,
