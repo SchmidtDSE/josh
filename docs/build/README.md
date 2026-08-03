@@ -46,6 +46,26 @@ docs/src/recipes/dispersal/wind-dispersal.md:4
   order: expected an integer, got 'thirty'
 ```
 
+## What reads the manifest
+
+`JoshConformanceTest` reads `build/docs/docs-manifest.json` before it walks `josh-tests`, so a model
+authored under `docs/src` with `assert: true` runs in the conformance suite, with the simulation and
+seed it declares rather than a first-`start simulation`-wins grep and a hardcoded seed. The walk
+stays as a fallback and fills in anything the manifest does not name, so the suite is unchanged on a
+checkout that has never run this builder.
+
+Gradle wires the two together:
+
+```bash
+./gradlew harvestDocs      # writes the manifest, building the jar first
+./gradlew conformanceTest  # depends on harvestDocs
+```
+
+`harvestDocs` warns and skips when `uv` is not on `PATH`, leaving the runner on its filename walk, so
+working on the engine never requires a Python toolchain. CI installs uv and then checks that the
+manifest exists, so the manifest-driven path cannot be skipped quietly where it is the thing being
+tested.
+
 ## A unit
 
 A unit is one `.josh` model plus one same-stem `.md` sidecar in the same directory:

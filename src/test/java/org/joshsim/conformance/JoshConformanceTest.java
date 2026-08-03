@@ -13,7 +13,10 @@ import java.io.InputStreamReader;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.Comparator;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Stream;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -26,6 +29,11 @@ import org.junit.jupiter.params.provider.MethodSource;
  *
  * <p>Each .josh file with assertions is a self-validating test.
  * This runner simply executes them and checks the exit code.</p>
+ *
+ * <p>Discovery reads the documentation manifest first, so a model authored under {@code docs/src}
+ * with {@code assert: true} runs here too, with the simulation and seed it declares. The
+ * {@code josh-tests} walk stays as a fallback and fills in anything the manifest does not name, so
+ * the suite is unchanged on a checkout that has never run the docs builder.</p>
  */
 @ExtendWith(PerformanceTracker.class)
 class JoshConformanceTest {
@@ -59,21 +67,34 @@ class JoshConformanceTest {
   }
 
   /**
-   * Discovers all Josh test files in josh-tests directory.
+   * Discovers every conformance test, from the manifest and from the filesystem.
    *
-   * @return stream of test info objects
-   * @throws Exception if directory cannot be traversed
+   * <p>The manifest wins on a name collision, since it is the half that knows about declared
+   * simulations, seeds, and export overlays.</p>
+   *
+   * @return stream of test info objects, ordered by name
+   * @throws Exception if the manifest cannot be read or the directory cannot be traversed
    */
   static Stream<TestInfo> discoverAllTests() throws Exception {
-    if (!Files.exists(TEST_ROOT)) {
-      return Stream.empty();
-    }
+    return discover(DocsManifest.DEFAULT_PATH);
+  }
 
-    return Files.walk(TEST_ROOT)
-        .filter(p -> p.getFileName().toString().startsWith("test_"))
-        .filter(p -> p.toString().endsWith(".josh"))
-        .sorted()
-        .map(TestInfo::fromPath);
+  /**
+   * Discovers tests from a named manifest, merged with the filesystem walk.
+   *
+   * @param manifestPath the manifest to read, which need not exist
+   * @return stream of test info objects, ordered by name
+   * @throws Exception if the manifest cannot be read or the directory cannot be traversed
+   */
+  static Stream<TestInfo> discover(Path manifestPath) throws Exception {
+    Map<String, TestInfo> byName = new LinkedHashMap<>();
+    for (TestInfo test : DocsManifest.readTests(manifestPath)) {
+      byName.put(test.name, test);
+    }
+    for (TestInfo test : walkTestRoot()) {
+      byName.putIfAbsent(test.name, test);
+    }
+    return byName.values().stream().sorted(Comparator.comparing(test -> test.name));
   }
 
   /**
@@ -84,7 +105,28 @@ class JoshConformanceTest {
    */
   static Stream<TestInfo> discoverCriticalTests() throws Exception {
     return discoverAllTests()
-        .filter(t -> "critical".equals(t.metadata.priority));
+        .filter(t -> "critical".equals(t.priority));
+  }
+
+  /**
+   * Walks the test root for Josh files named by the conformance convention.
+   *
+   * @return the tests found, or an empty list when the root is absent
+   * @throws Exception if directory cannot be traversed
+   */
+  private static List<TestInfo> walkTestRoot() throws Exception {
+    if (!Files.exists(TEST_ROOT)) {
+      return List.of();
+    }
+
+    try (Stream<Path> paths = Files.walk(TEST_ROOT)) {
+      return paths
+          .filter(p -> p.getFileName().toString().startsWith("test_"))
+          .filter(p -> p.toString().endsWith(".josh"))
+          .sorted()
+          .map(TestInfo::fromPath)
+          .toList();
+    }
   }
 
   /**
@@ -97,7 +139,7 @@ class JoshConformanceTest {
     List<String> args = List.of(
         "java", "-jar", JOSH_JAR,
         "run", test.path.toString(), test.simulationName,
-        "--seed", "42"
+        "--seed", String.valueOf(test.seed)
     );
     ProcessBuilder pb = new ProcessBuilder(args);
 
@@ -121,65 +163,6 @@ class JoshConformanceTest {
           test.path.getFileName(),
           output.toString()
       ));
-    }
-  }
-
-  /**
-   * Holds test metadata and path information.
-   */
-  static class TestInfo {
-    final Path path;
-    final String simulationName;
-    final TestMetadata metadata;
-
-    /**
-     * Constructs a TestInfo instance.
-     *
-     * @param path the path to the test file
-     * @param simulationName the simulation name to run
-     * @param metadata the parsed test metadata
-     */
-    TestInfo(Path path, String simulationName, TestMetadata metadata) {
-      this.path = path;
-      this.simulationName = simulationName;
-      this.metadata = metadata;
-    }
-
-    /**
-     * Creates a TestInfo from a file path.
-     *
-     * @param path the path to parse
-     * @return the TestInfo instance
-     */
-    static TestInfo fromPath(Path path) {
-      try {
-        String simulationName = extractSimulationName(path);
-        TestMetadata metadata = TestMetadata.parse(path);
-        return new TestInfo(path, simulationName, metadata);
-      } catch (Exception e) {
-        throw new RuntimeException("Failed to parse test: " + path, e);
-      }
-    }
-
-    @Override
-    public String toString() {
-      return path.getFileName().toString().replace(".josh", "");
-    }
-
-    /**
-     * Extracts the simulation name from a Josh file.
-     *
-     * @param file the file to parse
-     * @return the simulation name
-     * @throws Exception if no simulation is found
-     */
-    private static String extractSimulationName(Path file) throws Exception {
-      return Files.lines(file)
-          .filter(line -> line.trim().startsWith("start simulation"))
-          .findFirst()
-          .map(line -> line.split("\\s+")[2])
-          .orElseThrow(() -> new IllegalStateException(
-              "No simulation found in " + file));
     }
   }
 }

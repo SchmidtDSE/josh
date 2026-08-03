@@ -40,6 +40,21 @@ jobs:
       - name: Build fat jar
         run: ./gradlew fatJar
 
+      - name: Setup uv
+        uses: astral-sh/setup-uv@c771a70e6277c0a99b617c7a806ffedaca235ff9 # v9.0.0
+        with:
+          enable-cache: true
+          cache-dependency-glob: docs/build/uv.lock
+
+      - name: Harvest docs manifest
+        run: ./gradlew harvestDocs
+
+      # harvestDocs warns and skips when uv is missing so that a Java-only checkout still builds.
+      # Here uv is installed on purpose, so a missing manifest means the harvest silently did not
+      # happen and the suite would quietly fall back to the filename walk.
+      - name: Confirm the manifest was written
+        run: test -f build/docs/docs-manifest.json
+
       - name: Run conformance tests
         id: conformance
         continue-on-error: true
