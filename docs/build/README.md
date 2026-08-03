@@ -83,6 +83,10 @@ a unit.
 Conformance tests under `josh-tests/` need no sidecar: their `# @category:` header already carries
 the metadata, and their id is the filename stem, which is what already lands in the JUnit results.
 
+The one other `.josh` file that is not a unit is an **overlay fragment** — see below. Naming it in a
+sidecar's `overlay:` is what marks it as one; a `.josh` that no sidecar claims and has no prose is a
+build failure, same as any other unpaired model.
+
 `docs/src/reference/` holds the worked examples of every field below, including the three cases that
 are not simply "this should validate": an asserting unit (`time/spinup`), a unit that must fail to
 parse (`testing/error`), and units for syntax the engine does not implement yet
@@ -117,6 +121,7 @@ tags: [dispersal, spatial]
 | `assert` | `false` | Run this model in CI as a conformance test |
 | `simulation` | — | Name of the simulation stanza. Required with `exports` |
 | `exports` | none | Export slots (`patch`, `meta`, `entity`) to retarget for CLI runs |
+| `overlay` | none | A `.josh` file beside the model holding `update` stanzas to append for runs |
 | `data` | none | External data files the model needs, when the name does not imply the file |
 | `seed` | `42` | Seed for runs, matching the conformance runner |
 | `expect` | `valid` | `parse-error` for a model that documents a deliberate mistake |
@@ -144,6 +149,33 @@ end simulation
 `update` merges onto the simulation already declared, so it replaces those handlers and leaves the
 rest alone. The authored file is never rewritten, and the code shown on a rendered page is the
 authored file byte for byte. Emitted models land in `build/docs/runnable/`.
+
+## Overlay files, for differences `exports` cannot express
+
+`update` is not limited to `exportFiles`, and a CI run sometimes has to differ from the documented
+model in other ways — a shortened `steps.high`, a `debugFiles` target. Declaring an `overlay:` points
+at a `.josh` file beside the model holding stanzas you wrote:
+
+```
+docs/src/guides/two_trees/two_trees.josh      # the model, shown to readers, never edited
+docs/src/guides/two_trees/two_trees.md        # sidecar, declaring `overlay: two_trees_ci.josh`
+docs/src/guides/two_trees/two_trees_ci.josh   # update simulation Main / steps.high = 5 count / end
+```
+
+The alternative is a second copy of the model differing in three lines, which nothing compares — the
+drift this pipeline exists to remove.
+
+Three things follow from the fragment being real Josh in a real file rather than a string in YAML:
+
+- **Josh syntax stays in Josh files.** The builder concatenates; it never writes Josh expressions.
+- **A fragment is not a unit.** A bare `update` stanza does not validate on its own — the engine
+  rejects it with *"no prior definition exists"* — so it has no sidecar and is skipped by collection.
+  It is the `overlay:` reference that says so, so a fragment nothing claims is a build failure.
+- **The composed model is validated,** not just the authored half. A mistake in a fragment can only
+  surface once it is applied, and it is reported against the fragment rather than the emitted copy.
+
+An authored fragment is appended before the generated export block, so the export target the build
+controls always wins over a path an author might hardcode.
 
 ## Working on the builder
 

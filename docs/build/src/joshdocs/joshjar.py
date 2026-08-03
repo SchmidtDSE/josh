@@ -57,16 +57,23 @@ def may_read_externals(text: str) -> bool:
 def first_error_line(result: CLIResult) -> str:
     """Return the most useful single line of a result for an author-facing message.
 
+    A parse failure is reported over two lines -- a ``Found errors in Josh code at <path>:`` header
+    and then ``- <path>, line N: <what went wrong>`` -- so the header alone names the file the
+    author already knows about and none of the problem. Where a detail line follows, that is the
+    line worth reporting.
+
     Args:
         result: The outcome of one jar invocation.
 
     Returns:
-        The first non-blank line of output, or a placeholder when there was none.
+        The most informative non-blank line of output, or a placeholder when there was none.
     """
-    for line in (result.stdout + result.stderr).splitlines():
-        if line.strip():
-            return line.strip()
-    return "(no output)"
+    lines = [line.strip() for line in (result.stdout + result.stderr).splitlines() if line.strip()]
+    if not lines:
+        return "(no output)"
+    if lines[0].endswith(":") and len(lines) > 1:
+        return lines[1].lstrip("- ").strip()
+    return lines[0]
 
 
 class JoshJar:

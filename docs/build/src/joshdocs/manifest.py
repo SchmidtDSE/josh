@@ -44,6 +44,9 @@ class Unit(BaseModel):
     #: simulation in a file that declares several, and must set it to use `exports`.
     simulation: str | None = None
     exports: list[ExportSlot] = Field(default_factory=list)
+    #: Repo-relative path to the authored `update` stanzas appended for runs, when one was named.
+    #: The author writes a bare filename; this is that file resolved against the model's directory.
+    overlay: str | None = None
     externals: list[str] = Field(default_factory=list)
     data: list[str] = Field(default_factory=list)
     seed: int

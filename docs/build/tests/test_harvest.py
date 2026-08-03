@@ -49,15 +49,15 @@ def write_unit(src, relative, front_matter, model=MODEL):
 
 def run(tmp_path, jar=None, **overrides):
     """Harvest a tmp tree, defaulting to authored content only and no jar."""
-    options = HarvestOptions(
-        root=tmp_path,
-        src=tmp_path / "docs" / "src",
-        tests=None,
-        jar=jar,
-        runnable_dir=None,
-        **overrides,
-    )
-    return harvest(options)
+    fields = {
+        "root": tmp_path,
+        "src": tmp_path / "docs" / "src",
+        "tests": None,
+        "jar": jar,
+        "runnable_dir": None,
+    }
+    fields.update(overrides)
+    return harvest(HarvestOptions(**fields))
 
 
 def src_of(tmp_path):
@@ -365,3 +365,99 @@ def test_the_real_conformance_suite_harvests_cleanly():
     assert all(unit.kind is Kind.TEST for unit in units)
     assert all(unit.description for unit in units)
     assert any(unit.priority == "critical" for unit in units)
+
+
+FRAGMENT = """update simulation Main
+
+  steps.high = 5 count
+
+end simulation
+"""
+
+
+def write_fragment(src, relative, text=FRAGMENT):
+    """Write an overlay fragment, which has no sidecar of its own."""
+    path = src / relative
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text(text, encoding="utf-8")
+    return path
+
+
+def test_a_named_overlay_is_not_a_unit(tmp_path):
+    # A bare `update` stanza cannot be a unit: it does not validate on its own, and it has no prose
+    # of its own to carry. Naming it as an overlay is what says so.
+    src = src_of(tmp_path)
+    write_unit(src, "guides/two_trees", "kind: guide\ntitle: Two trees\noverlay: two_trees_ci.josh")
+    write_fragment(src, "guides/two_trees_ci.josh")
+
+    result = run(tmp_path)
+
+    assert not result.log
+    assert len(result.manifest.units) == 1
+    assert result.manifest.units[0].id == "two_trees"
+
+
+def test_an_unclaimed_fragment_is_a_failure(tmp_path):
+    src = src_of(tmp_path)
+    write_unit(src, "guides/two_trees", "kind: guide\ntitle: Two trees")
+    write_fragment(src, "guides/two_trees_ci.josh")
+
+    result = run(tmp_path)
+
+    assert len(result.log) == 1
+    message = result.log.problems[0].message
+    assert "has no prose beside it: add two_trees_ci.md" in message
+    assert "'overlay:'" in message
+
+
+def test_an_overlay_that_does_not_exist_is_a_failure(tmp_path):
+    src = src_of(tmp_path)
+    write_unit(src, "guides/two_trees", "kind: guide\ntitle: Two trees\noverlay: absent.josh")
+
+    result = run(tmp_path)
+
+    assert len(result.log) == 1
+    assert "overlay: 'absent.josh' is not beside two_trees.josh" in result.log.problems[0].message
+
+
+def test_an_overlay_that_is_a_unit_is_a_failure(tmp_path):
+    src = src_of(tmp_path)
+    write_unit(src, "guides/two_trees", "kind: guide\ntitle: Two trees\noverlay: hello.josh")
+    write_unit(src, "guides/hello", "kind: guide\ntitle: Hello")
+
+    result = run(tmp_path)
+
+    assert len(result.log) == 1
+    assert "is a unit of its own" in result.log.problems[0].message
+
+
+def test_the_manifest_records_the_overlay(tmp_path):
+    src = src_of(tmp_path)
+    write_unit(src, "guides/two_trees", "kind: guide\ntitle: Two trees\noverlay: two_trees_ci.josh")
+    write_fragment(src, "guides/two_trees_ci.josh")
+
+    unit = run(tmp_path).manifest.units[0]
+
+    assert unit.overlay == "docs/src/guides/two_trees_ci.josh"
+
+
+def test_the_composed_model_is_validated(tmp_path):
+    # The authored half validating says nothing about the emitted copy, which is what runs.
+    class FailsOnlyTheComposedCopy(FakeJar):
+        def validate(self, path):
+            self.validated.append(path)
+            if "runnable" in str(path):
+                return CLIResult(3, "", "line 9:0 mismatched input", ["validate"])
+            return CLIResult(0, "Validated Josh code at " + str(path), "", ["validate"])
+
+    src = src_of(tmp_path)
+    write_unit(src, "guides/two_trees", "kind: guide\ntitle: Two trees\noverlay: two_trees_ci.josh")
+    write_fragment(src, "guides/two_trees_ci.josh")
+
+    result = run(tmp_path, jar=FailsOnlyTheComposedCopy(), runnable_dir=tmp_path / "runnable")
+
+    assert len(result.log) == 1
+    problem = result.log.problems[0]
+    assert "once its overlay is applied" in problem.message
+    # The author has to be sent to the file they can edit, not to the generated copy.
+    assert problem.path.name == "two_trees_ci.josh"
