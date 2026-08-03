@@ -572,7 +572,9 @@ jobs:
           cp ./repo/llms.txt ./editor-build/
           cp ./repo/llms-full.txt ./editor-build/
           cp -r ./repo/docs ./editor-build/docs
-          rm -rf ./editor-build/docs/build
+          # docs/build is the builder's own source; docs/src is authored content, which ships as
+          # rendered pages rather than as raw .josh and front-matter.
+          rm -rf ./editor-build/docs/build ./editor-build/docs/src
       - name: Upload Editor via SCP
         env:
           SSHPASS: ${{ secrets.SFTPPASSWORD }}
@@ -590,7 +592,9 @@ jobs:
           cp ./repo/llms.txt ./landing-build/
           cp ./repo/llms-full.txt ./landing-build/
           cp -r ./repo/docs ./landing-build/docs
-          rm -rf ./landing-build/docs/build
+          # docs/build is the builder's own source; docs/src is authored content, which ships as
+          # rendered pages rather than as raw .josh and front-matter.
+          rm -rf ./landing-build/docs/build ./landing-build/docs/src
       - name: Organize tutorial data for guides
         run: |
           mkdir -p ./landing-build/guides/two_trees

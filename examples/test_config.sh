@@ -26,9 +26,9 @@ assert_ok() {
 
 echo "Testing config example with external config file..."
 # Copy the config file to working directory as expected by the config system
-cp examples/features/config_example.jshc example.jshc || exit 21
+cp docs/src/reference/config/example.jshc example.jshc || exit 21
 rm -f /tmp/config_example_josh.csv
-assert_ok examples/features/config_example.josh ConfigExample 1 || exit 22
+assert_ok docs/src/reference/config/config_example.josh ConfigExample 1 || exit 22
 [ -f "/tmp/config_example_josh.csv" ] || exit 23
 [ -s "/tmp/config_example_josh.csv" ] || exit 24
 echo "✓ Config example test passed successfully!"

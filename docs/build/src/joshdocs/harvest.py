@@ -64,9 +64,9 @@ class HarvestOptions:
         src: Authored content tree, or None to harvest only the conformance suite.
         tests: Conformance suite root, or None to harvest only authored content.
         jar: Wrapper around the Josh CLI, or None to skip everything that needs the engine.
-        require_src: Whether a missing ``src`` is a problem. False when ``src`` is the default,
-            because the authored tree is created by the content migration rather than by the
-            builder; True when a caller named a tree that is not there.
+        require_src: Whether a missing ``src`` is a problem. False when ``src`` is the default, so
+            that a checkout without the authored tree still harvests the conformance suite; True
+            when a caller named a tree that is not there, since naming it says they expect it.
         validate_tests: Also run ``validate`` over conformance tests, which the conformance runner
             already covers more strictly.
         runnable_dir: Directory to write authored-plus-overlay models into.
