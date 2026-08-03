@@ -291,8 +291,8 @@ Update:
 - `llms-full.txt`;
 - `README.md`;
 - `TIME.md`;
-- `examples/features/external_time_axis_count.josh`;
-- `examples/features/external_time_axis_iso.josh`.
+- `docs/src/reference/external/external_time_axis_count.josh`;
+- `docs/src/reference/external/external_time_axis_iso.josh`.
 
 Document default count compatibility, explicit ISO scope, exact-match behavior, JSHD v1 limitations, warning migration guidance, unit-alias requirements, prepared-data/CF boundary, and spin-up patterns.
 
