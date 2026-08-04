@@ -257,9 +257,9 @@ A `start external ...` stanza only declares a source and is not itself a read, s
 
 **Example:**
 ```bash
-$ java -jar joshsim-fat.jar inspect-externals examples/guide/two_trees.josh
+$ java -jar joshsim-fat.jar inspect-externals docs/src/guides/two_trees/two_trees.josh
 {
-  "entry": "examples/guide/two_trees.josh",
+  "entry": "docs/src/guides/two_trees/two_trees.josh",
   "externals": [
     "precipitationTulare",
     "temperatureTulare"

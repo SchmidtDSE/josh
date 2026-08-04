@@ -1,8 +1,25 @@
 #!/bin/bash
 
+# Runs the guide models as a CLI smoke test. The models live in docs/src/guides and export to
+# memory://editor/patches for the browser, which the JVM rejects; what runs here is the emitted
+# copy under build/docs/runnable, where the harvester has retargeted the export to a file:// path
+# and applied any overlay the unit declares. That is why there are no longer `_cli` twins to run.
+
+RUNNABLE=build/docs/runnable
+
 if [ ! -f build/libs/joshsim-fat.jar ]; then
    gradle fatJar
 fi
+
+if [ ! -d "$RUNNABLE" ]; then
+  echo "No emitted models at $RUNNABLE. Run './gradlew harvestDocs' first." >&2
+  exit 16
+fi
+
+# The export target is an absolute path baked into the emitted model, and the jar does not create
+# its parents. upload-artifact drops empty directories, so the directory may not have survived the
+# trip from the harvest job.
+mkdir -p build/docs/exports
 
 verbose=true
 if [ "$1" = "quiet" ]; then
@@ -25,7 +42,7 @@ assert_ok() {
 }
 
 echo "Testing guide examples..."
-assert_ok examples/guide/hello_cli.josh Main 1 || exit 17
+assert_ok $RUNNABLE/hello.josh Main 1 || exit 17
 
 # Copy required jshd files for CLI tests that now use external data
 echo "Checking for preprocessed data files..."
@@ -59,7 +76,7 @@ fi
 echo "Files available for CLI tests:"
 ls -la *.jshd 2>/dev/null || echo "No .jshd files in working directory"
 
-assert_ok examples/guide/grass_shrub_fire_cli.josh Main 1 || exit 18
-assert_ok examples/guide/two_trees_cli.josh Main 1 || exit 19
+assert_ok $RUNNABLE/grass_shrub_fire.josh Main 1 || exit 18
+assert_ok $RUNNABLE/two_trees.josh Main 1 || exit 19
 
 echo "✓ All guide example tests passed!"

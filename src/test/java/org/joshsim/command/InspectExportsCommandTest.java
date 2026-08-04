@@ -21,7 +21,7 @@ import picocli.CommandLine;
  */
 public class InspectExportsCommandTest {
 
-  private static final Path SCRIPT_PATH = Path.of("examples/guide/hello.josh");
+  private static final Path SCRIPT_PATH = Path.of("docs/src/guides/hello/hello.josh");
   private static final String SIMULATION_NAME = "Main";
 
   private ByteArrayOutputStream outContent;

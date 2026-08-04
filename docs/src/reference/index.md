@@ -17,6 +17,7 @@ build what to do with it.
 | [performance/](performance/) | `evalDuration`, and what to do with what it tells you |
 | [time/](time/) | Spin-up and spin-down without dedicated engine machinery |
 | [testing/](testing/) | Where assertions live, and what a rejected model looks like |
+| [debugging/](debugging/) | `debug(...)` messages and where `debugFiles` sends them |
 
 Most of these are snippets rather than complete simulations: they declare the stanzas a feature
 needs and nothing more, so they are validated rather than run. The ones that are complete say so

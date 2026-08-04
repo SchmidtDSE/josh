@@ -314,7 +314,7 @@ jobs:
       - name: Test geotiff output
         run: bash .github/scripts/test_geotiff_output.sh
   testGuideExamples:
-    needs: [validateExamples, testPreprocessing]
+    needs: [validateExamples, testPreprocessing, harvestDocs]
     environment: Build
     runs-on: ubuntu-latest
     name: Test Guide Examples
@@ -341,6 +341,14 @@ jobs:
         with:
           name: preprocessed-tutorial-data
           path: ./landing/preprocessed_data/
+      # The guide models export to memory://editor/patches, which the JVM rejects; what runs here
+      # is the emitted copy the harvest retargeted. The export path inside it is absolute, which
+      # holds because both jobs run on ubuntu-latest and so share a workspace path.
+      - name: Download emitted models
+        uses: actions/download-artifact@70fc10c6e5e1ce46ad2ea6f2b72d43f7d47b13c3 # v8.0.0
+        with:
+          name: docsManifest
+          path: ./build/docs/
       - name: Test guide examples
         run: bash examples/test_guide_examples.sh
   testConfiguration:
@@ -477,10 +485,13 @@ jobs:
           path: demo.joshsim.org
       - name: Copy guide examples to landing
         run: |
+          # The authored models, not the emitted copies under build/docs/runnable: these back the
+          # "Download Complete Code" links on the guide pages, and a reader wants the model as
+          # written, not one carrying a CI runner's absolute export path.
           mkdir -p landing/examples/guide
-          cp examples/guide/hello.josh landing/examples/guide/
-          cp examples/guide/grass_shrub_fire.josh landing/examples/guide/
-          cp examples/guide/two_trees.josh landing/examples/guide/
+          cp docs/src/guides/hello/hello.josh landing/examples/guide/
+          cp docs/src/guides/grass_shrub_fire/grass_shrub_fire.josh landing/examples/guide/
+          cp docs/src/guides/two_trees/two_trees.josh landing/examples/guide/
       - name: Upload war
         uses: actions/upload-artifact@bbbca2ddaa5d8feaa63e36b76fdaad77386f024f # v7.0.0
         with:

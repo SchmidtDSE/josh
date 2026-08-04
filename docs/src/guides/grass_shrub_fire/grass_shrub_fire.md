@@ -1,3 +1,11 @@
+---
+title: "Grass, Shrub, Fire"
+order: 30
+tags: [guide, disturbance, external-data]
+simulation: Main
+exports: [patch]
+---
+
 # Grass, Shrub, Fire
 
 In the [previous tutorial](hello.md), we explored some of Josh's features at a high level by simulating more than 30,000 trees over an 11 year period. In this next step, we are going to zoom into one common use of this software: patch-based execution.

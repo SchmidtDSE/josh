@@ -1,3 +1,11 @@
+---
+title: "Hello Grid!"
+order: 10
+tags: [guide, getting-started]
+simulation: Main
+exports: [patch]
+---
+
 # Hello Grid!
 
 Josh is a simulation engine that includes everything you need from handling stochastic properties to working with geospatial data formats. In this first tutorial, we will explore a simple getting started example that introduces the basic concepts of Josh and also Josh Lang, the configuration language used to define simulations.
@@ -131,7 +139,7 @@ end patch
 The code we wrote tells Josh to record the average age of the trees in each patch along with the average height. However, we also need to tell Josh to send these results to the editor for visualization. That is done on the simulation.
 
 ```joshlang
-start simulation TestSimpleSimulation
+start simulation Main
 
   grid.size = 1000 m
   grid.low = 33.7 degrees latitude, -115.4 degrees longitude

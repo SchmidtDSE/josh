@@ -1,8 +1,19 @@
 #!/bin/bash
 
+# The guide models export to memory://editor/patches for the browser, so what runs here is the
+# emitted copy under build/docs/runnable that the harvester retargeted to a file:// path.
+RUNNABLE=build/docs/runnable
+
 if [ ! -f build/libs/joshsim-fat.jar ]; then
    gradle fatJar
 fi
+
+if [ ! -d "$RUNNABLE" ]; then
+  echo "No emitted models at $RUNNABLE. Run './gradlew harvestDocs' first." >&2
+  exit 16
+fi
+
+mkdir -p build/docs/exports
 
 verbose=true
 if [ "$1" = "quiet" ]; then
@@ -53,7 +64,7 @@ assert_ok examples/simulations/simple_geotiff.josh TestSimpleSimulation 2 || exi
 [ -s "/tmp/simple_josh_averageHeight_1_2.tiff" ] || exit 16
 
 echo "Testing guide examples..."
-assert_ok examples/guide/hello_cli.josh Main 1 || exit 17
+assert_ok $RUNNABLE/hello.josh Main 1 || exit 17
 
 # Copy required jshd files for CLI tests that now use external data
 echo "Checking for preprocessed data files..."
@@ -87,8 +98,8 @@ fi
 echo "Files available for CLI tests:"
 ls -la *.jshd 2>/dev/null || echo "No .jshd files in working directory"
 
-assert_ok examples/guide/grass_shrub_fire_cli.josh Main 1 || exit 18
-assert_ok examples/guide/two_trees_cli.josh Main 1 || exit 19
+assert_ok $RUNNABLE/grass_shrub_fire.josh Main 1 || exit 18
+assert_ok $RUNNABLE/two_trees.josh Main 1 || exit 19
 
 echo "Testing config example with external config file..."
 # Copy the config file to working directory as expected by the config system

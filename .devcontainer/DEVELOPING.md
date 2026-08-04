@@ -23,18 +23,18 @@ In CI/CD, in order to ensure that our langauge parser is working correctly. Unde
 We provide a convenience script to validate `.josh` configurations. This script is located at `josh_validator.sh`, which is located in `.devcontainer/scripts/interactive` - however, this folder is added to `PATH` during the docker build process, so it can be run from anywhere.
 
 ```bash
-$ josh_validator.sh examples/sample.josh 
-Validating: examples/sample.josh
-Validated Josh code at examples/sample.josh
+$ josh_validator.sh docs/src/reference/distributions/sample.josh 
+Validating: docs/src/reference/distributions/sample.josh
+Validated Josh code at docs/src/reference/distributions/sample.josh
 Validation successful
 ```
 
 Running the validator on a syntactically incorrect `.josh` file will result in an error message.
 
 ```bash
-$ josh_validator.sh examples/error.josh 
-Validating: examples/error.josh
-Found errors in Josh code at examples/error.josh:
+$ josh_validator.sh docs/src/reference/testing/error.josh 
+Validating: docs/src/reference/testing/error.josh
+Found errors in Josh code at docs/src/reference/testing/error.josh:
  - On line 1: no viable alternative at input 'start test'
 Validation failed (exit code: 3)
 ```
