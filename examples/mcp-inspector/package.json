@@ -1,0 +1,10 @@
+{
+  "name": "josh-mcp-inspector",
+  "version": "0.0.0",
+  "private": true,
+  "description": "Pinned MCP Inspector CLI for examples/test_mcp.sh. Never published; exists so the smoke test installs from a lockfile instead of resolving the tree fresh on every run.",
+  "packageManager": "pnpm@11.20.0",
+  "dependencies": {
+    "@modelcontextprotocol/inspector": "1.0.1"
+  }
+}
