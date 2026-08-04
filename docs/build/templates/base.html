@@ -1,0 +1,45 @@
+{#
+  The shell every generated page shares: head, skip link, site nav, footer.
+
+  The nav lives here rather than in each page because the hand-written landing pages already
+  demonstrate the alternative -- five copies that have to be edited together. Links out to the
+  static site are site-absolute; links within the library are relative, computed by the renderer,
+  so the same output works at /library/ and at the root of a local preview server.
+#}
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>{% block title %}Josh Library{% endblock %}</title>
+    <link href="/landing.css" rel="stylesheet" type="text/css" />
+    <link href="/prism-tomorrow.min.css" rel="stylesheet" type="text/css" />
+  </head>
+  <body>
+    <div class="skip-link">
+      <a href="#main">Skip to content</a>
+    </div>
+    <header>
+      <h1>{% block heading %}Library{% endblock %}</h1>
+      {% block tagline %}{% endblock %}
+      <nav>
+        <span class="nav-option"><a href="/">Home</a></span>
+        <span class="nav-option"><a href="/purpose.html">Purpose</a></span>
+        <span class="nav-option"><a href="/use.html">Use</a></span>
+        <span class="nav-option"><a href="/guide.html">Guide</a></span>
+        <span class="nav-option selected"><a href="/library/">Library</a></span>
+        <span class="nav-option"><a href="/community.html">Community</a></span>
+      </nav>
+    </header>
+    {% block content %}{% endblock %}
+    <footer class="library-footer">
+      <p>
+        Every model on these pages is read from the <code>.josh</code> file in
+        <code>docs/src</code> that the build validates. Nothing here is transcribed by hand.
+      </p>
+    </footer>
+    <script src="/prism-core.min.js"></script>
+    <script src="/prism-autoloader.min.js"></script>
+    <script src="/joshlang-prism.js"></script>
+  </body>
+</html>

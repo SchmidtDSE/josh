@@ -386,6 +386,26 @@ task harvestDocs {
     }
 }
 
+// Task to render the harvested manifest into the static pages under landing/library. Unlike
+// harvestDocs this fails when uv is absent: nothing downstream falls back to a filesystem walk, so
+// a silent skip would leave a stale or missing library rather than a slower-but-correct build.
+task renderDocs {
+    description = 'Renders the docs manifest into the static library under landing/library'
+    group = 'documentation'
+    dependsOn harvestDocs
+
+    doLast {
+        def uv = findUv()
+        if (uv == null) {
+            throw new GradleException(
+                "renderDocs: 'uv' is not on PATH. See https://docs.astral.sh/uv/ to install it.")
+        }
+        exec {
+            commandLine uv, 'run', '--frozen', '--project', 'docs/build', 'joshdocs', 'render'
+        }
+    }
+}
+
 // Task to extract and debug a joshpy bottle with JDWP on port 5005.
 // Usage: ./gradlew debugBottle -Pbottle=<path-or-name.tar.gz>
 task debugBottle {

@@ -94,4 +94,65 @@ def test_the_default_source_tree_may_not_exist_yet(tmp_path, capsys, monkeypatch
 
 def test_an_unknown_subcommand_is_rejected():
     with pytest.raises(SystemExit):
-        main(["render"])
+        main(["publish"])
+
+
+def render_argv(tmp_path, *extra):
+    return [
+        "render",
+        "--root",
+        str(tmp_path),
+        "--manifest",
+        str(tmp_path / "manifest.json"),
+        "--out",
+        str(tmp_path / "out"),
+        *extra,
+    ]
+
+
+def harvest_tree_argv(tmp_path, *extra):
+    """Harvest the whole authored tree, so `kind` is inferred from its top-level directory."""
+    return [
+        "harvest",
+        "--root",
+        str(tmp_path),
+        "--src",
+        str(tmp_path / "docs" / "src"),
+        "--no-tests",
+        "--skip-jar",
+        "--manifest",
+        str(tmp_path / "manifest.json"),
+        "--emit-runnable",
+        str(tmp_path / "runnable"),
+        *extra,
+    ]
+
+
+def test_render_writes_pages_from_a_harvested_manifest(tmp_path, capsys):
+    src = tmp_path / "docs" / "src" / "recipes" / "dispersal"
+    make_unit(src, "wind", 'title: "Wind"')
+    assert main(harvest_tree_argv(tmp_path, "--quiet")) == EXIT_OK
+    assert main(render_argv(tmp_path)) == EXIT_OK
+    assert (tmp_path / "out" / "recipes" / "dispersal" / "wind.html").is_file()
+    assert "files ->" in capsys.readouterr().out
+
+
+def test_render_without_a_manifest_says_to_harvest_first(tmp_path, capsys):
+    assert main(render_argv(tmp_path)) == EXIT_UNUSABLE
+    assert "joshdocs harvest" in capsys.readouterr().err
+
+
+def test_render_reports_a_dead_link_and_fails(tmp_path, capsys):
+    src = tmp_path / "docs" / "src" / "recipes" / "dispersal"
+    make_unit(src, "wind", 'title: "Wind"')
+    (src / "wind.md").write_text(
+        '---\ntitle: "Wind"\n---\n\nSee [gone](nowhere.md).\n', encoding="utf-8"
+    )
+    assert main(harvest_tree_argv(tmp_path, "--quiet")) == EXIT_OK
+    assert main(render_argv(tmp_path)) == EXIT_PROBLEMS
+    assert "nowhere.md" in capsys.readouterr().err
+
+
+def test_serve_without_a_rendered_tree_says_to_render_first(tmp_path, capsys):
+    assert main(["serve", "--out", str(tmp_path / "out")]) == EXIT_UNUSABLE
+    assert "joshdocs render" in capsys.readouterr().err
