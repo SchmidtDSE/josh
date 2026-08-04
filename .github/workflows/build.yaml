@@ -114,13 +114,12 @@ jobs:
         run: bash examples/test_basic_preprocess.sh
       - name: Run spatial preprocessing tests
         run: bash examples/test_spatial_preprocess.sh
+      # This exercises `preprocess` against netCDF and GeoTIFF, which is worth keeping. Its output
+      # is no longer published: the guides' data is committed under docs/src/guides, so what ships
+      # is what is in the repository rather than whatever this job happened to produce from a zip
+      # fetched over the network.
       - name: Run temporal preprocessing and create tutorial data
         run: bash landing/test_preprocess.sh
-      - name: Upload preprocessed tutorial data
-        uses: actions/upload-artifact@bbbca2ddaa5d8feaa63e36b76fdaad77386f024f # v7.0.0
-        with:
-          name: preprocessed-tutorial-data
-          path: landing/preprocessed_data/
   validateExamples:
     needs: buildJava
     environment: Build
@@ -346,11 +345,6 @@ jobs:
           name: fatJar
       - name: Move artifact
         run: mkdir -p build/libs; mv joshsim-fat.jar build/libs/joshsim-fat.jar
-      - name: Download preprocessed tutorial data
-        uses: actions/download-artifact@70fc10c6e5e1ce46ad2ea6f2b72d43f7d47b13c3 # v8.0.0
-        with:
-          name: preprocessed-tutorial-data
-          path: ./landing/preprocessed_data/
       # The guide models export to memory://editor/patches, which the JVM rejects; what runs here
       # is the emitted copy the harvest retargeted. The export path inside it is absolute, which
       # holds because both jobs run on ubuntu-latest and so share a workspace path.
@@ -405,11 +399,6 @@ jobs:
           name: fatJar
       - name: Move artifact
         run: mkdir -p build/libs; mv joshsim-fat.jar build/libs/joshsim-fat.jar
-      - name: Download preprocessed tutorial data
-        uses: actions/download-artifact@70fc10c6e5e1ce46ad2ea6f2b72d43f7d47b13c3 # v8.0.0
-        with:
-          name: preprocessed-tutorial-data
-          path: ./landing/preprocessed_data/
       - name: Test external data with --data option
         run: bash examples/test_data_option.sh
       - name: Test job configuration template functionality
@@ -558,11 +547,6 @@ jobs:
         with:
           name: war
           path: ./deploy/war
-      - name: Download preprocessed tutorial data
-        uses: actions/download-artifact@70fc10c6e5e1ce46ad2ea6f2b72d43f7d47b13c3 # v8.0.0
-        with:
-          name: preprocessed-tutorial-data
-          path: ./tutorial-data-temp
       - name: Install SSH client and sshpass
         run: |
           sudo apt-get update
@@ -615,13 +599,17 @@ jobs:
           # docs/build is the builder's own source; docs/src is authored content, which ships as
           # rendered pages rather than as raw .josh and front-matter.
           rm -rf ./landing-build/docs/build ./landing-build/docs/src
+      # Data ships compressed in the repository and is published decompressed, because .jshdz is a
+      # JVM-only format and the browser editor a reader uploads into cannot read it. The guide
+      # directory names the destination, so adding a guide with data needs no change here.
       - name: Organize tutorial data for guides
         run: |
-          mkdir -p ./landing-build/guides/two_trees
-          mkdir -p ./landing-build/guides/grass_shrub_fire
-          cp ./tutorial-data-temp/temperatureTulare.jshd ./landing-build/guides/two_trees/
-          cp ./tutorial-data-temp/precipitationTulare.jshd ./landing-build/guides/two_trees/
-          cp ./tutorial-data-temp/precipitation_geotiff.jshd ./landing-build/guides/grass_shrub_fire/precipitation.jshd
+          for source in ./repo/docs/src/guides/*/*.jshdz; do
+            target="./landing-build/guides/$(basename "$(dirname "$source")")"
+            mkdir -p "$target"
+            xz -dc "$source" > "$target/$(basename "$source" .jshdz).jshd"
+          done
+          ls -l ./landing-build/guides/*/*.jshd
       - name: Remove publicsans directory before upload
         run: |
           if [ -d "./landing-build/publicsans" ]; then

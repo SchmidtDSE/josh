@@ -44,37 +44,19 @@ assert_ok() {
 echo "Testing guide examples..."
 assert_ok $RUNNABLE/hello.josh Main 1 || exit 17
 
-# Copy required jshd files for CLI tests that now use external data
-echo "Checking for preprocessed data files..."
-ls -la landing/preprocessed_data/ 2>/dev/null || echo "No landing/preprocessed_data directory found"
-
-if [ -f "landing/preprocessed_data/precipitation_geotiff.jshd" ]; then
-    echo "Found precipitation_geotiff.jshd, copying to precipitation.jshd"
-    cp landing/preprocessed_data/precipitation_geotiff.jshd precipitation.jshd
-elif [ -f "landing/preprocessed_data/precipitationGrassfire2008.jshd" ]; then
-    echo "Found precipitationGrassfire2008.jshd, copying to precipitation.jshd"
-    cp landing/preprocessed_data/precipitationGrassfire2008.jshd precipitation.jshd
-else
-    echo "Error: No GeoTIFF precipitation data found for CLI tests"
-    exit 20
-fi
-
-if [ -f "landing/preprocessed_data/temperatureTulare.jshd" ]; then
-    echo "Found temperatureTulare.jshd, copying to working directory"
-    cp landing/preprocessed_data/temperatureTulare.jshd .
-else
-    echo "Warning: temperatureTulare.jshd not found"
-fi
-
-if [ -f "landing/preprocessed_data/precipitationTulare.jshd" ]; then
-    echo "Found precipitationTulare.jshd, copying to working directory"
-    cp landing/preprocessed_data/precipitationTulare.jshd .
-else
-    echo "Warning: precipitationTulare.jshd not found"
-fi
-
-echo "Files available for CLI tests:"
-ls -la *.jshd 2>/dev/null || echo "No .jshd files in working directory"
+# The guides that read external data are staged from the compressed copies committed beside their
+# models, which is the same data the site publishes decompressed. A missing one is an error rather
+# than a warning: these files are in the repository, so absence means the checkout is wrong, not
+# that an upstream job failed to hand something over.
+echo "Staging tutorial data from the authored tree..."
+for source in docs/src/guides/*/*.jshdz; do
+    if [ ! -f "$source" ]; then
+        echo "Error: no committed tutorial data found under docs/src/guides"
+        exit 20
+    fi
+    cp "$source" .
+    echo "  $(basename "$source")"
+done
 
 assert_ok $RUNNABLE/grass_shrub_fire.josh Main 1 || exit 18
 assert_ok $RUNNABLE/two_trees.josh Main 1 || exit 19
