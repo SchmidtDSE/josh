@@ -37,7 +37,7 @@ With these goals in mind, we are going to simulate a very basic system: a Foreve
 
 The easiest way to use Josh is to take advantage of [our online development environment](https://editor.joshsim.org). You don't need to install any software and you can run simulations without leaving your browser. This will not share your simulation or data with us (unless you opt to run on [Josh Cloud](/community.html)). Also, your work is saved on your machine. All of this means that you can program in safety and privacy but also don't need to configure your computer.
 
-While we will discuss [running simulations outside your browser](cli.md) later and this can be much faster, we will assume that you are using the [Josh IDE](https://editor.joshsim.org) for the purposes of this guide.
+While we will discuss running simulations outside your browser later and this can be much faster, we will assume that you are using the [Josh IDE](https://editor.joshsim.org) for the purposes of this guide.
 
 ## Simulation
 
@@ -153,7 +153,7 @@ start simulation Main
 end simulation
 ```
 
-This says to send patches to the editor "in memory" which just means it isn't being saved to your computer. Note that the Josh IDE can only use memory targets. If you want to use disk targets, you need to [run simulations outside your browser](cli.md). Anyway, with that, give it another shot.
+This says to send patches to the editor "in memory" which just means it isn't being saved to your computer. Note that the Josh IDE can only use memory targets. If you want to use disk targets, you need to run simulations outside your browser. Anyway, with that, give it another shot.
 
 ## Visualizing
 
@@ -165,16 +165,15 @@ We are almost done but lets finish off our introduction by looking at replicates
 
 ## Replicates
 
-So far, we've only run with a single replicate. However, if you go back to the run dialog, you can indicate that you want more than one replicate. This can be a bit slow to execute in your browser. If you are [running Josh locally](cli.md), have access to [Josh Cloud](/community.html), or have an [IT team which has set up a data center](/use.html), you can run multiple replicates in parallel.
+So far, we've only run with a single replicate. However, if you go back to the run dialog, you can indicate that you want more than one replicate. This can be a bit slow to execute in your browser. If you are running Josh locally, have access to [Josh Cloud](/community.html), or have an [IT team which has set up a data center](/use.html), you can run multiple replicates in parallel.
 
 If you have access to one of those other systems, give it a try now with 10 replicates. Otherwise, go ahead and run in your browser with 2.
 
 ## Export
 
-After running for a larger number of replicates, try clicking the export button. This will provide CSV files which can be opened in your spreadsheet software. For exporting geotiffs and netCDF files, see [running Josh locally](cli.md).
+After running for a larger number of replicates, try clicking the export button. This will provide CSV files which can be opened in your spreadsheet software. For exporting geotiffs and netCDF files, run Josh locally.
 
 ## Wrap
 
 That's it for our first introduction. In the [next tutorial](grass_shrub_fire.md), we will explore some of the tools that Josh makes available for real world simulation including use of external data and some syntax which makes it easier to define these mathematical systems.
 
-[Download Complete Code](/examples/guide/hello.josh)

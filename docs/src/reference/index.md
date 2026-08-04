@@ -27,6 +27,10 @@ These files were previously `examples/features/`, checked by a hand-maintained l
 `examples/validate.sh` — a list that eight of them had never been added to. The harvest now
 discovers every unit by walking this tree, so a model cannot be added here without being checked.
 
+Every page under [joshsim.org/library/reference/](https://joshsim.org/library/reference/) is
+generated from this directory: the prose comes from the `.md`, and the complete model on the page is
+read from the `.josh` rather than copied into it.
+
 ## Adding a unit
 
 Write the `.josh` and a `.md` beside it with the same stem. The sidecar needs a `title:`; `kind:` is
