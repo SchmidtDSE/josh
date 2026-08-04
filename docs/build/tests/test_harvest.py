@@ -38,12 +38,18 @@ class FakeJar:
         return list(self.externals)
 
 
-def write_unit(src, relative, front_matter, model=MODEL):
-    """Write a `.josh` and its `.md` sidecar, returning the model's path."""
+def write_unit(src, relative, front_matter, model=MODEL, data=()):
+    """Write a `.josh` and its `.md` sidecar, returning the model's path.
+
+    `data` names files to create beside the model. Their contents do not matter -- the harvest only
+    checks that a declared data file is there, since reading one is the jar's job.
+    """
     path = src / relative
     path.parent.mkdir(parents=True, exist_ok=True)
     path.with_suffix(".josh").write_text(model, encoding="utf-8")
     path.with_suffix(".md").write_text(f"---\n{front_matter}\n---\n\nProse.\n", encoding="utf-8")
+    for name in data:
+        (path.parent / name).write_bytes(b"")
     return path.with_suffix(".josh")
 
 
@@ -218,7 +224,8 @@ def test_externals_come_from_the_jar(tmp_path):
     write_unit(
         src_of(tmp_path),
         "guides/two_trees",
-        'title: "Two trees"\ndata: [precipitationTulare.jshd, temperatureTulare.jshd]',
+        'title: "Two trees"\ndata: [precipitationTulare.jshdz, temperatureTulare.jshdz]',
+        data=("precipitationTulare.jshdz", "temperatureTulare.jshdz"),
     )
     jar = FakeJar(externals=["precipitationTulare", "temperatureTulare"])
     result = run(tmp_path, jar=jar)
@@ -239,12 +246,39 @@ def test_an_external_with_no_declared_data_is_a_failure(tmp_path):
 
 
 def test_only_the_externals_that_are_missing_are_reported(tmp_path):
-    write_unit(src_of(tmp_path), "guides/two_trees", 'title: "Two trees"\ndata: [rain.jshd]')
+    write_unit(
+        src_of(tmp_path),
+        "guides/two_trees",
+        'title: "Two trees"\ndata: [rain.jshdz]',
+        data=("rain.jshdz",),
+    )
     result = run(tmp_path, jar=FakeJar(externals=["rain", "heat"]))
 
     assert len(result.log) == 1
     assert "heat" in result.log.problems[0].message
     assert "rain" not in result.log.problems[0].message
+
+
+def test_a_declared_data_file_that_is_not_there_is_a_failure(tmp_path):
+    """The data is committed beside the model, so a name matching no file is a typo."""
+    write_unit(src_of(tmp_path), "guides/two_trees", 'title: "Two trees"\ndata: [rain.jshdz]')
+    result = run(tmp_path)
+
+    assert len(result.log) == 1
+    assert "rain.jshdz" in result.log.problems[0].message
+    assert "not beside" in result.log.problems[0].message
+
+
+def test_a_compressed_external_satisfies_the_declaration(tmp_path):
+    """`.jshdz` is XZ-compressed `.jshd`, and the engine resolves a bare name to either."""
+    write_unit(
+        src_of(tmp_path),
+        "guides/grass_shrub_fire",
+        'title: "Fire"\ndata: [precipitation.jshdz]',
+        data=("precipitation.jshdz",),
+    )
+    result = run(tmp_path, jar=FakeJar(externals=["precipitation"]))
+    assert not result.log, result.log.report()
 
 
 def test_a_conformance_test_may_read_an_undeclared_external(tmp_path):

@@ -60,7 +60,13 @@
 {% endif %}
 {% if unit.data %}
           <dt>Data</dt>
-          <dd>{% for file in unit.data %}<code>{{ file }}</code>{% if not loop.last %}, {% endif %}{% endfor %}</dd>
+          <dd>
+            {% for file in unit.data %}<code>{{ file }}</code>{% if not loop.last %}, {% endif %}{% endfor %}
+{% if data_compressed %}
+            &mdash; stored compressed beside the model. The links above download the expanded
+            <code>.jshd</code>, which is the form the browser editor reads.
+{% endif %}
+          </dd>
 {% endif %}
           <dt>Checked by</dt>
           <dd>

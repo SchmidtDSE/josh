@@ -291,6 +291,16 @@ def _authored_unit(
                 locate_key(sidecar.raw_frontmatter, "overlay"),
             )
 
+    for name in front.data:
+        # Data is committed beside the model, so a name that matches no file is a typo the build
+        # should catch here rather than a run that fails later with a missing external.
+        if not (model.parent / name).is_file():
+            log.add(
+                prose,
+                f"data: {name!r} is not beside {model.name}",
+                locate_key(sidecar.raw_frontmatter, "data"),
+            )
+
     return Unit(
         id=unit_id,
         kind=front.kind,
