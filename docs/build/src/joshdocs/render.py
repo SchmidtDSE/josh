@@ -45,6 +45,10 @@ RENDERED_KINDS = frozenset({Kind.GUIDE, Kind.RECIPE, Kind.REFERENCE})
 #: directory keeps the download href short and stable regardless of where a unit's page sits.
 MODEL_DIR = "models"
 
+#: Data ships compressed in the repository. The site publishes it expanded, because the XZ decoder
+#: behind this format is not compiled to WebAssembly and the browser editor cannot read it.
+COMPRESSED_DATA_SUFFIX = ".jshdz"
+
 #: Directory each kind's index lives in, matching the authored tree's top-level directories.
 KIND_ROOT: dict[Kind, str] = {
     Kind.GUIDE: "guides",
@@ -476,6 +480,10 @@ def render(options: RenderOptions) -> RenderResult:
                 else relative_href(page, library.assets[unit.overlay])
             ),
             reserved=unit.status is Status.RESERVED,
+            # The page names the file as the repository stores it, but the prose links the expanded
+            # copy the site publishes, so a reader who compares the two needs the difference said
+            # out loud rather than left as a puzzle about a filename they cannot find.
+            data_compressed=any(name.endswith(COMPRESSED_DATA_SUFFIX) for name in unit.data),
             kind_root=KIND_ROOT[unit.kind],
             kind_title=KIND_INDEX[unit.kind][0],
             kind_index=relative_href(page, kind_index_path(unit.kind)),

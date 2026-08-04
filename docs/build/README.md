@@ -167,7 +167,7 @@ tags: [dispersal, spatial]
 | `simulation` | — | Name of the simulation stanza. Required with `exports` |
 | `exports` | none | Export slots (`patch`, `meta`, `entity`) to retarget for CLI runs |
 | `overlay` | none | A `.josh` file beside the model holding `update` stanzas to append for runs |
-| `data` | none | External data files the model needs, when the name does not imply the file |
+| `data` | none | Data files beside the model. Required for every external a runnable model reads |
 | `seed` | `42` | Seed for runs, matching the conformance runner |
 | `expect` | `valid` | `parse-error` for a model that documents a deliberate mistake |
 | `status` | `active` | `reserved` for syntax not implemented yet; requires `reason` |
@@ -176,6 +176,27 @@ tags: [dispersal, spatial]
 
 Contradictions are rejected: `assert: true` needs `runnable: true`, `expect: parse-error` cannot be
 runnable, and `exports` needs `simulation` so the overlay knows which stanza to update.
+
+Omissions are too. A runnable model that reads an external must declare the file providing it, and
+the harvest fails naming the ones it does not — then fails again if the declared file is not there.
+Conformance tests are exempt from the first check, since their fixtures are staged by the test
+harness rather than shipped by the author.
+
+## Data beside the model
+
+A guide's data is committed as `.jshdz` in the same directory as its model. That is XZ-compressed
+`.jshd`, which the engine reads directly: `MultiFormatExternalGetter` resolves a bare `external`
+name to `<name>.jshdz` before `<name>.jshd`, so the model needs no change and neither does a run.
+Compression is what makes committing viable at all — the three tutorial files are 3.5 MB as `.jshd`
+and 34 KB as `.jshdz`.
+
+The site publishes them decompressed. `.jshdz` is JVM-only — the XZ decoder is not compiled through
+TeaVM — so the browser editor a reader uploads into can only take `.jshd`, and `deployStatic`
+expands each file as it stages the guides.
+
+Committing them is what makes the build reproducible. The data used to be preprocessed on every push
+from a zip fetched over the network at build time, which meant the input to the build was a mutable
+URL and a change in it would alter the published guides with no commit and no diff.
 
 ## Exports without editing the source
 

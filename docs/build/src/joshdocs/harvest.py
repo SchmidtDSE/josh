@@ -291,6 +291,16 @@ def _authored_unit(
                 locate_key(sidecar.raw_frontmatter, "overlay"),
             )
 
+    for name in front.data:
+        # Data is committed beside the model, so a name that matches no file is a typo the build
+        # should catch here rather than a run that fails later with a missing external.
+        if not (model.parent / name).is_file():
+            log.add(
+                prose,
+                f"data: {name!r} is not beside {model.name}",
+                locate_key(sidecar.raw_frontmatter, "data"),
+            )
+
     return Unit(
         id=unit_id,
         kind=front.kind,
@@ -408,6 +418,31 @@ def _needs_externals(unit: Unit) -> bool:
     )
 
 
+def _undeclared_data(unit: Unit, externals: list[str]) -> list[str]:
+    """Return the externals a unit reads that no declared data file provides.
+
+    A `.jshd` external resolves by filename stem -- an external named `precipitation` is read from
+    `precipitation.jshd` -- so that is what the match is on. A model naming its path inside a
+    `start external` block would report a name no filename matches; none is runnable today, and
+    declaring the file is the right answer there too, since the point is telling a reader what to
+    fetch rather than proving the jar will find it.
+
+    Conformance tests are exempt. Their fixtures are staged by the test harness, sometimes generated
+    rather than shipped, so the author of a test does not own the file.
+
+    Args:
+        unit: The unit that was inspected.
+        externals: External names the jar reported.
+
+    Returns:
+        The undeclared names, empty when every external has a declared file.
+    """
+    if unit.kind is Kind.TEST:
+        return []
+    declared = {Path(name).stem for name in unit.data}
+    return [name for name in externals if name not in declared]
+
+
 def _inspect(
     unit: Unit, jar: JoshJar, root: Path, validate_tests: bool
 ) -> tuple[Unit, list[Problem], list[str]]:
@@ -457,6 +492,19 @@ def _inspect(
     externals: list[str] = []
     if not problems and _needs_externals(unit):
         externals = jar.inspect_externals(path)
+        # `.jshd` files are gitignored and preprocessed by CI, so this list is the only record that
+        # a run needs them. Without it a reader downloads the model and gets "External resource not
+        # found" with nothing on the page saying which file was missing.
+        missing = _undeclared_data(unit, externals)
+        if missing:
+            problems.append(
+                Problem(
+                    root / unit.prose if unit.prose else path,
+                    f"reads the external {', '.join(missing)} but declares no data file for it: "
+                    "add `data: [<name>.jshd]` naming what a run needs, since the preprocessed "
+                    "files are not in the repository",
+                )
+            )
 
     return unit, problems, externals
 
