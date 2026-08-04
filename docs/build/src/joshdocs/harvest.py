@@ -187,16 +187,54 @@ def _collect_authored(src: Path, root: Path, log: ProblemLog) -> list[Unit]:
                 "file to index.md if it documents the directory rather than a unit",
             )
 
+    unpaired: list[Path] = []
     for model in models:
         prose = model.with_suffix(".md")
         if not prose.is_file():
-            log.add(model, f"has no prose beside it: add {prose.name}")
+            # It may be an overlay fragment rather than a unit. Only the sidecars know which, so
+            # the decision waits until they have all been read.
+            unpaired.append(model)
             continue
         unit = _authored_unit(model, prose, src, root, log)
         if unit is not None:
             units.append(unit)
 
+    _check_overlays(units, unpaired, root, log)
     return units
+
+
+def _check_overlays(
+    units: list[Unit], unpaired: list[Path], root: Path, log: ProblemLog
+) -> None:
+    """Report fragments nothing claims, and overlays that are units in their own right.
+
+    Args:
+        units: The units built so far, each carrying the overlay it named.
+        unpaired: Models with no sidecar beside them.
+        root: Repo root that recorded paths are relative to.
+        log: Problems are appended here.
+    """
+    sources = {unit.source: unit for unit in units}
+    claimed = set()
+    for unit in units:
+        if unit.overlay is None:
+            continue
+        claimed.add(unit.overlay)
+        if unit.overlay in sources:
+            log.add(
+                root / unit.prose if unit.prose else root / unit.source,
+                f"names {Path(unit.overlay).name!r} as an overlay, but it is a unit of its own: an "
+                "overlay holds `update` stanzas to append, not a model",
+            )
+
+    for model in unpaired:
+        if _relative(model, root) in claimed:
+            continue
+        log.add(
+            model,
+            f"has no prose beside it: add {model.with_suffix('.md').name}, or name it as the "
+            "'overlay:' of the model it updates",
+        )
 
 
 def _authored_unit(
@@ -241,6 +279,18 @@ def _authored_unit(
         )
         return None
 
+    overlay = None
+    if front.overlay is not None:
+        fragment = model.parent / front.overlay
+        if fragment.is_file():
+            overlay = _relative(fragment, root)
+        else:
+            log.add(
+                prose,
+                f"overlay: {front.overlay!r} is not beside {model.name}",
+                locate_key(sidecar.raw_frontmatter, "overlay"),
+            )
+
     return Unit(
         id=unit_id,
         kind=front.kind,
@@ -248,6 +298,7 @@ def _authored_unit(
         description=None,
         source=_relative(model, root),
         prose=_relative(prose, root),
+        overlay=overlay,
         destination=front.destination or _default_destination(model, src),
         order=front.order,
         runnable=bool(front.runnable),
@@ -387,6 +438,22 @@ def _inspect(
                 )
             )
 
+        # The authored file validating does not mean the model that actually runs does: an overlay
+        # is Josh an author wrote, and a bare `update` stanza cannot be validated on its own -- the
+        # engine rejects it with "no prior definition exists" -- so the composed copy is the only
+        # place a mistake in it can surface.
+        if not problems and unit.runnable_file is not None:
+            composed = root / unit.runnable_file
+            composed_result = jar.validate(composed)
+            if not composed_result.success:
+                problems.append(
+                    Problem(
+                        root / unit.overlay if unit.overlay else path,
+                        "produces a model that is not valid Josh once its overlay is applied: "
+                        f"{first_error_line(composed_result)}",
+                    )
+                )
+
     externals: list[str] = []
     if not problems and _needs_externals(unit):
         externals = jar.inspect_externals(path)
@@ -464,7 +531,7 @@ def _emit_runnables(units: list[Unit], options: HarvestOptions, log: ProblemLog)
 
     export_dir = options.export_dir or DEFAULT_EXPORT_DIR
     for unit in units:
-        if not unit.exports or unit.status is Status.RESERVED:
+        if not (unit.exports or unit.overlay) or unit.status is Status.RESERVED:
             continue
         try:
             written = emit_runnable(
@@ -474,6 +541,7 @@ def _emit_runnables(units: list[Unit], options: HarvestOptions, log: ProblemLog)
                 slots=list(unit.exports),
                 export_dir=export_dir,
                 unit_id=unit.id,
+                overlay_file=None if unit.overlay is None else options.root / unit.overlay,
             )
         except OSError as exc:
             log.add(options.root / unit.source, f"runnable copy could not be written: {exc}")
@@ -512,8 +580,11 @@ def harvest(options: HarvestOptions) -> HarvestResult:
     units = _check_ids(units, log, options.root)
     units.sort(key=lambda unit: (unit.kind.value, unit.destination, unit.order, unit.id))
 
-    validated = _jar_pass(units, options, log)
+    # Emitting comes first so that the jar pass can validate the composed model, not just the
+    # authored half. An overlay is Josh an author wrote, so a typo in it has to fail the build
+    # rather than wait for whatever eventually runs the emitted copy.
     _emit_runnables(units, options, log)
+    validated = _jar_pass(units, options, log)
 
     manifest = Manifest(
         root=".",

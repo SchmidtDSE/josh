@@ -179,3 +179,33 @@ def test_assert_errors_are_reported_under_the_yaml_key():
 def test_every_kind_has_a_runnable_default():
     for kind in Kind:
         assert isinstance(minimal(kind=kind.value, title="t").runnable, bool)
+
+
+def test_overlay_defaults_to_none():
+    assert minimal().overlay is None
+
+
+def test_overlay_must_name_a_josh_file():
+    with pytest.raises(ValidationError) as caught:
+        minimal(overlay="two_trees_ci.txt")
+    assert "must name a .josh file" in str(caught.value)
+
+
+@pytest.mark.parametrize("value", ["fragments/ci.josh", "../ci.josh", "/abs/ci.josh"])
+def test_overlay_must_be_a_bare_filename(value):
+    # An overlay lives beside the model so that moving the pair keeps it intact, and so that a
+    # sidecar cannot reach outside its own directory.
+    with pytest.raises(ValidationError) as caught:
+        minimal(overlay=value)
+    assert "bare filename" in str(caught.value)
+
+
+def test_overlay_requires_runnable():
+    with pytest.raises(ValidationError) as caught:
+        minimal(kind="reference", overlay="ci.josh")
+    assert "overlay: requires runnable: true" in str(caught.value)
+
+
+def test_overlay_does_not_require_a_simulation():
+    # Unlike `exports`, the author's stanzas name what they update, so nothing has to be inferred.
+    assert minimal(overlay="ci.josh").overlay == "ci.josh"

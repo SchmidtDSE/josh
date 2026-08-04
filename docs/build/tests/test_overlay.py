@@ -138,3 +138,66 @@ def test_emit_overrides_an_authored_memory_target(tmp_path):
     text = written.read_text(encoding="utf-8")
     assert "memory://editor/patches" in text
     assert text.index("memory://") < text.index("update simulation Main")
+
+
+FRAGMENT = """update simulation Main
+
+  steps.high = 5 count
+
+end simulation
+"""
+
+
+def test_compose_applies_overlays_in_order():
+    composed = compose(AUTHORED, "first\n", "second\n")
+    assert composed.index("first") < composed.index("second")
+    assert composed.startswith(AUTHORED)
+
+
+def test_compose_skips_empty_overlays():
+    assert compose(AUTHORED, "", "only\n") == compose(AUTHORED, "only\n")
+
+
+def test_emit_puts_the_authored_fragment_before_the_generated_block(tmp_path):
+    # The generated export target has to win over anything the author wrote, so that an overlay
+    # naming exportFiles cannot redirect output outside the export directory the build controls.
+    source = tmp_path / "two_trees.josh"
+    source.write_text(AUTHORED, encoding="utf-8")
+    fragment = tmp_path / "two_trees_ci.josh"
+    fragment.write_text(FRAGMENT, encoding="utf-8")
+
+    written = emit_runnable(
+        source=source,
+        destination=tmp_path / "runnable",
+        simulation="Main",
+        slots=[ExportSlot.PATCH],
+        export_dir=tmp_path / "exports",
+        unit_id="two_trees",
+        overlay_file=fragment,
+    )
+
+    text = written.read_text(encoding="utf-8")
+    assert text.startswith(AUTHORED)
+    assert text.index("steps.high = 5 count") < text.index("exportFiles.patch")
+
+
+def test_emit_with_an_overlay_and_no_exports(tmp_path):
+    source = tmp_path / "two_trees.josh"
+    source.write_text(AUTHORED, encoding="utf-8")
+    fragment = tmp_path / "two_trees_ci.josh"
+    fragment.write_text(FRAGMENT, encoding="utf-8")
+    exports = tmp_path / "exports"
+
+    written = emit_runnable(
+        source=source,
+        destination=tmp_path / "runnable",
+        simulation="Main",
+        slots=[],
+        export_dir=exports,
+        unit_id="two_trees",
+        overlay_file=fragment,
+    )
+
+    text = written.read_text(encoding="utf-8")
+    assert text == AUTHORED + "\n" + FRAGMENT
+    assert not exports.exists()

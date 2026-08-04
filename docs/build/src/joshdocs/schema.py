@@ -102,6 +102,11 @@ class FrontMatter(BaseModel):
     asserts: bool = Field(default=False, alias="assert")
     simulation: str | None = None
     exports: list[ExportSlot] = Field(default_factory=list)
+    #: A `.josh` file beside this unit holding `update` stanzas to append for runs. Naming a file
+    #: here is also what marks it as a fragment rather than a unit of its own, since a bare
+    #: `update` stanza does not validate on its own -- the engine rejects it with "no prior
+    #: definition exists" -- and so cannot be a documentation unit.
+    overlay: str | None = None
     data: list[str] = Field(default_factory=list)
     seed: int = DEFAULT_SEED
     expect: Expect = Expect.VALID
@@ -140,6 +145,21 @@ class FrontMatter(BaseModel):
         parts = Path(cleaned).parts
         if ".." in parts or Path(cleaned).is_absolute():
             raise ValueError(f"{value!r} must be a relative path without '..'")
+        return cleaned
+
+    @field_validator("overlay")
+    @classmethod
+    def _check_overlay(cls, value: str | None) -> str | None:
+        """Reject an overlay that is not a plain `.josh` filename beside the unit."""
+        if value is None:
+            return None
+        cleaned = value.strip()
+        if not cleaned.endswith(".josh"):
+            raise ValueError(f"{value!r} must name a .josh file")
+        if len(Path(cleaned).parts) != 1 or cleaned in {".", ".."}:
+            raise ValueError(
+                f"{value!r} must be a bare filename: an overlay lives beside the model it updates"
+            )
         return cleaned
 
     @field_validator("seed")
@@ -182,6 +202,11 @@ class FrontMatter(BaseModel):
             raise ValueError("assert: true requires runnable: true")
         if self.exports and not self.runnable:
             raise ValueError("exports: requires runnable: true")
+        # An overlay is `update <type> <Name>` stanzas the author wrote, so it names its own
+        # targets; unlike `exports`, it does not need `simulation` to know what to update. A
+        # parse-error unit is caught by the runnable rule above, since it cannot be runnable.
+        if self.overlay and not self.runnable:
+            raise ValueError("overlay: requires runnable: true")
 
         # The overlay is `update simulation <Name>`, so it has to know which stanza to update. The
         # name is not inferred here on purpose: only the engine knows what a file declares, and

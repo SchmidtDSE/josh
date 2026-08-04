@@ -11,6 +11,12 @@ declared, replacing the handlers it names and leaving everything else intact, so
 and the view-source box on a rendered page still shows the authored file byte for byte. The pattern
 is already in production in ``paper/management/management.josh``.
 
+``update`` is not limited to exports, and neither is this module: a unit may name an ``overlay:``
+file holding stanzas the author wrote, which is how a difference the generator cannot express --
+a shortened ``steps.high`` for CI, a ``debugFiles`` target -- is declared without a second copy of
+the model. Those stanzas are read from a ``.josh`` file rather than built from strings here, so
+Josh syntax stays in Josh files and this module only concatenates.
+
 Emitted models carry no comments: Josh sources in this repo are comment-free by convention, and the
 provenance of a generated model lives in the manifest instead.
 """
@@ -61,27 +67,32 @@ def render_overlay(simulation: str, targets: dict[ExportSlot, str]) -> str:
     return "\n".join(lines)
 
 
-def compose(source_text: str, overlay: str) -> str:
-    """Append an overlay to an authored model.
+def compose(source_text: str, *overlays: str) -> str:
+    """Append overlays to an authored model, in order.
 
-    The overlay has to follow the stanza it updates, which appending guarantees.
+    An overlay has to follow the stanza it updates, which appending guarantees. Several `update`
+    stanzas for the same entity compose, each replacing the handlers it names, so an authored
+    fragment and a generated export block can both apply to one model.
 
     Args:
         source_text: The authored model, verbatim.
-        overlay: The stanza to append, or an empty string.
+        *overlays: Stanzas to append. Empty ones are skipped.
 
     Returns:
         The composed model.
     """
-    if not overlay:
-        return source_text
-    if source_text.endswith("\n\n"):
-        separator = ""
-    elif source_text.endswith("\n"):
-        separator = "\n"
-    else:
-        separator = "\n\n"
-    return f"{source_text}{separator}{overlay}"
+    composed = source_text
+    for overlay in overlays:
+        if not overlay:
+            continue
+        if composed.endswith("\n\n"):
+            separator = ""
+        elif composed.endswith("\n"):
+            separator = "\n"
+        else:
+            separator = "\n\n"
+        composed = f"{composed}{separator}{overlay}"
+    return composed
 
 
 def emit_runnable(
@@ -91,8 +102,13 @@ def emit_runnable(
     slots: list[ExportSlot],
     export_dir: Path,
     unit_id: str,
+    overlay_file: Path | None = None,
 ) -> Path:
-    """Write a runnable copy of an authored model with its exports retargeted.
+    """Write a runnable copy of an authored model with its overlays applied.
+
+    The authored fragment goes on first and the generated export block last, so the export target
+    the build controls always wins: an author who also names ``exportFiles`` in their fragment gets
+    the build's path, not a hardcoded one that would write outside the export directory.
 
     Args:
         source: The authored ``.josh`` file.
@@ -101,12 +117,18 @@ def emit_runnable(
         slots: Export slots to retarget.
         export_dir: Directory the exports should be written into.
         unit_id: Id of the unit, used for both filenames.
+        overlay_file: An authored ``.josh`` fragment to append, or None.
 
     Returns:
         The path of the written model.
     """
     targets = {slot: export_target(export_dir, unit_id, slot) for slot in slots}
-    composed = compose(source.read_text(encoding="utf-8"), render_overlay(simulation, targets))
+    authored_overlay = "" if overlay_file is None else overlay_file.read_text(encoding="utf-8")
+    composed = compose(
+        source.read_text(encoding="utf-8"),
+        authored_overlay,
+        render_overlay(simulation, targets),
+    )
     if targets:
         # The jar opens an export target without creating its parents, so a model emitted against a
         # directory that does not exist yet fails at run time with a bare FileNotFoundException.
