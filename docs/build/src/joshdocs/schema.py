@@ -107,6 +107,11 @@ class FrontMatter(BaseModel):
     #: `update` stanza does not validate on its own -- the engine rejects it with "no prior
     #: definition exists" -- and so cannot be a documentation unit.
     overlay: str | None = None
+    #: Preprocessed `.jshd` inputs the model needs in its working directory to run. Declared rather
+    #: than derived: `externals` names what the model reaches, but the file behind a name is not
+    #: implied by it -- a geotiff or netcdf external carries its path inside a `start external`
+    #: block. These files are also not in the repository, since `.gitignore` excludes `*.jshd` and
+    #: CI preprocesses them into an artifact, so this list is the only record that a run needs them.
     data: list[str] = Field(default_factory=list)
     seed: int = DEFAULT_SEED
     expect: Expect = Expect.VALID

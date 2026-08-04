@@ -5,6 +5,7 @@ tags: [guide, competition, external-data]
 simulation: Main
 exports: [patch]
 overlay: two_trees_ci.josh
+data: [temperatureTulare.jshd, precipitationTulare.jshd]
 ---
 
 # Two Trees

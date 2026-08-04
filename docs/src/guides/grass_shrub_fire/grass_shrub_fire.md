@@ -4,6 +4,7 @@ order: 30
 tags: [guide, disturbance, external-data]
 simulation: Main
 exports: [patch]
+data: [precipitation.jshd]
 ---
 
 # Grass, Shrub, Fire

@@ -215,10 +215,56 @@ def test_a_parse_error_that_stopped_erroring_is_a_failure(tmp_path):
 
 
 def test_externals_come_from_the_jar(tmp_path):
-    write_unit(src_of(tmp_path), "guides/two_trees", 'title: "Two trees"')
+    write_unit(
+        src_of(tmp_path),
+        "guides/two_trees",
+        'title: "Two trees"\ndata: [precipitationTulare.jshd, temperatureTulare.jshd]',
+    )
     jar = FakeJar(externals=["precipitationTulare", "temperatureTulare"])
-    unit = run(tmp_path, jar=jar).manifest.units[0]
-    assert unit.externals == ["precipitationTulare", "temperatureTulare"]
+    result = run(tmp_path, jar=jar)
+    assert not result.log, result.log.report()
+    assert result.manifest.units[0].externals == ["precipitationTulare", "temperatureTulare"]
+
+
+def test_an_external_with_no_declared_data_is_a_failure(tmp_path):
+    """`.jshd` files are gitignored, so the declaration is the only record a run needs one."""
+    write_unit(src_of(tmp_path), "guides/two_trees", 'title: "Two trees"')
+    result = run(tmp_path, jar=FakeJar(externals=["precipitationTulare"]))
+
+    assert len(result.log) == 1
+    problem = result.log.problems[0]
+    assert "precipitationTulare" in problem.message
+    # The fix goes in the sidecar, so that is where the author is sent.
+    assert problem.path.name == "two_trees.md"
+
+
+def test_only_the_externals_that_are_missing_are_reported(tmp_path):
+    write_unit(src_of(tmp_path), "guides/two_trees", 'title: "Two trees"\ndata: [rain.jshd]')
+    result = run(tmp_path, jar=FakeJar(externals=["rain", "heat"]))
+
+    assert len(result.log) == 1
+    assert "heat" in result.log.problems[0].message
+    assert "rain" not in result.log.problems[0].message
+
+
+def test_a_conformance_test_may_read_an_undeclared_external(tmp_path):
+    """A test's fixtures are staged by the harness, sometimes generated, so its author owns none."""
+    tests = tmp_path / "josh-tests" / "conformance" / "io"
+    tests.mkdir(parents=True)
+    (tests / "test_external.josh").write_text(
+        "# @category: io\n# @subcategory: s\n# @priority: high\n# @description: d\n\n" + MODEL,
+        encoding="utf-8",
+    )
+    result = harvest(
+        HarvestOptions(
+            root=tmp_path,
+            src=None,
+            tests=tmp_path / "josh-tests" / "conformance",
+            jar=FakeJar(externals=["CheckerboardData"]),
+            runnable_dir=None,
+        )
+    )
+    assert not result.log, result.log.report()
 
 
 def test_unrunnable_units_are_not_inspected_for_externals(tmp_path):
