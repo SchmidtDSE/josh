@@ -11,6 +11,7 @@ build validates, this fails.
 
 import html
 import re
+from html.parser import HTMLParser
 from pathlib import Path
 from urllib.parse import urlsplit
 
@@ -25,6 +26,58 @@ TESTS = REPO_ROOT / "josh-tests" / "conformance"
 
 LISTING = re.compile(r'<pre><code class="language-joshlang">(.*?)</code></pre>', re.S)
 HREF = re.compile(r'href="([^"]+)"')
+
+#: Elements that never carry a closing tag, so they must not be pushed onto the nesting stack.
+VOID_ELEMENTS = frozenset({
+    "area", "base", "br", "col", "embed", "hr", "img", "input", "link", "meta", "param", "source",
+    "track", "wbr",
+})
+
+
+class TagBalance(HTMLParser):
+    """Reports elements that are closed out of order or never closed at all.
+
+    A Jinja template can produce mismatched markup without failing to render -- an ``{% if %}``
+    that opens a tag inside the block and closes it outside is valid Jinja and invalid HTML.
+
+    Attributes:
+        errors: Descriptions of the mismatches found, each naming a line.
+        stack: Elements still open when parsing finished.
+    """
+
+    def __init__(self) -> None:
+        super().__init__(convert_charrefs=True)
+        self.errors: list[str] = []
+        self.stack: list[str] = []
+
+    def handle_starttag(self, tag, attrs):
+        if tag not in VOID_ELEMENTS:
+            self.stack.append(tag)
+
+    def handle_startendtag(self, tag, attrs):
+        """Ignore a self-closing tag, which opens and closes in one go."""
+
+    def handle_endtag(self, tag):
+        if tag in VOID_ELEMENTS:
+            return
+        if not self.stack:
+            self.errors.append(f"line {self.getpos()[0]}: </{tag}> with nothing open")
+        elif self.stack[-1] != tag:
+            self.errors.append(f"line {self.getpos()[0]}: </{tag}> closes <{self.stack[-1]}>")
+            if tag in self.stack:
+                while self.stack and self.stack.pop() != tag:
+                    pass
+        else:
+            self.stack.pop()
+
+    def faults(self) -> list[str]:
+        """Return every mismatch, including elements left open.
+
+        Returns:
+            The descriptions, empty when the document is balanced.
+        """
+        unclosed = [f"never closed: <{tag}>" for tag in reversed(self.stack)]
+        return self.errors + unclosed
 
 
 @pytest.fixture(scope="module")
@@ -163,3 +216,15 @@ def test_conformance_tests_get_no_pages(manifest, site):
     assert tests, "the conformance suite should have been harvested"
     written = {path.name for path in site.rglob("*.html")}
     assert not [unit for unit in tests if f"{unit.id}.html" in written]
+
+
+def test_every_page_is_balanced_html(site):
+    broken = {}
+    for page in sorted(site.rglob("*.html")):
+        parser = TagBalance()
+        parser.feed(page.read_text(encoding="utf-8"))
+        parser.close()
+        faults = parser.faults()
+        if faults:
+            broken[str(page.relative_to(site))] = faults[:3]
+    assert not broken
