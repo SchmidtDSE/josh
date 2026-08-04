@@ -7,26 +7,35 @@
 #   3. run_simulation            — local run path (writes a CSV)
 #   4. preprocess_data           — local preprocess path (writes a .jshd)
 #
-# Requires `node`/`npx` on PATH (preinstalled on GitHub-hosted ubuntu runners)
-# and a built fat jar at build/libs/joshsim-fat.jar.
+# Requires `node` and `pnpm` on PATH and a built fat jar at build/libs/joshsim-fat.jar.
 set -euo pipefail
 
 JAR="build/libs/joshsim-fat.jar"
-# Pin a version here (e.g. @modelcontextprotocol/inspector@0.x.y) once a known-good
-# release is confirmed, so the inspector's own CLI changes can't silently break CI.
-INSPECTOR="@modelcontextprotocol/inspector"
+# The inspector is the repo's only npm dependency. It is installed from a committed lockfile with
+# every lifecycle script refused, rather than resolved fresh at run time: the version is pinned in
+# examples/mcp-inspector/package.json, and every transitive version is pinned by
+# examples/mcp-inspector/pnpm-lock.yaml. See that directory's .npmrc for why scripts are blocked.
+INSPECTOR_DIR="examples/mcp-inspector"
+INSPECTOR_BIN="$INSPECTOR_DIR/node_modules/.bin/mcp-inspector"
 
 if [ ! -f "$JAR" ]; then
   echo "ERROR: $JAR not found. Build it with: ./gradlew fatJar"
   exit 1
 fi
 
-echo "node: $(node --version), npm: $(npm --version)"
+echo "node: $(node --version), pnpm: $(pnpm --version)"
+echo "=== Installing pinned MCP Inspector ==="
+# --frozen-lockfile fails rather than silently re-resolving if the lockfile and manifest disagree,
+# so a drifting dependency tree surfaces as a CI failure instead of a silent upgrade.
+pnpm --dir "$INSPECTOR_DIR" install --frozen-lockfile --ignore-scripts
+
 echo "=== MCP Inspector CLI smoke test ==="
 
-# Helper: run the inspector against the stdio server with the given inspector args.
+# Helper: run the inspector against the stdio server with the given inspector args. Invoked by path
+# rather than through `pnpm exec` so the working directory stays at the repo root, which is what the
+# relative jar, script, and data paths below resolve against.
 inspect() {
-  npx --yes "$INSPECTOR" --cli java -jar "$JAR" mcp "$@"
+  "$INSPECTOR_BIN" --cli java -jar "$JAR" mcp "$@"
 }
 
 # 1. tools/list — every tool must be advertised.

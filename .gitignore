@@ -91,3 +91,6 @@ jotr
 # Joshpy bottles (compressed archives and extracted debug sessions)
 joshpy-bottles/
 !joshpy-bottles/README.md
+
+# MCP Inspector install tree (the manifest and lockfile beside it are tracked)
+examples/mcp-inspector/node_modules/
