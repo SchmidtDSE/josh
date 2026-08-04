@@ -180,6 +180,16 @@ jobs:
         with:
           name: docsManifest
           path: build/docs/
+      # Rendering runs here rather than in buildWeb so that a dead link or an unrenderable page
+      # fails a pull request. buildWeb only runs on main and dev, and by then it is too late.
+      - name: Render docs library
+        run: uv run --frozen --project docs/build joshdocs render
+      # Uploaded so that reviewing a docs change never requires a local Python install.
+      - name: Upload docs library
+        uses: actions/upload-artifact@bbbca2ddaa5d8feaa63e36b76fdaad77386f024f # v7.0.0
+        with:
+          name: docsLibrary
+          path: landing/library/
   testMcp:
     needs: buildJava
     environment: Build
@@ -483,15 +493,14 @@ jobs:
         with:
           name: demo
           path: demo.joshsim.org
-      - name: Copy guide examples to landing
-        run: |
-          # The authored models, not the emitted copies under build/docs/runnable: these back the
-          # "Download Complete Code" links on the guide pages, and a reader wants the model as
-          # written, not one carrying a CI runner's absolute export path.
-          mkdir -p landing/examples/guide
-          cp docs/src/guides/hello/hello.josh landing/examples/guide/
-          cp docs/src/guides/grass_shrub_fire/grass_shrub_fire.josh landing/examples/guide/
-          cp docs/src/guides/two_trees/two_trees.josh landing/examples/guide/
+      # The rendered library, built by harvestDocs. It carries the guide and reference pages and,
+      # under models/, the authored .josh each page shows -- which is what the "Download Complete
+      # Code" links point at. Nothing here transcribes a model, so nothing here can drift from one.
+      - name: Download docs library
+        uses: actions/download-artifact@70fc10c6e5e1ce46ad2ea6f2b72d43f7d47b13c3 # v8.0.0
+        with:
+          name: docsLibrary
+          path: ./landing/library/
       - name: Upload war
         uses: actions/upload-artifact@bbbca2ddaa5d8feaa63e36b76fdaad77386f024f # v7.0.0
         with:
