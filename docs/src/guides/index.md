@@ -59,3 +59,7 @@ two_trees/two_trees_ci.josh   an `update` stanza shortening the run for CI
 ```
 
 The model is never transcribed into the prose. Snippets inside a tutorial are excerpts that build it up step by step; the complete model is the `.josh` beside them, and `./gradlew harvestDocs` validates it on every push.
+
+## Where these are published
+
+`./gradlew renderDocs` turns this directory into [joshsim.org/library/guides/](https://joshsim.org/library/guides/), and CI does the same on every push. The rendered page shows the complete model by reading the `.josh` from disk, so a page cannot disagree with the file the build validates. The hand-written pages that used to live in `landing/guides/` are gone; only redirects remain, because they had drifted from the models and nothing compared them.

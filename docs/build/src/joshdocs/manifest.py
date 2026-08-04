@@ -14,7 +14,7 @@ from __future__ import annotations
 import json
 from pathlib import Path
 
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import BaseModel, ConfigDict, Field, ValidationError
 
 from . import SCHEMA_VERSION
 from .schema import Expect, ExportSlot, Kind, Status
@@ -27,7 +27,7 @@ class Unit(BaseModel):
     that harvests and the machine that renders.
     """
 
-    model_config = ConfigDict(extra="forbid")
+    model_config = ConfigDict(extra="forbid", populate_by_name=True)
 
     id: str
     kind: Kind
@@ -57,33 +57,37 @@ class Unit(BaseModel):
     priority: str | None = None
     issue: str | None = None
     #: Path to the emitted authored-plus-overlay model, when an overlay was needed.
-    runnable_file: str | None = Field(default=None, serialization_alias="runnableFile")
+    runnable_file: str | None = Field(default=None, alias="runnableFile")
 
 
 class Counts(BaseModel):
     """Summary counts, so a harvest's shape is visible without reading every unit."""
 
-    model_config = ConfigDict(extra="forbid")
+    model_config = ConfigDict(extra="forbid", populate_by_name=True)
 
     total: int
-    by_kind: dict[str, int] = Field(serialization_alias="byKind")
+    by_kind: dict[str, int] = Field(alias="byKind")
     runnable: int
     assertions: int
     reserved: int
     validated: int
 
 
+class ManifestUnreadable(Exception):
+    """Raised when a manifest is absent or is not the shape this version understands."""
+
+
 class Manifest(BaseModel):
     """The harvested documentation library."""
 
-    model_config = ConfigDict(extra="forbid")
+    model_config = ConfigDict(extra="forbid", populate_by_name=True)
 
     generator: str = "joshdocs"
-    schema_version: int = Field(default=SCHEMA_VERSION, serialization_alias="schemaVersion")
+    schema_version: int = Field(default=SCHEMA_VERSION, alias="schemaVersion")
     #: Directory that every path in the manifest is relative to, itself relative to the repo root.
     root: str = "."
     #: Directory the emitted runnable models write their exports into.
-    export_dir: str | None = Field(default=None, serialization_alias="exportDir")
+    export_dir: str | None = Field(default=None, alias="exportDir")
     counts: Counts
     units: list[Unit]
 
@@ -104,6 +108,48 @@ class Manifest(BaseModel):
         """
         path.parent.mkdir(parents=True, exist_ok=True)
         path.write_text(self.to_json(), encoding="utf-8")
+
+    @classmethod
+    def read(cls, path: Path) -> Manifest:
+        """Load a manifest written by :meth:`write`.
+
+        The camelCase keys on disk are the field aliases, so this is the exact inverse of
+        ``to_json`` -- which is what lets the renderer be a separate command from the harvest
+        rather than a second pass inside it.
+
+        Args:
+            path: The manifest file.
+
+        Returns:
+            The parsed manifest.
+
+        Raises:
+            ManifestUnreadable: If the file is missing, is not JSON, or does not match the schema
+                this version of the builder writes.
+        """
+        try:
+            text = path.read_text(encoding="utf-8")
+        except OSError as exc:
+            raise ManifestUnreadable(
+                f"{path} could not be read ({exc.strerror or exc}); run `joshdocs harvest` first"
+            ) from exc
+
+        try:
+            payload = json.loads(text)
+        except json.JSONDecodeError as exc:
+            raise ManifestUnreadable(f"{path} is not valid JSON: {exc}") from exc
+
+        found = payload.get("schemaVersion") if isinstance(payload, dict) else None
+        if found != SCHEMA_VERSION:
+            raise ManifestUnreadable(
+                f"{path} is schema version {found!r}, but this builder writes "
+                f"{SCHEMA_VERSION}; re-run `joshdocs harvest`"
+            )
+
+        try:
+            return cls.model_validate(payload)
+        except ValidationError as exc:
+            raise ManifestUnreadable(f"{path} does not match the manifest schema: {exc}") from exc
 
 
 def summarize(units: list[Unit], validated: int) -> Counts:

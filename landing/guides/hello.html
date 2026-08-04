@@ -1,180 +1,20 @@
-<html>
+<!doctype html>
+<html lang="en">
   <head>
-    <title>Josh Guide: Hello Grid</title>
-    <link href="/landing.css" rel="stylesheet" type="text/css" />
-    <link href="/prism-tomorrow.min.css" rel="stylesheet" type="text/css" />
+    <meta charset="utf-8" />
+    <title>Moved: this tutorial now lives in the Josh library</title>
+    <meta http-equiv="refresh" content="0; url=/library/guides/hello/hello.html" />
+    <link rel="canonical" href="/library/guides/hello/hello.html" />
   </head>
   <body>
-    <div class="skip-link">
-      <a href="#main">Skip to content</a>
-    </div>
-    <main id="main" class="guide">
-      <section id="intro">
-        <div class="back-panel">This tutorial is part of the <a href="/guide.html">Josh Simulation Engine Guide</a>.</div>
-        <h1>Hello Grid!</h1>
-        <p>Josh is a simulation engine that includes everything you need from handling stochastic properties to working with geospatial data formats. In this first tutorial, we will explore a simple getting started example that introduces the basic concepts of Josh and also Josh Lang, the configuration language used to define simulations.</p>
-        <details>
-          <summary>Table of Contents</summary>
-          <ul>
-            <li><a href="#overview">Overview</a></li>
-            <li><a href="#editor">Editor</a></li>
-            <li><a href="#simulation">Simulation</a></li>
-            <li><a href="#patch">Patch</a></li>
-            <li><a href="#organism">Organism</a></li>
-            <li><a href="#units">Units</a></li>
-            <li><a href="#exports">Exports</a></li>
-            <li><a href="#visualizing">Visualizing</a></li>
-            <li><a href="#replicates">Replicates</a></li>
-            <li><a href="#wrap">Wrap</a></li>
-          </ul>
-        </details>
-      </section>
-
-      <section id="overview">
-        <h2>Overview</h2>
-        <p>
-          Josh aims to make it easy to build spatial vegetation models. It is intended to help with the logistics of simulations including agents, geospatial data, scalability, and stochastic behavior. In these tutorials, we will explore these <a href="/purpose.html">features</a> in hands-on practical examples.
-        </p>
-        <details>
-          <summary>Why Josh Lang?</summary>
-          <p>
-            Sometimes expressing these systems in general purpose languages like Python can require a lot of code. We built Josh Lang to be a configuration language which is designed specifically for this use case and which includes syntax that, not only cutting down on development time, tries to improve clarity in the code defining how these systems work.
-          </p>
-        </details>
-        <p>
-          With these goals in mind, we are going to simulate a very basic system: a ForeverTree. This fake species for this toy demo just grows and gets older. While this seems simple, this basic entry point will enable us to explore all of the core concepts of Josh.
-        </p>
-      </section>
-
-      <section id="editor">
-        <h2>Editor</h2>
-        <p>The easiest way to use Josh is to take advantage of <a href="https://editor.joshsim.org" target="_blank">our online development environment</a>. You don't need to install any software and you can run simulations without leaving your browser. This will not share your simulation or data with us (unless you opt to run on <a href="/community.html">Josh Cloud</a>). Also, your work is saved on your machine. All of this means that you can program in safety and privacy but also don't need to configure your computer.</p>
-        <p>While we will discuss <a href="/guides/cli.html">running simulations outside your browser</a> later and this can be much faster, we will assume that you are using the <a href="https://editor.joshsim.org" target="_blank">Josh IDE</a> for the purposes of this guide.</p>
-      </section>
-
-      <section id="simulation">
-        <h2>Simulation</h2>
-        <p>It all starts with a simulation. This is where we tell Josh where in the world we are running our model and for how long. Let's define a 1 kilometer grid that is around Joshua Tree National Park. We will simulate from 2025 to 2035. Let's take a look at the code.</p>
-        <pre><code class="language-joshlang">start simulation Main
-
-  grid.size = 1000 m
-  grid.low = 33.7 degrees latitude, -115.4 degrees longitude
-  grid.high = 34.0 degrees latitude, -116.4 degrees longitude
-  grid.patch = "Default"
-
-  steps.low = 0 count
-  steps.high = 10 count
-
-end simulation</code></pre>
-        <p>
-          We called this simulation Main but you could call it anything you like. Note that Josh runs simulations where it computes everything within our simulated area once per step. So, <code>steps.low</code> and <code>steps.high</code> tells Josh for how many timesteps we want to execute our work. In our case, we will assume that each step is a year and we run from year 0 to year 11. However, you can run simulations where each step is a day or a month.
-        </p>
-        <p>
-          All together, this means that Josh will simulate each 1 km "patch" within our simulation area for each year from year 0 to year 10.
-        </p>
-      </section>
-
-      <section id="patch">
-        <h2>Patch</h2>
-        <p>Next, we need to tell Josh about our grid cells. These are referred to as patches. Here, we will create ten trees on each patch. Josh knows which kind of patch to use beacuse of the name we specified above. Here we encounter our first use of init.</p>
-        <pre><code class="language-joshlang">start patch Default
-
-  ForeverTree.init = create 10 count of ForeverTree
-
-end patch</code></pre>
-        <p>Init tells Josh that you want some calculation to run when something is made. In this case, when the patch is created in the simulation. In other words, we are telling Josh that, when a patch is created within our simulation, we should place 10 forever trees in that patch.</p>
-      </section>
-
-      <section id="organism">
-        <h2>Organism</h2>
-        <p>We've told Josh about our grid and we've told it about the patches we want to fill that grid. At last, we can tell Josh how we want our organism (ForeverTree) to behave.</p>
-        <pre><code class="language-joshlang">start organism ForeverTree
-
-  age.init = 0 year
-  age.step = prior.age + 1 year
-
-  height.init = 0 meters
-  height.step = prior.height + sample uniform from 0 meters to 1 meters
-
-end organism</code></pre>
-        <p>When we create a new ForeverTree, we give it an age. In this case, it starts as zero years old. However, we now see not just the use of the init event callback but the step event.</p>
-        <p>Using this step callback, Josh will add one year to the tree's age (prior means the value of the variable prior to that step starting). Something similar happens for height but with a twist: we are sampling the annual growth for each tree from a random uniform distribution.</p>
-        <details>
-          <summary>About random distributions</summary>
-          <p>We can sample different kinds of distributions in our simulations to try to capture real-world behaviors. This also lets us use Monte Carlo which involves running many simulations with lots of random sampling to see a universe of future possibilities. A uniform distribution means that every number hsa the same probability of being selected. So, a uniform distribution from 1 to 5 means 2 and 3 have the same probability of being selected. Later tutorials will look at other random distributions like the normal distribution.</p>
-        </details>
-      </section>
-
-      <section id="units">
-        <h2>Units</h2>
-        <p>So far, we've been giving Josh not just numbers like 33.7 but those numbers have units like degrees. Your simulations can do unit dimensional analysis for you, performing conversions if needed. Josh has meters (meter, meters, m), count (count, counts), and degrees (degree, degrees) built in. However, it doesn't know about years. Let's define it.</p>
-        <pre><code class="language-joshlang">start unit year
-
-  alias years
-  alias yr
-  alias yrs
-
-end unit</code></pre>
-        <p>A later tutorial will discuss unit conversions. For example, you might want to define months and tell Josh that a year is equivalent to 12 months. However, for now, this code snippet simply tells Josh that years is a valid unit and it may go by different names: year, years, yr, yrs.</p>
-      </section>
-
-      <section id="run">
-        <h2>Run</h2>
-        <p>You have everything you need to run your first simulation! Go ahead and copy the four stanzas above into the text editor and run in your browser. Give it a minute or two to do its job. You are simulating over 30,000 trees! Then, let's look at the output.</p>
-      </section>
-
-      <section id="exports">
-        <h2>Exports</h2>
-        <p>Your simulation probably ran but you likely didn't see any outputs. We have to tell Josh which variables to export. You can send data from your simulations to CSV files which you can open in spreadsheet software, COGs / geotiffs, or netCDF files. You can also do these exports for variables on simulations, patches, or organisms.</p>
-        <p>All of these options in mind, one of the most useful export targets it the Josh IDE itself. You can send these data into the editor for immediate visualization and, if desired, export. This can help refine a simulation as you are buliding it. Let's start there by changing our definition of the Default patch, indicating what data we want to export.</p>
-        <pre><code class="language-joshlang">start patch Default
-
-  ForeverTree.init = create 10 count of ForeverTree
-
-  export.averageAge.step = mean(ForeverTree.age)
-  export.averageHeight.step = mean(ForeverTree.height)
-
-end patch</code></pre>
-        <p>The code we wrote tells Josh to record the average age of the trees in each patch along with the average height. However, we also need to tell Josh to send these results to the editor for visualization. That is done on the simulation.</p>
-        <pre><code class="language-joshlang">start simulation TestSimpleSimulation
-
-  grid.size = 1000 m
-  grid.low = 33.7 degrees latitude, -115.4 degrees longitude
-  grid.high = 34.0 degrees latitude, -116.4 degrees longitude
-
-  steps.low = 0 count
-  steps.high = 10 count
-
-  exportFiles.patch = "memory://editor/patches"
-
-end simulation</code></pre>
-        <p>This says to send patches to the editor "in memory" which just means it isn't being saved to your computer. Note that the Josh IDE can only use memory targets. If you want to use disk targets, you need to <a href="/guides/cli.html">run simulations outside your browser</a>. Anyway, with that, give it another shot.</p>
-      </section>
-      <section id="visualizing">
-        <h2>Visualizing</h2>
-        <p>You should see tools for visualization including a bar chart showing the overall simulation-wide values over time. You can change the timestep shown by clicking on the different bars. Go ahead and try a few different options in the dropdown menus and see how values change over time in the simulation!</p>
-        <p>Also, if you have a <a href="https://www.mapbox.com" target="_blank">Mapbox API Key</a>, you can also add satellite imagery or reference points underneath your heatmap. Simply click the map button. Then, choose one of the basemap options.</p>
-        <p>We are almost done but lets finish off our introduction by looking at replicates.</p>
-      </section>
-      <section id="replicates">
-        <h2>Replicates</h2>
-        <p>So far, we've only run with a single replicate. However, if you go back to the run dialog, you can indicate that you want more than one replicate. This can be a bit slow to execute in your browser. If you are <a href="/guides/cli.html">running Josh locally</a>, have access to <a href="/community.html">Josh Cloud</a>, or have an <a href="/use.html">IT team which has set up a data center</a>, you can run multiple replicates in parallel.</p>
-        <p>If you have access to one of those other systems, give it a try now with 10 replicates. Otherwise, go ahead and run in your browser with 2.</p>
-      </section>
-      <section id="replicates">
-        <h2>Export</h2>
-        <p>After running for a larger number of replicates, try clicking the export button. This will provide CSV files which can be opened in your spreadsheet software. For exporting geotiffs and netCDF files, see <a href="/guides/cli.html">running Josh locally</a>.</p>
-      </section>
-      <section id="wrap">
-        <h2>Wrap</h2>
-        <p>That's it for our first introduction. In the <a href="/guides/grass_shrub_fire.html">next tutorial</a>, we will explore some of the tools that Josh makes avaiable for real world simulation including use of external data and some syntax which makes it easier to define these mathematical systems.</p>
-        <div class="call-to-action">
-          <a href="/examples/guide/hello.josh" download>Download Complete Code</a>
-        </div>
-      </section>
-    </main>
-    <script src="/prism-core.min.js"></script>
-    <script src="/prism-autoloader.min.js"></script>
-    <script src="/joshlang-prism.js"></script>
+    <!--
+      This page used to be hand-written HTML with the model transcribed into it, and it drifted
+      from the model CI validated. It is now generated from docs/src/guides/hello/ by the docs
+      builder. Only the redirect is kept, so links published before the move still work.
+    -->
+    <p>
+      This tutorial has moved to
+      <a href="/library/guides/hello/hello.html">/library/guides/hello/</a>.
+    </p>
   </body>
 </html>

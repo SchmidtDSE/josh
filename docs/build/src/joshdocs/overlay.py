@@ -2,14 +2,15 @@
 
 An authored model that writes to ``memory://editor/patches`` runs in the browser but throws
 ``Unsupported protocol: memory`` on the JVM, and one that writes to ``file:///tmp/...`` throws
-``Only in-memory targets supported on WASM``. That conflict is why ``examples/guide`` carries four
-``_cli`` twins of otherwise identical models.
+``Only in-memory targets supported on WASM``. That conflict used to be resolved by keeping a second
+copy of each model -- ``examples/guide`` carried four ``_cli`` twins of otherwise identical files --
+which is exactly the arrangement that lets two copies of one model disagree.
 
 Rather than rewrite the authored source, the harvester appends an ``update simulation <Name>``
 stanza that redeclares only the ``exportFiles`` handlers. ``update`` merges onto the entity already
 declared, replacing the handlers it names and leaving everything else intact, so appending is enough
-and the view-source box on a rendered page still shows the authored file byte for byte. The pattern
-is already in production in ``paper/management/management.josh``.
+and the listing on a rendered page still shows the authored file byte for byte. The pattern is
+already in production in ``paper/management/management.josh``.
 
 ``update`` is not limited to exports, and neither is this module: a unit may name an ``overlay:``
 file holding stanzas the author wrote, which is how a difference the generator cannot express --

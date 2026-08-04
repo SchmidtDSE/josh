@@ -46,6 +46,50 @@ docs/src/recipes/dispersal/wind-dispersal.md:4
   order: expected an integer, got 'thirty'
 ```
 
+## Rendering
+
+```bash
+uv run --project docs/build joshdocs render   # -> landing/library/
+uv run --project docs/build joshdocs serve    # -> http://127.0.0.1:8123/
+```
+
+`render` reads only the manifest, so it needs no jar. Pair it with `harvest --skip-jar` to work on
+prose without a 116MB build. The output tree is emptied first unless `--keep` is given, so a page
+whose unit was deleted does not linger; `landing/library/` is gitignored and rebuilt on every push.
+
+Each unit becomes `<destination>/<id>.html`, which is its prose file's own path with a new
+extension whenever the author let both fields default. Two indexes are generated per kind plus one
+for the library, so a new unit appears in the navigation by existing. Conformance tests are in the
+manifest but get no page: they carry no prose, and 156 stubs would not be documentation.
+
+The rule the whole pipeline exists to enforce is applied here. **The complete model on a page is
+read from the authored `.josh` and escaped, never transcribed**, and the copy under
+`landing/library/models/` that the download button serves is that same file. The fenced snippets
+inside the prose are the author's own excerpts and are allowed to differ, because a tutorial builds
+its model a piece at a time. `tests/test_integration.py` asserts the listing equals the source for
+every unit in the real tree, with a control that fails when the template hardcodes a listing.
+
+`serve` does not watch for changes: watching would need a dependency the build has no other use
+for, and re-running `render` takes well under a second.
+
+### Links in prose
+
+Relative links are repointed at the page they mean, and a link with no target **fails the render**.
+Three spellings resolve:
+
+| Written | Resolves to |
+|---|---|
+| `../two_trees/two_trees.md` | that unit's page, by path |
+| `two_trees.md` | that unit's page, by id — the spelling inherited from the old flat tree |
+| `hello_debug_ci.josh` | the copy under `models/`, for an overlay fragment that cannot be a unit |
+
+Site-absolute (`/use.html`), external, and in-page (`#anchor`) links are left alone. Rewriting
+happens on the Markdown token stream rather than on rendered HTML, so a URL inside a fenced
+`joshlang` block — `exportFiles.patch = "memory://editor/patches"` — is never touched.
+
+A page that is not published cannot be linked to. That is what makes a broken cross-reference a
+build failure rather than a 404 a reader finds first.
+
 ## What reads the manifest
 
 `JoshConformanceTest` reads `build/docs/docs-manifest.json` before it walks `josh-tests`, so a model
@@ -58,6 +102,7 @@ Gradle wires the two together:
 
 ```bash
 ./gradlew harvestDocs      # writes the manifest, building the jar first
+./gradlew renderDocs       # depends on harvestDocs; writes landing/library
 ./gradlew conformanceTest  # depends on harvestDocs
 ```
 
@@ -183,6 +228,12 @@ controls always wins over a path an author might hardcode.
 uv run --project docs/build ruff check docs/build
 uv run --project docs/build pytest docs/build
 ```
+
+The page templates are `docs/build/templates/`, Jinja files beside the package rather than inside
+it, so changing markup never means opening Python. `base.html` carries the head and the site nav;
+the nav is one copy here against the five hand-maintained copies in `landing/*.html`, which is the
+duplication this tree exists to stop adding to. Undefined variables are an error, so a renamed
+manifest field fails the build instead of rendering an empty page.
 
 One boundary is worth defending in review: **the jar owns Josh semantics.** Anything the builder
 needs to know about a model — does it parse, what externals does it read — goes through

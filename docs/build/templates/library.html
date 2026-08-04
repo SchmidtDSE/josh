@@ -1,0 +1,38 @@
+{% extends "base.html" %}
+{#
+  The library's front door: one card per kind, plus the harvest's own numbers. The counts are shown
+  because they are the honest summary of what the build checked, and they change when someone adds
+  a model without checking it -- which the harvest refuses to let happen.
+#}
+{% block title %}Josh Library{% endblock %}
+{% block heading %}Library{% endblock %}
+{% block tagline %}<p>Every Josh model we publish, validated by the build that publishes it.</p>{% endblock %}
+
+{% block content %}
+    <main id="main" class="landing">
+{% for title, blurb, href, count in sections %}
+      <section>
+        <h2>{{ title }}</h2>
+        <p>{{ blurb }}</p>
+        <p class="section-count">{{ count }} page{{ "" if count == 1 else "s" }}</p>
+        <div class="call-to-action">
+          <a href="{{ href }}">Browse the {{ title | lower }}</a>
+        </div>
+      </section>
+{% endfor %}
+      <section id="how">
+        <h2>How these pages are built</h2>
+        <p>
+          Each page pairs a <code>.josh</code> model with the prose beside it in
+          <code>docs/src</code>. The build reads the model from that file and puts it on the page
+          unchanged, so what you copy is what we validate. A model that no check covers cannot be
+          added: the harvest fails on a model with no prose, and on prose with no model.
+        </p>
+        <p class="section-count">
+          {{ counts.total }} units harvested &mdash; {{ counts.assertions }} run their own
+          assertions in the conformance suite, {{ counts.validated }} are validated against the
+          engine, and {{ counts.reserved }} document syntax that is not implemented yet.
+        </p>
+      </section>
+    </main>
+{% endblock %}

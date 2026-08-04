@@ -34,7 +34,7 @@ As with the other tutorials, this is a toy model using fake species. The use of 
 
 ## Data
 
-This time we are going to use data from [Cal-Adapt](https://cal-adapt.org/) which provides its data as netCDF files for Tulare County, California. The data comes from the FGOALS-g3 climate model under the SSP2-4.5 emissions scenario (2015-2100). Again, a [later tutorial will go into the details of preprocessing](data.md) for speed.
+This time we are going to use data from [Cal-Adapt](https://cal-adapt.org/) which provides its data as netCDF files for Tulare County, California. The data comes from the FGOALS-g3 climate model under the SSP2-4.5 emissions scenario (2015-2100). Again, these were preprocessed into `.jshd` for speed.
 
 The climate data uses custom unit conversions in Josh. Temperature data is in Kelvin (K), while precipitation data is provided in kg m^-2 s^-1 and automatically converted to mm/year using a custom `kgm2s` unit definition.
 
@@ -324,6 +324,5 @@ start unit mm
 end unit
 ```
 
-Go ahead and give it a run. This one might take a little longer! If you have [Josh Cloud](/community.html), this might be a good time to give it a shot. When ready, let's move forward to a [tutorial on data preprocessing](data.md).
+Go ahead and give it a run. This one might take a little longer! If you have [Josh Cloud](/community.html), this might be a good time to give it a shot. When ready, try swapping in data of your own.
 
-[Download Complete Code](/examples/guide/two_trees.josh)

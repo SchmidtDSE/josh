@@ -32,7 +32,7 @@ Once again, this is not meant to be a real ecological model. It's not simulating
 
 ## Data
 
-The [CHC-CMIP6 data](https://www.chc.ucsb.edu/data/chc-cmip6) are originally provided as geotiffs for annual precipitation. A [later tutorial](data.md) will discuss how to preprocess these files, a step which allows Josh to do some up-front work which ensures high simulation execution speeds. This rearranged data matrix is saved in Josh Data Files (.jshd).
+The [CHC-CMIP6 data](https://www.chc.ucsb.edu/data/chc-cmip6) are originally provided as geotiffs for annual precipitation. The `preprocess` command converts them, doing some up-front work which ensures high simulation execution speeds. This rearranged data matrix is saved in Josh Data Files (.jshd).
 
 Specifically, precipitation data are provided in millimeters (mm) per year from 2008-2016, covering multiple annual time steps. This comes from the SSP2-4.5 emissions scenario in the 2030 timeframe.
 
@@ -215,4 +215,3 @@ end unit
 
 With all that in place, go ahead and give your code a run with a single replicate! When you are ready, let's contiune this exploration by [returning to agents](two_trees.md).
 
-[Download Complete Code](/examples/guide/grass_shrub_fire.josh)

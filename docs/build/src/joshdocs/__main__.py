@@ -4,9 +4,16 @@ Run from the repo root:
 
     uv run --frozen --project docs/build joshdocs harvest
 
-Exit codes: 0 when the harvest is clean, 1 when any unit has a problem, and 2 when the builder
-itself could not run -- a missing jar, an unreadable tree. Rendering arrives with the page
-templates; this command is the half that produces the manifest.
+Exit codes: 0 when the work is clean, 1 when any unit has a problem, and 2 when the builder itself
+could not run -- a missing jar, an unreadable tree, an absent manifest.
+
+``harvest`` produces the manifest; ``render`` turns it into pages; ``serve`` puts those pages on
+localhost. They are separate commands because rendering reads only the manifest, which is what lets
+a prose author preview without building a 116MB jar:
+
+    uv run --frozen --project docs/build joshdocs harvest --skip-jar
+    uv run --frozen --project docs/build joshdocs render
+    uv run --frozen --project docs/build joshdocs serve
 """
 
 from __future__ import annotations
@@ -27,10 +34,15 @@ from .harvest import (
     harvest,
 )
 from .joshjar import DEFAULT_JAR, JarUnavailable, JoshJar
+from .manifest import Manifest, ManifestUnreadable
+from .render import DEFAULT_OUT, RenderOptions, render
 
 EXIT_OK = 0
 EXIT_PROBLEMS = 1
 EXIT_UNUSABLE = 2
+
+#: Port `serve` listens on when none is given. Not 8000, which the demo's own preview servers use.
+DEFAULT_PORT = 8123
 
 #: Default parallelism for jar invocations, which are subprocess-bound rather than CPU-bound.
 DEFAULT_JOBS = min(8, (os.cpu_count() or 2))
@@ -123,6 +135,56 @@ def _build_parser() -> argparse.ArgumentParser:
         action="store_true",
         help="print nothing on success",
     )
+
+    render_parser = subparsers.add_parser(
+        "render",
+        help="turn docs-manifest.json into the static pages under landing/library",
+    )
+    render_parser.add_argument(
+        "--root",
+        type=Path,
+        default=Path(),
+        help="repo root that manifest paths resolve against (default: the current directory)",
+    )
+    render_parser.add_argument(
+        "--manifest",
+        type=Path,
+        default=DEFAULT_MANIFEST,
+        help=f"manifest to render (default: {DEFAULT_MANIFEST})",
+    )
+    render_parser.add_argument(
+        "--out",
+        type=Path,
+        default=DEFAULT_OUT,
+        help=f"where to write the pages (default: {DEFAULT_OUT})",
+    )
+    render_parser.add_argument(
+        "--keep",
+        action="store_true",
+        help="add to the output tree instead of emptying it first",
+    )
+    render_parser.add_argument(
+        "--quiet",
+        action="store_true",
+        help="print nothing on success",
+    )
+
+    serve_parser = subparsers.add_parser(
+        "serve",
+        help="serve the rendered pages on localhost for review",
+    )
+    serve_parser.add_argument(
+        "--out",
+        type=Path,
+        default=DEFAULT_OUT,
+        help=f"directory to serve (default: {DEFAULT_OUT})",
+    )
+    serve_parser.add_argument(
+        "--port",
+        type=int,
+        default=DEFAULT_PORT,
+        help=f"port to listen on (default: {DEFAULT_PORT})",
+    )
     return parser
 
 
@@ -179,6 +241,72 @@ def _run_harvest(args: argparse.Namespace) -> int:
     return EXIT_OK
 
 
+def _run_render(args: argparse.Namespace) -> int:
+    """Run the render subcommand.
+
+    Args:
+        args: Parsed arguments.
+
+    Returns:
+        A process exit code.
+    """
+    try:
+        manifest = Manifest.read(args.manifest)
+    except ManifestUnreadable as exc:
+        print(f"joshdocs: {exc}", file=sys.stderr)
+        return EXIT_UNUSABLE
+
+    result = render(
+        RenderOptions(
+            manifest=manifest,
+            root=args.root,
+            out=args.out,
+            clean=not args.keep,
+        )
+    )
+
+    if result.log:
+        result.log.root = args.root
+        print(result.log.report(), file=sys.stderr)
+        return EXIT_PROBLEMS
+
+    if not args.quiet:
+        print(f"joshdocs: {len(result.pages)} files -> {args.out}")
+    return EXIT_OK
+
+
+def _run_serve(args: argparse.Namespace) -> int:
+    """Serve the rendered pages until interrupted.
+
+    Rendering is not repeated on change: watching the tree would need a dependency the build has no
+    other use for, and re-running ``render`` takes well under a second.
+
+    Args:
+        args: Parsed arguments.
+
+    Returns:
+        A process exit code.
+    """
+    import functools
+    import http.server
+
+    if not args.out.is_dir():
+        print(
+            f"joshdocs: {args.out} does not exist; run `joshdocs render` first",
+            file=sys.stderr,
+        )
+        return EXIT_UNUSABLE
+
+    handler = functools.partial(http.server.SimpleHTTPRequestHandler, directory=str(args.out))
+    with http.server.ThreadingHTTPServer(("127.0.0.1", args.port), handler) as server:
+        print(f"joshdocs: serving {args.out} at http://127.0.0.1:{args.port}/ (ctrl-c to stop)")
+        try:
+            server.serve_forever()
+        except KeyboardInterrupt:
+            print()
+    return EXIT_OK
+
+
 def main(argv: list[str] | None = None) -> int:
     """Run the builder.
 
@@ -189,13 +317,15 @@ def main(argv: list[str] | None = None) -> int:
         A process exit code.
     """
     args = _build_parser().parse_args(argv)
+    handlers = {"harvest": _run_harvest, "render": _run_render, "serve": _run_serve}
+    handler = handlers.get(args.command)
+    if handler is None:
+        return EXIT_UNUSABLE
     try:
-        if args.command == "harvest":
-            return _run_harvest(args)
+        return handler(args)
     except HarvestFailed as exc:
         print(exc.log.report(), file=sys.stderr)
         return EXIT_PROBLEMS
-    return EXIT_UNUSABLE
 
 
 if __name__ == "__main__":

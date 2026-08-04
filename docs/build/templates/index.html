@@ -1,0 +1,38 @@
+{% extends "base.html" %}
+{#
+  One kind's index: every unit of that kind, grouped by the directory it lives in and ordered by
+  the `order` field its author set. Generated, so a new unit appears here by existing.
+#}
+{% block title %}Josh {{ title }}{% endblock %}
+{% block heading %}{{ title }}{% endblock %}
+{% block tagline %}<p>{{ blurb }}</p>{% endblock %}
+
+{% block content %}
+    <main id="main" class="landing">
+{% for destination, label, entries in groups %}
+      <section id="{{ destination | replace('/', '-') }}">
+{% if not single_group %}
+        <h2>{{ label | title }}</h2>
+{% endif %}
+        <ul class="unit-list">
+{% for unit, href in entries %}
+          <li>
+            <a href="{{ href }}">{{ unit.title }}</a>
+{% if unit.status.value == "reserved" %}
+            <span class="badge badge-reserved">reserved</span>
+{% elif unit.assertions %}
+            <span class="badge badge-asserting">asserting</span>
+{% endif %}
+{% if unit.description %}
+            <p>{{ unit.description }}</p>
+{% endif %}
+          </li>
+{% endfor %}
+        </ul>
+      </section>
+{% endfor %}
+      <div class="call-to-action">
+        <a href="{{ home }}">All of the library</a>
+      </div>
+    </main>
+{% endblock %}

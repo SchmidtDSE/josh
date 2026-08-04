@@ -1,0 +1,85 @@
+{% extends "base.html" %}
+{#
+  One documentation unit: the author's prose, then the complete model.
+
+  The `model` variable is the authored file's text, read from disk by the renderer and escaped by
+  Jinja's autoescaping. It is deliberately the last thing on the page: the prose teaches the model
+  in excerpts, and this is the finished article those excerpts add up to.
+#}
+{% block title %}Josh {{ kind_title }}: {{ unit.title }}{% endblock %}
+{% block heading %}{{ unit.title }}{% endblock %}
+{% block tagline %}{% if unit.description %}<p>{{ unit.description }}</p>{% endif %}{% endblock %}
+
+{% block content %}
+    <main id="main" class="guide">
+      <div class="back-panel">
+        Part of the <a href="{{ kind_index }}">Josh {{ kind_title }}</a>.
+      </div>
+
+{% if reserved %}
+      <section class="reserved-notice">
+        <h2>Not implemented yet</h2>
+        <p>
+          This page documents syntax the engine does not accept today, so the model below is not
+          validated by the build and will not run.
+          {% if unit.reason %}<strong>{{ unit.reason }}</strong>{% endif %}
+        </p>
+      </section>
+{% endif %}
+
+      <section class="unit-prose">
+{{ prose }}
+      </section>
+
+{% if model is not none %}
+      <section class="unit-model">
+        <h2 id="complete-model">The complete model</h2>
+        <p>
+          This is <code>{{ unit.source }}</code> exactly as it is stored in the repository.
+{% if unit.overlay %}
+          Running it in CI appends
+          <a href="{{ overlay_href }}"><code>{{ unit.overlay.split('/') | last }}</code></a>,
+          which adjusts the run without changing the model you read here.
+{% endif %}
+        </p>
+        <pre><code class="language-joshlang">{{ model }}</code></pre>
+        <div class="call-to-action">
+          <a href="{{ model_href }}" download>Download Complete Code</a>
+        </div>
+      </section>
+{% endif %}
+
+      <section class="unit-facts">
+        <h2 id="about">About this page</h2>
+        <dl class="fact-list">
+          <dt>Source</dt>
+          <dd><code>{{ unit.source }}</code></dd>
+{% if unit.simulation %}
+          <dt>Simulation</dt>
+          <dd><code>{{ unit.simulation }}</code></dd>
+{% endif %}
+{% if unit.data %}
+          <dt>Data</dt>
+          <dd>{% for file in unit.data %}<code>{{ file }}</code>{% if not loop.last %}, {% endif %}{% endfor %}</dd>
+{% endif %}
+          <dt>Checked by</dt>
+          <dd>
+{% if reserved %}
+            nothing yet &mdash; this page is reserved
+{% elif unit.assertions %}
+            the conformance suite, which runs it on every push and fails the build if its
+            <code>assert</code> handlers do not hold
+{% elif unit.expect.value == "parse-error" %}
+            the harvest, which fails the build if this model ever starts parsing cleanly
+{% else %}
+            the harvest, which validates it against the engine on every push
+{% endif %}
+          </dd>
+{% if unit.tags %}
+          <dt>Tags</dt>
+          <dd>{% for tag in unit.tags %}<span class="tag">{{ tag }}</span>{% endfor %}</dd>
+{% endif %}
+        </dl>
+      </section>
+    </main>
+{% endblock %}
