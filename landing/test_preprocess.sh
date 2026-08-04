@@ -118,7 +118,7 @@ for year in {2009..2016}; do
     echo "Processing ${year} precipitation (timestep ${timestep})..."
     
     java -jar joshsim-fat.jar preprocess \
-        ../examples/guide/grass_shrub_fire.josh \
+        ../docs/src/guides/grass_shrub_fire/grass_shrub_fire.josh \
         Main \
         raw_tutorial_supplement/CHC-CMIP6_SSP245_CHIRPS_${year}_annual.tif \
         0 \
