@@ -7,11 +7,12 @@ echo "=== Josh Preprocessing Test ==="
 if [ -d "landing" ]; then
     # Running from root directory (CI/CD)
     cd landing
-    JOSH_PATH="../examples/guide"
-else
-    # Running from landing directory (local)
-    JOSH_PATH="../examples/guide"
 fi
+
+# succession.josh is a preprocessing fixture and stays under examples; the guide models are
+# documentation units and live in the authored docs tree.
+JOSH_PATH="../examples/guide"
+GUIDES_PATH="../docs/src/guides"
 
 # Download and extract tutorial data
 echo "Downloading tutorial data..."
@@ -97,7 +98,7 @@ echo "=== Processing Grass-Shrub-Fire Model Data (GeoTIFF) ==="
 
 echo "Processing 2008 precipitation (timestep 0)..."
 java -jar joshsim-fat.jar preprocess \
-    $JOSH_PATH/grass_shrub_fire.josh \
+    $GUIDES_PATH/grass_shrub_fire/grass_shrub_fire.josh \
     Main \
     raw_tutorial_supplement/CHC-CMIP6_SSP245_CHIRPS_2008_annual.tif \
     0 \
@@ -118,7 +119,7 @@ for year in {2009..2016}; do
     echo "Processing ${year} precipitation (timestep ${timestep})..."
     
     java -jar joshsim-fat.jar preprocess \
-        ../docs/src/guides/grass_shrub_fire/grass_shrub_fire.josh \
+        $GUIDES_PATH/grass_shrub_fire/grass_shrub_fire.josh \
         Main \
         raw_tutorial_supplement/CHC-CMIP6_SSP245_CHIRPS_${year}_annual.tif \
         0 \
