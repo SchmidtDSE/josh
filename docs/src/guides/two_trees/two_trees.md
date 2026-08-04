@@ -1,3 +1,12 @@
+---
+title: "Two Trees"
+order: 20
+tags: [guide, competition, external-data]
+simulation: Main
+exports: [patch]
+overlay: two_trees_ci.josh
+---
+
 # Two Trees
 
 In our [previous tutorial](grass_shrub_fire.md), we explored patch-based modeling. In this next step, we will look at modeling where we are simulating individual organisms.
@@ -82,8 +91,8 @@ start patch Default
   initialBCount.init = countOccupancy - initialACount
 
   # Create initial occupants
-  SpeciesA.init = create initialACount of SpeciesA
-  SpeciesB.init = create initialBCount of SpeciesB
+  SpeciesA.init = create floor(initialACount) of SpeciesA
+  SpeciesB.init = create floor(initialBCount) of SpeciesB
 
 end patch
 ```
@@ -153,7 +162,7 @@ start patch Default
     if (totalCount > 0) {
       return floor((speciesACount / totalCount) * newCount)
     } else {
-      return newCount * 50%
+      return floor(newCount * 50%)
     }
   }
 
@@ -161,7 +170,7 @@ start patch Default
     if (totalCount > 0) {
       return floor((speciesBCount / totalCount) * newCount)
     } else {
-      return newCount * 50%
+      return floor(newCount * 50%)
     }
   }
 

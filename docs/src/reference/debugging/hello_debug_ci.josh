@@ -1,0 +1,5 @@
+update simulation Main
+
+  debugFiles.organism = "file:///tmp/hello_debug_organism.txt"
+
+end simulation

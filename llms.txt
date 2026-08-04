@@ -6,29 +6,29 @@ Josh is a domain-specific language (DSL) designed for ecological modeling, with 
 ## Resources
 
 - [Full Documentation](llms-full.txt) - Complete Josh language specification and reference
-- [Tutorial Series](docs/guide/md/index.md) - Step-by-step tutorials for simulation development
-- [Getting Started](docs/guide/md/hello.md) - Basic introduction to Josh interface and concepts
-- [Two Trees Tutorial](docs/guide/md/two_trees.md) - Intermediate modeling with multiple species
-- [Fire Dynamics](docs/guide/md/grass_shrub_fire.md) - Advanced fire modeling and disturbance events
-- [State Management](docs/guide/md/states.md) - Working with entity states and transitions
-- [Python Integration](docs/guide/md/python.md) - Using Josh with Python for analysis
-- [Command Line Interface](docs/guide/md/cli.md) - Josh CLI tools and preprocessing
-- [Data Integration](docs/guide/md/data.md) - Working with external geospatial data
+- [Tutorial Series](docs/src/guides/index.md) - Step-by-step tutorials for simulation development
+- [Getting Started](docs/src/guides/hello/hello.md) - Basic introduction to Josh interface and concepts
+- [Two Trees Tutorial](docs/src/guides/two_trees/two_trees.md) - Intermediate modeling with multiple species
+- [Fire Dynamics](docs/src/guides/grass_shrub_fire/grass_shrub_fire.md) - Advanced fire modeling and disturbance events
+- [State Management](docs/src/guides/_states.md) - Working with entity states and transitions
+- [Python Integration](docs/src/guides/_python.md) - Using Josh with Python for analysis
+- [Command Line Interface](docs/src/guides/_cli.md) - Josh CLI tools and preprocessing
+- [Data Integration](docs/src/guides/_data.md) - Working with external geospatial data
 
 ## Tutorial Series Overview
 
 **Beginner Tutorials:** Basic interface, entities, and simple simulations
-- [Hello Grid](docs/guide/md/hello.md) - Interface overview and basic Josh concepts
-- [Data Integration](docs/guide/md/data.md) - Working with external data sources
+- [Hello Grid](docs/src/guides/hello/hello.md) - Interface overview and basic Josh concepts
+- [Data Integration](docs/src/guides/_data.md) - Working with external data sources
 
 **Intermediate Tutorials:** Multi-species modeling and spatial interactions
-- [Two Trees](docs/guide/md/two_trees.md) - Multiple species and competitive interactions
-- [State Management](docs/guide/md/states.md) - Entity states and behavioral transitions
+- [Two Trees](docs/src/guides/two_trees/two_trees.md) - Multiple species and competitive interactions
+- [State Management](docs/src/guides/_states.md) - Entity states and behavioral transitions
 
 **Advanced Tutorials:** Complex dynamics and tool integration
-- [Fire Dynamics](docs/guide/md/grass_shrub_fire.md) - Disturbance modeling and fire effects
-- [Python Integration](docs/guide/md/python.md) - Analysis workflows with Python
-- [Command Line Tools](docs/guide/md/cli.md) - Preprocessing and batch execution
+- [Fire Dynamics](docs/src/guides/grass_shrub_fire/grass_shrub_fire.md) - Disturbance modeling and fire effects
+- [Python Integration](docs/src/guides/_python.md) - Analysis workflows with Python
+- [Command Line Tools](docs/src/guides/_cli.md) - Preprocessing and batch execution
 
 ## Key Capabilities
 
