@@ -134,15 +134,31 @@ Built by `buildBatchImage` job in `.github/workflows/build.yaml` on push to main
 - **HMAC keys:** Secret Manager (`josh-k8s-minio-access-key`, `josh-k8s-minio-secret-key`)
 - **IAM:** `josh-k8s-gcs-sa@dse-nps` with `roles/storage.objectAdmin` + `roles/storage.bucketViewer`
 
-### Nautilus / NRP (untested — profile ready)
+### Nautilus / NRP
 
 Profile: `examples/test/nautilus/nautilus.json`. Two values need substituting before use:
-`kubernetes.namespace` and `minio_bucket`.
+`kubernetes.namespace` and `minio_bucket`. Validated verbatim otherwise — see results below.
 
-- **Kubeconfig:** download from the [NRP portal](https://nrp.ai); the context is normally `nautilus`.
+- **Kubeconfig:** download from the [NRP portal](https://nrp.ai); the context is `nautilus`.
   Fabric8 reads it through the same `Config.autoConfigure(context)` path as GKE.
+- **Auth needs a plugin, and it is interactive.** NRP authenticates via OIDC against authentik with
+  no static credential in the kubeconfig. The kubeconfig's `exec` block calls
+  `kubectl oidc-login` ([kubelogin](https://github.com/int128/kubelogin)), which must be installed as
+  `kubectl-oidc_login` on `PATH` — Fabric8 shells out to the same plugin, so josh needs it just as
+  much as kubectl does. First use opens a browser flow; `offline_access` then yields a refresh token
+  so renewals are silent. In a headless container, kubelogin listens on `--listen-address` and prints
+  a URL: complete it in a browser and, if the redirect cannot reach the container, replay the
+  `?code=...&state=...` callback against the listener with `curl` from inside it.
+
+  This is the one place NRP is materially worse than GKE for automation: unattended dispatch requires
+  a pre-warmed token cache plus the plugin binary. For CI or scheduled runs, prefer a ServiceAccount
+  token in the namespace, which removes both the plugin and the interactive step.
 - **Object storage:** NRP's Ceph RGW is S3-compatible, so the MinIO client works unchanged. Get keys
   from the portal's User → S3 Tokens page and export them as `MINIO_ACCESS_KEY` / `MINIO_SECRET_KEY`.
+  The token can create its own buckets — `stageToMinio --ensure-bucket-exists` is enough, no admin
+  step. Note `stageToMinio` takes no `--target`, so it reads endpoint and bucket from the
+  environment, while `batchRemote` reads them from the profile; the `minio://` export path in the
+  `.josh` script has to name the same bucket as both.
 - **The endpoint split matters here.** The client uses the public gateway
   `https://s3-west.nrp-nautilus.io`; pods use the in-cluster RGW service
   `http://rook-ceph-rgw-nautiluss3.rook`, which talks to the OSDs directly for higher bandwidth.
@@ -154,15 +170,33 @@ Profile: `examples/test/nautilus/nautilus.json`. Two values need substituting be
 - **Do not set `"spot": true`.** `applySpotConfig` emits a `cloud.google.com/gke-spot` selector and
   toleration, which is GKE-only and will make pods unschedulable on NRP.
 
-Not yet verified on a live NRP namespace:
+Verified on namespace `schmidtdse` (2026-08-05):
 
-| Test | What it validates | Status |
+| Test | What it validates | Result |
 |------|-------------------|--------|
-| N1 | Smoke test (single replicate) | [ ] |
-| N2 | Multi-replicate fan-out | [ ] |
-| N3 | Preprocessing round-trip | [ ] |
-| N4 | Credential Secret GC'd with the Job | [ ] |
-| N5 | Pod admission — image runs as root, so a namespace enforcing Pod Security `restricted` would reject it outright. NRP's published policies don't mention PSA; needs an empirical check. | [ ] |
+| N1 | Smoke test (single replicate), 40s end to end | **PASS** |
+| N2 | Multi-replicate fan-out — 3 pods at indices 0/1/2, three distinct `{replicate}` CSVs | **PASS** |
+| N3 | Preprocessing round-trip (GeoTIFF → 16MB .jshd downloaded) | **PASS** |
+| N4 | Credential Secret GC'd with the Job — `ownerReferences` set on both the run and preprocess paths; deleting the Job removed the Secret | **PASS** |
+| N5 | Pod admission — namespace carries no `pod-security.kubernetes.io/*` label, so the root-running batch image is admitted. No `securityContext` needed. | **PASS** |
+
+Environment notes from that run:
+
+- **Pods scheduled across institutions** — the three N2 replicates landed on nodes at SDSC, SDSC-HaoSu
+  and UC Santa Cruz, all writing back to the west Ceph pool through the in-cluster RGW service. The
+  in-cluster endpoint resolves from every site, so `pod_minio_endpoint` needs no per-site variation.
+- **Quotas are not a constraint at this scale:** namespace cap is 200 pods; GPU quotas are 0 (no GPU
+  access) and the `high-priority-ban` / `low-priority-ban` quotas mean pods must stay at default
+  priority, which josh does since it never sets `priorityClassName`.
+- **LimitRanges are permissive** — Pod max memory 1Ti, container defaults (cpu 100m / memory 1Gi)
+  apply only when unset, and `ephemeral-storage` defaults to a 50Gi limit. The profile's
+  2 cpu / 4Gi / 16Gi ephemeral sits well inside all of it.
+- **RBAC check before dispatching** — `kubectl auth can-i` on `create/get/delete jobs.batch`,
+  `create/get/patch secrets`, `list pods`, `get pods/log`. `patch secrets` matters specifically: it is
+  what the `ownerReferences` binding needs, and without it dispatch still succeeds but warns and
+  leaves the Secret behind.
+- **Pods are not labelled `app=joshsim`** — josh sets that label on the Job only, so ad-hoc pod
+  queries need `-l job-name=<job>`, which is also what `KubernetesPollingStrategy` uses.
 
 ### Cloud Run
 - **Dev:** `https://josh-executor-dev-1007495489273.us-west1.run.app`
