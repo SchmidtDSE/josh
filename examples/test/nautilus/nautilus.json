@@ -1,0 +1,26 @@
+{
+  "type": "kubernetes",
+  "kubernetes": {
+    "context": "nautilus",
+    "namespace": "your-nrp-namespace",
+    "image": "ghcr.io/schmidtdse/josh/joshsim-batch:latest",
+    "pod_minio_endpoint": "http://rook-ceph-rgw-nautiluss3.rook",
+    "resources": {
+      "requests": {
+        "cpu": "2",
+        "memory": "4Gi",
+        "ephemeral-storage": "16Gi"
+      },
+      "limits": {
+        "cpu": "2",
+        "memory": "4Gi",
+        "ephemeral-storage": "16Gi"
+      }
+    },
+    "parallelism": 5,
+    "timeoutSeconds": 3600,
+    "ttlSecondsAfterFinished": 3600
+  },
+  "minio_endpoint": "https://s3-west.nrp-nautilus.io",
+  "minio_bucket": "your-nrp-bucket"
+}

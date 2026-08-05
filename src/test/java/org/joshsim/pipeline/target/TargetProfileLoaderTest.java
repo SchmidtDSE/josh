@@ -7,6 +7,7 @@
 package org.joshsim.pipeline.target;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
@@ -96,6 +97,32 @@ class TargetProfileLoaderTest {
     assertEquals("2", profile.getKubernetesConfig().getResources()
         .get("requests").get("cpu"));
     assertNull(profile.getHttpConfig());
+  }
+
+  @Test
+  void loadsCommittedNautilusProfile() throws Exception {
+    // Guards the shipped NRP profile against typos and schema drift — it is
+    // copied straight into ~/.josh/targets/ by anyone testing on Nautilus.
+    TargetProfileLoader loader =
+        new TargetProfileLoader(new File("examples/test/nautilus"));
+    TargetProfile profile = loader.load("nautilus");
+
+    assertEquals("kubernetes", profile.getType());
+    KubernetesTargetConfig k8s = profile.getKubernetesConfig();
+    assertNotNull(k8s);
+    // Pods stage over the in-cluster Ceph RGW rather than the public HTTPS
+    // gateway; that split is what pod_minio_endpoint exists for.
+    assertEquals(
+        "http://rook-ceph-rgw-nautiluss3.rook", k8s.getPodMinioEndpoint()
+    );
+    // NRP policy: limits must be within 20% of requests. Keeping them equal
+    // satisfies it and keeps the two from drifting apart.
+    assertEquals(
+        k8s.getResources().get("requests"),
+        k8s.getResources().get("limits")
+    );
+    // Spot is a GKE-only node-selector mechanism and must not leak in here.
+    assertFalse(k8s.isSpot());
   }
 
   @Test

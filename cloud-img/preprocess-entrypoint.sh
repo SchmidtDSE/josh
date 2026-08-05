@@ -22,14 +22,19 @@ JAR="${1:-/app/joshsim-fat.jar}"
 WORK_DIR="/tmp/work"
 
 # GKE Autopilot pods sometimes have a brief window after start where DNS
-# isn't usable yet. Probe a stable host so a flaky resolver doesn't kill
-# stageFromMinio after we've paid full JAR startup cost.
-for attempt in 1 2 3 4 5 6 7 8 9 10; do
-  if getent hosts storage.googleapis.com >/dev/null 2>&1; then
-    break
-  fi
-  sleep 2
-done
+# isn't usable yet. Probe the object store we are about to stage from so a
+# flaky resolver doesn't kill stageFromMinio after we've paid full JAR
+# startup cost. Probing the configured endpoint rather than a fixed host
+# keeps this useful off GCP (NRP Ceph, in-cluster MinIO, EKS).
+MINIO_HOST=$(echo "${MINIO_ENDPOINT:-}" | sed -e 's|^[a-zA-Z][a-zA-Z0-9+.-]*://||' -e 's|[:/].*$||')
+if [ -n "$MINIO_HOST" ]; then
+  for attempt in 1 2 3 4 5 6 7 8 9 10; do
+    if getent hosts "$MINIO_HOST" >/dev/null 2>&1; then
+      break
+    fi
+    sleep 2
+  done
+fi
 
 # Stage inputs (josh script + data file), with retry for transient hiccups.
 STAGE_OK=0

@@ -10,28 +10,34 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.Mockito.inOrder;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 import io.fabric8.kubernetes.api.model.Container;
 import io.fabric8.kubernetes.api.model.EnvVar;
+import io.fabric8.kubernetes.api.model.OwnerReference;
 import io.fabric8.kubernetes.api.model.Secret;
 import io.fabric8.kubernetes.api.model.Toleration;
 import io.fabric8.kubernetes.api.model.batch.v1.Job;
+import io.fabric8.kubernetes.api.model.batch.v1.JobBuilder;
 import io.fabric8.kubernetes.client.KubernetesClient;
 import io.fabric8.kubernetes.client.dsl.BatchAPIGroupDSL;
 import io.fabric8.kubernetes.client.dsl.MixedOperation;
 import io.fabric8.kubernetes.client.dsl.NamespaceableResource;
+import io.fabric8.kubernetes.client.dsl.Resource;
 import io.fabric8.kubernetes.client.dsl.ScalableResource;
 import io.fabric8.kubernetes.client.dsl.V1BatchAPIGroupDSL;
 import java.util.List;
 import java.util.Map;
+import java.util.function.UnaryOperator;
 import org.joshsim.command.PreprocessOptions;
 import org.joshsim.command.TimeAxisParams;
 import org.joshsim.util.MinioOptions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
+import org.mockito.InOrder;
 
 
 /**
@@ -46,14 +52,18 @@ class KubernetesPreprocessTargetTest {
   private static final String NAMESPACE = "joshsim-lab";
   private static final String IMAGE = "ghcr.io/schmidtdse/joshsim-job:latest";
   private static final String JOB_ID = "pp-abc-123";
+  private static final String JOB_UID = "9a2d4b7c-0000-4000-8000-fedcba987654";
   private static final String PREFIX = "batch-jobs/pp-abc-123/inputs/";
   private static final String SIMULATION = "Main";
   private static final String POD_ENDPOINT = "http://minio.default.svc:9000";
 
   private KubernetesClient mockClient;
+  private ScalableResource mockJobResource;
+  private NamespaceableResource mockSecretResource;
   private KubernetesTargetConfig config;
   private ArgumentCaptor<Job> jobCaptor;
   private ArgumentCaptor<Secret> secretCaptor;
+  private ArgumentCaptor<UnaryOperator> secretEditCaptor;
 
   @BeforeEach
   void setUp() {
@@ -70,9 +80,19 @@ class KubernetesPreprocessTargetTest {
     when(mockJobs.inNamespace(NAMESPACE)).thenReturn(mockNsJobs);
 
     jobCaptor = ArgumentCaptor.forClass(Job.class);
-    final ScalableResource mockJobResource = mock(ScalableResource.class);
+    mockJobResource = mock(ScalableResource.class);
     when(mockNsJobs.resource(jobCaptor.capture())).thenReturn(mockJobResource);
-    when(mockJobResource.create()).thenReturn(null);
+    // The real client echoes back the created Job carrying its server-assigned
+    // UID, which is what the credential Secret's ownerReference binds to.
+    when(mockJobResource.create()).thenReturn(
+        new JobBuilder()
+            .withNewMetadata()
+                .withName("josh-" + JOB_ID)
+                .withNamespace(NAMESPACE)
+                .withUid(JOB_UID)
+            .endMetadata()
+            .build()
+    );
 
     final MixedOperation mockSecrets = mock(MixedOperation.class);
     final MixedOperation mockNsSecrets = mock(MixedOperation.class);
@@ -81,11 +101,48 @@ class KubernetesPreprocessTargetTest {
     when(mockSecrets.inNamespace(NAMESPACE)).thenReturn(mockNsSecrets);
 
     secretCaptor = ArgumentCaptor.forClass(Secret.class);
-    final NamespaceableResource mockSecretResource = mock(NamespaceableResource.class);
+    mockSecretResource = mock(NamespaceableResource.class);
     when(mockNsSecrets.resource(secretCaptor.capture())).thenReturn(mockSecretResource);
     when(mockSecretResource.create()).thenReturn(null);
 
+    // Wire secrets().withName(...).edit(...) for the ownership binding.
+    final Resource mockSecretByName = mock(Resource.class);
+    when(mockNsSecrets.withName("josh-creds-" + JOB_ID)).thenReturn(mockSecretByName);
+    secretEditCaptor = ArgumentCaptor.forClass(UnaryOperator.class);
+    when(mockSecretByName.edit(secretEditCaptor.capture())).thenReturn(null);
+
     config = buildConfig(10, 3600, null);
+  }
+
+  @Test
+  void dispatchBindsSecretToJobForGarbageCollection() throws Exception {
+    KubernetesPreprocessTarget target = buildTarget(config);
+
+    target.dispatch(JOB_ID, PREFIX, SIMULATION, buildParams());
+
+    Secret edited = (Secret) secretEditCaptor.getValue()
+        .apply(secretCaptor.getValue());
+
+    List<OwnerReference> owners = edited.getMetadata().getOwnerReferences();
+    assertEquals(1, owners.size());
+    OwnerReference owner = owners.get(0);
+    assertEquals("Job", owner.getKind());
+    assertEquals("josh-" + JOB_ID, owner.getName());
+    assertEquals(JOB_UID, owner.getUid());
+    assertTrue(owner.getController());
+  }
+
+  @Test
+  void dispatchCreatesSecretBeforeJob() throws Exception {
+    // A Job created first can schedule a pod against a secretKeyRef that does
+    // not exist yet, landing the container in CreateContainerConfigError.
+    KubernetesPreprocessTarget target = buildTarget(config);
+
+    target.dispatch(JOB_ID, PREFIX, SIMULATION, buildParams());
+
+    InOrder ordered = inOrder(mockSecretResource, mockJobResource);
+    ordered.verify(mockSecretResource).create();
+    ordered.verify(mockJobResource).create();
   }
 
   @Test

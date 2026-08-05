@@ -10,29 +10,37 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.inOrder;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 import io.fabric8.kubernetes.api.model.Container;
 import io.fabric8.kubernetes.api.model.EnvVar;
+import io.fabric8.kubernetes.api.model.OwnerReference;
 import io.fabric8.kubernetes.api.model.Quantity;
 import io.fabric8.kubernetes.api.model.ResourceRequirements;
 import io.fabric8.kubernetes.api.model.Secret;
 import io.fabric8.kubernetes.api.model.Toleration;
 import io.fabric8.kubernetes.api.model.batch.v1.Job;
+import io.fabric8.kubernetes.api.model.batch.v1.JobBuilder;
 import io.fabric8.kubernetes.client.KubernetesClient;
+import io.fabric8.kubernetes.client.KubernetesClientException;
 import io.fabric8.kubernetes.client.dsl.BatchAPIGroupDSL;
 import io.fabric8.kubernetes.client.dsl.MixedOperation;
 import io.fabric8.kubernetes.client.dsl.NamespaceableResource;
+import io.fabric8.kubernetes.client.dsl.Resource;
 import io.fabric8.kubernetes.client.dsl.ScalableResource;
 import io.fabric8.kubernetes.client.dsl.V1BatchAPIGroupDSL;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.function.UnaryOperator;
 import org.joshsim.util.MinioOptions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
+import org.mockito.InOrder;
 
 
 /**
@@ -48,6 +56,8 @@ class KubernetesTargetTest {
   private static final String IMAGE =
       "ghcr.io/schmidtdse/joshsim-job:latest";
   private static final String JOB_ID = "abc-123-def";
+  private static final String JOB_UID =
+      "6f1c8a3e-0000-4000-8000-0123456789ab";
   private static final String PREFIX =
       "batch-jobs/abc-123-def/inputs/";
   private static final String SIMULATION = "Main";
@@ -60,6 +70,7 @@ class KubernetesTargetTest {
   private KubernetesTargetConfig config;
   private ArgumentCaptor<Job> jobCaptor;
   private ArgumentCaptor<Secret> secretCaptor;
+  private ArgumentCaptor<UnaryOperator> secretEditCaptor;
 
   @BeforeEach
   void setUp() {
@@ -82,7 +93,17 @@ class KubernetesTargetTest {
     jobCaptor = ArgumentCaptor.forClass(Job.class);
     when(mockNsJobs.resource(jobCaptor.capture()))
         .thenReturn(mockJobResource);
-    when(mockJobResource.create()).thenReturn(null);
+    // The real client echoes back the created Job carrying its server-assigned
+    // UID, which is what the credential Secret's ownerReference binds to.
+    when(mockJobResource.create()).thenReturn(
+        new JobBuilder()
+            .withNewMetadata()
+                .withName("josh-" + JOB_ID)
+                .withNamespace(NAMESPACE)
+                .withUid(JOB_UID)
+            .endMetadata()
+            .build()
+    );
 
     // Wire secrets() chain
     final MixedOperation mockSecrets =
@@ -99,6 +120,14 @@ class KubernetesTargetTest {
     when(mockNsSecrets.resource(secretCaptor.capture()))
         .thenReturn(mockSecretResource);
     when(mockSecretResource.create()).thenReturn(null);
+
+    // Wire secrets().withName(...).edit(...) for the ownership binding.
+    final Resource mockSecretByName = mock(Resource.class);
+    when(mockNsSecrets.withName("josh-creds-" + JOB_ID))
+        .thenReturn(mockSecretByName);
+    secretEditCaptor = ArgumentCaptor.forClass(UnaryOperator.class);
+    when(mockSecretByName.edit(secretEditCaptor.capture()))
+        .thenReturn(null);
 
     config = buildConfig(10, 3600, null);
   }
@@ -155,6 +184,63 @@ class KubernetesTargetTest {
     assertNotNull(data.get("MINIO_ACCESS_KEY"));
     assertNotNull(data.get("MINIO_SECRET_KEY"));
     assertNotNull(data.get("MINIO_BUCKET"));
+  }
+
+  @Test
+  void dispatchBindsSecretToJobForGarbageCollection() throws Exception {
+    KubernetesTarget target = buildTarget(config);
+
+    target.dispatch(JOB_ID, PREFIX, SIMULATION, 1, Map.of(), 0, List.of());
+
+    // Apply the captured edit to the created Secret to see the ownerReference
+    // the target writes back once the Job has a UID.
+    Secret edited = (Secret) secretEditCaptor.getValue()
+        .apply(secretCaptor.getValue());
+
+    List<OwnerReference> owners =
+        edited.getMetadata().getOwnerReferences();
+    assertEquals(1, owners.size());
+    OwnerReference owner = owners.get(0);
+    assertEquals("batch/v1", owner.getApiVersion());
+    assertEquals("Job", owner.getKind());
+    assertEquals("josh-" + JOB_ID, owner.getName());
+    assertEquals(JOB_UID, owner.getUid());
+    assertTrue(owner.getController());
+    // Blocking owner deletion would need finalizer rights on the Job.
+    assertEquals(false, owner.getBlockOwnerDeletion());
+  }
+
+  @Test
+  void dispatchCreatesSecretBeforeJob() throws Exception {
+    // Ordering matters: a Job created first can schedule a pod against a
+    // secretKeyRef that does not exist yet, which lands the container in
+    // CreateContainerConfigError and trips the poller's failure detection.
+    KubernetesTarget target = buildTarget(config);
+
+    target.dispatch(JOB_ID, PREFIX, SIMULATION, 1, Map.of(), 0, List.of());
+
+    InOrder ordered = inOrder(mockSecretResource, mockJobResource);
+    ordered.verify(mockSecretResource).create();
+    ordered.verify(mockJobResource).create();
+  }
+
+  @Test
+  void dispatchSurvivesSecretBindingFailure() throws Exception {
+    // A namespace that withholds patch rights on Secrets should degrade to
+    // leaving the Secret behind, not fail a Job the API server already took.
+    final Resource failingSecret = mock(Resource.class);
+    when(failingSecret.edit(any(UnaryOperator.class)))
+        .thenThrow(new KubernetesClientException("secrets is forbidden"));
+    when(mockClient.secrets().inNamespace(NAMESPACE)
+        .withName("josh-creds-" + JOB_ID))
+        .thenReturn(failingSecret);
+
+    KubernetesTarget target = buildTarget(config);
+
+    target.dispatch(JOB_ID, PREFIX, SIMULATION, 1, Map.of(), 0, List.of());
+
+    // The Job still went out.
+    assertNotNull(jobCaptor.getValue());
   }
 
   @Test

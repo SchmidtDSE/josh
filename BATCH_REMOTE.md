@@ -74,6 +74,15 @@ Client (CLI / joshpy)
 
 **Credential resolution:** MinIO credentials resolved via `HierarchyConfig`: profile JSON → environment variables. Secrets don't need to live in the profile.
 
+**Credential Secret lifecycle:** each dispatch creates a `josh-creds-<jobId>` Secret, then adds an
+`ownerReferences` entry pointing at the Job it created (`KubernetesJobSecret`). K8s garbage collection
+deletes the Secret when the Job goes away. The Secret is written *before* the Job so no pod can start
+against a missing `secretKeyRef`; the owner reference is added afterwards because it needs the Job's
+server-assigned UID.
+
+Set `ttlSecondsAfterFinished` on any target you care about — it is what actually triggers the
+cascade. Without it the Job (and therefore the Secret) survives until deleted by hand.
+
 ### Server endpoints
 
 - `POST /runBatch` — async simulation execution, returns 202 + statusPath
@@ -106,6 +115,11 @@ contiguous timesteps.
 - `/app/run-entrypoint.sh` — stages from GCS, runs simulation at `--replicate-index`
 - `/app/preprocess-entrypoint.sh` — stages from GCS, preprocesses, uploads result .jshd
 
+Both entrypoints wait for DNS on the host parsed out of `$MINIO_ENDPOINT` before staging, since a
+pod's resolver can be briefly unusable right after start and a failed `stageFromMinio` wastes the
+full JVM startup. The probe follows the configured endpoint rather than a fixed hostname so it stays
+meaningful off GCP.
+
 Built by `buildBatchImage` job in `.github/workflows/build.yaml` on push to main/dev/feat/k8s-batch.
 
 ---
@@ -119,6 +133,70 @@ Built by `buildBatchImage` job in `.github/workflows/build.yaml` on push to main
 - **GCS bucket:** `dse-nps-josh-batch-storage`
 - **HMAC keys:** Secret Manager (`josh-k8s-minio-access-key`, `josh-k8s-minio-secret-key`)
 - **IAM:** `josh-k8s-gcs-sa@dse-nps` with `roles/storage.objectAdmin` + `roles/storage.bucketViewer`
+
+### Nautilus / NRP
+
+Profile: `examples/test/nautilus/nautilus.json`. Two values need substituting before use:
+`kubernetes.namespace` and `minio_bucket`. Validated verbatim otherwise — see results below.
+
+- **Kubeconfig:** download from the [NRP portal](https://nrp.ai); the context is `nautilus`.
+  Fabric8 reads it through the same `Config.autoConfigure(context)` path as GKE.
+- **Auth needs a plugin, and it is interactive.** NRP authenticates via OIDC against authentik with
+  no static credential in the kubeconfig. The kubeconfig's `exec` block calls
+  `kubectl oidc-login` ([kubelogin](https://github.com/int128/kubelogin)), which must be installed as
+  `kubectl-oidc_login` on `PATH` — Fabric8 shells out to the same plugin, so josh needs it just as
+  much as kubectl does. First use opens a browser flow; `offline_access` then yields a refresh token
+  so renewals are silent. In a headless container, kubelogin listens on `--listen-address` and prints
+  a URL: complete it in a browser and, if the redirect cannot reach the container, replay the
+  `?code=...&state=...` callback against the listener with `curl` from inside it.
+
+  This is the one place NRP is materially worse than GKE for automation: unattended dispatch requires
+  a pre-warmed token cache plus the plugin binary. For CI or scheduled runs, prefer a ServiceAccount
+  token in the namespace, which removes both the plugin and the interactive step.
+- **Object storage:** NRP's Ceph RGW is S3-compatible, so the MinIO client works unchanged. Get keys
+  from the portal's User → S3 Tokens page and export them as `MINIO_ACCESS_KEY` / `MINIO_SECRET_KEY`.
+  The token can create its own buckets — `stageToMinio --ensure-bucket-exists` is enough, no admin
+  step. Note `stageToMinio` takes no `--target`, so it reads endpoint and bucket from the
+  environment, while `batchRemote` reads them from the profile; the `minio://` export path in the
+  `.josh` script has to name the same bucket as both.
+- **The endpoint split matters here.** The client uses the public gateway
+  `https://s3-west.nrp-nautilus.io`; pods use the in-cluster RGW service
+  `http://rook-ceph-rgw-nautiluss3.rook`, which talks to the OSDs directly for higher bandwidth.
+  That is exactly what `pod_minio_endpoint` is for.
+- **Resource policy:** NRP requires `limits` within 20% of `requests`, and calls out
+  `ephemeral-storage` specifically — staging writes inputs to the pod's ephemeral disk, so a job with
+  large `.jshd` inputs is evicted without a request for it. The profile sets requests == limits on
+  cpu/memory/ephemeral-storage to stay inside the policy.
+- **Do not set `"spot": true`.** `applySpotConfig` emits a `cloud.google.com/gke-spot` selector and
+  toleration, which is GKE-only and will make pods unschedulable on NRP.
+
+Verified on namespace `schmidtdse` (2026-08-05):
+
+| Test | What it validates | Result |
+|------|-------------------|--------|
+| N1 | Smoke test (single replicate), 40s end to end | **PASS** |
+| N2 | Multi-replicate fan-out — 3 pods at indices 0/1/2, three distinct `{replicate}` CSVs | **PASS** |
+| N3 | Preprocessing round-trip (GeoTIFF → 16MB .jshd downloaded) | **PASS** |
+| N4 | Credential Secret GC'd with the Job — `ownerReferences` set on both the run and preprocess paths; deleting the Job removed the Secret | **PASS** |
+| N5 | Pod admission — namespace carries no `pod-security.kubernetes.io/*` label, so the root-running batch image is admitted. No `securityContext` needed. | **PASS** |
+
+Environment notes from that run:
+
+- **Pods scheduled across institutions** — the three N2 replicates landed on nodes at SDSC, SDSC-HaoSu
+  and UC Santa Cruz, all writing back to the west Ceph pool through the in-cluster RGW service. The
+  in-cluster endpoint resolves from every site, so `pod_minio_endpoint` needs no per-site variation.
+- **Quotas are not a constraint at this scale:** namespace cap is 200 pods; GPU quotas are 0 (no GPU
+  access) and the `high-priority-ban` / `low-priority-ban` quotas mean pods must stay at default
+  priority, which josh does since it never sets `priorityClassName`.
+- **LimitRanges are permissive** — Pod max memory 1Ti, container defaults (cpu 100m / memory 1Gi)
+  apply only when unset, and `ephemeral-storage` defaults to a 50Gi limit. The profile's
+  2 cpu / 4Gi / 16Gi ephemeral sits well inside all of it.
+- **RBAC check before dispatching** — `kubectl auth can-i` on `create/get/delete jobs.batch`,
+  `create/get/patch secrets`, `list pods`, `get pods/log`. `patch secrets` matters specifically: it is
+  what the `ownerReferences` binding needs, and without it dispatch still succeeds but warns and
+  leaves the Secret behind.
+- **Pods are not labelled `app=joshsim`** — josh sets that label on the Job only, so ad-hoc pod
+  queries need `-l job-name=<job>`, which is also what `KubernetesPollingStrategy` uses.
 
 ### Cloud Run
 - **Dev:** `https://josh-executor-dev-1007495489273.us-west1.run.app`
