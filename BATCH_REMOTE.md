@@ -115,6 +115,11 @@ contiguous timesteps.
 - `/app/run-entrypoint.sh` — stages from GCS, runs simulation at `--replicate-index`
 - `/app/preprocess-entrypoint.sh` — stages from GCS, preprocesses, uploads result .jshd
 
+Both entrypoints wait for DNS on the host parsed out of `$MINIO_ENDPOINT` before staging, since a
+pod's resolver can be briefly unusable right after start and a failed `stageFromMinio` wastes the
+full JVM startup. The probe follows the configured endpoint rather than a fixed hostname so it stays
+meaningful off GCP.
+
 Built by `buildBatchImage` job in `.github/workflows/build.yaml` on push to main/dev/feat/k8s-batch.
 
 ---
