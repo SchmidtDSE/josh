@@ -134,6 +134,36 @@ Built by `buildBatchImage` job in `.github/workflows/build.yaml` on push to main
 - **HMAC keys:** Secret Manager (`josh-k8s-minio-access-key`, `josh-k8s-minio-secret-key`)
 - **IAM:** `josh-k8s-gcs-sa@dse-nps` with `roles/storage.objectAdmin` + `roles/storage.bucketViewer`
 
+### Nautilus / NRP (untested — profile ready)
+
+Profile: `examples/test/nautilus/nautilus.json`. Two values need substituting before use:
+`kubernetes.namespace` and `minio_bucket`.
+
+- **Kubeconfig:** download from the [NRP portal](https://nrp.ai); the context is normally `nautilus`.
+  Fabric8 reads it through the same `Config.autoConfigure(context)` path as GKE.
+- **Object storage:** NRP's Ceph RGW is S3-compatible, so the MinIO client works unchanged. Get keys
+  from the portal's User → S3 Tokens page and export them as `MINIO_ACCESS_KEY` / `MINIO_SECRET_KEY`.
+- **The endpoint split matters here.** The client uses the public gateway
+  `https://s3-west.nrp-nautilus.io`; pods use the in-cluster RGW service
+  `http://rook-ceph-rgw-nautiluss3.rook`, which talks to the OSDs directly for higher bandwidth.
+  That is exactly what `pod_minio_endpoint` is for.
+- **Resource policy:** NRP requires `limits` within 20% of `requests`, and calls out
+  `ephemeral-storage` specifically — staging writes inputs to the pod's ephemeral disk, so a job with
+  large `.jshd` inputs is evicted without a request for it. The profile sets requests == limits on
+  cpu/memory/ephemeral-storage to stay inside the policy.
+- **Do not set `"spot": true`.** `applySpotConfig` emits a `cloud.google.com/gke-spot` selector and
+  toleration, which is GKE-only and will make pods unschedulable on NRP.
+
+Not yet verified on a live NRP namespace:
+
+| Test | What it validates | Status |
+|------|-------------------|--------|
+| N1 | Smoke test (single replicate) | [ ] |
+| N2 | Multi-replicate fan-out | [ ] |
+| N3 | Preprocessing round-trip | [ ] |
+| N4 | Credential Secret GC'd with the Job | [ ] |
+| N5 | Pod admission — image runs as root, so a namespace enforcing Pod Security `restricted` would reject it outright. NRP's published policies don't mention PSA; needs an empirical check. | [ ] |
+
 ### Cloud Run
 - **Dev:** `https://josh-executor-dev-1007495489273.us-west1.run.app`
 - **API key:** enforced via `JOSH_API_KEYS` env var
