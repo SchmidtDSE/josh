@@ -74,6 +74,15 @@ Client (CLI / joshpy)
 
 **Credential resolution:** MinIO credentials resolved via `HierarchyConfig`: profile JSON → environment variables. Secrets don't need to live in the profile.
 
+**Credential Secret lifecycle:** each dispatch creates a `josh-creds-<jobId>` Secret, then adds an
+`ownerReferences` entry pointing at the Job it created (`KubernetesJobSecret`). K8s garbage collection
+deletes the Secret when the Job goes away. The Secret is written *before* the Job so no pod can start
+against a missing `secretKeyRef`; the owner reference is added afterwards because it needs the Job's
+server-assigned UID.
+
+Set `ttlSecondsAfterFinished` on any target you care about — it is what actually triggers the
+cascade. Without it the Job (and therefore the Secret) survives until deleted by hand.
+
 ### Server endpoints
 
 - `POST /runBatch` — async simulation execution, returns 202 + statusPath

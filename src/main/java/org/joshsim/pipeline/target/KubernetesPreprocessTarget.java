@@ -11,8 +11,6 @@ import io.fabric8.kubernetes.api.model.EnvVarBuilder;
 import io.fabric8.kubernetes.api.model.EnvVarSourceBuilder;
 import io.fabric8.kubernetes.api.model.Quantity;
 import io.fabric8.kubernetes.api.model.ResourceRequirements;
-import io.fabric8.kubernetes.api.model.Secret;
-import io.fabric8.kubernetes.api.model.SecretBuilder;
 import io.fabric8.kubernetes.api.model.Toleration;
 import io.fabric8.kubernetes.api.model.TolerationBuilder;
 import io.fabric8.kubernetes.api.model.batch.v1.Job;
@@ -21,7 +19,6 @@ import io.fabric8.kubernetes.client.Config;
 import io.fabric8.kubernetes.client.KubernetesClient;
 import io.fabric8.kubernetes.client.KubernetesClientBuilder;
 import java.util.ArrayList;
-import java.util.Base64;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -87,7 +84,9 @@ public class KubernetesPreprocessTarget implements RemotePreprocessTarget {
   ) throws Exception {
     String secretName = SECRET_NAME_PREFIX + jobId;
 
-    createSecret(secretName);
+    KubernetesJobSecret.create(
+        client, config.getNamespace(), secretName, buildCredentials()
+    );
 
     JobBuilder jobBuilder = new JobBuilder()
         .withNewMetadata()
@@ -136,10 +135,16 @@ public class KubernetesPreprocessTarget implements RemotePreprocessTarget {
 
     Job job = jobBuilder.build();
 
-    client.batch().v1().jobs()
+    Job created = client.batch().v1().jobs()
         .inNamespace(config.getNamespace())
         .resource(job)
         .create();
+
+    // Hand the Secret to the Job so K8s garbage collection reaps it with the
+    // Job rather than leaving credentials behind in the namespace.
+    KubernetesJobSecret.bindToJob(
+        client, config.getNamespace(), secretName, created
+    );
   }
 
   /**
@@ -160,36 +165,13 @@ public class KubernetesPreprocessTarget implements RemotePreprocessTarget {
     return config;
   }
 
-  private void createSecret(String secretName) {
+  private Map<String, String> buildCredentials() {
     Map<String, String> resolved =
         minioOptions.getResolvedCredentials();
     resolved.put(
         "MINIO_ENDPOINT", config.getPodMinioEndpoint()
     );
-    Map<String, String> data = new HashMap<>();
-    resolved.forEach(
-        (k, v) -> data.put(k, encode(v))
-    );
-
-    Secret secret = new SecretBuilder()
-        .withNewMetadata()
-            .withName(secretName)
-            .withNamespace(config.getNamespace())
-        .endMetadata()
-        .withType("Opaque")
-        .withData(data)
-        .build();
-
-    client.secrets()
-        .inNamespace(config.getNamespace())
-        .resource(secret)
-        .create();
-  }
-
-  private static String encode(String value) {
-    return Base64.getEncoder().encodeToString(
-        value.getBytes(java.nio.charset.StandardCharsets.UTF_8)
-    );
+    return resolved;
   }
 
   private List<EnvVar> buildEnvVars(
