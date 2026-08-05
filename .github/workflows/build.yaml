@@ -202,7 +202,11 @@ jobs:
         with:
           distribution: 'temurin'
           java-version: '21'
-      # node/npm are preinstalled on ubuntu-latest runners; npx fetches the inspector.
+      # node is preinstalled on ubuntu-latest runners; pnpm is not, so pin it like every other action.
+      - name: Setup pnpm
+        uses: pnpm/action-setup@0977fd99725f1db4007ccb2928dbb4e90d06cc86 # v6.0.10
+        with:
+          version: 11.20.0
       - name: Update apt
         run: sudo apt-get update
       - name: Setup netCDF

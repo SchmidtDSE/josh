@@ -7,28 +7,35 @@
 #   3. run_simulation            — local run path (writes a CSV)
 #   4. preprocess_data           — local preprocess path (writes a .jshd)
 #
-# Requires `node`/`npx` on PATH (preinstalled on GitHub-hosted ubuntu runners)
-# and a built fat jar at build/libs/joshsim-fat.jar.
+# Requires `node` and `pnpm` on PATH and a built fat jar at build/libs/joshsim-fat.jar.
 set -euo pipefail
 
 JAR="build/libs/joshsim-fat.jar"
-# Pinned deliberately. Tracking @latest broke CI the day inspector 2.x was published: its CLI no
-# longer accepts `--cli <command> <args> --method ...`, so the server command was mangled and java
-# printed its own usage instead of starting. 1.0.1 is the last release this script is known to pass
-# against. Moving to 2.x means reworking the invocations below, not just bumping this.
-INSPECTOR="@modelcontextprotocol/inspector@1.0.1"
+# The inspector is the repo's only npm dependency. It is installed from a committed lockfile with
+# every lifecycle script refused, rather than resolved fresh at run time: the version is pinned in
+# examples/mcp-inspector/package.json, and every transitive version is pinned by
+# examples/mcp-inspector/pnpm-lock.yaml. See that directory's .npmrc for why scripts are blocked.
+INSPECTOR_DIR="examples/mcp-inspector"
+INSPECTOR_BIN="$INSPECTOR_DIR/node_modules/.bin/mcp-inspector"
 
 if [ ! -f "$JAR" ]; then
   echo "ERROR: $JAR not found. Build it with: ./gradlew fatJar"
   exit 1
 fi
 
-echo "node: $(node --version), npm: $(npm --version)"
+echo "node: $(node --version), pnpm: $(pnpm --version)"
+echo "=== Installing pinned MCP Inspector ==="
+# --frozen-lockfile fails rather than silently re-resolving if the lockfile and manifest disagree,
+# so a drifting dependency tree surfaces as a CI failure instead of a silent upgrade.
+pnpm --dir "$INSPECTOR_DIR" install --frozen-lockfile --ignore-scripts
+
 echo "=== MCP Inspector CLI smoke test ==="
 
-# Helper: run the inspector against the stdio server with the given inspector args.
+# Helper: run the inspector against the stdio server with the given inspector args. Invoked by path
+# rather than through `pnpm exec` so the working directory stays at the repo root, which is what the
+# relative jar, script, and data paths below resolve against.
 inspect() {
-  npx --yes "$INSPECTOR" --cli java -jar "$JAR" mcp "$@"
+  "$INSPECTOR_BIN" --cli java -jar "$JAR" mcp "$@"
 }
 
 # 1. tools/list — every tool must be advertised.
