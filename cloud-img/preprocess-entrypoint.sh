@@ -1,6 +1,6 @@
 #!/bin/sh
 # Preprocess batch entrypoint for K8s pods.
-# Stages inputs from MinIO, finds .josh script, runs preprocessing,
+# Stages inputs from MinIO, resolves the entry .josh script, runs preprocessing,
 # uploads the resulting .jshd back to MinIO.
 #
 # Expects env vars:
@@ -10,6 +10,8 @@
 #   JOSH_CRS, JOSH_X_COORD, JOSH_Y_COORD, JOSH_TIME_DIM,
 #   JOSH_TIMESTEP, JOSH_DEFAULT_VALUE, JOSH_PARALLEL, JOSH_AMEND,
 #   JOSH_TIME_OPTS
+#   JOSH_SCRIPT names the entry script when the staged layout is not the usual
+#   "sim.josh (or the one root-level .josh) plus imported overlays".
 # MinIO creds (MINIO_ENDPOINT, etc.) are picked up automatically
 # by HierarchyConfig from the environment.
 #
@@ -53,12 +55,49 @@ if [ "$STAGE_OK" -ne 1 ]; then
   exit 1
 fi
 
-SCRIPT=$(find "$WORK_DIR" -name '*.josh' -type f | head -1)
-
-if [ -z "$SCRIPT" ]; then
-  echo "ERROR: No .josh file found in $WORK_DIR" >&2
-  exit 1
+# Resolve the entry script. A model that uses `import` stages its overlay files
+# alongside the entry at their relative import path (canonical/exports.josh and
+# friends), so a recursive `find ... | head -1` can return an overlay instead of
+# the entry -- filesystem traversal order decides, which is neither alphabetical
+# nor stable. Running an overlay standalone fails with "Cannot update entity
+# ...; no prior definition exists" because it only means anything when imported.
+# Resolve deterministically instead, most explicit first:
+#   1. JOSH_SCRIPT, when the dispatcher names the entry outright.
+#   2. sim.josh at the work dir root, the name joshpy's staging always uses.
+#   3. The sole root-level *.josh. Imports live in subdirectories, so limiting
+#      this to depth 1 excludes overlays, and it keeps the name-agnostic
+#      `stageToMinio --input-dir=./sim/` workflow working. More than one
+#      candidate is an error rather than a coin flip.
+if [ -n "${JOSH_SCRIPT:-}" ]; then
+  case "$JOSH_SCRIPT" in
+    /*) SCRIPT="$JOSH_SCRIPT" ;;
+    *) SCRIPT="$WORK_DIR/$JOSH_SCRIPT" ;;
+  esac
+  if [ ! -f "$SCRIPT" ]; then
+    echo "ERROR: JOSH_SCRIPT=$JOSH_SCRIPT does not resolve to a file ($SCRIPT)" >&2
+    exit 1
+  fi
+elif [ -f "$WORK_DIR/sim.josh" ]; then
+  SCRIPT="$WORK_DIR/sim.josh"
+else
+  SCRIPT=""
+  for candidate in "$WORK_DIR"/*.josh; do
+    [ -f "$candidate" ] || continue
+    if [ -n "$SCRIPT" ]; then
+      echo "ERROR: multiple .josh files at the root of $WORK_DIR and no" \
+        "sim.josh to disambiguate. Set JOSH_SCRIPT to name the entry file." >&2
+      ls -1 "$WORK_DIR"/*.josh >&2
+      exit 1
+    fi
+    SCRIPT="$candidate"
+  done
+  if [ -z "$SCRIPT" ]; then
+    echo "ERROR: No .josh file at the root of $WORK_DIR" >&2
+    exit 1
+  fi
 fi
+
+echo "Entry script: $SCRIPT"
 
 # Build optional flags
 OPTS=""
