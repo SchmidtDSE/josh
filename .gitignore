@@ -66,6 +66,11 @@ landing/temperature.jshd
 landing/precipitation*.jshd
 
 landing/publicsans
+
+# Landing war: the WebAssembly engine staged by landing/war/get_from_jar.sh so a library page can
+# run the model it shows. Only the generated directories are ignored, so the script stays tracked.
+landing/war/js
+landing/war/wasm-gc
 landing/d3.min.js
 landing/prism-*.js
 landing/prism-*.css

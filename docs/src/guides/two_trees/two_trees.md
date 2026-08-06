@@ -39,7 +39,7 @@ This time we are going to use data from [Cal-Adapt](https://cal-adapt.org/) whic
 
 The climate data uses custom unit conversions in Josh. Temperature data is in Kelvin (K), while precipitation data is provided in kg m^-2 s^-1 and automatically converted to mm/year using a custom `kgm2s` unit definition.
 
-For now, go ahead and grab our preprocessed [temperature data](/guides/two_trees/temperatureTulare.jshd) and [precipitation data](/guides/two_trees/precipitationTulare.jshd). Then, delete the data from the prior tutorial and upload these new files.
+For now, go ahead and grab our preprocessed [temperature data](temperatureTulare.jshd) and [precipitation data](precipitationTulare.jshd). Then, delete the data from the prior tutorial and upload these new files.
 
 ### Data Sources
 

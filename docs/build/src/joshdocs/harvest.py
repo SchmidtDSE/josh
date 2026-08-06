@@ -13,6 +13,7 @@ found, not the first.
 from __future__ import annotations
 
 from concurrent.futures import ThreadPoolExecutor
+from dataclasses import dataclass, field
 from pathlib import Path
 
 from pydantic import ValidationError
@@ -418,6 +419,21 @@ def _needs_externals(unit: Unit) -> bool:
     )
 
 
+def _needs_browser_check(unit: Unit) -> bool:
+    """Return True when the jar should be asked whether this unit can run in the browser.
+
+    Only units that become pages are asked, since the answer drives a run button and conformance
+    tests have no page. A unit with no ``simulation`` is excluded rather than guessed at: the
+    browser has to name one to run, and inferring it here is the lookup the manifest deliberately
+    leaves to its consumers.
+    """
+    return (
+        _needs_externals(unit)
+        and unit.kind is not Kind.TEST
+        and unit.simulation is not None
+    )
+
+
 def _undeclared_data(unit: Unit, externals: list[str]) -> list[str]:
     """Return the externals a unit reads that no declared data file provides.
 
@@ -443,9 +459,24 @@ def _undeclared_data(unit: Unit, externals: list[str]) -> list[str]:
     return [name for name in externals if name not in declared]
 
 
-def _inspect(
-    unit: Unit, jar: JoshJar, root: Path, validate_tests: bool
-) -> tuple[Unit, list[Problem], list[str]]:
+@dataclass
+class _Inspection:
+    """What the jar reported about one unit.
+
+    Attributes:
+        unit: The unit that was inspected.
+        problems: What the jar rejected, empty when it accepted everything.
+        externals: External names the model reads.
+        browser_runnable: Whether the reader's browser can run the model as authored.
+    """
+
+    unit: Unit
+    problems: list[Problem] = field(default_factory=list)
+    externals: list[str] = field(default_factory=list)
+    browser_runnable: bool = False
+
+
+def _inspect(unit: Unit, jar: JoshJar, root: Path, validate_tests: bool) -> _Inspection:
     """Ask the jar about one unit.
 
     Args:
@@ -455,7 +486,7 @@ def _inspect(
         validate_tests: Whether conformance tests are validated too.
 
     Returns:
-        The unit, the problems found, and the externals it reads.
+        Everything the jar had to say about the unit.
     """
     path = root / unit.source
     problems: list[Problem] = []
@@ -506,12 +537,20 @@ def _inspect(
                 )
             )
 
-    return unit, problems, externals
+    # Asked last, and only of a unit nothing else objected to, so a model the engine already
+    # rejected does not also get offered to readers as something they can run.
+    browser_runnable = (
+        not problems
+        and _needs_browser_check(unit)
+        and jar.writes_only_to_memory(path, unit.simulation or "")
+    )
+
+    return _Inspection(unit, problems, externals, browser_runnable)
 
 
 def _inspect_all(
     scheduled: list[Unit], jar: JoshJar, root: Path, validate_tests: bool, jobs: int
-) -> list[tuple[Unit, list[Problem], list[str]]]:
+) -> list[_Inspection]:
     """Inspect several units at once.
 
     Jar invocations are subprocesses, so threads are the right tool: they wait on a JVM rather than
@@ -559,9 +598,10 @@ def _jar_pass(units: list[Unit], options: HarvestOptions, log: ProblemLog) -> in
     results = _inspect_all(
         scheduled, options.jar, options.root, options.validate_tests, options.jobs
     )
-    for unit, problems, externals in results:
-        log.extend(problems)
-        unit.externals = externals
+    for inspection in results:
+        log.extend(inspection.problems)
+        inspection.unit.externals = inspection.externals
+        inspection.unit.browser_runnable = inspection.browser_runnable
 
     return validated
 

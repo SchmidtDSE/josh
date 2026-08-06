@@ -190,9 +190,18 @@ name to `<name>.jshdz` before `<name>.jshd`, so the model needs no change and ne
 Compression is what makes committing viable at all — the three tutorial files are 3.5 MB as `.jshd`
 and 34 KB as `.jshdz`.
 
-The site publishes them decompressed. `.jshdz` is JVM-only — the XZ decoder is not compiled through
-TeaVM — so the browser editor a reader uploads into can only take `.jshd`, and `deployStatic`
-expands each file as it stages the guides.
+The site publishes them decompressed, at `data/<unit id>/<name>.jshd` beside the pages. `.jshdz` is
+JVM-only — the XZ decoder is not compiled through TeaVM — so neither the browser editor a reader
+uploads into nor the run button on the page itself can read the compressed form.
+
+`joshdocs render` does the expanding, rather than a step in the deploy workflow. That keeps one rule
+in one language and means a local preview serves the same bytes from the same paths as the deployed
+site, which is what lets a run button work before anything has been deployed. Prose links a data
+file by its **published** name — `[precipitation data](precipitation.jshd)`, not `.jshdz` — and a
+link naming a file no unit declares fails the render like any other dead link.
+
+Nesting under the unit id is deliberate: declared filenames are only unique within a directory, so
+publishing them flat would quietly serve one guide's `precipitation.jshd` to another.
 
 Committing them is what makes the build reproducible. The data used to be preprocessed on every push
 from a zip fetched over the network at build time, which meant the input to the build was a mutable
@@ -242,6 +251,30 @@ Three things follow from the fragment being real Josh in a real file rather than
 
 An authored fragment is appended before the generated export block, so the export target the build
 controls always wins over a path an author might hardcode.
+
+## Running a model in the reader's browser
+
+A page whose model can execute in a browser gets a **Run it here** button. The engine is the same
+one the command line uses, compiled to WebAssembly and staged into the landing site by
+`landing/war/get_from_jar.sh` — the same arrangement the editor and the demo already have, since
+each is deployed to its own host and cannot reach across to another's copy.
+
+`browserRunnable` in the manifest decides which pages get the button. It is **derived, not
+declared**: the harvest asks the jar (`inspect-exports`) whether every target the simulation
+declares uses the `memory` protocol. WebAssembly has no filesystem, so a `file://` target aborts
+the run — and a model declaring no target at all qualifies, since it still executes, which is the
+whole point for one whose `assert` handlers are the result. A unit naming no `simulation` is
+excluded rather than guessed at, and a model the engine rejected is never offered.
+
+The run box **reads the model out of the listing already on the page** rather than holding a copy
+of it, so the code that runs is necessarily the code the reader is looking at. There is nothing to
+keep in sync, because there is no second copy. The variables offered in the result plot are
+discovered from the result itself — the records know their own attribute names — so a page gains a
+new plot by the model exporting a new value, with no front-matter change.
+
+The browser JavaScript in `landing/js/` is copied byte-for-byte from `demo.joshsim.org/js/`, with
+`runner.js` the only file written for this. Nothing in CI lints or executes JavaScript today, so
+prefer copying a proven file over writing a new one.
 
 ## Working on the builder
 

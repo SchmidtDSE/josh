@@ -58,6 +58,11 @@ class Unit(BaseModel):
     issue: str | None = None
     #: Path to the emitted authored-plus-overlay model, when an overlay was needed.
     runnable_file: str | None = Field(default=None, alias="runnableFile")
+    #: Whether the reader's browser can run this model as authored. The engine compiles to
+    #: WebAssembly, which has no filesystem, so this is false for a model whose output goes to a
+    #: `file://` target -- and false as well when nothing names a simulation to run. Derived from
+    #: the jar rather than declared, because the answer is a fact about the model.
+    browser_runnable: bool = Field(default=False, alias="browserRunnable")
 
 
 class Counts(BaseModel):

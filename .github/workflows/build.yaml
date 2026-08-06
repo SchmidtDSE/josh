@@ -501,6 +501,11 @@ jobs:
           path: build/libs/JoshSim.war
       - name: Embed war
         run: bash editor/war/get_from_jar.sh
+      # The library's runnable pages execute the model they show on this engine, so the landing site
+      # needs its own copy for the same reason the editor and the demo do: each is deployed to its
+      # own host and cannot reach across to another's.
+      - name: Embed landing war
+        run: bash landing/war/get_from_jar.sh
       - name: Build fat jar
         run: ./gradlew fatJar
       - name: Upload full jar
@@ -603,17 +608,11 @@ jobs:
           # docs/build is the builder's own source; docs/src is authored content, which ships as
           # rendered pages rather than as raw .josh and front-matter.
           rm -rf ./landing-build/docs/build ./landing-build/docs/src
-      # Data ships compressed in the repository and is published decompressed, because .jshdz is a
-      # JVM-only format and the browser editor a reader uploads into cannot read it. The guide
-      # directory names the destination, so adding a guide with data needs no change here.
-      - name: Organize tutorial data for guides
-        run: |
-          for source in ./repo/docs/src/guides/*/*.jshdz; do
-            target="./landing-build/guides/$(basename "$(dirname "$source")")"
-            mkdir -p "$target"
-            xz -dc "$source" > "$target/$(basename "$source" .jshdz).jshd"
-          done
-          ls -l ./landing-build/guides/*/*.jshd
+      # Tutorial data is no longer staged here. `joshdocs render` publishes it beside the page that
+      # declares it, decompressing the committed .jshdz because the XZ decoder is JVM-only. That
+      # keeps one rule in one language: a local preview serves the same bytes from the same paths as
+      # the deployed site, which is what lets the run button on a page work before any deploy has
+      # happened.
       - name: Remove publicsans directory before upload
         run: |
           if [ -d "./landing-build/publicsans" ]; then

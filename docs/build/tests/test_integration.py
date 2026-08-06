@@ -24,7 +24,9 @@ REPO_ROOT = Path(__file__).resolve().parents[3]
 SRC = REPO_ROOT / "docs" / "src"
 TESTS = REPO_ROOT / "josh-tests" / "conformance"
 
-LISTING = re.compile(r'<pre><code class="language-joshlang">(.*?)</code></pre>', re.S)
+# Attribute-tolerant: the complete listing also carries an id, so the run button can read the model
+# off the page instead of holding a second copy of it.
+LISTING = re.compile(r'<pre><code class="language-joshlang"[^>]*>(.*?)</code></pre>', re.S)
 HREF = re.compile(r'href="([^"]+)"')
 
 #: Elements that never carry a closing tag, so they must not be pushed onto the nesting stack.
