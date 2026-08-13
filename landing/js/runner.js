@@ -135,17 +135,23 @@ class RunnerPresenter {
       }
 
       const code = self.getCode();
-      self._say("Running…");
 
+      // Metadata is read before the run rather than after it, so the progress line can say how far
+      // along the run is. A heavy model takes minutes in a browser, and "step 12 of 31" is the
+      // difference between a reader waiting and a reader deciding the page is broken.
+      self._say("Reading the simulation…");
+      self._lastMetadata = await self._wasmLayer.getSimulationMetadata(code, self._simulation);
+      const total = self._lastMetadata.getTotalSteps();
+
+      self._say("Running…");
       self._lastResult = await self._wasmLayer.runSimulation(
         code,
         self._simulation,
         self._jshdCache,
-        (step) => self._say("Running… step " + step),
+        (step) => self._say(total ? `Running… step ${step} of ${total}` : `Running… step ${step}`),
         false,
         ""
       );
-      self._lastMetadata = await self._wasmLayer.getSimulationMetadata(code, self._simulation);
 
       self._show();
     } catch (err) {
