@@ -91,6 +91,10 @@ class RunnerPresenter {
     const self = this;
     self._root = root;
     self._simulation = options.simulation;
+    // The manifest's seed, as a string for the engine. Every unit carries one, so a reader running
+    // a model here gets the draws CI got; without it a stochastic model can fail an assertion on
+    // the page that it passes in the conformance suite.
+    self._seed = options.seed === undefined || options.seed === null ? "" : String(options.seed);
     self._dataManifest = options.dataManifest || {};
     self._source = options.source;
     self._originalCode = self._source ? self._source.textContent : "";
@@ -241,7 +245,8 @@ class RunnerPresenter {
         self._jshdCache,
         (step) => self._say(total ? `Running… step ${step} of ${total}` : `Running… step ${step}`),
         false,
-        ""
+        "",
+        self._seed
       );
 
       self._show();

@@ -37,6 +37,7 @@ import org.joshsim.lang.parse.JoshParser;
 import org.joshsim.lang.parse.ParseError;
 import org.joshsim.lang.parse.ParseResult;
 import org.joshsim.util.OutputStepsParser;
+import org.joshsim.util.SharedRandom;
 import org.joshsim.wire.NamedMap;
 import org.joshsim.wire.WireConverter;
 import org.teavm.jso.JSBody;
@@ -124,6 +125,13 @@ public class JoshJsSimFacade {
    * performs various steps including syntax checking, program interpretation, and simulation
    * execution. It uses a callback mechanism to signal completion of each simulation step.</p>
    *
+   * <p>There is deliberately only one exported {@code runSimulation}. TeaVM emits one JavaScript
+   * binding per {@link JSExport} name and the later definition overwrites the earlier one, so a
+   * second overload does not add a shorter calling convention: it silently replaces the longer
+   * one. This class carried such an overload, and the four-argument form won, which is why
+   * {@code outputSteps} never reached the engine from the browser. Give every argument a value
+   * that means "unset" instead of adding an overload.</p>
+   *
    * @param code The Josh source code to parse, interpret, and run as a simulation.
    * @param simulationName The name of the simulation to be executed as defined in the parsed
    *     program.
@@ -132,35 +140,26 @@ public class JoshJsSimFacade {
    *     not specified. True if BigDecimal and false otherwise.
    * @param outputSteps Comma-separated string of step numbers to export (e.g., "5,7,8,9,20").
    *     If empty or null, all steps are exported.
+   * @param seed Random seed as a decimal string, matching the CLI's {@code --seed}. If empty or
+   *     null the run is unseeded, which is the behavior callers get when they omit it.
    */
   @JSExport
   public static void runSimulation(String code, String simulationName, String externalData,
-        boolean favorBigDecimal, String outputSteps) {
+        boolean favorBigDecimal, String outputSteps, String seed) {
     try {
-      runSimulationUnsafe(code, simulationName, externalData, favorBigDecimal, outputSteps);
+      // Mirrors RunUtil.run: seed the shared generator before the run and clear it afterwards
+      // however the run terminates. The CLI additionally forces serial patch execution when
+      // seeded, because parallel execution reorders random draws; here that is already the case,
+      // as runSimulationUnsafe always passes serialPatches = true.
+      SharedRandom.initialize(parseSeed(seed));
+      try {
+        runSimulationUnsafe(code, simulationName, externalData, favorBigDecimal, outputSteps);
+      } finally {
+        SharedRandom.clear();
+      }
     } catch (Exception e) {
       reportError(e.toString());
     }
-  }
-
-  /**
-   * Interpret and run a Josh simulation.
-   *
-   * <p>Backward compatibility method that delegates to the new method with empty outputSteps.
-   * This maintains compatibility with existing JavaScript callers that don't specify
-   * outputSteps.</p>
-   *
-   * @param code The Josh source code to parse, interpret, and run as a simulation.
-   * @param simulationName The name of the simulation to be executed as defined in the parsed
-   *     program.
-   * @param externalData The serialization of the virtual file system to use in this simulation.
-   * @param favorBigDecimal Flag indicating if numbers should be backed by BigDecimal or double if
-   *     not specified. True if BigDecimal and false otherwise.
-   */
-  @JSExport
-  public static void runSimulation(String code, String simulationName, String externalData,
-        boolean favorBigDecimal) {
-    runSimulation(code, simulationName, externalData, favorBigDecimal, "");
   }
 
   /**
@@ -329,22 +328,22 @@ public class JoshJsSimFacade {
   }
 
   /**
-   * Interpret and run a Josh simulation without error handling.
+   * Parses the seed parameter, treating an absent value as an unseeded run.
    *
-   * <p>Backward compatibility method that delegates to the new method with empty outputSteps.
-   * This maintains compatibility with existing internal callers that don't specify outputSteps.</p>
-   *
-   * @param code The Josh source code to parse, interpret, and run as a simulation.
-   * @param simulationName The name of the simulation to be executed as defined in the parsed
-   *     program.
-   * @param externalData The serialization of the virtual file system to use within this simulation.
-   * @param favorBigDecimal Flag indicating if numbers should be backed by BigDecimal or double if
-   *     not specified. True if BigDecimal and false otherwise.
-   * @throws RuntimeException If parsing the code results in errors.
+   * @param seed Random seed as a decimal string, or empty / null for an unseeded run.
+   * @return Optional containing the seed, or empty to leave the generator unseeded.
+   * @throws RuntimeException if a non-empty seed is not a decimal integer.
    */
-  private static void runSimulationUnsafe(String code, String simulationName, String externalData,
-        boolean favorBigDecimal) {
-    runSimulationUnsafe(code, simulationName, externalData, favorBigDecimal, "");
+  private static Optional<Long> parseSeed(String seed) {
+    if (seed == null || seed.trim().isEmpty()) {
+      return Optional.empty();
+    }
+
+    try {
+      return Optional.of(Long.parseLong(seed.trim()));
+    } catch (NumberFormatException e) {
+      throw new RuntimeException("Seed must be a whole number but got: " + seed);
+    }
   }
 
   /**
