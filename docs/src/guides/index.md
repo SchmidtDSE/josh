@@ -11,19 +11,21 @@ Learn the basics of Josh interface and core concepts.
 2. **Data Integration** — working with external geospatial data sources. Not written yet; the stub is [_data.md](_data.md).
 
 ### Intermediate Tutorials
-Explore multi-species modeling and spatial interactions.
+Bring outside data into a model and compute over it spatially.
 
-3. **[Two Trees](two_trees/two_trees.md)** - Multiple species modeling and competitive interactions
+3. **[Fire Dynamics](grass_shrub_fire/grass_shrub_fire.md)** - Disturbance modeling and fire effects
 4. **State Management** — entity states and behavioral transitions. Not written yet; the stub is [_states.md](_states.md).
 
 ### Advanced Tutorials
 Master complex dynamics and tool integration workflows.
 
-5. **[Fire Dynamics](grass_shrub_fire/grass_shrub_fire.md)** - Disturbance modeling and fire effects
+5. **[Two Trees](two_trees/two_trees.md)** - Multiple species modeling and competitive interactions
 6. **Python Integration** — analysis workflows using Python. Not written yet; the stub is [_python.md](_python.md).
 7. **Command Line Tools** — preprocessing and batch execution. Not written yet; the stub is [_cli.md](_cli.md).
 
 Four of the seven tutorials have never been more than a heading and an "under construction" line. They are listed without links so the series reads honestly, and their files carry a leading underscore, which is what tells the harvester they are prose with no model rather than a unit missing one.
+
+The numbering above is the order each tutorial's own prose asserts: every written one opens by naming the previous tutorial and closes by linking the next. It is also the `order:` field in each sidecar, which is what sorts the rendered index, so the two have to be changed together.
 
 ## Getting Help
 

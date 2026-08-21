@@ -172,7 +172,7 @@ tags: [dispersal, spatial]
 | `kind` | from the directory | `guide`, `recipe`, `reference`, or `test` |
 | `id` | filename stem | URL segment and join key to CI results. Set only to break a collision |
 | `destination` | directory under `docs/src` | Output directory for the rendered page |
-| `order` | `100` | Sort order within a destination |
+| `order` | `100` | Sort order within a destination, and across a kind's whole index when that index is not grouped |
 | `runnable` | `true`, or `false` for `reference` | Whether the model is a complete, runnable simulation |
 | `assert` | `false` | Run this model in CI as a conformance test |
 | `simulation` | — | Name of the simulation stanza. Required with `exports` |

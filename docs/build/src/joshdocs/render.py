@@ -328,6 +328,11 @@ def index_groups(
     it. So the groups are flattened into a single unlabelled list unless at least one of them
     gathers more than one unit.
 
+    A flattened list is re-sorted by ``order``. Units are laid out by directory first, which is
+    what keeps a topic's pages together, and that is also what would otherwise decide a flat index:
+    the guides would run in alphabetical order of their directories rather than in the sequence
+    their own prose asserts, with each tutorial naming the next.
+
     Args:
         kind: The kind being indexed.
         library: The indexed manifest.
@@ -342,7 +347,8 @@ def index_groups(
 
     grouped = library.grouped(kind)
     if not any(len(units) > 1 for _, units in grouped):
-        return [("", "", entries(library.of_kind(kind)))]
+        flat = sorted(library.of_kind(kind), key=lambda unit: (unit.order, unit.id))
+        return [("", "", entries(flat))]
     return [
         (destination, destination.split("/")[-1].replace("_", " "), entries(units))
         for destination, units in grouped

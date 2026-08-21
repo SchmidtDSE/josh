@@ -303,6 +303,15 @@ def test_an_index_does_not_label_groups_that_hold_one_unit_each(tmp_path):
     assert text.count('<ul class="unit-list">') == 1
 
 
+def test_a_flat_index_follows_order_rather_than_the_directory_name(tmp_path):
+    """Units sort by directory first, which would put a guide series in alphabetical order."""
+    src = tmp_path / "docs" / "src"
+    write_unit(src, "guides/apples/apples", 'title: "Apples"\norder: 30')
+    write_unit(src, "guides/bananas/bananas", 'title: "Bananas"\norder: 10')
+    text = (draw(tmp_path)[1] / "guides/index.html").read_text(encoding="utf-8")
+    assert text.index("Bananas") < text.index("Apples")
+
+
 def test_a_reserved_unit_says_it_is_not_implemented(tmp_path):
     src = tmp_path / "docs" / "src"
     write_unit(src, "reference/syntax/soon",
