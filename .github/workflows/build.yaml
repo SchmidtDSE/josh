@@ -189,6 +189,53 @@ jobs:
         with:
           name: docsLibrary
           path: landing/library/
+  checkBrowser:
+    environment: Build
+    runs-on: ubuntu-latest
+    name: Check Browser Build
+    # Deliberately not behind buildWeb, which only runs on main/dev. The WebAssembly module stopped
+    # validating in January and no one noticed for eight months, because wasm.worker.js catches the
+    # load failure and falls back to the JavaScript backend -- and because no job ran, linted, or
+    # loaded a single line of browser code. Gating every push is the point.
+    steps:
+      - name: Checkout
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+      - name: Setup Java
+        uses: actions/setup-java@be666c2fcd27ec809703dec50e508c2fdc7f6654 # v5.2.0
+        with:
+          distribution: 'temurin'
+          java-version: '21'
+      - name: Build war
+        run: ./gradlew war
+      - name: Stage the engine
+        run: bash editor/war/get_from_jar.sh
+      # Node is pinned rather than taken from the runner because this job loads the WebAssembly
+      # module, and whether an engine accepts it depends on its exact version. TeaVM emits exnref,
+      # which V8 gates behind a flag until Node 25; taking whatever the runner ships would make this
+      # check pass or fail for reasons that have nothing to do with the commit under test.
+      #
+      # Node comes from pnpm rather than actions/setup-node so that this job adds no new action to
+      # the repository's trust boundary: pnpm/action-setup is already pinned below for testMcp.
+      # standalone installs a self-contained pnpm, so provisioning Node does not itself depend on
+      # whatever Node the runner happens to ship.
+      - name: Setup pnpm
+        uses: pnpm/action-setup@0977fd99725f1db4007ccb2928dbb4e90d06cc86 # v6.0.10
+        with:
+          version: 11.20.0
+          standalone: true
+      - name: Setup Node via pnpm
+        env:
+          PNPM_HOME: ${{ github.workspace }}/.pnpm-home
+        run: |
+          mkdir -p "$PNPM_HOME/bin"
+          export PATH="$PNPM_HOME/bin:$PATH"
+          pnpm env use --global 24
+          echo "$PNPM_HOME/bin" >> "$GITHUB_PATH"
+      - name: Check the browser build
+        run: |
+          node --version
+          node --experimental-wasm-exnref .github/scripts/check_browser_build.mjs editor/war \
+            demo.joshsim.org/js editor/js landing/js
   testMcp:
     needs: buildJava
     environment: Build

@@ -210,10 +210,11 @@ function summarizeDatasets(target, query) {
     const valuesByKey = getValuesByKey(keyGetter);
     const valueByKey = new Map();
 
-    valuesByKey.keys().forEach((key) => {
-      const values = valuesByKey.get(key);
-      const value = curriedStrategy(values);
-      valueByKey.set(key, value);
+    // forEach on a Map, not on the iterator its keys() returns: Iterator.prototype.forEach is an
+    // iterator-helper method, and an engine without those throws "keys(...).forEach is not a
+    // function" here rather than anywhere near the run the user started.
+    valuesByKey.forEach((values, key) => {
+      valueByKey.set(key, curriedStrategy(values));
     });
 
     return valueByKey;
