@@ -75,6 +75,9 @@ landing/d3.min.js
 landing/math.min.js
 landing/prism-*.js
 landing/prism-*.css
+landing/ace.min.js
+landing/theme-textmate.js
+landing/theme-textmate-css.js
 
 .claude
 

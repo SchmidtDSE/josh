@@ -1,6 +1,11 @@
 ---
 title: "Grass, Shrub, Fire"
-order: 30
+description: >-
+  Spatial computation without simulating individuals: grass and shrub cover live on the patch
+  itself, and each year a fire may burn back whatever the rain grew. Brings in external climate
+  data, curves that map precipitation onto a growth rate, and multi-line handler bodies with local
+  values. Also explains why the order handlers are written in never matters.
+order: 20
 tags: [guide, disturbance, external-data]
 simulation: Main
 exports: [patch]

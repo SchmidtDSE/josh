@@ -1,5 +1,8 @@
 ---
 title: "Reading other entities on the same patch"
+description: >-
+  Reading the entities that share a patch with this one, and aggregating them into a value a
+  handler can branch on.
 order: 10
 tags: [queries, spatial]
 ---

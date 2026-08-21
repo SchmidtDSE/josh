@@ -50,8 +50,15 @@ docs/src/recipes/dispersal/wind-dispersal.md:4
 
 ```bash
 uv run --project docs/build joshdocs render   # -> landing/library/
-uv run --project docs/build joshdocs serve    # -> http://127.0.0.1:8123/
+uv run --project docs/build joshdocs serve    # -> http://127.0.0.1:8123/library/
 ```
+
+`serve` is rooted at the **site** (`landing/`), not at the tree `render` writes. A page reaches its
+stylesheet, the nav's targets, and the engine by site-absolute path, because it sits at an arbitrary
+depth under `/library/` while those are staged once at the root. Rooting the server at
+`landing/library/` answers all of them with the 404 page, which a browser reports as
+`blocked because of a disallowed MIME type ("text/html")` -- a message that names the symptom and
+not the cause, so `serve` warns when the directory it is given holds no `library/`.
 
 `render` reads only the manifest, so it needs no jar. Pair it with `harvest --skip-jar` to work on
 prose without a 116MB build. The output tree is emptied first unless `--keep` is given, so a page
@@ -139,13 +146,16 @@ parse (`testing/error`), and units for syntax the engine does not implement yet
 
 ## Sidecar fields
 
-Only `title` is required; `kind` is inferred from the directory (`guides/`, `recipes/`,
-`reference/`). Unknown fields are rejected rather than ignored, so a typo fails the build instead of
-silently doing nothing.
+`title` and `description` are required; `kind` is inferred from the directory (`guides/`,
+`recipes/`, `reference/`). Unknown fields are rejected rather than ignored, so a typo fails the
+build instead of silently doing nothing.
 
 ```yaml
 ---
 title: "Wind-driven seed dispersal"
+description: >-
+  Moving seed off the parent patch with a wind kernel, and what the kernel does at the edge of
+  the grid.
 order: 30
 runnable: true
 assert: true
@@ -158,10 +168,11 @@ tags: [dispersal, spatial]
 | Field | Default | Meaning |
 |---|---|---|
 | `title` | — | Required. Heading for the rendered page |
+| `description` | — | Required. One to three sentences, at most 400 characters, shown under the title on the index and as the page's subtitle |
 | `kind` | from the directory | `guide`, `recipe`, `reference`, or `test` |
 | `id` | filename stem | URL segment and join key to CI results. Set only to break a collision |
 | `destination` | directory under `docs/src` | Output directory for the rendered page |
-| `order` | `100` | Sort order within a destination |
+| `order` | `100` | Sort order within a destination, and across a kind's whole index when that index is not grouped |
 | `runnable` | `true`, or `false` for `reference` | Whether the model is a complete, runnable simulation |
 | `assert` | `false` | Run this model in CI as a conformance test |
 | `simulation` | — | Name of the simulation stanza. Required with `exports` |

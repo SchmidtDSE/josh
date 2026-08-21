@@ -1,5 +1,7 @@
 ---
 title: "What a rejected model looks like"
+description: >-
+  A deliberately invalid model, and the file, line, and complaint that validating it reports.
 order: 20
 tags: [testing]
 expect: parse-error

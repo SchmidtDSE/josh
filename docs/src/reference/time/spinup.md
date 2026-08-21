@@ -1,5 +1,8 @@
 ---
 title: "Spin-up and spin-down as a modelling recipe"
+description: >-
+  Expressing burn-in and cool-down with ordinary attributes, because the engine has no dedicated
+  machinery for either.
 order: 10
 tags: [time, spinup]
 runnable: true

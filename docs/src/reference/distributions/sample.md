@@ -1,5 +1,8 @@
 ---
 title: "Sampling from a distribution"
+description: >-
+  Drawing a value from normal or uniform, the units the draw carries, and the bound that keeps
+  it non-negative.
 order: 10
 tags: [distributions, stochastic]
 ---

@@ -1,5 +1,8 @@
 ---
 title: "A file of shared unit definitions"
+description: >-
+  A .josh file that declares no simulation at all, holding only unit definitions for other
+  models to import.
 order: 10
 tags: [imports, units]
 ---

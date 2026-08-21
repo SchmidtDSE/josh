@@ -1,5 +1,8 @@
 ---
 title: "Creating entities in a patch"
+description: >-
+  Populating a grid cell with create, and how the attribute a create is assigned to becomes
+  the name the rest of the model queries.
 order: 20
 tags: [entities, patch]
 ---

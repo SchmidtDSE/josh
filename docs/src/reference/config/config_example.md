@@ -1,5 +1,8 @@
 ---
 title: "Configuration variables"
+description: >-
+  Reading a value from a .jshc namespace, so one model runs against several parameter sets
+  without being edited.
 order: 10
 tags: [config]
 ---

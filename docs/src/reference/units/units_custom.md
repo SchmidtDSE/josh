@@ -1,5 +1,8 @@
 ---
 title: "Defining custom units"
+description: >-
+  Declaring a unit the engine does not know, the spellings a model may use for it, and its
+  conversion to a unit that is already known.
 order: 20
 tags: [units, conversion]
 ---

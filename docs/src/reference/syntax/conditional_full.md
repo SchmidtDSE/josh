@@ -1,5 +1,8 @@
 ---
 title: "Branching with if, elif, and else"
+description: >-
+  Branching inside a handler body, where each branch returns its own value and may take more than
+  one statement to get there.
 order: 20
 tags: [syntax, conditionals]
 ---

@@ -1,5 +1,7 @@
 ---
 title: "Comments"
+description: >-
+  What # does, and why the models in this library carry almost none of them.
 order: 10
 tags: [syntax]
 ---

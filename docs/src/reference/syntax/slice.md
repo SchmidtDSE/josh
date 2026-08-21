@@ -1,5 +1,8 @@
 ---
 title: "Filtering a collection with a slice"
+description: >-
+  Selecting the members of a collection that satisfy a predicate, such as the dead trees out of
+  all the trees on a patch.
 order: 70
 tags: [syntax, values, collections]
 ---

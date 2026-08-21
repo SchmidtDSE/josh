@@ -1,5 +1,8 @@
 ---
 title: "Measuring where time goes with evalDuration"
+description: >-
+  Exporting how long each attribute took to evaluate, in the same CSV as the values it sits
+  beside.
 order: 10
 tags: [performance, profiling]
 ---

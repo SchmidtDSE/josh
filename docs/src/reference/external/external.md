@@ -1,5 +1,8 @@
 ---
 title: "Declaring an external data source"
+description: >-
+  Naming a dataset, where it comes from, and what units its values carry, so that handlers can
+  read it.
 order: 10
 tags: [external, data]
 ---
