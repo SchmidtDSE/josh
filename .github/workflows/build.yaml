@@ -235,7 +235,7 @@ jobs:
         run: |
           node --version
           node --experimental-wasm-exnref .github/scripts/check_browser_build.mjs editor/war \
-            demo.joshsim.org/js editor/js landing/js
+            web/js demo.joshsim.org/js editor/js landing/js
   testMcp:
     needs: buildJava
     environment: Build
@@ -482,6 +482,8 @@ jobs:
         run: sudo apt-get update
       - name: Install wget
         run: sudo apt-get install -y wget
+      - name: Stage the shared browser client
+        run: bash web/stage_js.sh
       - name: Load JS deps
         run: cd editor/third_party; bash install_deps.sh
       - name: Install landing deps
