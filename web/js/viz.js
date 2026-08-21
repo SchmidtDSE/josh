@@ -199,15 +199,77 @@ class GridPresenter {
    *
    * @param {Element} selection - The containing element in which the SVG and info display is
    *     found.
+   * @param {?Object} options - Optional behaviors. `scrollContainer` is the scrolling element the
+   *     info panel should pin itself inside, which only a page that scrolls its results separately
+   *     from the document has; omit it and the panel scrolls with the page. `colorDomain` is
+   *     "all-steps" to scale the heatmap across every timestep, so growth is visible as the reader
+   *     scrubs, or "per-step" to rescale each timestep on its own, so within-step contrast is
+   *     visible instead. Defaults to "all-steps".
    */
-  constructor(selection) {
+  constructor(selection, options) {
     const self = this;
+    const settings = options || {};
     self._root = selection;
     self._infoSelection = selection.querySelector("#grid-viz-info");
     self._svgSelection = selection.querySelector("#grid-viz");
     self._d3SvgSelection = d3.select(self._svgSelection);
     self._customDimensions = null;
+    self._colorDomain = settings.colorDomain || "all-steps";
 
+    // Taken as an element rather than looked up by id here: the id belonged to one page's markup,
+    // so this class could not be used anywhere else without addEventListener throwing on null. A
+    // null guard would have hidden that instead, turning a wiring mistake into a silent no-op.
+    if (settings.scrollContainer) {
+      self._pinInfoPanelWithin(settings.scrollContainer);
+    }
+  }
+
+  /**
+   * Collect every value the grid takes over every timestep.
+   *
+   * @param {SimulationMetadata} metadata - Metadata about the grid dimensions.
+   * @param {SummarizedDatasets} summarized - The summarized results to read.
+   * @param {number} patchSize - Width of one patch in grid units.
+   * @param {number} patchSizeHalf - Half a patch, the offset to a patch's center.
+   * @param {number} endXPad - Where to stop stepping in x.
+   * @param {number} endYPad - Where to stop stepping in y.
+   * @returns {number[]} The values found, excluding cells with no value.
+   */
+  _allTimestepValues(metadata, summarized, patchSize, patchSizeHalf, endXPad, endYPad) {
+    const values = [];
+    const minTimestep = summarized.getMinTimestep();
+    const maxTimestep = summarized.getMaxTimestep();
+    for (let timestep = minTimestep; timestep <= maxTimestep; timestep += 1) {
+      for (let x = metadata.getStartX(); x < endXPad; x += patchSize) {
+        for (let y = metadata.getStartY(); y < endYPad; y += patchSize) {
+          const value = summarized.getGridValue(timestep, x + patchSizeHalf, y + patchSizeHalf);
+          if (value !== null) {
+            values.push(value);
+          }
+        }
+      }
+    }
+    return values;
+  }
+
+  /**
+   * Keep the info panel visible while the results area scrolls beneath it.
+   *
+   * @param {Element} container - The scrolling element the panel is pinned inside.
+   */
+  _pinInfoPanelWithin(container) {
+    const self = this;
+    container.addEventListener("scroll", () => {
+      const outerRect = container.getBoundingClientRect();
+      const rect = self._svgSelection.getBoundingClientRect();
+      const difference = rect.top - outerRect.top;
+      if (difference < 35) {
+        self._infoSelection.classList.add("fixed");
+        self._infoSelection.style.top = (difference * -1 + 37) + "px";
+      } else {
+        self._infoSelection.classList.remove("fixed");
+      }
+    });
   }
 
   /**
@@ -285,26 +347,16 @@ class GridPresenter {
       }
     }
 
-    // Demo-specific divergence from the editor's GridPresenter: fix the color
-    // domain across ALL timesteps (not just the current one) so the heatmap is
-    // comparable as the user scrubs through years — early years read light and
-    // later years dark, making growth visible. (Editor rescales per timestep.)
-    const allValues = [];
-    const minTimestep = summarized.getMinTimestep();
-    const maxTimestep = summarized.getMaxTimestep();
-    for (let t = minTimestep; t <= maxTimestep; t += 1) {
-      for (let x = metadata.getStartX(); x < endXPad; x += patchSize) {
-        for (let y = metadata.getStartY(); y < endYPad; y += patchSize) {
-          const v = summarized.getGridValue(t, x + patchSizeHalf, y + patchSizeHalf);
-          if (v !== null) {
-            allValues.push(v);
-          }
-        }
-      }
-    }
+    // Two defensible scales, so this is the caller's choice rather than a hardcoded one. Fixing the
+    // domain across every timestep makes the heatmap comparable while scrubbing: early years read
+    // light and later years dark, which is what makes growth visible. Rescaling per timestep
+    // instead spends the whole color range on one step, showing contrast within it.
+    const domainValues = self._colorDomain === "per-step"
+      ? cells.map((cell) => cell.value)
+      : self._allTimestepValues(metadata, summarized, patchSize, patchSizeHalf, endXPad, endYPad);
 
     const colorScale = d3.scaleSequential()
-      .domain([Math.min(...allValues), Math.max(...allValues)])
+      .domain([Math.min(...domainValues), Math.max(...domainValues)])
       .interpolator(d3.interpolateBlues);
 
     const xScale = d3.scaleLinear()
