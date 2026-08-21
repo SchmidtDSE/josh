@@ -237,6 +237,7 @@ def test_every_page_is_balanced_html(site):
 #: an import-graph check -- which is how `math` reached a reader as "math is not defined", reported
 #: only after their simulation had already finished running.
 GLOBAL_SCRIPTS = {
+    "ace": "/ace.min.js",
     "d3": "/d3.min.js",
     "math": "/math.min.js",
 }

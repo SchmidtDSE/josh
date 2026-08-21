@@ -1,5 +1,7 @@
 ---
 title: "Entities that reference each other"
+description: >-
+  Two entity types that each read the other, resolved without the author ordering them by hand.
 order: 20
 tags: [queries, spatial]
 ---

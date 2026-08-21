@@ -1,5 +1,8 @@
 ---
 title: "Management stanzas"
+description: >-
+  The entity type for a deliberate intervention such as planting or thinning, as opposed to a
+  disturbance the system suffers.
 order: 40
 tags: [entities, management]
 ---

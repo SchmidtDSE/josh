@@ -75,6 +75,46 @@ landing/d3.min.js
 landing/math.min.js
 landing/prism-*.js
 landing/prism-*.css
+landing/ace.min.js
+landing/theme-textmate.js
+landing/theme-textmate-css.js
+
+# The shared browser client, staged into each site by web/stage_js.sh. One copy is tracked, at
+# web/js; these are the copies each site serves. They are ignored so that editing one shows up
+# as nothing in `git status`, which is the signal that the edit belongs in web/js instead.
+editor/js/debug.js
+editor/js/mode-joshlang.js
+editor/js/model.js
+editor/js/parse.js
+editor/js/summarize.js
+editor/js/util.js
+editor/js/viz.js
+editor/js/wasm.js
+editor/js/wasm.worker.js
+editor/js/wire.js
+
+demo.joshsim.org/js/debug.js
+demo.joshsim.org/js/mode-joshlang.js
+demo.joshsim.org/js/model.js
+demo.joshsim.org/js/parse.js
+demo.joshsim.org/js/summarize.js
+demo.joshsim.org/js/util.js
+demo.joshsim.org/js/viz.js
+demo.joshsim.org/js/wasm.js
+demo.joshsim.org/js/wasm.worker.js
+demo.joshsim.org/js/wire.js
+
+landing/js/debug.js
+landing/js/mode-joshlang.js
+landing/js/model.js
+landing/js/parse.js
+landing/js/summarize.js
+landing/js/util.js
+landing/js/viz.js
+landing/js/wasm.js
+landing/js/wasm.worker.js
+landing/js/wire.js
+
 
 .claude
 

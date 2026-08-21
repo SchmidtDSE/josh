@@ -1,15 +1,9 @@
 /**
  * RunnerPresenter: runs a library page's model in the reader's browser.
  *
- * The engine is the same WebAssembly build the editor and the demo use, reached through the same
- * WasmLayer. What differs is where the code comes from: this presenter reads the model out of the
- * listing already on the page rather than holding a copy of it, so the code that runs is
- * necessarily the code the reader is looking at. There is nothing here to keep in sync with the
- * authored `.josh`, because there is no second copy of it.
- *
- * The variables offered in the result viz are discovered from the result itself, not declared. A
- * model's exports are whatever its `export.` handlers wrote, and the records know their own
- * attribute names, so a page gains a new plot by the model exporting a new value.
+ * Progressive enhancement: the server renders a static <pre><code> listing that works without JS.
+ * When this module loads, it replaces that listing with an Ace editor so the reader can modify the
+ * model before running it. A Reset button restores the original text.
  *
  * @license BSD-3-Clause
  */
@@ -19,24 +13,63 @@ import {DataQuery, summarizeDatasets} from "summarize";
 import {GridPresenter, ScrubPresenter} from "viz";
 
 
-/**
- * Attributes every patch record carries to say where and when it was taken.
- *
- * They are how a result is placed on the map and the timeline, not things to plot, so they are kept
- * out of the variable picker.
- */
 const STRUCTURAL_VARIABLES = new Set(["step", "position.x", "position.y"]);
 
 
 /**
- * Fetch a URL as a base64-encoded string.
+ * Third-party libraries the run pipeline reaches for as a bare global rather than importing.
  *
- * Binary `.jshd` files cross the wire to the engine as base64: ExternalDataSerializer marks
- * anything that is not .csv/.txt/.jshc/.josh as binary and expects it encoded.
- *
- * @param {string} url - URL to fetch.
- * @returns {Promise<string>} Base64 string of the binary content.
+ * They are invisible to the module graph, so a page that fails to load one still starts a run and
+ * then dies partway through with a ReferenceError naming a variable -- `math is not defined` --
+ * which says nothing about which script is missing or that the reader should reload. Checking here
+ * turns that into a sentence, and does it before a run that can take a minute or more rather than
+ * after. `docs/build/tests/test_integration.py` asserts a run page carries a tag for each of these.
  */
+const REQUIRED_GLOBALS = {
+  "d3": "/d3.min.js",
+  "math": "/math.min.js",
+};
+
+
+/**
+ * Recover a library that loaded but published itself somewhere other than the global scope.
+ *
+ * A UMD bundle picks where to put itself by sniffing the scope it finds itself in, and mathjs sniffs
+ * for a bare `exports` before falling back to the global. So anything that leaves an `exports` object
+ * on the window -- a CommonJS shim, an injected script, a browser extension -- takes delivery of
+ * mathjs instead of the page, and the page then fails partway through a run with
+ * `math is not defined` while d3, whose bundle has no such branch, works fine beside it.
+ *
+ * Only the `exports.<name>` form is recovered. The `module.exports` form the same bundles prefer is
+ * deliberately left alone: every library that took it wrote to one property, so there is no way to
+ * tell whose value is sitting there, and guessing would be worse than the honest failure below.
+ */
+function adoptDisplacedGlobals() {
+  const displaced = globalThis.exports;
+  if (typeof displaced !== "object" || displaced === null) {
+    return;
+  }
+  Object.keys(REQUIRED_GLOBALS)
+    .filter((name) => typeof globalThis[name] === "undefined" && displaced[name])
+    .forEach((name) => {
+      globalThis[name] = displaced[name];
+    });
+}
+
+
+/**
+ * Return the scripts whose globals never arrived.
+ *
+ * @returns {string[]} The missing scripts' URLs, in declaration order.
+ */
+function missingScripts() {
+  adoptDisplacedGlobals();
+  return Object.keys(REQUIRED_GLOBALS)
+    .filter((name) => typeof globalThis[name] === "undefined")
+    .map((name) => REQUIRED_GLOBALS[name]);
+}
+
+
 async function fetchAsBase64(url) {
   const response = await fetch(url);
   if (!response.ok) {
@@ -44,8 +77,6 @@ async function fetchAsBase64(url) {
   }
   const bytes = new Uint8Array(await response.arrayBuffer());
   let binary = "";
-  // Chunked because String.fromCharCode is applied to the whole array at once below, and a
-  // multi-megabyte spread overflows the argument limit in every engine.
   const chunk = 8192;
   for (let i = 0; i < bytes.length; i += chunk) {
     binary += String.fromCharCode.apply(null, bytes.subarray(i, i + chunk));
@@ -56,26 +87,20 @@ async function fetchAsBase64(url) {
 
 class RunnerPresenter {
 
-  /**
-   * @param {Element} root - The run section, which owns every element this presenter touches.
-   * @param {Object} options - What this page needs to run its own model.
-   * @param {string} options.simulation - Name of the simulation to run.
-   * @param {Object<string,string>} options.dataManifest - Map of the virtual `.jshd` filename the
-   *     engine resolves an external by, to the URL this page fetches it from. Empty when the model
-   *     reads no external data.
-   * @param {Element} options.source - The element holding the model text to run.
-   */
   constructor(root, options) {
     const self = this;
     self._root = root;
     self._simulation = options.simulation;
     self._dataManifest = options.dataManifest || {};
     self._source = options.source;
+    self._originalCode = self._source ? self._source.textContent : "";
 
     self._button = root.querySelector(".run-button");
     self._status = root.querySelector(".run-status");
     self._results = root.querySelector(".run-results");
 
+    self._editor = null;
+    self._resetButton = null;
     self._wasmLayer = null;
     self._jshdCache = null;
     self._isRunning = false;
@@ -87,32 +112,101 @@ class RunnerPresenter {
     self._scrubPresenter = null;
   }
 
-  /**
-   * Wire the run button. The button starts disabled in the markup so that a page whose scripts
-   * failed to load offers nothing to click rather than something that does nothing.
-   */
   attach() {
     const self = this;
     if (!self._button) {
       return;
     }
+    const missing = missingScripts();
+    if (missing.length > 0) {
+      self._say(
+        "This page did not finish loading, so it cannot run the model: " + missing.join(", ") +
+        ". Reload the page, and if it keeps happening the site is serving them incorrectly.",
+        true
+      );
+      self._initEditor();
+      return;
+    }
+
     self._button.removeAttribute("disabled");
     self._button.addEventListener("click", () => self._run());
+    self._initEditor();
   }
 
   /**
-   * The model to run, read from the listing on the page.
+   * Replace the static listing with an editor, or leave the listing alone.
    *
-   * @returns {string} The model text.
+   * Returns without touching the page when Ace did not load, so a reader whose browser blocked the
+   * script still gets a readable model and a working Run button. The notice is written here rather
+   * than in the template for the same reason: it promises editing, so it must not appear on a page
+   * where nothing is editable.
    */
+  _initEditor() {
+    const self = this;
+    if (!self._source || typeof ace === "undefined") {
+      return;
+    }
+
+    const pre = self._source.closest("pre");
+    if (!pre) {
+      return;
+    }
+
+    const notice = document.createElement("p");
+    notice.className = "run-notice";
+    notice.append("Editable: change the model below and run it. Your edits stay in this browser, ");
+    notice.append("and if anything breaks, simply press the reset button!");
+    const reset = document.createElement("button");
+    reset.type = "button";
+    reset.className = "reset-button";
+    reset.textContent = "Reset";
+    reset.addEventListener("click", () => self._reset());
+    self._resetButton = reset;
+    notice.appendChild(reset);
+    pre.parentNode.insertBefore(notice, pre);
+
+    const editorDiv = document.createElement("div");
+    editorDiv.id = "run-editor";
+    editorDiv.className = "run-editor";
+    pre.parentNode.replaceChild(editorDiv, pre);
+
+    ace.config.set("basePath", "/");
+    self._editor = ace.edit(editorDiv);
+    self._editor.getSession().setUseWorker(false);
+    self._editor.setTheme("ace/theme/textmate");
+    self._editor.getSession().setMode("ace/mode/joshlang");
+    self._editor.session.setOptions({ tabSize: 2, useSoftTabs: true });
+    self._editor.setOption("printMarginColumn", 100);
+    self._editor.setOption("enableKeyboardAccessibility", true);
+    self._editor.getSession().setValue(self._originalCode, 1);
+
+    const lineCount = self._editor.getSession().getLength();
+    const lineHeight = self._editor.renderer.lineHeight || 16;
+    const padding = 16;
+    editorDiv.style.height = Math.min(lineCount * lineHeight + padding, 600) + "px";
+    self._editor.resize();
+  }
+
   getCode() {
     const self = this;
-    return self._source ? self._source.textContent : "";
+    if (self._editor) {
+      return self._editor.getValue();
+    }
+    return self._originalCode;
   }
 
-  /**
-   * Run the simulation and show what it produced.
-   */
+  _reset() {
+    const self = this;
+    if (self._isRunning) {
+      return;
+    }
+    if (self._editor) {
+      self._editor.getSession().setValue(self._originalCode, 1);
+    }
+    self._results.innerHTML = "";
+    self._say("");
+  }
+
   async _run() {
     const self = this;
     if (self._isRunning) {
@@ -120,7 +214,7 @@ class RunnerPresenter {
     }
 
     self._isRunning = true;
-    self._button.disabled = true;
+    self._setBusy(true);
     self._results.innerHTML = "";
     self._say("Loading the engine…");
 
@@ -136,9 +230,6 @@ class RunnerPresenter {
 
       const code = self.getCode();
 
-      // Metadata is read before the run rather than after it, so the progress line can say how far
-      // along the run is. A heavy model takes minutes in a browser, and "step 12 of 31" is the
-      // difference between a reader waiting and a reader deciding the page is broken.
       self._say("Reading the simulation…");
       self._lastMetadata = await self._wasmLayer.getSimulationMetadata(code, self._simulation);
       const total = self._lastMetadata.getTotalSteps();
@@ -155,21 +246,21 @@ class RunnerPresenter {
 
       self._show();
     } catch (err) {
-      // Assertion failures arrive here too: a failed `assert` aborts the run and the engine
-      // reports it as an error, so the message a reader sees is the one the model wrote.
       self._say("Did not finish: " + (err.message || String(err)), true);
     } finally {
       self._isRunning = false;
-      self._button.disabled = false;
+      self._setBusy(false);
     }
   }
 
-  /**
-   * Put a line of status text above the results.
-   *
-   * @param {string} message - What to say.
-   * @param {boolean} [failed] - Whether this is a failure, which is styled and announced as one.
-   */
+  _setBusy(busy) {
+    const self = this;
+    self._button.disabled = busy;
+    if (self._resetButton) {
+      self._resetButton.disabled = busy;
+    }
+  }
+
   _say(message, failed) {
     const self = this;
     if (!self._status) {
@@ -179,9 +270,6 @@ class RunnerPresenter {
     self._status.classList.toggle("run-failed", Boolean(failed));
   }
 
-  /**
-   * Render the finished run: a note of what it produced, then the viz if there is anything to plot.
-   */
   _show() {
     const self = this;
     const result = self._lastResult;
@@ -192,8 +280,6 @@ class RunnerPresenter {
       .sort();
 
     if (self._variables.length === 0) {
-      // A model with no `export.` handlers still ran, and for one whose assertions are the point
-      // that is the whole result. Saying so is better than an empty panel.
       self._say("Ran to completion. This model exports no patch variables to plot.");
       return;
     }
@@ -241,12 +327,6 @@ class RunnerPresenter {
     self._plot();
   }
 
-  /**
-   * Summarize the cached result for the selected variable and draw it.
-   *
-   * The result is reused rather than re-run, so changing the variable costs a summarize rather than
-   * a simulation.
-   */
   _plot() {
     const self = this;
     const query = new DataQuery(self._selectedVariable, "mean", null, null, null);
@@ -262,11 +342,6 @@ class RunnerPresenter {
     self._scrubPresenter.render(summarized);
   }
 
-  /**
-   * Fetch this page's data files and return them keyed by the name the engine looks them up under.
-   *
-   * @returns {Promise<Object>} The externalData map handed to the engine.
-   */
   async _loadJshd() {
     const self = this;
     const names = Object.keys(self._dataManifest);

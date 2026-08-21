@@ -1,5 +1,8 @@
 ---
 title: "Binomial draws for cohort survival"
+description: >-
+  Drawing the number of survivors out of a thousand interchangeable individuals in one call,
+  rather than instantiating a thousand entities.
 order: 40
 tags: [distributions, stochastic, performance]
 ---

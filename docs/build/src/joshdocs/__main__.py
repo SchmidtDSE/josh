@@ -35,7 +35,7 @@ from .harvest import (
 )
 from .joshjar import DEFAULT_JAR, JarUnavailable, JoshJar
 from .manifest import Manifest, ManifestUnreadable
-from .render import DEFAULT_OUT, RenderOptions, render
+from .render import DEFAULT_OUT, DEFAULT_SITE, RenderOptions, render
 
 EXIT_OK = 0
 EXIT_PROBLEMS = 1
@@ -176,8 +176,11 @@ def _build_parser() -> argparse.ArgumentParser:
     serve_parser.add_argument(
         "--out",
         type=Path,
-        default=DEFAULT_OUT,
-        help=f"directory to serve (default: {DEFAULT_OUT})",
+        default=DEFAULT_SITE,
+        help=(
+            f"site root to serve (default: {DEFAULT_SITE}). Not the rendered tree: a page's assets "
+            "are site-absolute, so they resolve only from the root the site publishes at."
+        ),
     )
     serve_parser.add_argument(
         "--port",
@@ -276,10 +279,16 @@ def _run_render(args: argparse.Namespace) -> int:
 
 
 def _run_serve(args: argparse.Namespace) -> int:
-    """Serve the rendered pages until interrupted.
+    """Serve the site root until interrupted, and say where the rendered pages are in it.
 
     Rendering is not repeated on change: watching the tree would need a dependency the build has no
     other use for, and re-running ``render`` takes well under a second.
+
+    What is served is the site root rather than the rendered tree, since a page reaches its
+    stylesheet, its nav, and the engine by site-absolute path. Rooting the server at the rendered
+    tree instead answers every one of those with the 404 page, which a browser reports as
+    ``blocked because of a disallowed MIME type ("text/html")`` -- naming the symptom and not the
+    cause -- so the mistake is worth calling out rather than leaving to be diagnosed.
 
     Args:
         args: Parsed arguments.
@@ -297,9 +306,22 @@ def _run_serve(args: argparse.Namespace) -> int:
         )
         return EXIT_UNUSABLE
 
+    library = args.out / DEFAULT_OUT.name
+    if not library.is_dir():
+        print(
+            f"joshdocs: warning: {args.out} holds no {DEFAULT_OUT.name}/. Serve the site root "
+            f"({DEFAULT_SITE}) rather than the rendered tree, or a page's stylesheet and scripts "
+            "will 404.",
+            file=sys.stderr,
+        )
+
     handler = functools.partial(http.server.SimpleHTTPRequestHandler, directory=str(args.out))
     with http.server.ThreadingHTTPServer(("127.0.0.1", args.port), handler) as server:
-        print(f"joshdocs: serving {args.out} at http://127.0.0.1:{args.port}/ (ctrl-c to stop)")
+        landed = f"{DEFAULT_OUT.name}/" if library.is_dir() else ""
+        print(
+            f"joshdocs: serving {args.out} at "
+            f"http://127.0.0.1:{args.port}/{landed} (ctrl-c to stop)"
+        )
         try:
             server.serve_forever()
         except KeyboardInterrupt:

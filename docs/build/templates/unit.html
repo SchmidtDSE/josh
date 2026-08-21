@@ -55,7 +55,7 @@
         code that runs is the code on the page. Nothing here transcribes Josh, and nothing here can
         drift from the authored file.
       #}
-      <section class="unit-run" id="run">
+      <section class="unit-run" id="run-it-here">
         <h2>Run it here</h2>
         <p>
           This runs <code>{{ unit.simulation }}</code> in your browser on the same engine the
@@ -121,6 +121,10 @@
       engine is staged once at the site root. The bare specifiers are what the modules import each
       other by; they are the same names the editor and the demo use, since these are the same files.
     #}
+    <script src="/ace.min.js"></script>
+    <script src="/theme-textmate.js"></script>
+    <script src="/theme-textmate-css.js"></script>
+    <script src="/js/mode-joshlang.js"></script>
     <script src="/d3.min.js"></script>
     <script src="/math.min.js"></script>
     <script type="importmap">
@@ -136,14 +140,20 @@
         }
       }
     </script>
+    {#
+      Selected by class rather than by id. A prose heading becomes an anchor with an id slugged from
+      its text, so `getElementById` here answered with an author's `## Run` heading -- earlier in the
+      document than this section -- and the run box silently never wired itself up. Classes are the
+      template's own namespace; ids are shared with whatever the author writes.
+    #}
     <script type="module">
       import {RunnerPresenter} from "runner";
 
-      const section = document.getElementById("run");
+      const section = document.querySelector("section.unit-run");
       new RunnerPresenter(section, {
         simulation: {{ unit.simulation | tojson }},
         dataManifest: {{ data_manifest | tojson }},
-        source: document.getElementById("complete-model-code")
+        source: document.querySelector(".unit-model pre code")
       }).attach();
     </script>
 {% endif %}

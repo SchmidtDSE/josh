@@ -17,3 +17,8 @@ fi
 [ ! -e prism-tomorrow.min.css ] && wget https://cdnjs.cloudflare.com/ajax/libs/prism/1.30.0/themes/prism-tomorrow.min.css -O prism-tomorrow.min.css
 [ ! -e prism-core.min.js ] && wget https://cdnjs.cloudflare.com/ajax/libs/prism/1.30.0/components/prism-core.min.js -O prism-core.min.js
 [ ! -e prism-autoloader.min.js ] && wget https://cdnjs.cloudflare.com/ajax/libs/prism/1.30.0/plugins/autoloader/prism-autoloader.min.js -O prism-autoloader.min.js
+
+# Ace editor, same version the demo and editor sites use.
+[ ! -e ace.min.js ] && wget https://cdnjs.cloudflare.com/ajax/libs/ace/1.36.5/ace.min.js -O ace.min.js
+[ ! -e theme-textmate.js ] && wget https://editor.joshsim.org/third_party/theme-textmate.js -O theme-textmate.js
+[ ! -e theme-textmate-css.js ] && wget https://editor.joshsim.org/third_party/theme-textmate-css.js -O theme-textmate-css.js

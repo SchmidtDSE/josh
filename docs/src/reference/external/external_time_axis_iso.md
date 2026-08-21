@@ -1,5 +1,8 @@
 ---
 title: "External time axis on an ISO clock"
+description: >-
+  Putting a simulation on a calendar clock with ISO dates, and what that changes about the
+  temporal queries.
 order: 30
 tags: [external, data, temporal]
 ---

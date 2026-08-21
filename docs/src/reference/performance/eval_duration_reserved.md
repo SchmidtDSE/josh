@@ -1,5 +1,8 @@
 ---
 title: "evalDuration cannot be assigned"
+description: >-
+  Why the engine rejects a model that writes to an attribute the engine itself supplies, kept as a
+  standing check that it still does.
 order: 30
 tags: [performance, profiling]
 expect: parse-error

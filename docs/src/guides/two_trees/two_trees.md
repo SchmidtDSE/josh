@@ -1,6 +1,11 @@
 ---
 title: "Two Trees"
-order: 20
+description: >-
+  Returns to agents, with every tree its own organism competing for room on a patch that holds at
+  most thirty. Adds the start and end phases beside step, slices that clear the dead out of a
+  collection, and the pipe that joins new trees onto the survivors. Growth and death come from
+  Cal-Adapt temperature and precipitation, each read through its own response curve.
+order: 30
 tags: [guide, competition, external-data]
 simulation: Main
 exports: [patch]

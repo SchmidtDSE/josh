@@ -20,7 +20,7 @@ SIDECAR = Path("docs/src/recipes/x.md")
 
 
 def minimal(**overrides):
-    fields = {"kind": "recipe", "title": "A recipe"}
+    fields = {"kind": "recipe", "title": "A recipe", "description": "What it is for."}
     fields.update(overrides)
     return FrontMatter.model_validate(fields)
 
@@ -45,7 +45,9 @@ def test_explicit_runnable_overrides_the_kind_default():
 
 
 def test_assert_is_read_from_the_yaml_keyword():
-    front = FrontMatter.model_validate({"kind": "recipe", "title": "t", "assert": True})
+    front = FrontMatter.model_validate(
+        {"kind": "recipe", "title": "t", "description": "d", "assert": True}
+    )
     assert front.asserts is True
 
 
@@ -73,7 +75,7 @@ def test_exports_require_runnable():
 def test_assert_requires_runnable():
     with pytest.raises(ValidationError, match="assert: true requires runnable"):
         FrontMatter.model_validate(
-            {"kind": "reference", "title": "t", "assert": True}
+            {"kind": "reference", "title": "t", "description": "d", "assert": True}
         )
 
 
@@ -97,7 +99,13 @@ def test_parse_error_cannot_be_runnable():
 def test_parse_error_cannot_assert():
     with pytest.raises(ValidationError, match="cannot carry assert"):
         FrontMatter.model_validate(
-            {"kind": "reference", "title": "t", "expect": "parse-error", "assert": True}
+            {
+                "kind": "reference",
+                "title": "t",
+                "description": "d",
+                "expect": "parse-error",
+                "assert": True,
+            }
         )
 
 
@@ -117,6 +125,35 @@ def test_destination_must_stay_inside_the_output_tree():
 def test_blank_title_is_rejected():
     with pytest.raises(ValidationError, match="must not be empty"):
         minimal(title="   ")
+
+
+def test_description_is_required():
+    # An index of bare titles is what requiring this prevents, so it is not optional the way a
+    # tag or an order is: a unit that does not say what it is for cannot be published.
+    with pytest.raises(ValidationError) as caught:
+        FrontMatter.model_validate({"kind": "recipe", "title": "t"})
+    assert caught.value.errors()[0]["loc"] == ("description",)
+
+
+def test_blank_description_is_rejected():
+    with pytest.raises(ValidationError, match="must not be empty"):
+        minimal(description="  ")
+
+
+def test_a_description_longer_than_a_summary_is_rejected():
+    with pytest.raises(ValidationError, match="at most 400 characters"):
+        minimal(description="word " * 100)
+
+
+def test_a_description_that_expects_markdown_is_rejected():
+    # The index shows the description as text, so a backtick reaches the reader as a backtick.
+    with pytest.raises(ValidationError, match="plain text"):
+        minimal(description="Reading a value from a `.jshc` namespace.")
+
+
+def test_a_folded_description_collapses_to_one_line():
+    # YAML folding leaves the newlines a `|` block keeps, and the index shows this as one line.
+    assert minimal(description="over\ntwo lines").description == "over two lines"
 
 
 def test_negative_seed_is_rejected():
@@ -168,12 +205,14 @@ def test_bad_enum_value_lists_what_was_expected():
 
 def test_assert_errors_are_reported_under_the_yaml_key():
     with pytest.raises(ValidationError) as caught:
-        FrontMatter.model_validate({"kind": "recipe", "title": "t", "assert": "yes please"})
+        FrontMatter.model_validate(
+            {"kind": "recipe", "title": "t", "description": "d", "assert": "yes please"}
+        )
     problems = problems_from_validation_error(
-        caught.value, SIDECAR, "kind: recipe\ntitle: t\nassert: yes please"
+        caught.value, SIDECAR, "kind: recipe\ntitle: t\ndescription: d\nassert: yes please"
     )
     assert problems[0].message.startswith("assert: expected true or false")
-    assert problems[0].line == 4
+    assert problems[0].line == 5
 
 
 def test_every_kind_has_a_runnable_default():

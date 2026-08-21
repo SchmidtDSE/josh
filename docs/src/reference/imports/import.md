@@ -1,5 +1,8 @@
 ---
 title: "Importing another model (reserved URL form)"
+description: >-
+  Pulling one .josh into another, kept here to record that the file:// spelling is refused
+  where a bare relative path is not.
 order: 20
 tags: [imports, reserved]
 status: reserved

@@ -1,5 +1,7 @@
 ---
 title: "Test stanzas (reserved)"
+description: >-
+  Why start test is not valid syntax, and where a model's assertions are written instead.
 order: 10
 tags: [testing, reserved]
 status: reserved

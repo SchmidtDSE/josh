@@ -1,5 +1,8 @@
 ---
 title: "Loading a config file from the model (reserved)"
+description: >-
+  The config "<url>" as <name> form the grammar accepts and the interpreter refuses, recorded so
+  the syntax is not rediscovered.
 order: 20
 tags: [config, reserved]
 status: reserved

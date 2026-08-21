@@ -2,6 +2,10 @@
 {#
   One kind's index: every unit of that kind, grouped by the directory it lives in and ordered by
   the `order` field its author set. Generated, so a new unit appears here by existing.
+
+  A group carries a label only when the renderer decided grouping says something -- guides live one
+  per directory, so labelling those would print every title twice, and the renderer hands them over
+  as a single unlabelled group instead.
 #}
 {% block title %}Josh {{ title }}{% endblock %}
 {% block heading %}{{ title }}{% endblock %}
@@ -10,21 +14,23 @@
 {% block content %}
     <main id="main" class="landing">
 {% for destination, label, entries in groups %}
-      <section id="{{ destination | replace('/', '-') }}">
-{% if not single_group %}
+      <section{% if destination %} id="{{ destination | replace('/', '-') }}"{% endif %}>
+{% if label %}
         <h2>{{ label | title }}</h2>
 {% endif %}
         <ul class="unit-list">
 {% for unit, href in entries %}
           <li>
-            <a href="{{ href }}">{{ unit.title }}</a>
+            <p class="unit-title">
+              <a href="{{ href }}">{{ unit.title }}</a>
 {% if unit.status.value == "reserved" %}
-            <span class="badge badge-reserved">reserved</span>
+              <span class="badge badge-reserved">reserved</span>
 {% elif unit.assertions %}
-            <span class="badge badge-asserting">asserting</span>
+              <span class="badge badge-asserting">asserting</span>
 {% endif %}
+            </p>
 {% if unit.description %}
-            <p>{{ unit.description }}</p>
+            <p class="unit-summary">{{ unit.description }}</p>
 {% endif %}
           </li>
 {% endfor %}

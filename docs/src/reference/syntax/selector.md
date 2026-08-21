@@ -1,5 +1,8 @@
 ---
 title: "Selectors on event handlers"
+description: >-
+  Guarding a handler with its own condition, so several handlers can share one attribute and the
+  engine evaluates the first that applies.
 order: 40
 tags: [syntax, conditionals]
 ---

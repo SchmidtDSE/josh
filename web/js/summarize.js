@@ -212,7 +212,7 @@ function summarizeDatasets(target, query) {
 
     // forEach on a Map, not on the iterator its keys() returns: Iterator.prototype.forEach is an
     // iterator-helper method, and an engine without those throws "keys(...).forEach is not a
-    // function" here rather than anywhere near the run the reader started.
+    // function" here rather than anywhere near the run the user started.
     valuesByKey.forEach((values, key) => {
       valueByKey.set(key, curriedStrategy(values));
     });

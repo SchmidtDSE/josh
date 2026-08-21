@@ -33,8 +33,10 @@ read from the `.josh` rather than copied into it.
 
 ## Adding a unit
 
-Write the `.josh` and a `.md` beside it with the same stem. The sidecar needs a `title:`; `kind:` is
-inferred from the top-level directory. `docs/build/README.md` documents every field.
+Write the `.josh` and a `.md` beside it with the same stem. The sidecar needs a `title:` and a
+`description:` — one sentence saying what the page is for, which the index shows under the link to
+it — and `kind:` is inferred from the top-level directory. `docs/build/README.md` documents every
+field.
 
 Three declarations carry the cases that are not simply "this should validate":
 

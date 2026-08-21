@@ -1,18 +1,48 @@
 """Tests for the command line entry point, which is what CI calls."""
 
+import http.server
 import json
 
 import pytest
 
-from joshdocs.__main__ import EXIT_OK, EXIT_PROBLEMS, EXIT_UNUSABLE, main
+from joshdocs.__main__ import EXIT_OK, EXIT_PROBLEMS, EXIT_UNUSABLE, _build_parser, main
+from joshdocs.render import DEFAULT_OUT, DEFAULT_SITE
+from support import with_description
 
 MODEL = "start simulation Main\n\n  grid.size = 10 m\n\nend simulation\n"
+
+
+class StubServer:
+    """Stands in for the HTTP server so a `serve` test returns instead of listening forever."""
+
+    def __init__(self, address, handler):
+        self.address = address
+        self.handler = handler
+
+    def __enter__(self):
+        """Hand back the stub, as the real server's context manager hands back itself."""
+        return self
+
+    def __exit__(self, *exc):
+        """Let the KeyboardInterrupt through, which is what `serve` catches to shut down."""
+        return False
+
+    def serve_forever(self):
+        raise KeyboardInterrupt
+
+
+@pytest.fixture
+def stub_server(monkeypatch):
+    """Let `serve` run its checks and print its banner without binding a port."""
+    monkeypatch.setattr(http.server, "ThreadingHTTPServer", StubServer)
 
 
 def make_unit(src, stem, front_matter):
     src.mkdir(parents=True, exist_ok=True)
     (src / f"{stem}.josh").write_text(MODEL, encoding="utf-8")
-    (src / f"{stem}.md").write_text(f"---\n{front_matter}\n---\n\nProse.\n", encoding="utf-8")
+    (src / f"{stem}.md").write_text(
+        f"---\n{with_description(front_matter)}\n---\n\nProse.\n", encoding="utf-8"
+    )
 
 
 def harvest_argv(tmp_path, *extra):
@@ -145,8 +175,9 @@ def test_render_without_a_manifest_says_to_harvest_first(tmp_path, capsys):
 def test_render_reports_a_dead_link_and_fails(tmp_path, capsys):
     src = tmp_path / "docs" / "src" / "recipes" / "dispersal"
     make_unit(src, "wind", 'title: "Wind"')
+    front = with_description('title: "Wind"')
     (src / "wind.md").write_text(
-        '---\ntitle: "Wind"\n---\n\nSee [gone](nowhere.md).\n', encoding="utf-8"
+        f"---\n{front}\n---\n\nSee [gone](nowhere.md).\n", encoding="utf-8"
     )
     assert main(harvest_tree_argv(tmp_path, "--quiet")) == EXIT_OK
     assert main(render_argv(tmp_path)) == EXIT_PROBLEMS
@@ -156,3 +187,30 @@ def test_render_reports_a_dead_link_and_fails(tmp_path, capsys):
 def test_serve_without_a_rendered_tree_says_to_render_first(tmp_path, capsys):
     assert main(["serve", "--out", str(tmp_path / "out")]) == EXIT_UNUSABLE
     assert "joshdocs render" in capsys.readouterr().err
+
+
+def test_serve_defaults_to_the_site_root_not_the_rendered_tree():
+    """Pages carry site-absolute assets, so the tree `render` writes is the wrong server root."""
+    args = _build_parser().parse_args(["serve"])
+    assert args.out == DEFAULT_SITE
+    assert args.out != DEFAULT_OUT
+
+
+def test_serve_points_at_the_library_and_stays_quiet_on_a_real_site_root(
+    tmp_path, capsys, stub_server
+):
+    (tmp_path / "library").mkdir()
+    assert main(["serve", "--out", str(tmp_path)]) == EXIT_OK
+    captured = capsys.readouterr()
+    assert "/library/" in captured.out
+    assert "warning" not in captured.err
+
+
+def test_serve_warns_when_pointed_at_the_rendered_tree(tmp_path, capsys, stub_server):
+    """Serving `landing/library` 404s every stylesheet and script, as a MIME refusal.
+
+    The browser blames the content type rather than the missing file, so nothing in the error names
+    the server root as the cause. This is the only place that can.
+    """
+    assert main(["serve", "--out", str(tmp_path)]) == EXIT_OK
+    assert "warning" in capsys.readouterr().err

@@ -8,7 +8,8 @@ import {BasemapDialogPresenter} from "baselayer";
 import {ExportPresenter} from "exporter";
 import {DebugMessage, DebugMessageStore} from "model";
 import {DataQuery, summarizeDatasets} from "summarize";
-import {GridPresenter, ScrubPresenter, MapConfigPresenter} from "viz";
+import {GridPresenter, ScrubPresenter} from "viz";
+import {MapConfigPresenter} from "./map_config.js";
 
 
 /**
@@ -345,7 +346,14 @@ class ResultsDisplayPresenter {
       (step) => self._onStepSelected(step)
     );
     self._gridPresenter = new GridPresenter(
-      self._root.querySelector("#grid-viz-holder")
+      self._root.querySelector("#grid-viz-holder"),
+      {
+        // The editor scrolls its results separately from the document and rescales the heatmap on
+        // each timestep. Both were hardcoded in viz.js and are now asked for, so the other sites
+        // can share the class without inheriting markup they do not have.
+        scrollContainer: document.getElementById("results-area"),
+        colorDomain: "per-step",
+      }
     );
     self._mapConfigPresenter = new MapConfigPresenter(
       self._root.querySelector("#map-config"),
