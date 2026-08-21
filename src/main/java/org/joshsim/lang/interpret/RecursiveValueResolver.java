@@ -31,6 +31,7 @@ public class RecursiveValueResolver implements ValueResolver {
 
   private final ValueSupportFactory valueFactory;
   private final String path;
+  private final String[] pathPieces;
   private final boolean hasDot;
   private final boolean isEvalDuration;
   private final EngineValue zeroMilliseconds;
@@ -47,11 +48,47 @@ public class RecursiveValueResolver implements ValueResolver {
   public RecursiveValueResolver(ValueSupportFactory valueFactory, String path) {
     this.valueFactory = valueFactory;
     this.path = path;
+    this.pathPieces = splitPath(path);
     this.hasDot = getHasDot(path);
     this.isEvalDuration = EVAL_DURATION_ATTR.equals(path);
     this.zeroMilliseconds = valueFactory.build(0L, Units.MILLISECONDS);
     memoizedContinuationResolver = null;
     foundPath = null;
+  }
+
+  /**
+   * Split a dot-separated path into its segments.
+   *
+   * <p>Performs the same split as {@code path.split("\\.")} but without compiling a regular
+   * expression, which is comparatively expensive and runs once per resolver construction.</p>
+   *
+   * @param path The dot-separated attribute path to split, may be null.
+   * @return Segments of the path or an empty array if the path is null.
+   */
+  private static String[] splitPath(String path) {
+    if (path == null) {
+      return new String[0];
+    }
+
+    int numPieces = 1;
+    for (int i = 0; i < path.length(); i++) {
+      if (path.charAt(i) == '.') {
+        numPieces += 1;
+      }
+    }
+
+    String[] pieces = new String[numPieces];
+    int start = 0;
+    int pieceIndex = 0;
+    for (int i = 0; i <= path.length(); i++) {
+      if (i == path.length() || path.charAt(i) == '.') {
+        pieces[pieceIndex] = path.substring(start, i);
+        pieceIndex += 1;
+        start = i + 1;
+      }
+    }
+
+    return pieces;
   }
 
   /**
@@ -208,7 +245,7 @@ public class RecursiveValueResolver implements ValueResolver {
       return memoizedContinuationResolver;
     }
 
-    String[] pieces = path.split("\\.");
+    String[] pieces = pathPieces;
     int numPieces = pieces.length;
 
     for (int numPiecesAttempt = numPieces; numPiecesAttempt > 0; numPiecesAttempt--) {

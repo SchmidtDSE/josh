@@ -20,6 +20,7 @@ public class DoublePrecomputedGrid extends UniformPrecomputedGrid<Double> {
   private final ValueSupportFactory factory;
   private final Units units;
   private final double[][][] innerValues;
+  private final EngineValue[][][] innerValueCache;
 
   /**
    * Create a new precomputed grid.
@@ -42,6 +43,7 @@ public class DoublePrecomputedGrid extends UniformPrecomputedGrid<Double> {
     int timestepsCut = (int) (getMaxTimestep() - getMinTimestep() + 1);
 
     innerValues = new double[timestepsCut][height][width];
+    innerValueCache = new EngineValue[timestepsCut][height][width];
   }
 
   /**
@@ -62,6 +64,11 @@ public class DoublePrecomputedGrid extends UniformPrecomputedGrid<Double> {
     this.units = units;
 
     this.innerValues = innerValues;
+
+    int numTimesteps = innerValues.length;
+    int numRows = numTimesteps > 0 ? innerValues[0].length : 0;
+    int numCols = numRows > 0 ? innerValues[0][0].length : 0;
+    this.innerValueCache = new EngineValue[numTimesteps][numRows][numCols];
   }
 
   /**
@@ -108,6 +115,9 @@ public class DoublePrecomputedGrid extends UniformPrecomputedGrid<Double> {
     }
 
     innerValues[timestepCut][vertCut][horizCut] = value;
+    if (innerValueCache.length > 0) {
+      innerValueCache[timestepCut][vertCut][horizCut] = null;
+    }
   }
 
   @Override
@@ -116,6 +126,14 @@ public class DoublePrecomputedGrid extends UniformPrecomputedGrid<Double> {
       for (int y = 0; y < innerValues[t].length; y++) {
         for (int x = 0; x < innerValues[t][y].length; x++) {
           innerValues[t][y][x] = value;
+        }
+      }
+    }
+
+    for (int t = 0; t < innerValueCache.length; t++) {
+      for (int y = 0; y < innerValueCache[t].length; y++) {
+        for (int x = 0; x < innerValueCache[t][y].length; x++) {
+          innerValueCache[t][y][x] = null;
         }
       }
     }
@@ -155,7 +173,15 @@ public class DoublePrecomputedGrid extends UniformPrecomputedGrid<Double> {
     }
 
     double value = innerValues[timestepCut][vertCut][horizCut];
-    return factory.buildForNumber(value, units);
+
+    // Values built here are immutable scalars and each cell is read many times per timestep, so
+    // build each cell's EngineValue once and reuse it. Benign race on first read.
+    EngineValue cached = innerValueCache[timestepCut][vertCut][horizCut];
+    if (cached == null) {
+      cached = factory.buildForNumber(value, units);
+      innerValueCache[timestepCut][vertCut][horizCut] = cached;
+    }
+    return cached;
   }
 
   @Override

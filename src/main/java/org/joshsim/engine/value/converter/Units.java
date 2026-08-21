@@ -25,6 +25,8 @@ public class Units {
   // ConcurrentHashMap provides thread-safe access without synchronization overhead.
   private static final Map<String, Units> UNITS_CACHE = new ConcurrentHashMap<>();
 
+  private static int nextId = 1;
+
   public static final Units EMPTY;
   public static final Units COUNT;
   public static final Units METERS;
@@ -59,6 +61,8 @@ public class Units {
   private final Map<String, Long> numeratorUnits;
   private final Map<String, Long> denominatorUnits;
   private final Map<Units, Units> multiplyCache = new ConcurrentHashMap<>(4);
+  private final int id;
+  private Units inverted;
 
   /**
    * Constructs Units from a description string.
@@ -143,6 +147,7 @@ public class Units {
     numeratorUnits = parseMultiplyString(numerator);
     denominatorUnits = parseMultiplyString(denominator);
     this.description = serializeString();
+    this.id = takeNextId();
   }
 
   /**
@@ -157,6 +162,25 @@ public class Units {
     this.numeratorUnits = numeratorUnits;
     this.denominatorUnits = denominatorUnits;
     this.description = serializeString();
+    this.id = takeNextId();
+  }
+
+  private static synchronized int takeNextId() {
+    int id = nextId;
+    nextId += 1;
+    return id;
+  }
+
+  /**
+   * Get the unique numeric identity of this instance.
+   *
+   * <p>Identity is unique per instance regardless of content, unlike equals / hashCode which
+   * compare content. Used to build collision-free composite cache keys without boxing.</p>
+   *
+   * @return unique positive identifier for this exact Units instance.
+   */
+  public int getId() {
+    return id;
   }
 
   /**
@@ -180,10 +204,18 @@ public class Units {
   /**
    * Flip the units such that the numerator and denominator are inverted.
    *
+   * <p>Units are immutable so the inverted form is deterministic; it is computed once and
+   * reused. Benign race on first access.</p>
+   *
    * @returns inverted copy of these units.
    */
   public Units invert() {
-    return Units.of(denominatorUnits, numeratorUnits);
+    Units result = inverted;
+    if (result == null) {
+      result = Units.of(denominatorUnits, numeratorUnits);
+      inverted = result;
+    }
+    return result;
   }
 
   /**

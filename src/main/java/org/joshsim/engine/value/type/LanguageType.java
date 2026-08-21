@@ -20,9 +20,12 @@ import org.joshsim.compat.CompatibleStringJoiner;
  */
 public class LanguageType {
 
+  private static int nextId = 1;
+
   private final Collection<String> distributionTypes;
   private final String rootType;
   private final boolean containsAttributes;
+  private final int id;
 
   // Interning cache for simple single-argument LanguageType instances
   // Only caches types created with LanguageType(String) constructor for primitive types
@@ -37,6 +40,7 @@ public class LanguageType {
     this.rootType = rootType;
     this.distributionTypes = new ArrayList<>();
     containsAttributes = false;
+    id = takeNextId();
   }
 
   /**
@@ -50,6 +54,7 @@ public class LanguageType {
     this.rootType = rootType;
     this.distributionTypes = new ArrayList<>();
     this.containsAttributes = containsAttributes;
+    id = takeNextId();
   }
 
   /**
@@ -62,6 +67,7 @@ public class LanguageType {
     this.distributionTypes = distributionTypes;
     this.rootType = rootType;
     this.containsAttributes = false;
+    id = takeNextId();
   }
 
   /**
@@ -77,6 +83,25 @@ public class LanguageType {
     this.distributionTypes = distributionTypes;
     this.rootType = rootType;
     this.containsAttributes = containsAttributes;
+    id = takeNextId();
+  }
+
+  private static synchronized int takeNextId() {
+    int id = nextId;
+    nextId += 1;
+    return id;
+  }
+
+  /**
+   * Get the unique numeric identity of this instance.
+   *
+   * <p>Identity is unique per instance regardless of content, unlike equals / hashCode which
+   * compare content. Used to build collision-free composite cache keys without boxing.</p>
+   *
+   * @return unique positive identifier for this exact LanguageType instance.
+   */
+  public int getId() {
+    return id;
   }
 
   /**

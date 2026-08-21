@@ -16,6 +16,8 @@ import org.joshsim.engine.value.engine.EngineValueCaster;
  */
 public class StringScalar extends Scalar {
 
+  private static final LanguageType STRING_TYPE = LanguageType.of("string");
+
   private final String innerValue;
 
   /**
@@ -62,7 +64,7 @@ public class StringScalar extends Scalar {
 
   @Override
   public LanguageType getLanguageType() {
-    return LanguageType.of("string");
+    return STRING_TYPE;
   }
 
   @Override

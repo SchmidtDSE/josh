@@ -6,8 +6,6 @@
 
 package org.joshsim.engine.value.engine;
 
-import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
 import org.joshsim.engine.value.converter.Units;
 import org.joshsim.engine.value.type.EngineValue;
 import org.joshsim.engine.value.type.LanguageType;
@@ -21,8 +19,10 @@ public class EngineValueTuple {
   private final EngineValue second;
   private final TypesTuple types;
   private final UnitsTuple units;
-  private static final Map<Long, TypesTuple> TYPES_TUPLE_CACHE = new ConcurrentHashMap<>();
-  private static final Map<Long, UnitsTuple> UNITS_TUPLE_CACHE = new ConcurrentHashMap<>();
+  private static final ThreadLocal<PairTable<LanguageType, LanguageType, TypesTuple>>
+      TYPES_TUPLE_CACHE = ThreadLocal.withInitial(PairTable::new);
+  private static final ThreadLocal<PairTable<Units, Units, UnitsTuple>> UNITS_TUPLE_CACHE =
+      ThreadLocal.withInitial(PairTable::new);
 
   /**
    * Create a new tuple of engine values.
@@ -63,16 +63,17 @@ public class EngineValueTuple {
    * Factory method to get or create an EngineValueTuple with caching of nested tuples.
    *
    * <p>This method caches TypesTuple and UnitsTuple instances using long-based composite keys
-   * computed from identity hashes of LanguageType and Units objects. Since both
-   * LanguageType.of() and Units.of() return cached singleton instances, identity hashes are
+   * computed from the dense identities of LanguageType and Units objects. Since both
+   * LanguageType.of() and Units.of() return cached singleton instances, identities are
    * stable and suitable for cache keys.</p>
    *
    * <p>Note: The EngineValueTuple itself is NOT cached as it must hold references to the
    * specific EngineValue instances passed in. Only the nested TypesTuple and UnitsTuple
    * objects are cached to reduce allocations.</p>
    *
-   * <p>Thread-safe for concurrent access including parallel streams. ConcurrentHashMap
-   * handles synchronization without blocking reads.</p>
+   * <p>Tuple caches are thread-local: each thread builds its own tuple instances without
+   * synchronization or boxing on the lookup path. Tuples compare by content so duplicated
+   * instances across threads are equivalent.</p>
    *
    * @param first the first engine value for this tuple, for example the left side operand.
    * @param second the second engine value for this tuple, for example the right side operand.
@@ -111,22 +112,16 @@ public class EngineValueTuple {
   /**
    * Look up a cached TypesTuple, inserting a freshly built one only on a miss.
    *
-   * <p>Uses get-then-putIfAbsent rather than computeIfAbsent so the common cache-hit path
-   * allocates no capturing lambda; the TypesTuple is constructed only when actually absent.</p>
+   * <p>Uses a thread-local open-addressed table so the cache-hit path allocates nothing and
+   * boxes nothing; the TypesTuple is constructed only when actually absent.</p>
    *
-   * @param key composite identity-hash key for the type pair
+   * @param key composite identity key for the type pair
    * @param first LanguageType of first operand
    * @param second LanguageType of second operand
    * @return the cached (or newly cached) TypesTuple for this pair
    */
   private static TypesTuple getOrPutTypesTuple(long key, LanguageType first, LanguageType second) {
-    TypesTuple tuple = TYPES_TUPLE_CACHE.get(key);
-    if (tuple == null) {
-      TypesTuple created = new TypesTuple(first, second);
-      TypesTuple existing = TYPES_TUPLE_CACHE.putIfAbsent(key, created);
-      tuple = existing != null ? existing : created;
-    }
-    return tuple;
+    return TYPES_TUPLE_CACHE.get().getOrPut(key, first, second, TypesTuple::new);
   }
 
   /**
@@ -138,13 +133,13 @@ public class EngineValueTuple {
    */
   private static UnitsTuple getOrCreateUnitsTuple(
       Units firstUnits, Units secondUnits) {
-    long key = computUnitsCacheKey(firstUnits, secondUnits);
+    long key = computeUnitsCacheKey(firstUnits, secondUnits);
     UnitsTuple tuple = getOrPutUnitsTuple(key, firstUnits, secondUnits);
 
     // Establish bidirectional linking for reverse() optimization
     // Check if reversed tuple needs to be created and linked
     if (tuple.getReversed() == null) {
-      long reversedKey = computUnitsCacheKey(secondUnits, firstUnits);
+      long reversedKey = computeUnitsCacheKey(secondUnits, firstUnits);
       UnitsTuple reversedTuple = getOrPutUnitsTuple(reversedKey, secondUnits, firstUnits);
 
       // Link bidirectionally (benign race: both threads compute same result)
@@ -158,52 +153,42 @@ public class EngineValueTuple {
   /**
    * Look up a cached UnitsTuple, inserting a freshly built one only on a miss.
    *
-   * <p>Uses get-then-putIfAbsent rather than computeIfAbsent so the common cache-hit path
-   * allocates no capturing lambda; the UnitsTuple is constructed only when actually absent.</p>
+   * <p>Uses a thread-local open-addressed table so the cache-hit path allocates nothing and
+   * boxes nothing; the UnitsTuple is constructed only when actually absent.</p>
    *
-   * @param key composite identity-hash key for the units pair
+   * @param key composite identity key for the units pair
    * @param first Units of first operand
    * @param second Units of second operand
    * @return the cached (or newly cached) UnitsTuple for this pair
    */
   private static UnitsTuple getOrPutUnitsTuple(long key, Units first, Units second) {
-    UnitsTuple tuple = UNITS_TUPLE_CACHE.get(key);
-    if (tuple == null) {
-      UnitsTuple created = new UnitsTuple(first, second);
-      UnitsTuple existing = UNITS_TUPLE_CACHE.putIfAbsent(key, created);
-      tuple = existing != null ? existing : created;
-    }
-    return tuple;
+    return UNITS_TUPLE_CACHE.get().getOrPut(key, first, second, UnitsTuple::new);
   }
 
   /**
-   * Compute a long-based composite key from type identity hashes.
+   * Compute a long-based composite key from type identities.
    *
-   * <p>Packs 2 identity hashes into a 64-bit long key. Each component uses 32 bits.</p>
+   * <p>Packs 2 dense identities into a 64-bit long key. Each component uses 32 bits.</p>
    *
    * @param firstType LanguageType of first operand
    * @param secondType LanguageType of second operand
    * @return 64-bit composite key
    */
   private static long computeTypesCacheKey(LanguageType firstType, LanguageType secondType) {
-    int firstTypeHash = System.identityHashCode(firstType);
-    int secondTypeHash = System.identityHashCode(secondType);
-    return ((long) firstTypeHash << 32) | (secondTypeHash & 0xFFFFFFFFL);
+    return ((long) firstType.getId() << 32) | (secondType.getId() & 0xFFFFFFFFL);
   }
 
   /**
-   * Compute a long-based composite key from unit identity hashes.
+   * Compute a long-based composite key from unit identities.
    *
-   * <p>Packs 2 identity hashes into a 64-bit long key. Each component uses 32 bits.</p>
+   * <p>Packs 2 dense identities into a 64-bit long key. Each component uses 32 bits.</p>
    *
    * @param firstUnits Units of first operand
    * @param secondUnits Units of second operand
    * @return 64-bit composite key
    */
-  private static long computUnitsCacheKey(Units firstUnits, Units secondUnits) {
-    int firstUnitsHash = System.identityHashCode(firstUnits);
-    int secondUnitsHash = System.identityHashCode(secondUnits);
-    return ((long) firstUnitsHash << 32) | (secondUnitsHash & 0xFFFFFFFFL);
+  private static long computeUnitsCacheKey(Units firstUnits, Units secondUnits) {
+    return ((long) firstUnits.getId() << 32) | (secondUnits.getId() & 0xFFFFFFFFL);
   }
 
   /**
@@ -468,6 +453,143 @@ public class EngineValueTuple {
     @Override
     public int hashCode() {
       return cachedHashCode;
+    }
+
+  }
+
+  /**
+   * Creator of a tuple value for a cache miss.
+   *
+   * <p>Implemented with constructor references (eg TypesTuple::new) so that no capturing
+   * lambda is allocated on cache hits or misses.</p>
+   *
+   * @param <A> type of the first identifying value of the pair.
+   * @param <B> type of the second identifying value of the pair.
+   * @param <V> type of tuple created on a cache miss.
+   */
+  @FunctionalInterface
+  public interface PairCreator<A, B, V> {
+
+    /**
+     * Create the tuple to cache for this pair.
+     *
+     * @param first the first identifying value of the pair.
+     * @param second the second identifying value of the pair.
+     * @return newly created tuple which has not yet been cached.
+     */
+    V create(A first, B second);
+
+  }
+
+  /**
+   * Single-threaded open-addressed map from long keys to values.
+   *
+   * <p>Avoids the boxing of Long keys required by HashMap or ConcurrentHashMap. Tables are kept
+   * per thread so lookups need no synchronization and inserts need no compare-and-swap. Key 0 is
+   * reserved as the empty marker; callers must use non-zero keys. Grows by rehashing when more
+   * than half full, which keeps probing short.</p>
+   *
+   * @param <A> type of the first identifying value of the pair.
+   * @param <B> type of the second identifying value of the pair.
+   * @param <V> type of value cached for each key.
+   */
+  public static final class PairTable<A, B, V> {
+
+    private static final int INITIAL_CAPACITY = 64;
+
+    private long[] keys;
+    private Object[] values;
+    private int used;
+    private int mask;
+
+    /**
+     * Create a new, empty pair table.
+     */
+    public PairTable() {
+      keys = new long[INITIAL_CAPACITY];
+      values = new Object[INITIAL_CAPACITY];
+      mask = INITIAL_CAPACITY - 1;
+      used = 0;
+    }
+
+    /**
+     * Get the value for a key, creating and caching it on a miss.
+     *
+     * @param key non-zero composite key for the pair.
+     * @param first the first identifying value of the pair, used on a miss.
+     * @param second the second identifying value of the pair, used on a miss.
+     * @param creator constructor reference used to build a value on a miss.
+     * @return the cached or newly created value for this key.
+     */
+    @SuppressWarnings("unchecked")
+    public V getOrPut(long key, A first, B second, PairCreator<A, B, V> creator) {
+      if ((used + 1) * 2 > keys.length) {
+        grow();
+      }
+
+      int index = hash(key) & mask;
+      while (true) {
+        long existing = keys[index];
+        if (existing == key) {
+          return (V) values[index];
+        }
+        if (existing == 0L) {
+          V created = creator.create(first, second);
+          keys[index] = key;
+          values[index] = created;
+          used += 1;
+          return created;
+        }
+        index = (index + 1) & mask;
+      }
+    }
+
+    /**
+     * Double the table capacity and reinsert all prior entries.
+     */
+    private void grow() {
+      final long[] oldKeys = keys;
+      final Object[] oldValues = values;
+
+      int newCapacity = oldKeys.length * 2;
+      keys = new long[newCapacity];
+      values = new Object[newCapacity];
+      mask = newCapacity - 1;
+      used = 0;
+
+      for (int i = 0; i < oldKeys.length; i++) {
+        long key = oldKeys[i];
+        if (key != 0L) {
+          insertDuringGrow(key, oldValues[i]);
+        }
+      }
+    }
+
+    /**
+     * Insert an entry which is known not to be present, used while rehashing.
+     *
+     * @param key non-zero composite key for the pair.
+     * @param value value previously cached for this key.
+     */
+    private void insertDuringGrow(long key, Object value) {
+      int index = hash(key) & mask;
+      while (keys[index] != 0L) {
+        index = (index + 1) & mask;
+      }
+      keys[index] = key;
+      values[index] = value;
+      used += 1;
+    }
+
+    /**
+     * Spread the bits of a composite key so consecutive ids do not cluster.
+     *
+     * @param key non-zero composite key for the pair.
+     * @return mixed hash value which may be used with the table mask.
+     */
+    private static int hash(long key) {
+      long mixed = key * 0x9E3779B97F4A7C15L;
+      return (int) (mixed ^ (mixed >>> 32));
     }
 
   }

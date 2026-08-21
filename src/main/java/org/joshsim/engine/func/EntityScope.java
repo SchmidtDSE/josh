@@ -123,24 +123,11 @@ public class EntityScope implements Scope {
       return Optional.empty();
     }
 
-    if (indexCacheMaybe.isEmpty()) {
-      indexCacheMaybe = Optional.of(new HashMap<>());
-    }
-
-    HashMap<String, Integer> indexCache = indexCacheMaybe.get();
-
-    Integer cachedIndex = indexCache.get(name);
-
-    if (cachedIndex != null) {
-      return getOptional(cachedIndex);
-    }
-
     Integer index = indexMap.get(name);
     if (index == null) {
       return Optional.empty();
     }
 
-    indexCache.put(name, index);
     return getOptional(index);
   }
 

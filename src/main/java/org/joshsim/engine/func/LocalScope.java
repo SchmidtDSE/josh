@@ -24,7 +24,7 @@ import org.joshsim.engine.value.type.EngineValue;
 public class LocalScope implements Scope {
 
   private final Map<String, EngineValue> localValues;
-  private final Scope containingScope;
+  private Scope containingScope;
 
   /**
    * Creates a new local scope with an enclosing scope.
@@ -35,6 +35,21 @@ public class LocalScope implements Scope {
   public LocalScope(Scope containingScope) {
     this.containingScope = containingScope;
     localValues = new HashMap<>();
+  }
+
+  /**
+   * Re-target this local scope at a different enclosing scope, clearing local values.
+   *
+   * <p>Supports reuse of the scope (and its backing map allocation) across many evaluations, as
+   * done by the pooled event handler machines. Passing {@code null} releases the reference to the
+   * prior enclosing scope so that a pooled scope does not retain an entity graph while idle; the
+   * scope is not usable again until it is reset to a real scope.</p>
+   *
+   * @param containingScope The new enclosing scope or null to release the prior one.
+   */
+  public void resetTo(Scope containingScope) {
+    this.containingScope = containingScope;
+    localValues.clear();
   }
 
   /**
@@ -125,7 +140,16 @@ public class LocalScope implements Scope {
 
   @Override
   public Optional<EngineValue> tryIndexedGet(String name) {
-    return Optional.empty();
+    if (localValues.isEmpty()) {
+      return containingScope.tryIndexedGet(name);
+    }
+
+    EngineValue localValue = localValues.get(name);
+    if (localValue != null) {
+      return Optional.of(localValue);
+    }
+
+    return containingScope.tryIndexedGet(name);
   }
 
 }
