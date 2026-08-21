@@ -32,11 +32,38 @@ const REQUIRED_GLOBALS = {
 
 
 /**
+ * Recover a library that loaded but published itself somewhere other than the global scope.
+ *
+ * A UMD bundle picks where to put itself by sniffing the scope it finds itself in, and mathjs sniffs
+ * for a bare `exports` before falling back to the global. So anything that leaves an `exports` object
+ * on the window -- a CommonJS shim, an injected script, a browser extension -- takes delivery of
+ * mathjs instead of the page, and the page then fails partway through a run with
+ * `math is not defined` while d3, whose bundle has no such branch, works fine beside it.
+ *
+ * Only the `exports.<name>` form is recovered. The `module.exports` form the same bundles prefer is
+ * deliberately left alone: every library that took it wrote to one property, so there is no way to
+ * tell whose value is sitting there, and guessing would be worse than the honest failure below.
+ */
+function adoptDisplacedGlobals() {
+  const displaced = globalThis.exports;
+  if (typeof displaced !== "object" || displaced === null) {
+    return;
+  }
+  Object.keys(REQUIRED_GLOBALS)
+    .filter((name) => typeof globalThis[name] === "undefined" && displaced[name])
+    .forEach((name) => {
+      globalThis[name] = displaced[name];
+    });
+}
+
+
+/**
  * Return the scripts whose globals never arrived.
  *
  * @returns {string[]} The missing scripts' URLs, in declaration order.
  */
 function missingScripts() {
+  adoptDisplacedGlobals();
   return Object.keys(REQUIRED_GLOBALS)
     .filter((name) => typeof globalThis[name] === "undefined")
     .map((name) => REQUIRED_GLOBALS[name]);
