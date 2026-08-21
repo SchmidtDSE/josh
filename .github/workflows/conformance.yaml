@@ -5,9 +5,10 @@ name: Conformance Tests
 # workflow -- so the conformance suite would go ungated for the whole life of that branch, which
 # is precisely the work that adds conformance tests and drives them from the docs manifest.
 #
-# feat/docs-conformance-runner is listed for the same reason one level down: the reference
-# migration stacks onto it, and that PR adds a conformance unit. It stops mattering the moment
-# that branch merges, since GitHub then retargets the PR at the integration branch above.
+# This list is the reason the remaining work targets that branch directly rather than stacking a
+# second level below it. A PR based on feat/docs-browser-runner ran build.yaml but not this
+# workflow, so #515 through #519 were gated by the conformance suite only when the branch merged
+# upward, not individually. Anything below the integration branch has that hole.
 #
 # REMOVE EVERY ENTRY BELOW main AND dev in the pull request that merges feat/runnable-static-docs
 # into dev.
@@ -17,13 +18,11 @@ on:
       - main
       - dev
       - feat/runnable-static-docs
-      - feat/docs-conformance-runner
   push:
     branches:
       - main
       - dev
       - feat/runnable-static-docs
-      - feat/docs-conformance-runner
 
 jobs:
   conformance:
