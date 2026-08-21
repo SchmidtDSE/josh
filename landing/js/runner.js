@@ -63,18 +63,18 @@ class RunnerPresenter {
     if (!self._button) {
       return;
     }
-    self._initEditor();
     self._button.removeAttribute("disabled");
     self._button.addEventListener("click", () => self._run());
     if (self._resetButton) {
       self._resetButton.removeAttribute("disabled");
       self._resetButton.addEventListener("click", () => self._reset());
     }
+    self._initEditor();
   }
 
   _initEditor() {
     const self = this;
-    if (!self._source) {
+    if (!self._source || typeof ace === "undefined") {
       return;
     }
 
