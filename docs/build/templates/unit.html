@@ -59,8 +59,7 @@
         <h2>Run it here</h2>
         <p>
           This runs <code>{{ unit.simulation }}</code> in your browser on the same engine the
-          command line uses, compiled to WebAssembly. Edit the model, then click Run. Nothing
-          is uploaded
+          command line uses, compiled to WebAssembly. Nothing is uploaded
           {%- if data_manifest %}, though the
           {{ "data file" if data_manifest | length == 1 else "data files" }} above
           {{ "is" if data_manifest | length == 1 else "are" }} downloaded on the first run
@@ -68,7 +67,6 @@
         </p>
         <div class="call-to-action">
           <button type="button" class="run-button" disabled>Run simulation</button>
-          <button type="button" class="reset-button" disabled>Reset</button>
         </div>
         <p class="run-status" role="status" aria-live="polite"></p>
         <div class="run-results"></div>

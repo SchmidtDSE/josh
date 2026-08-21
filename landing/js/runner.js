@@ -42,11 +42,11 @@ class RunnerPresenter {
     self._originalCode = self._source ? self._source.textContent : "";
 
     self._button = root.querySelector(".run-button");
-    self._resetButton = root.querySelector(".reset-button");
     self._status = root.querySelector(".run-status");
     self._results = root.querySelector(".run-results");
 
     self._editor = null;
+    self._resetButton = null;
     self._wasmLayer = null;
     self._jshdCache = null;
     self._isRunning = false;
@@ -65,13 +65,17 @@ class RunnerPresenter {
     }
     self._button.removeAttribute("disabled");
     self._button.addEventListener("click", () => self._run());
-    if (self._resetButton) {
-      self._resetButton.removeAttribute("disabled");
-      self._resetButton.addEventListener("click", () => self._reset());
-    }
     self._initEditor();
   }
 
+  /**
+   * Replace the static listing with an editor, or leave the listing alone.
+   *
+   * Returns without touching the page when Ace did not load, so a reader whose browser blocked the
+   * script still gets a readable model and a working Run button. The notice is written here rather
+   * than in the template for the same reason: it promises editing, so it must not appear on a page
+   * where nothing is editable.
+   */
   _initEditor() {
     const self = this;
     if (!self._source || typeof ace === "undefined") {
@@ -82,6 +86,19 @@ class RunnerPresenter {
     if (!pre) {
       return;
     }
+
+    const notice = document.createElement("p");
+    notice.className = "run-notice";
+    notice.append("Editable: change the model below and run it. Your edits stay in this browser, ");
+    notice.append("and a change can stop the model from running.");
+    const reset = document.createElement("button");
+    reset.type = "button";
+    reset.className = "reset-button";
+    reset.textContent = "Reset";
+    reset.addEventListener("click", () => self._reset());
+    self._resetButton = reset;
+    notice.appendChild(reset);
+    pre.parentNode.insertBefore(notice, pre);
 
     const editorDiv = document.createElement("div");
     editorDiv.id = "run-editor";
@@ -132,7 +149,7 @@ class RunnerPresenter {
     }
 
     self._isRunning = true;
-    self._button.disabled = true;
+    self._setBusy(true);
     self._results.innerHTML = "";
     self._say("Loading the engine…");
 
@@ -167,7 +184,15 @@ class RunnerPresenter {
       self._say("Did not finish: " + (err.message || String(err)), true);
     } finally {
       self._isRunning = false;
-      self._button.disabled = false;
+      self._setBusy(false);
+    }
+  }
+
+  _setBusy(busy) {
+    const self = this;
+    self._button.disabled = busy;
+    if (self._resetButton) {
+      self._resetButton.disabled = busy;
     }
   }
 

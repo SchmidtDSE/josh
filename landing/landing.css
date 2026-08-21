@@ -374,16 +374,28 @@ pre[class*="language-joshlang"] .token.variable-language {
    demo.joshsim.org/style/style.css, rescoped from #playground-viz to .run-viz, because the
    graphics come from the same viz.js and would otherwise default to black fill. */
 
-.unit-run .run-editor {
-  border: 1px solid #ddd;
-  border-radius: 4px;
+/* The editor and its notice replace the listing in .unit-model, not in .unit-run, so neither may be
+   scoped to the run box. Both are written by runner.js and exist only once Ace has loaded. */
+.run-editor {
+  border: 1px solid #A0A0A0;
+  border-radius: 5px;
   min-height: 120px;
   max-height: 600px;
   font-size: 14px;
   margin-bottom: 1em;
 }
 
-.unit-run .run-button, .unit-run .reset-button {
+.run-notice {
+  background-color: #F0F0F8;
+  border: 1px solid #C8C8E8;
+  border-radius: 5px;
+  padding: 10px 12px;
+  margin-bottom: 8px;
+  font-size: 0.9em;
+  color: #444;
+}
+
+.run-button, .reset-button {
   border: none;
   border-radius: 10px;
   padding: 8px 16px;
@@ -392,33 +404,35 @@ pre[class*="language-joshlang"] .token.variable-language {
   cursor: pointer;
 }
 
-.unit-run .run-button {
+.run-button {
   background-color: #7070C0;
   color: white;
 }
 
-.unit-run .reset-button {
-  background-color: #e0e0e0;
-  color: #333;
-  margin-left: 8px;
+.reset-button {
+  background-color: #E0E0E0;
+  color: #333333;
+  margin-left: 10px;
+  padding: 4px 12px;
+  font-size: 0.95em;
 }
 
-.unit-run .run-button:focus, .unit-run .run-button:hover, .unit-run .run-button:active {
+.run-button:focus, .run-button:hover, .run-button:active {
   background-color: #5050C0;
 }
 
-.unit-run .reset-button:focus, .unit-run .reset-button:hover, .unit-run .reset-button:active {
-  background-color: #ccc;
+.reset-button:focus, .reset-button:hover, .reset-button:active {
+  background-color: #C8C8C8;
 }
 
-.unit-run .run-button[disabled] {
+.run-button[disabled] {
   background-color: #A0A0B0;
   cursor: default;
 }
 
-.unit-run .reset-button[disabled] {
-  background-color: #e8e8e8;
-  color: #999;
+.reset-button[disabled] {
+  background-color: #E8E8E8;
+  color: #999999;
   cursor: default;
 }
 
