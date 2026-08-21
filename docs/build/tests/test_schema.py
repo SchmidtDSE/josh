@@ -140,9 +140,9 @@ def test_blank_description_is_rejected():
         minimal(description="  ")
 
 
-def test_a_description_longer_than_a_subtitle_is_rejected():
-    with pytest.raises(ValidationError, match="at most 200 characters"):
-        minimal(description="word " * 60)
+def test_a_description_longer_than_a_summary_is_rejected():
+    with pytest.raises(ValidationError, match="at most 400 characters"):
+        minimal(description="word " * 100)
 
 
 def test_a_description_that_expects_markdown_is_rejected():

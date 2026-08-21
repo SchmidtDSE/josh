@@ -32,10 +32,11 @@ DEFAULT_SEED = 42
 #: Units sort by ``order`` within a destination; this default leaves room on both sides.
 DEFAULT_ORDER = 100
 
-#: How long a description may be. It is a subtitle, shown under the title on an index card and as
-#: the tagline of the unit's own page, so past this length it stops summarizing the page and starts
-#: being it. The prose below the front-matter is where the explanation goes.
-MAX_DESCRIPTION = 200
+#: How long a description may be. It is the text on an index card and the tagline of the unit's own
+#: page: room for two or three sentences on a guide, where a title cannot carry what a whole
+#: tutorial covers, and past that it stops summarizing the page and starts being it. The prose below
+#: the front-matter is where the explanation goes.
+MAX_DESCRIPTION = 400
 
 
 class Kind(StrEnum):
@@ -101,9 +102,9 @@ class FrontMatter(BaseModel):
     id: str | None = None
     kind: Kind
     title: str
-    #: One sentence saying what the page is for. Required, because a title alone is not an answer:
-    #: an index of links reading "evalDuration cannot be assigned" tells a reader nothing about
-    #: what is on the other end of one.
+    #: One to three sentences saying what the page is for. Required, because a title alone is not
+    #: an answer: an index of links reading "evalDuration cannot be assigned" tells a reader
+    #: nothing about what is on the other end of one.
     description: str
     destination: str | None = None
     order: int = DEFAULT_ORDER
@@ -158,7 +159,7 @@ class FrontMatter(BaseModel):
         if len(collapsed) > MAX_DESCRIPTION:
             raise ValueError(
                 f"description must be at most {MAX_DESCRIPTION} characters, got {len(collapsed)}: "
-                "it is the one-line subtitle under the title, not the page's opening paragraph"
+                "it is the summary on the index card, not the page's opening section"
             )
         if "`" in collapsed:
             # The description is shown as text, so a backtick reaches the reader as a backtick.

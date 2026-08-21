@@ -1,8 +1,8 @@
 ---
 title: "Disturbance stanzas"
 description: >-
-  The entity type for something that happens to a patch — fire, flood, harvest — rather than
-  something that lives in it.
+  The entity type for something that happens to a patch, such as fire, flood, or harvest, rather
+  than something that lives in it.
 order: 30
 tags: [entities, disturbance]
 ---

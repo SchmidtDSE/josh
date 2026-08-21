@@ -1,8 +1,10 @@
 ---
 title: "Grass, Shrub, Fire"
 description: >-
-  Patch-based modelling: grass and shrub cover held as attributes of the patch itself, and a fire
-  disturbance acting on them.
+  Spatial computation without simulating individuals: grass and shrub cover live on the patch
+  itself, and each year a fire may burn back whatever the rain grew. Brings in external climate
+  data, curves that map precipitation onto a growth rate, and multi-line handler bodies with local
+  values. Also explains why the order handlers are written in never matters.
 order: 30
 tags: [guide, disturbance, external-data]
 simulation: Main

@@ -1,8 +1,10 @@
 ---
 title: "Hello Grid!"
 description: >-
-  The first tutorial: 30,000 trees over eleven years, introducing Josh's core concepts and the
-  language its simulations are written in.
+  Builds a first working model from nothing: a one kilometre grid over Joshua Tree National Park,
+  ten trees on every patch, and eleven years of growth. Introduces the four stanzas a simulation is
+  made of, the init and step handlers that fill them, and drawing growth from a random
+  distribution. Ends by exporting the results into the editor and plotting them.
 order: 10
 tags: [guide, getting-started]
 simulation: Main

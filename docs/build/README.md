@@ -168,7 +168,7 @@ tags: [dispersal, spatial]
 | Field | Default | Meaning |
 |---|---|---|
 | `title` | — | Required. Heading for the rendered page |
-| `description` | — | Required. One sentence, at most 200 characters, shown under the title on the index and as the page's subtitle |
+| `description` | — | Required. One to three sentences, at most 400 characters, shown under the title on the index and as the page's subtitle |
 | `kind` | from the directory | `guide`, `recipe`, `reference`, or `test` |
 | `id` | filename stem | URL segment and join key to CI results. Set only to break a collision |
 | `destination` | directory under `docs/src` | Output directory for the rendered page |
