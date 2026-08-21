@@ -50,8 +50,15 @@ docs/src/recipes/dispersal/wind-dispersal.md:4
 
 ```bash
 uv run --project docs/build joshdocs render   # -> landing/library/
-uv run --project docs/build joshdocs serve    # -> http://127.0.0.1:8123/
+uv run --project docs/build joshdocs serve    # -> http://127.0.0.1:8123/library/
 ```
+
+`serve` is rooted at the **site** (`landing/`), not at the tree `render` writes. A page reaches its
+stylesheet, the nav's targets, and the engine by site-absolute path, because it sits at an arbitrary
+depth under `/library/` while those are staged once at the root. Rooting the server at
+`landing/library/` answers all of them with the 404 page, which a browser reports as
+`blocked because of a disallowed MIME type ("text/html")` -- a message that names the symptom and
+not the cause, so `serve` warns when the directory it is given holds no `library/`.
 
 `render` reads only the manifest, so it needs no jar. Pair it with `harvest --skip-jar` to work on
 prose without a 116MB build. The output tree is emptied first unless `--keep` is given, so a page

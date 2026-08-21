@@ -34,6 +34,13 @@ from .sidecar import split_frontmatter
 #: Where rendered pages land by default. Ignored by git: the tree is generated on every build.
 DEFAULT_OUT = Path("landing/library")
 
+#: The site the rendered tree is published inside. A page carries site-absolute asset paths, because
+#: it sits at an arbitrary depth under `/library/` while the stylesheet, the nav's targets, and the
+#: engine are staged once at the root -- so this, not DEFAULT_OUT, is the only directory a preview
+#: server can be rooted at. Serving DEFAULT_OUT gives every page a 404 for `/landing.css` and for
+#: every script, which a browser reports as a MIME-type refusal rather than as a missing file.
+DEFAULT_SITE = DEFAULT_OUT.parent
+
 #: Templates ship beside the package rather than inside it, so they can be edited without a
 #: reinstall and so a designer never has to open Python to change markup.
 TEMPLATE_DIR = Path(__file__).resolve().parents[2] / "templates"
