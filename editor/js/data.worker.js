@@ -224,8 +224,14 @@ class OpfsFileManager {
         const self = this;
 
         const directoryFuture = navigator.storage.getDirectory();
-        return directoryFuture.then((directory) => {
-            return Array.fromAsync(directory.keys());
+        return directoryFuture.then(async (directory) => {
+            // Collected with for-await rather than Array.fromAsync, which is ES2024: on an engine
+            // without it the editor cannot list the project's files at all, which is the feature
+            // the guides tell a reader to use to upload their data.
+            const names = [];
+            for await (const name of directory.keys()) {
+                names.push(name);
+            }
             return names;
         });
     }
