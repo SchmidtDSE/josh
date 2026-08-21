@@ -7,6 +7,7 @@ from joshpy.cli import CLIResult
 
 from joshdocs.harvest import DEFAULT_TESTS, HarvestOptions, harvest
 from joshdocs.schema import Expect, Kind, Status
+from support import with_description
 
 REPO_ROOT = Path(__file__).resolve().parents[3]
 
@@ -53,7 +54,9 @@ def write_unit(src, relative, front_matter, model=MODEL, data=()):
     path = src / relative
     path.parent.mkdir(parents=True, exist_ok=True)
     path.with_suffix(".josh").write_text(model, encoding="utf-8")
-    path.with_suffix(".md").write_text(f"---\n{front_matter}\n---\n\nProse.\n", encoding="utf-8")
+    path.with_suffix(".md").write_text(
+        f"---\n{with_description(front_matter)}\n---\n\nProse.\n", encoding="utf-8"
+    )
     for name in data:
         (path.parent / name).write_bytes(b"")
     return path.with_suffix(".josh")

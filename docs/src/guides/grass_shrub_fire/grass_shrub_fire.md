@@ -1,5 +1,8 @@
 ---
 title: "Grass, Shrub, Fire"
+description: >-
+  Patch-based modelling: grass and shrub cover held as attributes of the patch itself, and a fire
+  disturbance acting on them.
 order: 30
 tags: [guide, disturbance, external-data]
 simulation: Main

@@ -1,5 +1,8 @@
 ---
 title: "Exporting the spin-up phase"
+description: >-
+  Two ways to separate the observed window from the burn-in around it: a phase column in the CSV,
+  or narrowing the export.
 order: 20
 tags: [time, spinup, export]
 runnable: true

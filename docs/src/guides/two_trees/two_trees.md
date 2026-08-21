@@ -1,5 +1,8 @@
 ---
 title: "Two Trees"
+description: >-
+  Individual-based modelling: two species simulated as individual organisms competing for the same
+  space, driven by external climate data.
 order: 20
 tags: [guide, competition, external-data]
 simulation: Main

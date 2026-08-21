@@ -1,5 +1,8 @@
 ---
 title: "Rescaling a value with map"
+description: >-
+  Rescaling a value linearly from one range onto another, and why the result is not clamped to the
+  destination.
 order: 60
 tags: [syntax, values]
 ---

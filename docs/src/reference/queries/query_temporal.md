@@ -1,5 +1,8 @@
 ---
 title: "Querying the previous step"
+description: >-
+  Reading state as of the end of the previous step, and how that composes with reading the current
+  patch.
 order: 40
 tags: [queries, temporal]
 ---

@@ -1,5 +1,7 @@
 ---
 title: "Declaring a simulation grid"
+description: >-
+  Setting the size of a patch and the two corners that bound the space a model runs over.
 order: 10
 tags: [entities, simulation, grid]
 ---

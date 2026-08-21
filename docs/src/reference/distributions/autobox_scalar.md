@@ -1,5 +1,8 @@
 ---
 title: "Sampling a scalar"
+description: >-
+  Why sampling a plain scalar works, and what that makes substitutable — a constant today, a
+  distribution tomorrow, with no other change.
 order: 20
 tags: [distributions, stochastic]
 ---

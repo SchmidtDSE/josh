@@ -24,6 +24,7 @@ from joshdocs.render import (
     render,
 )
 from joshdocs.schema import Kind
+from support import with_description
 
 MODEL = """start simulation Main
 
@@ -43,7 +44,7 @@ def write_unit(src, relative, front_matter, prose="Prose.", model=MODEL):
     path.parent.mkdir(parents=True, exist_ok=True)
     path.with_suffix(".josh").write_text(model, encoding="utf-8")
     path.with_suffix(".md").write_text(
-        f"---\n{front_matter}\n---\n\n{prose}\n", encoding="utf-8"
+        f"---\n{with_description(front_matter)}\n---\n\n{prose}\n", encoding="utf-8"
     )
     return path.with_suffix(".josh")
 
@@ -152,8 +153,9 @@ def test_a_link_to_nothing_is_a_problem_with_the_line_it_is_on(tmp_path):
     assert len(result.log) == 1
     problem = result.log.problems[0]
     assert "nowhere.md" in problem.message
-    # Front matter is 3 lines, blank, "Line one.", blank, then the link.
-    assert problem.line == 7
+    # Front matter is 4 lines -- two delimiters, the title, and the description `write_unit`
+    # supplies -- then blank, "Line one.", blank, and the link.
+    assert problem.line == 8
 
 
 def test_repeated_bad_links_report_their_own_lines(tmp_path):
@@ -161,7 +163,7 @@ def test_repeated_bad_links_report_their_own_lines(tmp_path):
     write_unit(src, "guides/hello/hello", 'title: "Hello"',
                prose="[a](gone.md)\n\n[b](gone.md)")
     result, _ = draw(tmp_path)
-    assert [problem.line for problem in result.log.problems] == [5, 7]
+    assert [problem.line for problem in result.log.problems] == [6, 8]
 
 
 def test_a_heading_that_slugs_onto_the_pages_own_id_is_a_problem(tmp_path):
@@ -266,6 +268,39 @@ def test_an_index_orders_units_by_order(tmp_path):
     _, out = draw(tmp_path)
     text = (out / "reference/index.html").read_text(encoding="utf-8")
     assert text.index("First") < text.index("Second")
+
+
+def test_an_index_entry_carries_its_description(tmp_path):
+    """A title alone is jargon to a reader who has not met the feature the page is about."""
+    src = tmp_path / "docs" / "src"
+    write_unit(src, "reference/performance/reserved",
+               'title: "evalDuration cannot be assigned"\n'
+               "description: Why the engine rejects a model that writes to it.")
+    _, out = draw(tmp_path)
+    text = (out / "reference/index.html").read_text(encoding="utf-8")
+    assert "Why the engine rejects a model that writes to it." in text
+
+
+def test_an_index_groups_a_directory_that_holds_several_units(tmp_path):
+    src = tmp_path / "docs" / "src"
+    write_unit(src, "reference/syntax/comments", 'title: "Comments"')
+    write_unit(src, "reference/syntax/limit", 'title: "Limit"')
+    write_unit(src, "reference/units/units_custom", 'title: "Custom units"')
+    text = (draw(tmp_path)[1] / "reference/index.html").read_text(encoding="utf-8")
+    assert "<h2>Syntax</h2>" in text
+    assert "<h2>Units</h2>" in text
+
+
+def test_an_index_does_not_label_groups_that_hold_one_unit_each(tmp_path):
+    """Guides live one per directory, so labelling those groups prints every title twice."""
+    src = tmp_path / "docs" / "src"
+    write_unit(src, "guides/hello/hello", 'title: "Hello"')
+    write_unit(src, "guides/two_trees/two_trees", 'title: "Two Trees"')
+    text = (draw(tmp_path)[1] / "guides/index.html").read_text(encoding="utf-8")
+    assert "<h2>" not in text
+    assert text.count("Hello") == 1
+    # One list, not one section apiece, so the cards read as a series rather than as two panels.
+    assert text.count('<ul class="unit-list">') == 1
 
 
 def test_a_reserved_unit_says_it_is_not_implemented(tmp_path):

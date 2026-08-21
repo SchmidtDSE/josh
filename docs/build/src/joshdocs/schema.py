@@ -4,8 +4,9 @@ A unit is one ``.josh`` model plus its same-stem ``.md`` sidecar. The sidecar's 
 modelled here with pydantic so that a malformed field produces a message an author can act on --
 ``order: expected an integer, got 'thirty'`` with a file and line -- rather than a traceback.
 
-Every field has a default that suits the common case, so a minimal sidecar declares only ``kind``
-and ``title``. The rules enforced below exist because contradictory combinations are silently
+Every field has a default that suits the common case, so a minimal sidecar declares only ``kind``,
+``title``, and ``description``. The rules enforced below exist because contradictory combinations
+are silently
 meaningless otherwise: a snippet that is not runnable cannot carry assertions, and a model expected
 to fail parsing cannot be run at all.
 """
@@ -30,6 +31,11 @@ DEFAULT_SEED = 42
 
 #: Units sort by ``order`` within a destination; this default leaves room on both sides.
 DEFAULT_ORDER = 100
+
+#: How long a description may be. It is a subtitle, shown under the title on an index card and as
+#: the tagline of the unit's own page, so past this length it stops summarizing the page and starts
+#: being it. The prose below the front-matter is where the explanation goes.
+MAX_DESCRIPTION = 200
 
 
 class Kind(StrEnum):
@@ -95,6 +101,10 @@ class FrontMatter(BaseModel):
     id: str | None = None
     kind: Kind
     title: str
+    #: One sentence saying what the page is for. Required, because a title alone is not an answer:
+    #: an index of links reading "evalDuration cannot be assigned" tells a reader nothing about
+    #: what is on the other end of one.
+    description: str
     destination: str | None = None
     order: int = DEFAULT_ORDER
     runnable: bool | None = None
@@ -137,6 +147,27 @@ class FrontMatter(BaseModel):
         if not value.strip():
             raise ValueError("title must not be empty")
         return value
+
+    @field_validator("description")
+    @classmethod
+    def _check_description(cls, value: str) -> str:
+        """Reject a description that is empty or long enough to stop being a subtitle."""
+        collapsed = " ".join(value.split())
+        if not collapsed:
+            raise ValueError("description must not be empty")
+        if len(collapsed) > MAX_DESCRIPTION:
+            raise ValueError(
+                f"description must be at most {MAX_DESCRIPTION} characters, got {len(collapsed)}: "
+                "it is the one-line subtitle under the title, not the page's opening paragraph"
+            )
+        if "`" in collapsed:
+            # The description is shown as text, so a backtick reaches the reader as a backtick.
+            # Caught here because the alternative is noticing it on the published page.
+            raise ValueError(
+                "description is shown as plain text, not rendered as Markdown, so drop the "
+                "backticks; the prose below the front-matter is where formatting works"
+            )
+        return collapsed
 
     @field_validator("destination")
     @classmethod

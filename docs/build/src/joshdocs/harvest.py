@@ -306,7 +306,7 @@ def _authored_unit(
         id=unit_id,
         kind=front.kind,
         title=front.title,
-        description=None,
+        description=front.description,
         source=_relative(model, root),
         prose=_relative(prose, root),
         overlay=overlay,

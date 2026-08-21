@@ -1,5 +1,8 @@
 ---
 title: "Hello Grid!"
+description: >-
+  The first tutorial: 30,000 trees over eleven years, introducing Josh's core concepts and the
+  language its simulations are written in.
 order: 10
 tags: [guide, getting-started]
 simulation: Main

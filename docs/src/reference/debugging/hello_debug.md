@@ -1,5 +1,8 @@
 ---
 title: "Debug output with debugFiles"
+description: >-
+  Tracing a model with debug(...) messages, on a stream kept separate from the data the run
+  exports.
 order: 10
 tags: [debugging, export]
 runnable: true

@@ -146,13 +146,16 @@ parse (`testing/error`), and units for syntax the engine does not implement yet
 
 ## Sidecar fields
 
-Only `title` is required; `kind` is inferred from the directory (`guides/`, `recipes/`,
-`reference/`). Unknown fields are rejected rather than ignored, so a typo fails the build instead of
-silently doing nothing.
+`title` and `description` are required; `kind` is inferred from the directory (`guides/`,
+`recipes/`, `reference/`). Unknown fields are rejected rather than ignored, so a typo fails the
+build instead of silently doing nothing.
 
 ```yaml
 ---
 title: "Wind-driven seed dispersal"
+description: >-
+  Moving seed off the parent patch with a wind kernel, and what the kernel does at the edge of
+  the grid.
 order: 30
 runnable: true
 assert: true
@@ -165,6 +168,7 @@ tags: [dispersal, spatial]
 | Field | Default | Meaning |
 |---|---|---|
 | `title` | — | Required. Heading for the rendered page |
+| `description` | — | Required. One sentence, at most 200 characters, shown under the title on the index and as the page's subtitle |
 | `kind` | from the directory | `guide`, `recipe`, `reference`, or `test` |
 | `id` | filename stem | URL segment and join key to CI results. Set only to break a collision |
 | `destination` | directory under `docs/src` | Output directory for the rendered page |

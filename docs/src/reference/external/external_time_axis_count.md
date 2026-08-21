@@ -1,5 +1,8 @@
 ---
 title: "External time axis on a count clock"
+description: >-
+  Querying a dataset's time axis with at year, on a run whose clock counts steps from a calendar
+  anchor.
 order: 20
 tags: [external, data, temporal]
 ---

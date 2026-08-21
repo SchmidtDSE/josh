@@ -1,5 +1,7 @@
 ---
 title: "Bounding a value with limit"
+description: >-
+  Clamping a value into a range, with either end left open when only one side needs a bound.
 order: 50
 tags: [syntax, values]
 ---

@@ -1,5 +1,8 @@
 ---
 title: "Querying a spatial neighbourhood"
+description: >-
+  Reaching past the current patch to every entity within a radius, and why that read is taken as
+  of the previous step.
 order: 30
 tags: [queries, spatial]
 ---

@@ -1,5 +1,8 @@
 ---
 title: "Acting on an evalDuration measurement"
+description: >-
+  The same model with 5,000 interchangeable entities replaced by one attribute, so the cost of
+  representing them individually can be read off directly.
 order: 20
 tags: [performance, profiling]
 ---

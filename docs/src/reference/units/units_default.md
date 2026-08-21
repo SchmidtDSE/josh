@@ -1,5 +1,8 @@
 ---
 title: "Converting between built-in units"
+description: >-
+  What as converts on its own, and what force ... as asserts on the author's behalf when the
+  plain conversion is refused.
 order: 10
 tags: [units, conversion]
 ---

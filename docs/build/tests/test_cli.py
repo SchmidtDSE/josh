@@ -7,6 +7,7 @@ import pytest
 
 from joshdocs.__main__ import EXIT_OK, EXIT_PROBLEMS, EXIT_UNUSABLE, _build_parser, main
 from joshdocs.render import DEFAULT_OUT, DEFAULT_SITE
+from support import with_description
 
 MODEL = "start simulation Main\n\n  grid.size = 10 m\n\nend simulation\n"
 
@@ -39,7 +40,9 @@ def stub_server(monkeypatch):
 def make_unit(src, stem, front_matter):
     src.mkdir(parents=True, exist_ok=True)
     (src / f"{stem}.josh").write_text(MODEL, encoding="utf-8")
-    (src / f"{stem}.md").write_text(f"---\n{front_matter}\n---\n\nProse.\n", encoding="utf-8")
+    (src / f"{stem}.md").write_text(
+        f"---\n{with_description(front_matter)}\n---\n\nProse.\n", encoding="utf-8"
+    )
 
 
 def harvest_argv(tmp_path, *extra):
@@ -172,8 +175,9 @@ def test_render_without_a_manifest_says_to_harvest_first(tmp_path, capsys):
 def test_render_reports_a_dead_link_and_fails(tmp_path, capsys):
     src = tmp_path / "docs" / "src" / "recipes" / "dispersal"
     make_unit(src, "wind", 'title: "Wind"')
+    front = with_description('title: "Wind"')
     (src / "wind.md").write_text(
-        '---\ntitle: "Wind"\n---\n\nSee [gone](nowhere.md).\n', encoding="utf-8"
+        f"---\n{front}\n---\n\nSee [gone](nowhere.md).\n", encoding="utf-8"
     )
     assert main(harvest_tree_argv(tmp_path, "--quiet")) == EXIT_OK
     assert main(render_argv(tmp_path)) == EXIT_PROBLEMS

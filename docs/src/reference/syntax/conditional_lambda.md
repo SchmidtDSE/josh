@@ -1,5 +1,8 @@
 ---
 title: "Inline conditional expressions"
+description: >-
+  The one-line conditional, for a handler whose every branch is a single value and which needs no
+  body at all.
 order: 30
 tags: [syntax, conditionals]
 ---

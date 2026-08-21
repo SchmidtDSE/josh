@@ -1,5 +1,7 @@
 ---
 title: "Binding a distribution to a const"
+description: >-
+  A distribution is a value: it can be named and passed around before anything is drawn from it.
 order: 30
 tags: [distributions, stochastic]
 ---

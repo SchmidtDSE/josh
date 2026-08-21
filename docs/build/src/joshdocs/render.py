@@ -317,6 +317,38 @@ class Library:
         return relative_href(from_page, asset) if asset is not None else None
 
 
+def index_groups(
+    kind: Kind, library: Library, page: str
+) -> list[tuple[str, str, list[tuple[Unit, str]]]]:
+    """Return one kind's index entries, grouped for display.
+
+    Grouping by directory organizes the reference tree, where a topic gathers several units. It
+    does nothing for guides, which live one per directory so each can keep its data beside it:
+    labelling those groups prints every title twice, once as a heading and once as the link under
+    it. So the groups are flattened into a single unlabelled list unless at least one of them
+    gathers more than one unit.
+
+    Args:
+        kind: The kind being indexed.
+        library: The indexed manifest.
+        page: Path of the index page, which the entry hrefs are relative to.
+
+    Returns:
+        Triples of section id, heading, and that section's units paired with their hrefs. An empty
+        id or heading means the template leaves it out.
+    """
+    def entries(units: list[Unit]) -> list[tuple[Unit, str]]:
+        return [(unit, relative_href(page, page_path(unit))) for unit in units]
+
+    grouped = library.grouped(kind)
+    if not any(len(units) > 1 for _, units in grouped):
+        return [("", "", entries(library.of_kind(kind)))]
+    return [
+        (destination, destination.split("/")[-1].replace("_", " "), entries(units))
+        for destination, units in grouped
+    ]
+
+
 def _markdown() -> MarkdownIt:
     """Build the Markdown parser.
 
@@ -681,16 +713,10 @@ def render(options: RenderOptions) -> RenderResult:
     for kind in library.kinds():
         page = kind_index_path(kind)
         title, blurb = KIND_INDEX[kind]
-        groups = [
-            (destination, destination.split("/")[-1].replace("_", " "),
-             [(unit, relative_href(page, page_path(unit))) for unit in units])
-            for destination, units in library.grouped(kind)
-        ]
         markup = index_template.render(
             title=title,
             blurb=blurb,
-            groups=groups,
-            single_group=len(groups) == 1,
+            groups=index_groups(kind, library, page),
             page=page,
             home=relative_href(page, "index.html"),
         )

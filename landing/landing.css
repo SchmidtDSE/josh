@@ -281,24 +281,39 @@ pre {
   font-size: 13px;
 }
 
-/* Index pages: one entry per unit, grouped by topic. */
+/* Index pages: one card per unit, grouped by topic.
+
+   Each entry is a box rather than a row because the description is what makes the index usable --
+   a title such as "evalDuration cannot be assigned" says nothing to a reader who has not met the
+   feature yet, and a bare list of them reads as jargon. The card is deliberately quieter than the
+   section it sits in: a light fill and a hairline, no shadow, so the nesting stays legible. */
 .unit-list {
   list-style: none;
   padding-left: 0;
+  margin: 0;
 }
 
 .unit-list li {
-  padding: 10px 0;
-  border-bottom: 1px dotted #D0D0D0;
+  background-color: #F7F7F9;
+  border: 1px solid #DCDCE4;
+  border-radius: 8px;
+  padding: 12px 14px;
+  margin-bottom: 10px;
 }
 
 .unit-list li:last-child {
-  border-bottom: none;
+  margin-bottom: 0;
 }
 
-.unit-list li p {
-  margin: 4px 0 0;
+.unit-list .unit-title {
+  margin: 0;
+  font-size: 16px;
+}
+
+.unit-list .unit-summary {
+  margin: 6px 0 0;
   color: #555555;
+  line-height: 1.45;
 }
 
 .section-count {
