@@ -16,6 +16,33 @@ import {GridPresenter, ScrubPresenter} from "viz";
 const STRUCTURAL_VARIABLES = new Set(["step", "position.x", "position.y"]);
 
 
+/**
+ * Third-party libraries the run pipeline reaches for as a bare global rather than importing.
+ *
+ * They are invisible to the module graph, so a page that fails to load one still starts a run and
+ * then dies partway through with a ReferenceError naming a variable -- `math is not defined` --
+ * which says nothing about which script is missing or that the reader should reload. Checking here
+ * turns that into a sentence, and does it before a run that can take a minute or more rather than
+ * after. `docs/build/tests/test_integration.py` asserts a run page carries a tag for each of these.
+ */
+const REQUIRED_GLOBALS = {
+  "d3": "/d3.min.js",
+  "math": "/math.min.js",
+};
+
+
+/**
+ * Return the scripts whose globals never arrived.
+ *
+ * @returns {string[]} The missing scripts' URLs, in declaration order.
+ */
+function missingScripts() {
+  return Object.keys(REQUIRED_GLOBALS)
+    .filter((name) => typeof globalThis[name] === "undefined")
+    .map((name) => REQUIRED_GLOBALS[name]);
+}
+
+
 async function fetchAsBase64(url) {
   const response = await fetch(url);
   if (!response.ok) {
@@ -63,6 +90,17 @@ class RunnerPresenter {
     if (!self._button) {
       return;
     }
+    const missing = missingScripts();
+    if (missing.length > 0) {
+      self._say(
+        "This page did not finish loading, so it cannot run the model: " + missing.join(", ") +
+        ". Reload the page, and if it keeps happening the site is serving them incorrectly.",
+        true
+      );
+      self._initEditor();
+      return;
+    }
+
     self._button.removeAttribute("disabled");
     self._button.addEventListener("click", () => self._run());
     self._initEditor();
@@ -90,7 +128,7 @@ class RunnerPresenter {
     const notice = document.createElement("p");
     notice.className = "run-notice";
     notice.append("Editable: change the model below and run it. Your edits stay in this browser, ");
-    notice.append("and a change can stop the model from running.");
+    notice.append("and if anything breaks, simply press the reset button!");
     const reset = document.createElement("button");
     reset.type = "button";
     reset.className = "reset-button";
