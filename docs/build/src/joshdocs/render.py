@@ -12,6 +12,7 @@ contract, and this module owns HTML. Nothing here parses Josh -- it reads a file
 
 from __future__ import annotations
 
+import lzma
 import posixpath
 import shutil
 from collections.abc import Iterable
@@ -46,8 +47,17 @@ RENDERED_KINDS = frozenset({Kind.GUIDE, Kind.RECIPE, Kind.REFERENCE})
 MODEL_DIR = "models"
 
 #: Data ships compressed in the repository. The site publishes it expanded, because the XZ decoder
-#: behind this format is not compiled to WebAssembly and the browser editor cannot read it.
+#: behind this format is not compiled to WebAssembly and neither the browser editor nor the run
+#: button on a page can read the compressed form.
 COMPRESSED_DATA_SUFFIX = ".jshdz"
+
+#: What a published data file is called. The engine resolves an external by filename stem, so this
+#: extension is also what the run button hands the engine as the file's virtual name.
+DATA_SUFFIX = ".jshd"
+
+#: Where published data goes, relative to the output root. Nested per unit because two units may
+#: declare same-named files, and a flat directory would silently serve one unit's data to the other.
+DATA_DIR = "data"
 
 #: Directory each kind's index lives in, matching the authored tree's top-level directories.
 KIND_ROOT: dict[Kind, str] = {
@@ -126,6 +136,41 @@ def page_path(unit: Unit) -> str:
     return f"{destination}/{unit.id}.html"
 
 
+def _published_source(stored: str) -> str:
+    """Return the repo path a data file would have if it were stored the way it is published.
+
+    Args:
+        stored: Repo-relative path of the file as the repository holds it.
+
+    Returns:
+        The same path with the published extension, which for an uncompressed file is itself.
+    """
+    return stored[: -len(COMPRESSED_DATA_SUFFIX)] + DATA_SUFFIX \
+        if stored.endswith(COMPRESSED_DATA_SUFFIX) else stored
+
+
+def data_paths(unit: Unit) -> dict[str, str]:
+    """Return where a unit's declared data is stored and where it gets published.
+
+    A unit declares its data by filename, relative to its own directory, so the stored path is that
+    name resolved against the model. The published path is nested under the unit's id, since the
+    declared names are only unique within a directory.
+
+    Args:
+        unit: The unit whose data to place.
+
+    Returns:
+        Repo-relative stored path mapped to output-relative published path, in declaration order.
+    """
+    directory = posixpath.dirname(unit.source)
+    places = {}
+    for name in unit.data:
+        stored = posixpath.join(directory, name)
+        published = posixpath.basename(_published_source(stored))
+        places[stored] = f"{DATA_DIR}/{unit.id}/{published}"
+    return places
+
+
 def kind_index_path(kind: Kind) -> str:
     """Return the path of a kind's index page.
 
@@ -161,8 +206,11 @@ class Library:
         units: The units that become pages, sorted for display.
         by_id: Every renderable unit by id.
         by_path: Every renderable unit by repo-relative prose and source path.
-        assets: Repo-relative path of every publishable file that is not a page, mapped to its
+        assets: Repo-relative path of every publishable text file that is not a page, mapped to its
             path within the output tree. Models and overlay fragments live here.
+        data: Repo-relative path of every declared data file, as the repository stores it, mapped to
+            its path within the output tree. Kept apart from ``assets`` because these are bytes and
+            are usually compressed, so publishing one is a decode rather than a copy.
     """
 
     def __init__(self, manifest: Manifest) -> None:
@@ -178,6 +226,7 @@ class Library:
         self.by_id = {unit.id: unit for unit in self.units}
         self.by_path: dict[str, Unit] = {}
         self.assets: dict[str, str] = {}
+        self.data: dict[str, str] = {}
         for unit in self.units:
             self.by_path[unit.source] = unit
             if unit.prose is not None:
@@ -187,6 +236,7 @@ class Library:
                 # A fragment is not a unit -- a bare `update` stanza does not validate on its own --
                 # but the page names it, so a reader has to be able to open it.
                 self.assets[unit.overlay] = f"{MODEL_DIR}/{posixpath.basename(unit.overlay)}"
+            self.data.update(data_paths(unit))
 
     def kinds(self) -> list[Kind]:
         """Return the kinds that have at least one unit, in reading order.
@@ -248,6 +298,14 @@ class Library:
         if unit is not None:
             return relative_href(from_page, page_path(unit))
         asset = self.assets.get(resolved)
+        if asset is None:
+            # Prose links a data file as published, not as stored, because the published name is
+            # the one a reader downloads and the one the engine looks up. That path is not in the
+            # repository, so it is matched here rather than found among the files on disk.
+            asset = next(
+                (out for stored, out in self.data.items() if _published_source(stored) == resolved),
+                None,
+            )
         return relative_href(from_page, asset) if asset is not None else None
 
 
@@ -414,6 +472,35 @@ def _read(relative: str, options: RenderOptions, log: ProblemLog) -> str | None:
         return None
 
 
+def _publish_data(stored: str, options: RenderOptions, log: ProblemLog) -> bytes | None:
+    """Read a stored data file and return the bytes the site should serve.
+
+    Data is committed compressed, and the site serves it expanded: the XZ decoder is JVM-only, so
+    neither the browser editor nor the run button on a page can read the compressed form.
+
+    Args:
+        stored: Repo-relative path of the file as the repository holds it.
+        options: The render inputs.
+        log: Problems are appended here.
+
+    Returns:
+        The bytes to publish, or None when the file could not be read or decoded.
+    """
+    path = options.root / stored
+    try:
+        raw = path.read_bytes()
+    except OSError as exc:
+        log.add(path, f"could not be read: {exc.strerror or exc}")
+        return None
+    if not stored.endswith(COMPRESSED_DATA_SUFFIX):
+        return raw
+    try:
+        return lzma.decompress(raw)
+    except lzma.LZMAError as exc:
+        log.add(path, f"is not readable as {COMPRESSED_DATA_SUFFIX} (XZ-compressed) data: {exc}")
+        return None
+
+
 def _environment() -> Environment:
     """Build the Jinja environment.
 
@@ -440,9 +527,21 @@ def _write(out: Path, page: str, markup: str, result: RenderResult) -> None:
         markup: The rendered HTML.
         result: Written paths are appended here.
     """
+    _write_bytes(out, page, markup.encode("utf-8"), result)
+
+
+def _write_bytes(out: Path, page: str, payload: bytes, result: RenderResult) -> None:
+    """Write one output file, creating its directories.
+
+    Args:
+        out: The output root.
+        page: Path of the file within the output root.
+        payload: What to write.
+        result: Written paths are appended here.
+    """
     destination = out / page
     destination.parent.mkdir(parents=True, exist_ok=True)
-    destination.write_text(markup, encoding="utf-8")
+    destination.write_bytes(payload)
     result.pages.append(destination)
 
 
@@ -484,6 +583,12 @@ def render(options: RenderOptions) -> RenderResult:
             # copy the site publishes, so a reader who compares the two needs the difference said
             # out loud rather than left as a puzzle about a filename they cannot find.
             data_compressed=any(name.endswith(COMPRESSED_DATA_SUFFIX) for name in unit.data),
+            # What the run button hands the engine: the virtual filename a model resolves an
+            # external by, mapped to where this page can fetch that file from.
+            data_manifest={
+                posixpath.basename(published): relative_href(page, published)
+                for published in data_paths(unit).values()
+            },
             kind_root=KIND_ROOT[unit.kind],
             kind_title=KIND_INDEX[unit.kind][0],
             kind_index=relative_href(page, kind_index_path(unit.kind)),
@@ -497,6 +602,13 @@ def render(options: RenderOptions) -> RenderResult:
         text = _read(authored, options, result.log)
         if text is not None:
             _write(options.out, asset, text, result)
+
+    # Data is published beside the pages rather than staged by the deploy, so that a local preview
+    # runs a model the same way the site does and a reader's download comes from the same place.
+    for stored, published in sorted(library.data.items()):
+        payload = _publish_data(stored, options, result.log)
+        if payload is not None:
+            _write_bytes(options.out, published, payload, result)
 
     for kind in library.kinds():
         page = kind_index_path(kind)

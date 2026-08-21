@@ -37,7 +37,7 @@ The [CHC-CMIP6 data](https://www.chc.ucsb.edu/data/chc-cmip6) are originally pro
 
 Specifically, precipitation data are provided in millimeters (mm) per year from 2008-2016, covering multiple annual time steps. This comes from the SSP2-4.5 emissions scenario in the 2030 timeframe.
 
-Regardless, we've gone ahead and preprocessed these data for you for the purposes of this tutorial. Go ahead and download [our preprocessed version of precipitation estimates from CHC-CMIP6's annual series](/guides/grass_shrub_fire/precipitation.jshd) and upload them into the IDE. To do this, click on data files, add file, select the file, and then click add file to confirm.
+Regardless, we've gone ahead and preprocessed these data for you for the purposes of this tutorial. Go ahead and download [our preprocessed version of precipitation estimates from CHC-CMIP6's annual series](precipitation.jshd) and upload them into the IDE. To do this, click on data files, add file, select the file, and then click add file to confirm.
 
 ### Data Sources
 

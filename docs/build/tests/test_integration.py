@@ -24,7 +24,9 @@ REPO_ROOT = Path(__file__).resolve().parents[3]
 SRC = REPO_ROOT / "docs" / "src"
 TESTS = REPO_ROOT / "josh-tests" / "conformance"
 
-LISTING = re.compile(r'<pre><code class="language-joshlang">(.*?)</code></pre>', re.S)
+# Attribute-tolerant: the complete listing also carries an id, so the run button can read the model
+# off the page instead of holding a second copy of it.
+LISTING = re.compile(r'<pre><code class="language-joshlang"[^>]*>(.*?)</code></pre>', re.S)
 HREF = re.compile(r'href="([^"]+)"')
 
 #: Elements that never carry a closing tag, so they must not be pushed onto the nesting stack.
@@ -228,3 +230,52 @@ def test_every_page_is_balanced_html(site):
         if faults:
             broken[str(page.relative_to(site))] = faults[:3]
     assert not broken
+
+
+#: Third-party libraries the browser JavaScript reaches for as a bare global rather than importing.
+#: Each maps the global's name to the script the page must load to provide it. They are invisible to
+#: an import-graph check -- which is how `math` reached a reader as "math is not defined", reported
+#: only after their simulation had already finished running.
+GLOBAL_SCRIPTS = {
+    "d3": "/d3.min.js",
+    "math": "/math.min.js",
+}
+
+
+def test_a_run_page_loads_every_global_its_scripts_reach_for(manifest, tmp_path):
+    """A page with a run box must load a script for each bare global the runner's code uses.
+
+    Scanning the shipped JavaScript rather than asserting a fixed list, so that vendoring another
+    file from the demo cannot quietly add a dependency the page does not provide.
+
+    The harvest here runs without the jar, so nothing is marked browser-runnable; one unit is marked
+    by hand to make the run box render. What is under test is the template's script tags against the
+    scripts' actual needs, not how a unit earns a run box.
+    """
+    js_dir = REPO_ROOT / "landing" / "js"
+    needed = set()
+    for path in sorted(js_dir.glob("*.js")):
+        text = path.read_text(encoding="utf-8")
+        for name in GLOBAL_SCRIPTS:
+            # Word-boundary on the left so `Math.round` never reads as the mathjs global.
+            if re.search(rf"(?<![\w.]){name}\.", text):
+                needed.add(name)
+
+    assert needed, "expected the browser scripts to use at least one third-party global"
+
+    runnable = next(unit for unit in manifest.units if unit.kind in RENDERED_KINDS
+                    and unit.simulation is not None)
+    runnable.browser_runnable = True
+    try:
+        out = tmp_path / "library"
+        result = render(RenderOptions(manifest=manifest, root=REPO_ROOT, out=out))
+        assert not result.log, result.log.report()
+        page = (out / page_path(runnable)).read_text(encoding="utf-8")
+    finally:
+        runnable.browser_runnable = False
+
+    for name in sorted(needed):
+        script = GLOBAL_SCRIPTS[name]
+        assert f'src="{script}"' in page, (
+            f"the browser scripts use the `{name}` global but the run page does not load {script}"
+        )

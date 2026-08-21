@@ -18,7 +18,13 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from joshpy.cli import CLIResult, InspectExternalsConfig, JoshCLI, ValidateConfig
+from joshpy.cli import (
+    CLIResult,
+    InspectExportsConfig,
+    InspectExternalsConfig,
+    JoshCLI,
+    ValidateConfig,
+)
 
 #: The fat jar the CLI commands live in, relative to the repo root.
 DEFAULT_JAR = Path("build/libs/joshsim-fat.jar")
@@ -29,6 +35,14 @@ DEFAULT_TIMEOUT_SECONDS = 120
 #: Tokens that must appear in a model's text before it can possibly read an external data set:
 #: `external` for a read in this file, `import` because reads in an imported file count too.
 _EXTERNAL_TOKENS = ("external", "import")
+
+#: Tokens that must appear before a model can possibly declare somewhere for its output to go.
+#: `import` is here for the same reason as above: the declaration may live in an imported file.
+_EXPORT_TOKENS = ("exportFiles", "debugFiles", "import")
+
+#: The protocol a target must use to be writable from the browser. WASM has no filesystem, so
+#: `SandboxExportFacadeFactory` rejects every other scheme with "Only in-memory targets supported".
+MEMORY_PROTOCOL = "memory"
 
 
 class JarUnavailable(Exception):
@@ -52,6 +66,23 @@ def may_read_externals(text: str) -> bool:
         False only when the answer is provably empty.
     """
     return any(token in text for token in _EXTERNAL_TOKENS)
+
+
+def may_declare_exports(text: str) -> bool:
+    """Return whether a model could possibly declare somewhere for its output to go.
+
+    The companion to :func:`may_read_externals`, sound in the same direction and for the same
+    reason: a target is declared by assigning to ``exportFiles`` or ``debugFiles``, so a source
+    mentioning neither -- nor ``import``, which could bring in a file that does -- provably declares
+    none, and a model that declares none writes nowhere the browser cannot follow.
+
+    Args:
+        text: The model's source.
+
+    Returns:
+        False only when the answer is provably empty.
+    """
+    return any(token in text for token in _EXPORT_TOKENS)
 
 
 def first_error_line(result: CLIResult) -> str:
@@ -175,6 +206,49 @@ class JoshJar:
             ) from exc
         except RuntimeError as exc:
             raise JarUnavailable(f"inspect-externals failed for {path}: {exc}") from exc
+
+    def writes_only_to_memory(self, path: Path, simulation: str) -> bool:
+        """Return whether every target a simulation declares can be written from the browser.
+
+        The browser runs the model on WebAssembly, which has no filesystem, so a ``file://`` target
+        aborts the run. Asking the parser rather than reading the text is what makes this reliable:
+        a target can be declared in an imported file, spelled across a line break, or sit inside a
+        comment, and only the engine resolves those the way the engine will at run time.
+
+        A model declaring no target at all qualifies. Such a run produces no output, but it still
+        executes -- which is the whole point for a model whose ``assert`` handlers are the result.
+
+        Args:
+            path: The entry ``.josh`` file.
+            simulation: Name of the simulation whose targets are being checked.
+
+        Returns:
+            True when every declared target uses the ``memory`` protocol, or none is declared.
+
+        Raises:
+            JarUnavailable: If the command failed, or produced output that is not the JSON the
+                command documents.
+        """
+        try:
+            if not may_declare_exports(path.read_text(encoding="utf-8")):
+                return True
+        except OSError:
+            # Let the command report an unreadable file, so there is one error path rather than two.
+            pass
+
+        try:
+            paths = self._cli.inspect_exports(
+                InspectExportsConfig(script=path, simulation=simulation), timeout=self.timeout
+            )
+        except ValueError as exc:
+            raise JarUnavailable(
+                f"inspect-exports produced unreadable output for {path}: {exc}"
+            ) from exc
+        except RuntimeError as exc:
+            raise JarUnavailable(f"inspect-exports failed for {path}: {exc}") from exc
+
+        declared = list(paths.export_files.values()) + list(paths.debug_files.values())
+        return all(info.protocol == MEMORY_PROTOCOL for info in declared if info is not None)
 
     def _check_invocation(self, result: CLIResult, path: Path) -> None:
         """Fail loudly when the jar could not be run at all.

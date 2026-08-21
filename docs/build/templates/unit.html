@@ -42,10 +42,34 @@
           which adjusts the run without changing the model you read here.
 {% endif %}
         </p>
-        <pre><code class="language-joshlang">{{ model }}</code></pre>
+        <pre><code class="language-joshlang" id="complete-model-code">{{ model }}</code></pre>
         <div class="call-to-action">
           <a href="{{ model_href }}" download>Download Complete Code</a>
         </div>
+      </section>
+{% endif %}
+
+{% if unit.browser_runnable %}
+      {#
+        The run box reads the listing above rather than carrying its own copy of the model, so the
+        code that runs is the code on the page. Nothing here transcribes Josh, and nothing here can
+        drift from the authored file.
+      #}
+      <section class="unit-run" id="run">
+        <h2>Run it here</h2>
+        <p>
+          This runs <code>{{ unit.simulation }}</code> in your browser on the same engine the
+          command line uses, compiled to WebAssembly. Nothing is uploaded
+          {%- if data_manifest %}, though the
+          {{ "data file" if data_manifest | length == 1 else "data files" }} above
+          {{ "is" if data_manifest | length == 1 else "are" }} downloaded on the first run
+          {%- endif %}.
+        </p>
+        <div class="call-to-action">
+          <button type="button" class="run-button" disabled>Run simulation</button>
+        </div>
+        <p class="run-status" role="status" aria-live="polite"></p>
+        <div class="run-results"></div>
       </section>
 {% endif %}
 
@@ -88,4 +112,39 @@
         </dl>
       </section>
     </main>
+{% endblock %}
+
+{% block scripts %}
+{% if unit.browser_runnable %}
+    {#
+      Site-absolute paths, because a page sits at an arbitrary depth under /library/ while the
+      engine is staged once at the site root. The bare specifiers are what the modules import each
+      other by; they are the same names the editor and the demo use, since these are the same files.
+    #}
+    <script src="/d3.min.js"></script>
+    <script src="/math.min.js"></script>
+    <script type="importmap">
+      {
+        "imports": {
+          "runner":    "/js/runner.js",
+          "wasm":      "/js/wasm.js",
+          "wire":      "/js/wire.js",
+          "model":     "/js/model.js",
+          "util":      "/js/util.js",
+          "summarize": "/js/summarize.js",
+          "viz":       "/js/viz.js"
+        }
+      }
+    </script>
+    <script type="module">
+      import {RunnerPresenter} from "runner";
+
+      const section = document.getElementById("run");
+      new RunnerPresenter(section, {
+        simulation: {{ unit.simulation | tojson }},
+        dataManifest: {{ data_manifest | tojson }},
+        source: document.getElementById("complete-model-code")
+      }).attach();
+    </script>
+{% endif %}
 {% endblock %}

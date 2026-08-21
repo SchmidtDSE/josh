@@ -21,11 +21,13 @@ end simulation
 class FakeJar:
     """Stands in for the Josh CLI so pairing and schema rules can be tested without a JVM."""
 
-    def __init__(self, valid=True, externals=None):
+    def __init__(self, valid=True, externals=None, memory_only=True):
         self.valid = valid
         self.externals = externals or []
+        self.memory_only = memory_only
         self.validated: list[Path] = []
         self.inspected: list[Path] = []
+        self.export_checked: list[tuple[Path, str]] = []
 
     def validate(self, path):
         self.validated.append(path)
@@ -36,6 +38,10 @@ class FakeJar:
     def inspect_externals(self, path):
         self.inspected.append(path)
         return list(self.externals)
+
+    def writes_only_to_memory(self, path, simulation):
+        self.export_checked.append((path, simulation))
+        return self.memory_only
 
 
 def write_unit(src, relative, front_matter, model=MODEL, data=()):
@@ -541,3 +547,73 @@ def test_the_composed_model_is_validated(tmp_path):
     assert "once its overlay is applied" in problem.message
     # The author has to be sent to the file they can edit, not to the generated copy.
     assert problem.path.name == "two_trees_ci.josh"
+
+
+def test_a_memory_only_unit_is_marked_browser_runnable(tmp_path):
+    src = src_of(tmp_path)
+    write_unit(src, "guides/hello", "kind: guide\ntitle: Hello\nsimulation: Main")
+
+    unit = run(tmp_path, jar=FakeJar()).manifest.units[0]
+
+    assert unit.browser_runnable
+
+
+def test_a_unit_writing_to_a_file_is_not_browser_runnable(tmp_path):
+    # WebAssembly has no filesystem, so a `file://` target aborts the run rather than writing.
+    src = src_of(tmp_path)
+    write_unit(src, "guides/hello", "kind: guide\ntitle: Hello\nsimulation: Main")
+
+    unit = run(tmp_path, jar=FakeJar(memory_only=False)).manifest.units[0]
+
+    assert not unit.browser_runnable
+
+
+def test_a_unit_that_names_no_simulation_is_not_browser_runnable(tmp_path):
+    # The browser has to name a simulation to run one, and the manifest leaves that lookup to its
+    # consumers rather than guessing here.
+    src = src_of(tmp_path)
+    write_unit(src, "guides/hello", "kind: guide\ntitle: Hello")
+
+    jar = FakeJar()
+    unit = run(tmp_path, jar=jar).manifest.units[0]
+
+    assert not unit.browser_runnable
+    assert jar.export_checked == []
+
+
+def test_an_invalid_unit_is_never_offered_as_browser_runnable(tmp_path):
+    # A model the engine rejected must not carry a run button, whatever its targets say.
+    src = src_of(tmp_path)
+    write_unit(src, "guides/hello", "kind: guide\ntitle: Hello\nsimulation: Main")
+
+    result = run(tmp_path, jar=FakeJar(valid=False))
+
+    assert result.log
+    assert not result.manifest.units[0].browser_runnable
+
+
+def test_a_conformance_test_is_not_checked_for_browser_runnability(tmp_path):
+    # Tests carry no page, so nothing would use the answer and the JVM start would be wasted.
+    tests = tmp_path / "josh-tests" / "conformance" / "core"
+    tests.mkdir(parents=True)
+    (tests / "test_thing.josh").write_text(
+        "# @category: core\n"
+        "# @subcategory: things\n"
+        "# @priority: high\n"
+        "# @description: checks a thing\n\n" + MODEL,
+        encoding="utf-8",
+    )
+
+    jar = FakeJar()
+    result = harvest(
+        HarvestOptions(
+            root=tmp_path,
+            src=None,
+            tests=tmp_path / "josh-tests" / "conformance",
+            jar=jar,
+            runnable_dir=None,
+        )
+    )
+
+    assert not result.log, result.log.report()
+    assert jar.export_checked == []

@@ -6,6 +6,7 @@ against a tree built here; `test_integration.py` makes the same assertion agains
 """
 
 import html
+import lzma
 import re
 from pathlib import Path
 
@@ -31,7 +32,9 @@ MODEL = """start simulation Main
 end simulation
 """
 
-LISTING = re.compile(r'<pre><code class="language-joshlang">(.*?)</code></pre>', re.S)
+# Attribute-tolerant: the complete listing also carries an id, so the run button can read the model
+# off the page instead of holding a second copy of it.
+LISTING = re.compile(r'<pre><code class="language-joshlang"[^>]*>(.*?)</code></pre>', re.S)
 
 
 def write_unit(src, relative, front_matter, prose="Prose.", model=MODEL):
@@ -310,3 +313,142 @@ def test_a_manifest_from_another_schema_version_is_refused(tmp_path):
     path.write_text('{"schemaVersion": 99, "counts": {}, "units": []}', encoding="utf-8")
     with pytest.raises(ManifestUnreadable, match="schema version"):
         Manifest.read(path)
+
+
+def write_data(src, relative, payload, compress=True):
+    """Write a data file beside a model, compressed the way the repository stores it."""
+    path = src / relative
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_bytes(lzma.compress(payload) if compress else payload)
+    return path
+
+
+def test_compressed_data_is_published_expanded(tmp_path):
+    # The XZ decoder is JVM-only, so what the site serves has to be the decompressed bytes: neither
+    # the browser editor nor the run button on a page can read the stored form.
+    src = tmp_path / "docs" / "src"
+    write_unit(src, "guides/two_trees", "kind: guide\ntitle: Two trees\ndata: [rain.jshdz]")
+    write_data(src, "guides/rain.jshdz", b"not really a grid, but bytes are bytes")
+
+    _, out = draw(tmp_path)
+
+    published = out / "data" / "two_trees" / "rain.jshd"
+    assert published.read_bytes() == b"not really a grid, but bytes are bytes"
+
+
+def test_uncompressed_data_is_published_as_is(tmp_path):
+    src = tmp_path / "docs" / "src"
+    write_unit(src, "guides/two_trees", "kind: guide\ntitle: Two trees\ndata: [rain.jshd]")
+    write_data(src, "guides/rain.jshd", b"already expanded", compress=False)
+
+    _, out = draw(tmp_path)
+
+    assert (out / "data" / "two_trees" / "rain.jshd").read_bytes() == b"already expanded"
+
+
+def test_two_units_declaring_the_same_filename_do_not_collide(tmp_path):
+    # Declared names are only unique within a directory, so publishing them flat would serve one
+    # unit's data to the other with no error anywhere.
+    src = tmp_path / "docs" / "src"
+    write_unit(src, "guides/first/model", "kind: guide\ntitle: First\ndata: [rain.jshdz]")
+    write_data(src, "guides/first/rain.jshdz", b"first")
+    write_unit(src, "guides/second/model2", "kind: guide\ntitle: Second\ndata: [rain.jshdz]")
+    write_data(src, "guides/second/rain.jshdz", b"second")
+
+    _, out = draw(tmp_path)
+
+    assert (out / "data" / "model" / "rain.jshd").read_bytes() == b"first"
+    assert (out / "data" / "model2" / "rain.jshd").read_bytes() == b"second"
+
+
+def test_prose_links_data_by_its_published_name(tmp_path):
+    # An author links the file as it is served, not as it is stored; the stored name has an
+    # extension no reader ever sees.
+    src = tmp_path / "docs" / "src"
+    write_unit(
+        src,
+        "guides/two_trees",
+        "kind: guide\ntitle: Two trees\ndata: [rain.jshdz]",
+        prose="Grab the [rain data](rain.jshd).",
+    )
+    write_data(src, "guides/rain.jshdz", b"payload")
+
+    result, out = draw(tmp_path)
+
+    assert not result.log, result.log.report()
+    page = (out / "guides" / "two_trees.html").read_text(encoding="utf-8")
+    assert 'href="../data/two_trees/rain.jshd"' in page
+
+
+def test_a_link_to_data_that_is_not_declared_still_fails(tmp_path):
+    # Registering published data for linking must not become a hole in the dead-link check.
+    src = tmp_path / "docs" / "src"
+    write_unit(
+        src,
+        "guides/two_trees",
+        "kind: guide\ntitle: Two trees",
+        prose="Grab the [rain data](rain.jshd).",
+    )
+
+    result, _ = draw(tmp_path)
+
+    assert len(result.log) == 1
+    message = result.log.problems[0].message
+    assert "neither a unit in the library nor a file beside the model" in message
+
+
+def test_data_that_is_not_xz_is_reported_rather_than_published(tmp_path):
+    src = tmp_path / "docs" / "src"
+    write_unit(src, "guides/two_trees", "kind: guide\ntitle: Two trees\ndata: [rain.jshdz]")
+    write_data(src, "guides/rain.jshdz", b"plain bytes, not compressed", compress=False)
+
+    result, out = draw(tmp_path)
+
+    assert len(result.log) == 1
+    assert "XZ-compressed" in result.log.problems[0].message
+    assert not (out / "data" / "two_trees" / "rain.jshd").exists()
+
+
+def test_a_browser_runnable_unit_gets_a_run_box(tmp_path):
+    src = tmp_path / "docs" / "src"
+    write_unit(src, "guides/hello", "kind: guide\ntitle: Hello\nsimulation: Main")
+    manifest = build(tmp_path)
+    manifest.units[0].browser_runnable = True
+
+    _, out = draw(tmp_path, manifest=manifest)
+
+    page = (out / "guides" / "hello.html").read_text(encoding="utf-8")
+    assert 'class="unit-run"' in page
+    assert 'simulation: "Main"' in page
+    # The run box reads the listing rather than carrying a copy of the model.
+    assert 'id="complete-model-code"' in page
+    assert page.count(MODEL.strip().splitlines()[0]) == 1
+
+
+def test_a_unit_that_is_not_browser_runnable_gets_no_run_box(tmp_path):
+    src = tmp_path / "docs" / "src"
+    write_unit(src, "guides/hello", "kind: guide\ntitle: Hello\nsimulation: Main")
+
+    _, out = draw(tmp_path)
+
+    page = (out / "guides" / "hello.html").read_text(encoding="utf-8")
+    assert 'class="unit-run"' not in page
+    assert "importmap" not in page
+
+
+def test_the_run_box_is_told_where_to_fetch_each_data_file(tmp_path):
+    src = tmp_path / "docs" / "src"
+    write_unit(
+        src,
+        "guides/two_trees",
+        "kind: guide\ntitle: Two trees\nsimulation: Main\ndata: [rain.jshdz]",
+    )
+    write_data(src, "guides/rain.jshdz", b"payload")
+    manifest = build(tmp_path)
+    manifest.units[0].browser_runnable = True
+
+    _, out = draw(tmp_path, manifest=manifest)
+
+    page = (out / "guides" / "two_trees.html").read_text(encoding="utf-8")
+    # Keyed by the virtual filename the engine resolves the external by, not by the stored name.
+    assert '"rain.jshd": "../data/two_trees/rain.jshd"' in page
