@@ -17,6 +17,7 @@ import posixpath
 import shutil
 from collections.abc import Iterable
 from dataclasses import dataclass, field
+from html.parser import HTMLParser
 from pathlib import Path
 from urllib.parse import urlsplit
 
@@ -442,6 +443,59 @@ def _render_prose(unit: Unit, options: RenderOptions, library: Library, parser: 
     return Markup(parser.renderer.render(tokens, parser.options, {}))
 
 
+class _IdCollector(HTMLParser):
+    """Collects every ``id`` a rendered page carries, in document order.
+
+    Parsing the finished page rather than the token stream, because the collision that matters is
+    between an author's prose and the template's own furniture -- two sources that only meet here.
+    Code is safe to walk past: both the injected listing and a fenced excerpt reach this point with
+    their angle brackets escaped, so nothing inside them is read as a tag.
+
+    Attributes:
+        ids: The ids found, with repeats.
+    """
+
+    def __init__(self) -> None:
+        super().__init__(convert_charrefs=True)
+        self.ids: list[str] = []
+
+    def handle_starttag(self, tag, attrs):
+        for name, value in attrs:
+            if name == "id" and value:
+                self.ids.append(value)
+
+    def handle_startendtag(self, tag, attrs):
+        """Read a self-closing tag's attributes too, which the base class would otherwise skip."""
+        self.handle_starttag(tag, attrs)
+
+
+def _duplicate_ids(markup: str) -> list[str]:
+    """Return the ids a page uses more than once, in the order they first repeat.
+
+    A duplicate is not a cosmetic HTML-validity nit here. ``getElementById`` answers with the first
+    match in document order, so a prose heading that slugs to the same id as a section further down
+    silently takes that section's place -- which is how a ``## Run`` heading disabled a page's run
+    box while every other page worked.
+
+    Args:
+        markup: The rendered page.
+
+    Returns:
+        The repeated ids, each named once.
+    """
+    collector = _IdCollector()
+    collector.feed(markup)
+    collector.close()
+
+    seen: set[str] = set()
+    repeated: list[str] = []
+    for value in collector.ids:
+        if value in seen and value not in repeated:
+            repeated.append(value)
+        seen.add(value)
+    return repeated
+
+
 def _without_leading_title(tokens: list[Token]) -> list[Token]:
     """Drop a prose file's opening ``# Title``, which the page header already shows.
 
@@ -601,6 +655,13 @@ def render(options: RenderOptions) -> RenderResult:
             kind_index=relative_href(page, kind_index_path(unit.kind)),
             home=relative_href(page, "index.html"),
         )
+        for duplicate in _duplicate_ids(markup):
+            result.log.add(
+                options.root / (unit.prose or unit.source),
+                f"renders two elements with id={duplicate!r}. A heading's anchor is slugged from "
+                "its text, so an author's prose and the page's own furniture share one id "
+                "namespace; rename the heading, or the id in templates/unit.html.",
+            )
         _write(options.out, page, markup, result)
 
     # The authored files are copied verbatim so that "Download Complete Code" hands over the same

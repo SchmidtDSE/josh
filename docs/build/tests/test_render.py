@@ -164,6 +164,32 @@ def test_repeated_bad_links_report_their_own_lines(tmp_path):
     assert [problem.line for problem in result.log.problems] == [5, 7]
 
 
+def test_a_heading_that_slugs_onto_the_pages_own_id_is_a_problem(tmp_path):
+    """`getElementById` answers with the first match, so this silently steals a section.
+
+    A `## Run it here` heading slugs to `run-it-here`, which is the run box's own id. The prose sits
+    earlier in the document, so the run box's element lookup finds the heading instead and the
+    button is never wired up -- exactly the failure this check exists to make visible.
+    """
+    src = tmp_path / "docs" / "src"
+    write_unit(src, "guides/hello/hello", 'title: "Hello"\nsimulation: Main',
+               prose="## Run it here\n\nProse.")
+    manifest = build(tmp_path)
+    # The harvest runs without a jar here, so nothing earns a run box on its own merits.
+    manifest.units[0].browser_runnable = True
+    result = render(RenderOptions(manifest=manifest, root=tmp_path, out=tmp_path / "out"))
+    assert len(result.log) == 1
+    assert "run-it-here" in result.log.problems[0].message
+
+
+def test_an_ordinary_heading_is_not_reported_as_a_collision(tmp_path):
+    """The control: headings mint ids on every page, so the check must not fire on all of them."""
+    src = tmp_path / "docs" / "src"
+    write_unit(src, "guides/hello/hello", 'title: "Hello"', prose="## Run\n\n## Exports\n\nProse.")
+    result, _ = draw(tmp_path)
+    assert not result.log, result.log.report()
+
+
 def test_an_overlay_fragment_is_linkable_though_it_is_not_a_unit(tmp_path):
     src = tmp_path / "docs" / "src"
     (src / "guides/hello").mkdir(parents=True)
