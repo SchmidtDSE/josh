@@ -59,8 +59,11 @@ public class RecursiveValueResolver implements ValueResolver {
   /**
    * Split a dot-separated path into its segments.
    *
-   * <p>Performs the same split as {@code path.split("\\.")} but without compiling a regular
-   * expression, which is comparatively expensive and runs once per resolver construction.</p>
+   * <p>Replaces {@code path.split("\\.")} so that no regular expression is compiled, which is
+   * comparatively expensive and would run once per resolver construction. The two agree on every
+   * path the grammar can produce. They differ only on trailing empty segments, which
+   * {@code String.split} discards and this keeps, so "a." splits here into two segments rather
+   * than one; a path cannot end in a dot because the grammar requires an attribute after it.</p>
    *
    * @param path The dot-separated attribute path to split, may be null.
    * @return Segments of the path or an empty array if the path is null.

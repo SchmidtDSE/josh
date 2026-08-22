@@ -213,6 +213,10 @@ public abstract class DirectLockMutableEntity implements MutableEntity {
       // else: leave null in array (uninitialized attribute)
     }
 
+    // The snapshot describes the same geometry and name as this entity, so it is given this
+    // entity's cached key instead of building an equal one. Incremental export asks every frozen
+    // patch for its key on every step, so rebuilding it there was a per-patch-per-step
+    // allocation.
     return new FrozenEntity(
         getEntityType(),
         name,
@@ -222,7 +226,8 @@ public abstract class DirectLockMutableEntity implements MutableEntity {
         indexToAttributeName,
         attributeNames,
         usesState,
-        stateIndex
+        stateIndex,
+        getKey()
     );
   }
 

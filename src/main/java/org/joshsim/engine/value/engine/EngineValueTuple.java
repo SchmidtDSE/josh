@@ -518,11 +518,53 @@ public class EngineValueTuple {
      * @param key non-zero composite key for the pair.
      * @param first the first identifying value of the pair, used on a miss.
      * @param second the second identifying value of the pair, used on a miss.
-     * @param creator constructor reference used to build a value on a miss.
+     * @param creator constructor reference used to build a value on a miss. Must not return null,
+     *     which this table cannot distinguish from an absent key.
      * @return the cached or newly created value for this key.
      */
-    @SuppressWarnings("unchecked")
     public V getOrPut(long key, A first, B second, PairCreator<A, B, V> creator) {
+      V cached = getIfPresent(key);
+      if (cached != null) {
+        return cached;
+      }
+
+      // The creator runs before a slot is claimed, and the slot is located again afterwards.
+      // Claiming it first would break if a creator ever inserted into this same table, since
+      // that insert can grow it and leave the pending index pointing into the replaced array.
+      V created = creator.create(first, second);
+      return putIfAbsent(key, created);
+    }
+
+    /**
+     * Find the value already cached for a key.
+     *
+     * @param key non-zero composite key for the pair.
+     * @return the cached value, or null if this key has no value cached.
+     */
+    @SuppressWarnings("unchecked")
+    private V getIfPresent(long key) {
+      int index = hash(key) & mask;
+      while (true) {
+        long existing = keys[index];
+        if (existing == key) {
+          return (V) values[index];
+        }
+        if (existing == 0L) {
+          return null;
+        }
+        index = (index + 1) & mask;
+      }
+    }
+
+    /**
+     * Cache a value for a key unless one arrived for it while it was being created.
+     *
+     * @param key non-zero composite key for the pair.
+     * @param value the value to cache for this key.
+     * @return the newly cached value, or the value already cached for this key.
+     */
+    @SuppressWarnings("unchecked")
+    private V putIfAbsent(long key, V value) {
       if ((used + 1) * 2 > keys.length) {
         grow();
       }
@@ -534,11 +576,10 @@ public class EngineValueTuple {
           return (V) values[index];
         }
         if (existing == 0L) {
-          V created = creator.create(first, second);
           keys[index] = key;
-          values[index] = created;
+          values[index] = value;
           used += 1;
-          return created;
+          return value;
         }
         index = (index + 1) & mask;
       }
