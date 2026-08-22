@@ -134,13 +134,24 @@ public class SingleThreadEventHandlerMachine implements EventHandlerMachine {
    * Release references held by this machine so a pooled instance does not retain values.
    *
    * <p>Clears the memory stack and detaches the local scope from its enclosing scope so that a
-   * pooled machine does not keep an entity graph alive between evaluations. The machine must be
-   * {@link #reset(EngineBridge, Scope, Optional)} before it can be used again.</p>
+   * pooled machine does not keep an entity graph alive between evaluations. The bridge is
+   * dropped for the same reason and is the larger of the two roots: it reaches the simulation,
+   * the replicate and therefore every patch. Pooled machines sit on a thread local free list,
+   * so on the long lived threads used for parallel patch processing and for cloud batch jobs an
+   * idle machine would otherwise pin a finished simulation until that thread ran another
+   * evaluation. The machine must be {@link #reset(EngineBridge, Scope, Optional)} before it can
+   * be used again.</p>
+   *
+   * <p>The value factory and the resolver built from it are deliberately kept: they belong to
+   * the run rather than to a single simulation, reach no entities, and holding them lets reset
+   * skip rebuilding the resolver on every evaluation.</p>
    */
   public void release() {
     memory.clear();
     scope.resetTo(null);
     conversionTarget = Optional.empty();
+    bridge = null;
+    debugOutputFacade = Optional.empty();
   }
 
   @Override

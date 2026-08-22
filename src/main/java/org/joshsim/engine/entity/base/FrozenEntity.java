@@ -149,7 +149,10 @@ public class FrozenEntity implements Entity {
       return Optional.empty();
     } else if (cachedKey == null) {
       // Geometry is assigned at construction and never replaced, so the key is computed once
-      // and reused rather than rebuilt on every external data read.
+      // and reused rather than rebuilt on every external data read. Racing threads may each
+      // build a key and one write may be lost, which is harmless: GeoKey holds only final
+      // fields, so it is safely published even through this plain field, and keys for the same
+      // geometry compare equal.
       cachedKey = Optional.of(new GeoKey(this));
     }
     return cachedKey;

@@ -238,7 +238,9 @@ public abstract class DirectLockMutableEntity implements MutableEntity {
     } else if (cachedKey == null) {
       // Geometry is assigned at construction and never replaced, so the key is computed once
       // and reused. Each external data read asks for the containing patch's key, making this
-      // a hot allocation path otherwise.
+      // a hot allocation path otherwise. Racing threads may each build a key and one write may
+      // be lost, which is harmless: GeoKey holds only final fields, so it is safely published
+      // even through this plain field, and keys for the same geometry compare equal.
       cachedKey = Optional.of(new GeoKey(this));
     }
     return cachedKey;

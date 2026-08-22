@@ -7,6 +7,7 @@
 package org.joshsim.engine.entity.base;
 
 import java.math.BigDecimal;
+import java.util.NoSuchElementException;
 import java.util.Objects;
 import java.util.Optional;
 import org.joshsim.engine.geometry.EngineGeometry;
@@ -19,14 +20,13 @@ public class GeoKey {
   private final Optional<EngineGeometry> geometry;
   private final String entityName;
 
-  // Lazy caches for the integral form of the center coordinates. The BigDecimal to long
-  // conversion is comparatively expensive and grid lookups run once per external read, so the
-  // converted values are computed once and reused for the life of this key. BigDecimal is
-  // immutable so this is safe; benign race if accessed from multiple threads.
-  private boolean horizontalKnown;
-  private long horizontalLong;
-  private boolean verticalKnown;
-  private long verticalLong;
+  // Integral form of the center coordinates. The BigDecimal to long conversion is comparatively
+  // expensive and grid lookups run once per external read, so it is performed once here. These
+  // are computed in the constructor rather than lazily because a key is now cached per entity
+  // and therefore shared across the threads processing patches in parallel: a lazily assigned
+  // flag and value pair could be observed half-written, yielding a silent zero coordinate.
+  private final long horizontalLong;
+  private final long verticalLong;
 
   /**
    * Craete a new key with the specified entity.
@@ -34,8 +34,7 @@ public class GeoKey {
    * @param entity The patch to be keyed.
    */
   public GeoKey(Entity entity) {
-    geometry = entity.getGeometry();
-    entityName = entity.getName();
+    this(entity.getGeometry(), entity.getName());
   }
 
   /**
@@ -48,6 +47,15 @@ public class GeoKey {
   public GeoKey(Optional<EngineGeometry> geometry, String entityName) {
     this.geometry = geometry;
     this.entityName = entityName;
+
+    if (geometry.isPresent()) {
+      EngineGeometry innerGeometry = geometry.get();
+      this.horizontalLong = innerGeometry.getCenterX().longValue();
+      this.verticalLong = innerGeometry.getCenterY().longValue();
+    } else {
+      this.horizontalLong = 0;
+      this.verticalLong = 0;
+    }
   }
 
   /**
@@ -69,33 +77,33 @@ public class GeoKey {
   }
 
   /**
-   * Get the horizontal center of this position as a long, computing it at most once.
+   * Get the horizontal center of this position as a long.
    *
-   * <p>Caches the result of the BigDecimal to long conversion, which grid data lookups perform
-   * on every external value read.</p>
+   * <p>Returns the result of the BigDecimal to long conversion which grid data lookups perform
+   * on every external value read, computed once when this key was created.</p>
    *
    * @returns The x or horizontal position as a long.
+   * @throws NoSuchElementException if this key has no geometry.
    */
   public long getHorizontalAsLong() {
-    if (!horizontalKnown) {
-      horizontalLong = getCenterX().longValue();
-      horizontalKnown = true;
+    if (geometry.isEmpty()) {
+      throw new NoSuchElementException("Cannot get horizontal position without geometry.");
     }
     return horizontalLong;
   }
 
   /**
-   * Get the vertical center of this position as a long, computing it at most once.
+   * Get the vertical center of this position as a long.
    *
-   * <p>Caches the result of the BigDecimal to long conversion, which grid data lookups perform
-   * on every external value read.</p>
+   * <p>Returns the result of the BigDecimal to long conversion which grid data lookups perform
+   * on every external value read, computed once when this key was created.</p>
    *
    * @returns The y or vertical position as a long.
+   * @throws NoSuchElementException if this key has no geometry.
    */
   public long getVerticalAsLong() {
-    if (!verticalKnown) {
-      verticalLong = getCenterY().longValue();
-      verticalKnown = true;
+    if (geometry.isEmpty()) {
+      throw new NoSuchElementException("Cannot get vertical position without geometry.");
     }
     return verticalLong;
   }
