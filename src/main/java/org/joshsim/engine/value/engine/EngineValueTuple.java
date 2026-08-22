@@ -463,12 +463,12 @@ public class EngineValueTuple {
    * <p>Implemented with constructor references (eg TypesTuple::new) so that no capturing
    * lambda is allocated on cache hits or misses.</p>
    *
-   * @param <A> type of the first identifying value of the pair.
-   * @param <B> type of the second identifying value of the pair.
-   * @param <V> type of tuple created on a cache miss.
+   * @param <FirstT> type of the first identifying value of the pair.
+   * @param <SecondT> type of the second identifying value of the pair.
+   * @param <ValueT> type of tuple created on a cache miss.
    */
   @FunctionalInterface
-  public interface PairCreator<A, B, V> {
+  public interface PairCreator<FirstT, SecondT, ValueT> {
 
     /**
      * Create the tuple to cache for this pair.
@@ -477,7 +477,7 @@ public class EngineValueTuple {
      * @param second the second identifying value of the pair.
      * @return newly created tuple which has not yet been cached.
      */
-    V create(A first, B second);
+    ValueT create(FirstT first, SecondT second);
 
   }
 
@@ -485,35 +485,46 @@ public class EngineValueTuple {
    * Single-threaded open-addressed map from long keys to values.
    *
    * <p>Avoids the boxing of Long keys required by HashMap or ConcurrentHashMap. Tables are kept
-   * per thread so lookups need no synchronization and inserts need no compare-and-swap. Key 0 is
-   * reserved as the empty marker; callers must use non-zero keys. Grows by rehashing when more
-   * than half full, which keeps probing short.</p>
+   * per thread so lookups need no synchronization and inserts need no compare-and-swap.</p>
    *
-   * @param <A> type of the first identifying value of the pair.
-   * @param <B> type of the second identifying value of the pair.
-   * @param <V> type of value cached for each key.
+   * <p>Collisions are resolved by walking forward to the next free slot, so a run of occupied
+   * slots must always be terminated by an empty one for a lookup to know when to stop. The table
+   * therefore grows once it is half full, and the key zero is reserved to mark a slot as empty.
+   * Callers must use non-zero keys.</p>
+   *
+   * @param <FirstT> type of the first identifying value of the pair.
+   * @param <SecondT> type of the second identifying value of the pair.
+   * @param <ValueT> type of value cached for each key.
    */
-  public static final class PairTable<A, B, V> {
+  public static final class PairTable<FirstT, SecondT, ValueT> {
 
     private static final int INITIAL_CAPACITY = 64;
+    private static final long EMPTY_SLOT_KEY = 0L;
 
-    private long[] keys;
-    private Object[] values;
-    private int used;
-    private int mask;
+    // Parallel arrays rather than an entry object per key, so that a lookup touches no
+    // per-entry allocation. Slot i of slotValues holds the value for slot i of slotKeys.
+    private long[] slotKeys;
+    private Object[] slotValues;
+    private int occupiedSlots;
+    private int indexMask;
 
     /**
      * Create a new, empty pair table.
      */
     public PairTable() {
-      keys = new long[INITIAL_CAPACITY];
-      values = new Object[INITIAL_CAPACITY];
-      mask = INITIAL_CAPACITY - 1;
-      used = 0;
+      slotKeys = new long[INITIAL_CAPACITY];
+      slotValues = new Object[INITIAL_CAPACITY];
+      indexMask = INITIAL_CAPACITY - 1;
+      occupiedSlots = 0;
     }
 
     /**
      * Get the value for a key, creating and caching it on a miss.
+     *
+     * <p>The creator runs before any slot is claimed and the slot is located again afterwards.
+     * Claiming the slot first would be shorter but would break if a creator ever inserted into
+     * this same table, since that insert can grow it and leave the pending slot index pointing
+     * into the replaced array, overwriting an unrelated entry.</p>
      *
      * @param key non-zero composite key for the pair.
      * @param first the first identifying value of the pair, used on a miss.
@@ -522,17 +533,15 @@ public class EngineValueTuple {
      *     which this table cannot distinguish from an absent key.
      * @return the cached or newly created value for this key.
      */
-    public V getOrPut(long key, A first, B second, PairCreator<A, B, V> creator) {
-      V cached = getIfPresent(key);
+    public ValueT getOrPut(long key, FirstT first, SecondT second,
+        PairCreator<FirstT, SecondT, ValueT> creator) {
+      ValueT cached = findValue(key);
       if (cached != null) {
         return cached;
       }
 
-      // The creator runs before a slot is claimed, and the slot is located again afterwards.
-      // Claiming it first would break if a creator ever inserted into this same table, since
-      // that insert can grow it and leave the pending index pointing into the replaced array.
-      V created = creator.create(first, second);
-      return putIfAbsent(key, created);
+      ValueT created = creator.create(first, second);
+      return cacheIfAbsent(key, created);
     }
 
     /**
@@ -542,17 +551,17 @@ public class EngineValueTuple {
      * @return the cached value, or null if this key has no value cached.
      */
     @SuppressWarnings("unchecked")
-    private V getIfPresent(long key) {
-      int index = hash(key) & mask;
+    private ValueT findValue(long key) {
+      int slotIndex = spreadKey(key) & indexMask;
       while (true) {
-        long existing = keys[index];
-        if (existing == key) {
-          return (V) values[index];
+        long keyAtSlot = slotKeys[slotIndex];
+        if (keyAtSlot == key) {
+          return (ValueT) slotValues[slotIndex];
         }
-        if (existing == 0L) {
+        if (keyAtSlot == EMPTY_SLOT_KEY) {
           return null;
         }
-        index = (index + 1) & mask;
+        slotIndex = nextSlot(slotIndex);
       }
     }
 
@@ -564,44 +573,53 @@ public class EngineValueTuple {
      * @return the newly cached value, or the value already cached for this key.
      */
     @SuppressWarnings("unchecked")
-    private V putIfAbsent(long key, V value) {
-      if ((used + 1) * 2 > keys.length) {
-        grow();
+    private ValueT cacheIfAbsent(long key, ValueT value) {
+      if (needsGrowthForInsert()) {
+        growAndRehash();
       }
 
-      int index = hash(key) & mask;
+      int slotIndex = spreadKey(key) & indexMask;
       while (true) {
-        long existing = keys[index];
-        if (existing == key) {
-          return (V) values[index];
+        long keyAtSlot = slotKeys[slotIndex];
+        if (keyAtSlot == key) {
+          return (ValueT) slotValues[slotIndex];
         }
-        if (existing == 0L) {
-          keys[index] = key;
-          values[index] = value;
-          used += 1;
+        if (keyAtSlot == EMPTY_SLOT_KEY) {
+          slotKeys[slotIndex] = key;
+          slotValues[slotIndex] = value;
+          occupiedSlots += 1;
           return value;
         }
-        index = (index + 1) & mask;
+        slotIndex = nextSlot(slotIndex);
       }
+    }
+
+    /**
+     * Determine whether one more entry would leave the table more than half full.
+     *
+     * @return true if the table must grow before another entry is inserted.
+     */
+    private boolean needsGrowthForInsert() {
+      return (occupiedSlots + 1) * 2 > slotKeys.length;
     }
 
     /**
      * Double the table capacity and reinsert all prior entries.
      */
-    private void grow() {
-      final long[] oldKeys = keys;
-      final Object[] oldValues = values;
+    private void growAndRehash() {
+      final long[] priorKeys = slotKeys;
+      final Object[] priorValues = slotValues;
 
-      int newCapacity = oldKeys.length * 2;
-      keys = new long[newCapacity];
-      values = new Object[newCapacity];
-      mask = newCapacity - 1;
-      used = 0;
+      int newCapacity = priorKeys.length * 2;
+      slotKeys = new long[newCapacity];
+      slotValues = new Object[newCapacity];
+      indexMask = newCapacity - 1;
+      occupiedSlots = 0;
 
-      for (int i = 0; i < oldKeys.length; i++) {
-        long key = oldKeys[i];
-        if (key != 0L) {
-          insertDuringGrow(key, oldValues[i]);
+      for (int priorSlot = 0; priorSlot < priorKeys.length; priorSlot++) {
+        long key = priorKeys[priorSlot];
+        if (key != EMPTY_SLOT_KEY) {
+          insertKnownAbsent(key, priorValues[priorSlot]);
         }
       }
     }
@@ -612,25 +630,39 @@ public class EngineValueTuple {
      * @param key non-zero composite key for the pair.
      * @param value value previously cached for this key.
      */
-    private void insertDuringGrow(long key, Object value) {
-      int index = hash(key) & mask;
-      while (keys[index] != 0L) {
-        index = (index + 1) & mask;
+    private void insertKnownAbsent(long key, Object value) {
+      int slotIndex = spreadKey(key) & indexMask;
+      while (slotKeys[slotIndex] != EMPTY_SLOT_KEY) {
+        slotIndex = nextSlot(slotIndex);
       }
-      keys[index] = key;
-      values[index] = value;
-      used += 1;
+      slotKeys[slotIndex] = key;
+      slotValues[slotIndex] = value;
+      occupiedSlots += 1;
+    }
+
+    /**
+     * Get the slot to probe after a collision, wrapping at the end of the table.
+     *
+     * @param slotIndex the slot which was found to be occupied by another key.
+     * @return the next slot to probe.
+     */
+    private int nextSlot(int slotIndex) {
+      return (slotIndex + 1) & indexMask;
     }
 
     /**
      * Spread the bits of a composite key so consecutive ids do not cluster.
      *
+     * <p>Ids are handed out in sequence, so the low bits of a composite key advance far more
+     * often than the high ones. Multiplying by the golden ratio constant and folding the halves
+     * together mixes both ends into the bits the table mask actually reads.</p>
+     *
      * @param key non-zero composite key for the pair.
      * @return mixed hash value which may be used with the table mask.
      */
-    private static int hash(long key) {
-      long mixed = key * 0x9E3779B97F4A7C15L;
-      return (int) (mixed ^ (mixed >>> 32));
+    private static int spreadKey(long key) {
+      long spread = key * 0x9E3779B97F4A7C15L;
+      return (int) (spread ^ (spread >>> 32));
     }
 
   }
