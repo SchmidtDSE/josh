@@ -6,7 +6,6 @@
 
 package org.joshsim.engine.func;
 
-import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
@@ -21,7 +20,6 @@ public class EntityScope implements Scope {
 
   private final Entity value;
   private final Set<String> expectedAttrs;
-  private Optional<HashMap<String, Integer>> indexCacheMaybe;
 
   /**
    * Create a scope decorator around this entity.
@@ -31,7 +29,6 @@ public class EntityScope implements Scope {
   public EntityScope(Entity value) {
     this.value = value;
     this.expectedAttrs = value.getAttributeNames();
-    this.indexCacheMaybe = Optional.empty();
   }
 
   @Override
@@ -105,12 +102,12 @@ public class EntityScope implements Scope {
   }
 
   /**
-   * Attempt to retrieve a value using a cached integer index for fast array access.
+   * Attempt to retrieve a value using the entity's attribute index for fast array access.
    *
-   * <p>Caches the resolved attribute index by name so repeated lookups for the same attribute
-   * avoid redundant map traversals. Returns {@code Optional.empty()} when the entity has no
-   * index map, when {@code name} is not present in the index, or when the stored value is
-   * uninitialized (signalling the caller to fall through to the slow path).</p>
+   * <p>Resolves the attribute index by name and reads the backing array directly. Returns
+   * {@code Optional.empty()} when the entity has no index map, when {@code name} is not present
+   * in the index, or when the stored value is uninitialized (signalling the caller to fall
+   * through to the slow path).</p>
    *
    * @param name the attribute name to look up.
    * @return Optional containing the resolved value, or empty to signal fall-through to slow path.

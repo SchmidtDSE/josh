@@ -9,6 +9,7 @@ package org.joshsim.engine.value.converter;
 
 import java.util.Map;
 import org.joshsim.engine.value.engine.EngineValueTuple;
+import org.joshsim.engine.value.engine.EngineValueTuple.PairCreator;
 import org.joshsim.engine.value.engine.EngineValueTuple.PairTable;
 
 
@@ -20,6 +21,11 @@ public class MapConverter implements Converter {
   private final Map<EngineValueTuple.UnitsTuple, Conversion> conversions;
   private final ThreadLocal<PairTable<Units, Units, Conversion>> conversionCache =
       ThreadLocal.withInitial(PairTable::new);
+
+  // Held in a field rather than written as this::computeConversion at the call site: a bound
+  // method reference allocates a fresh object on each evaluation, which would defeat the
+  // allocation-free lookup the cache exists to provide.
+  private final PairCreator<Units, Units, Conversion> conversionCreator = this::computeConversion;
 
   /**
    * Constructs a new Converter with the specified conversion mappings.
@@ -44,7 +50,7 @@ public class MapConverter implements Converter {
    */
   public Conversion getConversion(Units oldUnits, Units newUnits) {
     long key = ((long) oldUnits.getId() << 32) | (newUnits.getId() & 0xFFFFFFFFL);
-    return conversionCache.get().getOrPut(key, oldUnits, newUnits, this::computeConversion);
+    return conversionCache.get().getOrPut(key, oldUnits, newUnits, conversionCreator);
   }
 
   /**

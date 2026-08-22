@@ -97,8 +97,44 @@ class LocalScopeTest {
   }
 
   @Test
-  void testTryIndexedGetAlwaysEmpty() {
+  void testTryIndexedGetFindsLocalValue() {
+    scope.defineConstant("localVar", mockValue);
+
     Optional<EngineValue> result = scope.tryIndexedGet("localVar");
+
+    assertTrue(result.isPresent());
+    assertEquals(mockValue, result.get());
+  }
+
+  @Test
+  void testTryIndexedGetDelegatesWhenNoLocalValues() {
+    when(mockContainingScope.tryIndexedGet("outerVar"))
+        .thenReturn(Optional.of(mockOuterValue));
+
+    Optional<EngineValue> result = scope.tryIndexedGet("outerVar");
+
+    assertTrue(result.isPresent());
+    assertEquals(mockOuterValue, result.get());
+  }
+
+  @Test
+  void testTryIndexedGetDelegatesOnLocalMiss() {
+    scope.defineConstant("localVar", mockValue);
+    when(mockContainingScope.tryIndexedGet("outerVar"))
+        .thenReturn(Optional.of(mockOuterValue));
+
+    Optional<EngineValue> result = scope.tryIndexedGet("outerVar");
+
+    assertTrue(result.isPresent());
+    assertEquals(mockOuterValue, result.get());
+  }
+
+  @Test
+  void testTryIndexedGetEmptyWhenNeitherScopeHasValue() {
+    when(mockContainingScope.tryIndexedGet("missing")).thenReturn(Optional.empty());
+
+    Optional<EngineValue> result = scope.tryIndexedGet("missing");
+
     assertTrue(result.isEmpty());
   }
 }
