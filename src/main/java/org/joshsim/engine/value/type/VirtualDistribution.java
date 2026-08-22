@@ -64,13 +64,7 @@ public abstract class VirtualDistribution extends Distribution {
   @Override
   public LanguageType getLanguageType() {
     EngineValue exampleValue = sample();
-
-    Iterable<String> innerDistributions = exampleValue.getLanguageType().getDistributionTypes();
-    List<String> distributions = new ArrayList<>();
-    distributions.add("VirtualDistribution");
-    innerDistributions.forEach(distributions::add);
-
-    return new LanguageType(distributions, exampleValue.getLanguageType().getRootType());
+    return exampleValue.getLanguageType().asVirtualDistribution();
   }
 
   @Override
