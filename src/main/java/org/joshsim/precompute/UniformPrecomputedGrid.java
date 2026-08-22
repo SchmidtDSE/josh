@@ -64,8 +64,8 @@ public abstract class UniformPrecomputedGrid<T extends Comparable> implements
 
   @Override
   public EngineValue getAt(GeoKey location, long timestep) {
-    long x = location.getCenterX().longValue();
-    long y = location.getCenterY().longValue();
+    long x = location.getHorizontalAsLong();
+    long y = location.getVerticalAsLong();
     return getAt(x, y, timestep);
   }
 

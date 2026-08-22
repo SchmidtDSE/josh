@@ -19,6 +19,15 @@ public class GeoKey {
   private final Optional<EngineGeometry> geometry;
   private final String entityName;
 
+  // Lazy caches for the integral form of the center coordinates. The BigDecimal to long
+  // conversion is comparatively expensive and grid lookups run once per external read, so the
+  // converted values are computed once and reused for the life of this key. BigDecimal is
+  // immutable so this is safe; benign race if accessed from multiple threads.
+  private boolean horizontalKnown;
+  private long horizontalLong;
+  private boolean verticalKnown;
+  private long verticalLong;
+
   /**
    * Craete a new key with the specified entity.
    *
@@ -57,6 +66,38 @@ public class GeoKey {
    */
   public BigDecimal getCenterY() {
     return getGeometry().orElseThrow().getCenterY();
+  }
+
+  /**
+   * Get the horizontal center of this position as a long, computing it at most once.
+   *
+   * <p>Caches the result of the BigDecimal to long conversion, which grid data lookups perform
+   * on every external value read.</p>
+   *
+   * @returns The x or horizontal position as a long.
+   */
+  public long getHorizontalAsLong() {
+    if (!horizontalKnown) {
+      horizontalLong = getCenterX().longValue();
+      horizontalKnown = true;
+    }
+    return horizontalLong;
+  }
+
+  /**
+   * Get the vertical center of this position as a long, computing it at most once.
+   *
+   * <p>Caches the result of the BigDecimal to long conversion, which grid data lookups perform
+   * on every external value read.</p>
+   *
+   * @returns The y or vertical position as a long.
+   */
+  public long getVerticalAsLong() {
+    if (!verticalKnown) {
+      verticalLong = getCenterY().longValue();
+      verticalKnown = true;
+    }
+    return verticalLong;
   }
 
   public Optional<EngineGeometry> getGeometry() {

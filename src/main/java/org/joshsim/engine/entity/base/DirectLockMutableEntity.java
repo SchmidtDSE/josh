@@ -38,6 +38,7 @@ public abstract class DirectLockMutableEntity implements MutableEntity {
   private Map<String, List<EventHandlerGroup>> commonHandlerCache;
   private final boolean usesState;
   private final int stateIndex;
+  private Optional<GeoKey> cachedKey;
 
   /**
    * Constructor for Entity.
@@ -234,9 +235,13 @@ public abstract class DirectLockMutableEntity implements MutableEntity {
   public Optional<GeoKey> getKey() {
     if (getGeometry().isEmpty()) {
       return Optional.empty();
-    } else {
-      return Optional.of(new GeoKey(this));
+    } else if (cachedKey == null) {
+      // Geometry is assigned at construction and never replaced, so the key is computed once
+      // and reused. Each external data read asks for the containing patch's key, making this
+      // a hot allocation path otherwise.
+      cachedKey = Optional.of(new GeoKey(this));
     }
+    return cachedKey;
   }
 
   @Override

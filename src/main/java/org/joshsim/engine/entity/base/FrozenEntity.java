@@ -39,6 +39,7 @@ public class FrozenEntity implements Entity {
   private final Set<String> attributeNames;
   private final boolean usesState;
   private final int stateIndex;
+  private Optional<GeoKey> cachedKey;
 
 
   /**
@@ -146,9 +147,12 @@ public class FrozenEntity implements Entity {
   public Optional<GeoKey> getKey() {
     if (getGeometry().isEmpty()) {
       return Optional.empty();
-    } else {
-      return Optional.of(new GeoKey(this));
+    } else if (cachedKey == null) {
+      // Geometry is assigned at construction and never replaced, so the key is computed once
+      // and reused rather than rebuilt on every external data read.
+      cachedKey = Optional.of(new GeoKey(this));
     }
+    return cachedKey;
   }
 
   @Override
