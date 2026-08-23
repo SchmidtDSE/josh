@@ -8,10 +8,10 @@
 package org.joshsim.engine.value.converter;
 
 import java.util.Map;
+import java.util.function.BiFunction;
 import org.joshsim.engine.value.engine.EngineValueTuple;
-import org.joshsim.engine.value.engine.EngineValueTuple.PairCreator;
-import org.joshsim.engine.value.engine.EngineValueTuple.PairTable;
 import org.joshsim.util.CompositeKeyUtil;
+import org.joshsim.util.PairTable;
 
 
 /**
@@ -21,7 +21,7 @@ public class MapConverter implements Converter {
 
   private final Map<EngineValueTuple.UnitsTuple, Conversion> conversions;
   private final ThreadLocal<PairTable<Units, Units, Conversion>> conversionCache;
-  private final PairCreator<Units, Units, Conversion> conversionCreator;
+  private final BiFunction<Units, Units, Conversion> conversionCreator;
 
   /**
    * Constructs a new Converter with the specified conversion mappings.

@@ -26,6 +26,10 @@ public final class CompositeKeyUtil {
    * Each identity keeps its full 32 bits, so distinct pairs of distinct identities always produce
    * distinct keys.</p>
    *
+   * <p>This packing is the same function as Agrona's Hashing.compoundKey, which was consulted
+   * when the alternative of taking that library was evaluated and declined; see PairTable for
+   * why.</p>
+   *
    * <p>The second identity is masked with {@code 0xFFFFFFFFL} because widening an int to a long
    * sign extends it. Without the mask a negative second identity would set every high bit and
    * corrupt the first identity's half of the key. Identities are handed out as positive counters
