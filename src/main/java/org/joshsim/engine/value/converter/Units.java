@@ -219,12 +219,14 @@ public class Units {
    * @returns inverted copy of these units.
    */
   public Units invert() {
-    Units result = inverted;
-    if (result == null) {
-      result = Units.of(denominatorUnits, numeratorUnits);
-      inverted = result;
+    Units cached = inverted;
+    if (cached == null) {
+      Units computed = Units.of(denominatorUnits, numeratorUnits);
+      inverted = computed;
+      return computed;
+    } else {
+      return cached;
     }
-    return result;
   }
 
   /**

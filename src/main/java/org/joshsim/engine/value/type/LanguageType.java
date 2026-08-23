@@ -177,16 +177,18 @@ public class LanguageType {
    * @return type describing a realized distribution of this type.
    */
   public LanguageType asRealizedDistribution() {
-    LanguageType result = realizedDistributionType;
-    if (result == null) {
-      result = new LanguageType(
+    LanguageType cached = realizedDistributionType;
+    if (cached == null) {
+      LanguageType computed = new LanguageType(
           buildDistributionChain("RealizedDistribution"),
           rootType,
           containsAttributes
       );
-      realizedDistributionType = result;
+      realizedDistributionType = computed;
+      return computed;
+    } else {
+      return cached;
     }
-    return result;
   }
 
   /**
@@ -199,12 +201,15 @@ public class LanguageType {
    * @return type describing a virtual distribution of this type.
    */
   public LanguageType asVirtualDistribution() {
-    LanguageType result = virtualDistributionType;
-    if (result == null) {
-      result = new LanguageType(buildDistributionChain("VirtualDistribution"), rootType);
-      virtualDistributionType = result;
+    LanguageType cached = virtualDistributionType;
+    if (cached == null) {
+      LanguageType computed =
+          new LanguageType(buildDistributionChain("VirtualDistribution"), rootType);
+      virtualDistributionType = computed;
+      return computed;
+    } else {
+      return cached;
     }
-    return result;
   }
 
   /**

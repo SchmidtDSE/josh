@@ -655,8 +655,15 @@ public class EngineValueTuple {
      * Spread the bits of a composite key so consecutive ids do not cluster.
      *
      * <p>Ids are handed out in sequence, so the low bits of a composite key advance far more
-     * often than the high ones. Multiplying by the golden ratio constant and folding the halves
-     * together mixes both ends into the bits the table mask actually reads.</p>
+     * often than the high ones, and the mask below reads only low bits. Multiplying spreads the
+     * sequential low bits across the whole word, and folding the halves together with an xor
+     * brings the high half back down into the bits the mask reads.</p>
+     *
+     * <p>The multiplier is the golden ratio scaled to 64 bits, that is 2 to the 64th divided by
+     * phi rounded to an odd number. Odd matters because an even multiplier would discard the top
+     * bits of the key. This is the 64-bit counterpart of the more familiar 0x9E3779B9 and the
+     * same value the JDK uses as SplittableRandom.GOLDEN_GAMMA; it is a conventional choice for
+     * this kind of mixing rather than a tuned one.</p>
      *
      * @param key non-zero composite key for the pair.
      * @return mixed hash value which may be used with the table mask.

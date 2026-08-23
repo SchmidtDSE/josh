@@ -43,21 +43,22 @@ public class GeoKey {
   public GeoKey(Optional<EngineGeometry> geometry, String entityName) {
     this.geometry = geometry;
     this.entityName = entityName;
-    this.horizontalLong = cacheGeometryAsLongIfPresent(geometry, EngineGeometry::getCenterX);
-    this.verticalLong = cacheGeometryAsLongIfPresent(geometry, EngineGeometry::getCenterY);
+    this.horizontalLong = getGeometryAsLongIfPresent(geometry, EngineGeometry::getCenterX);
+    this.verticalLong = getGeometryAsLongIfPresent(geometry, EngineGeometry::getCenterY);
   }
 
   /**
-   * Convert one center coordinate of a geometry to a long, or zero if there is no geometry.
+   * Get one center coordinate of a geometry as a long, or zero if there is no geometry.
    *
    * <p>The BigDecimal to long conversion is comparatively expensive and grid lookups run it once
-   * per external read, so it is performed once per key here and the result kept.</p>
+   * per external read, so the constructor calls this once per axis and keeps the result.</p>
    *
-   * <p>This runs during construction rather than lazily on first request because a key is cached
-   * per entity and so shared across the threads processing patches in parallel. A lazily assigned
-   * flag and value pair could be observed half written by another thread, which would yield a
-   * silent zero coordinate and a read from the wrong grid cell. Converting here lets the fields
-   * be final, which also makes a key safely published through the plain field that caches it.</p>
+   * <p>The conversion happens during construction rather than lazily on first request because a
+   * key is cached per entity and so shared across the threads processing patches in parallel. A
+   * lazily assigned flag and value pair could be observed half written by another thread, which
+   * would yield a silent zero coordinate and a read from the wrong grid cell. Converting here
+   * lets the fields be final, which also makes a key safely published through the plain field
+   * that caches it.</p>
    *
    * @param geometry The geometry to read the coordinate from, or empty if the key has none.
    * @param getCenter Accessor for the coordinate of interest, such as the horizontal center.
@@ -65,12 +66,13 @@ public class GeoKey {
    *     must consult the geometry before reporting the zero, since it stands for absence rather
    *     than for a position.
    */
-  private static long cacheGeometryAsLongIfPresent(
+  private static long getGeometryAsLongIfPresent(
       Optional<EngineGeometry> geometry, Function<EngineGeometry, BigDecimal> getCenter) {
     if (geometry.isEmpty()) {
       return 0;
+    } else {
+      return getCenter.apply(geometry.get()).longValue();
     }
-    return getCenter.apply(geometry.get()).longValue();
   }
 
   /**
