@@ -10,7 +10,6 @@ package org.joshsim.engine.value.converter;
 import java.util.Map;
 import java.util.function.BiFunction;
 import org.joshsim.engine.value.engine.EngineValueTuple;
-import org.joshsim.util.CompositeKeyUtil;
 import org.joshsim.util.PairTable;
 
 
@@ -45,11 +44,8 @@ public class MapConverter implements Converter {
    * steady-state lookup path allocates nothing. On a cache miss, the content-based
    * UnitsTuple lookup below runs as before, including its error behavior.</p>
    *
-   * <p>The two identities are packed into one long by
-   * {@link CompositeKeyUtil#packIds(int, int)}, which places the source units in the high 32 bits
-   * and the destination in the low 32 bits. That keeps the key order sensitive, so converting
-   * from metres to feet is cached separately from feet to metres, and lets the cache be keyed on
-   * a primitive rather than on a boxed pair.</p>
+   * <p>The cache is keyed on the ordered pair of unit identities, with the source units first, so
+   * converting from metres to feet is cached separately from feet to metres.</p>
    *
    * @param oldUnits the source units
    * @param newUnits the destination units
@@ -57,8 +53,13 @@ public class MapConverter implements Converter {
    * @throws IllegalArgumentException if no conversion exists between the units
    */
   public Conversion getConversion(Units oldUnits, Units newUnits) {
-    long key = CompositeKeyUtil.packIds(oldUnits.getId(), newUnits.getId());
-    return conversionCache.get().getOrPut(key, oldUnits, newUnits, conversionCreator);
+    return conversionCache.get().getOrPut(
+        oldUnits.getId(),
+        newUnits.getId(),
+        oldUnits,
+        newUnits,
+        conversionCreator
+    );
   }
 
   /**

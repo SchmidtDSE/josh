@@ -1,5 +1,5 @@
 /**
- * Table caching values built from pairs of identities.
+ * Table caching values built from pairs of identified values.
  *
  * @license BSD-3-Clause
  */
@@ -10,10 +10,12 @@ import java.util.function.BiFunction;
 
 
 /**
- * Single-threaded open-addressed map from long keys to values.
+ * Single-threaded open-addressed map keyed on pairs of integer identities.
  *
- * <p>Avoids the boxing of Long keys required by HashMap or ConcurrentHashMap. Tables are kept
- * per thread so lookups need no synchronization and inserts need no compare-and-swap.</p>
+ * <p>Entries are keyed on an ordered pair of integer identities, such as the identities of a pair
+ * of Units or a pair of LanguageTypes. The two identities are packed into a single long so that
+ * lookups need none of the boxing a HashMap of object keys would require. Tables are kept per
+ * thread so lookups need no synchronization and inserts need no compare-and-swap.</p>
  *
  * <p>Collisions are resolved by walking forward to the next free slot, so a run of occupied slots
  * must always be terminated by an empty one for a lookup to know when to stop. The table
@@ -71,15 +73,17 @@ public final class PairTable<FirstT, SecondT, ValueT> {
    * this same table, since that insert can grow it and leave the pending slot index pointing
    * into the replaced array, overwriting an unrelated entry.</p>
    *
-   * @param key composite key for the pair.
+   * @param firstId identity of the first member of the pair.
+   * @param secondId identity of the second member of the pair.
    * @param first the first identifying value of the pair, used on a miss.
    * @param second the second identifying value of the pair, used on a miss.
    * @param creator constructor reference used to build a value on a miss. Must not return null,
-   *     which this table cannot distinguish from an absent key.
-   * @return the cached or newly created value for this key.
+   *     which this table cannot distinguish from an absent pair.
+   * @return the cached or newly created value for this pair.
    */
-  public ValueT getOrPut(long key, FirstT first, SecondT second,
+  public ValueT getOrPut(int firstId, int secondId, FirstT first, SecondT second,
       BiFunction<FirstT, SecondT, ValueT> creator) {
+    long key = packIds(firstId, secondId);
     ValueT cached = findValue(key);
     if (cached != null) {
       return cached;
@@ -193,6 +197,28 @@ public final class PairTable<FirstT, SecondT, ValueT> {
    */
   private int nextSlot(int slotIndex) {
     return (slotIndex + 1) & indexMask;
+  }
+
+  /**
+   * Pack two identities into a single key, first in the high bits and second in the low.
+   *
+   * <p>The pairing is order sensitive, so the key for (a, b) differs from the key for (b, a).
+   * Each identity keeps its full 32 bits, so distinct pairs of distinct identities always produce
+   * distinct keys.</p>
+   *
+   * <p>The second identity is masked with {@code 0xFFFFFFFFL} because widening an int to a long
+   * sign extends it. Without the mask a negative second identity would set every high bit and
+   * corrupt the first identity's half of the key. Identities are handed out as positive counters
+   * today, so the mask guards against a counter that has wrapped rather than against normal
+   * operation. This packing is the same function as Agrona's Hashing.compoundKey, which was
+   * consulted when the alternative of taking that library was evaluated and declined.</p>
+   *
+   * @param firstId identity of the first member of the pair, placed in the high 32 bits.
+   * @param secondId identity of the second member of the pair, placed in the low 32 bits.
+   * @return composite key for this ordered pair of identities.
+   */
+  private static long packIds(int firstId, int secondId) {
+    return ((long) firstId << 32) | (secondId & 0xFFFFFFFFL);
   }
 
   /**

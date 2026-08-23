@@ -9,7 +9,6 @@ package org.joshsim.engine.value.engine;
 import org.joshsim.engine.value.converter.Units;
 import org.joshsim.engine.value.type.EngineValue;
 import org.joshsim.engine.value.type.LanguageType;
-import org.joshsim.util.CompositeKeyUtil;
 import org.joshsim.util.PairTable;
 
 /**
@@ -98,14 +97,12 @@ public class EngineValueTuple {
    */
   private static TypesTuple getOrCreateTypesTuple(
       LanguageType firstType, LanguageType secondType) {
-    long key = computeTypesCacheKey(firstType, secondType);
-    TypesTuple tuple = getOrPutTypesTuple(key, firstType, secondType);
+    TypesTuple tuple = getOrPutTypesTuple(firstType, secondType);
 
     // Establish bidirectional linking for reverse() optimization
     // Check if reversed tuple needs to be created and linked
     if (tuple.getReversed() == null) {
-      long reversedKey = computeTypesCacheKey(secondType, firstType);
-      TypesTuple reversedTuple = getOrPutTypesTuple(reversedKey, secondType, firstType);
+      TypesTuple reversedTuple = getOrPutTypesTuple(secondType, firstType);
 
       // Link bidirectionally (benign race: both threads compute same result)
       tuple.setReversed(reversedTuple);
@@ -121,13 +118,18 @@ public class EngineValueTuple {
    * <p>Uses a thread-local open-addressed table so the cache-hit path allocates nothing and
    * boxes nothing; the TypesTuple is constructed only when actually absent.</p>
    *
-   * @param key composite identity key for the type pair
    * @param first LanguageType of first operand
    * @param second LanguageType of second operand
    * @return the cached (or newly cached) TypesTuple for this pair
    */
-  private static TypesTuple getOrPutTypesTuple(long key, LanguageType first, LanguageType second) {
-    return TYPES_TUPLE_CACHE.get().getOrPut(key, first, second, TypesTuple::new);
+  private static TypesTuple getOrPutTypesTuple(LanguageType first, LanguageType second) {
+    return TYPES_TUPLE_CACHE.get().getOrPut(
+        first.getId(),
+        second.getId(),
+        first,
+        second,
+        TypesTuple::new
+    );
   }
 
   /**
@@ -139,14 +141,12 @@ public class EngineValueTuple {
    */
   private static UnitsTuple getOrCreateUnitsTuple(
       Units firstUnits, Units secondUnits) {
-    long key = computeUnitsCacheKey(firstUnits, secondUnits);
-    UnitsTuple tuple = getOrPutUnitsTuple(key, firstUnits, secondUnits);
+    UnitsTuple tuple = getOrPutUnitsTuple(firstUnits, secondUnits);
 
     // Establish bidirectional linking for reverse() optimization
     // Check if reversed tuple needs to be created and linked
     if (tuple.getReversed() == null) {
-      long reversedKey = computeUnitsCacheKey(secondUnits, firstUnits);
-      UnitsTuple reversedTuple = getOrPutUnitsTuple(reversedKey, secondUnits, firstUnits);
+      UnitsTuple reversedTuple = getOrPutUnitsTuple(secondUnits, firstUnits);
 
       // Link bidirectionally (benign race: both threads compute same result)
       tuple.setReversed(reversedTuple);
@@ -162,35 +162,18 @@ public class EngineValueTuple {
    * <p>Uses a thread-local open-addressed table so the cache-hit path allocates nothing and
    * boxes nothing; the UnitsTuple is constructed only when actually absent.</p>
    *
-   * @param key composite identity key for the units pair
    * @param first Units of first operand
    * @param second Units of second operand
    * @return the cached (or newly cached) UnitsTuple for this pair
    */
-  private static UnitsTuple getOrPutUnitsTuple(long key, Units first, Units second) {
-    return UNITS_TUPLE_CACHE.get().getOrPut(key, first, second, UnitsTuple::new);
-  }
-
-  /**
-   * Compute a long-based composite key from type identities.
-   *
-   * @param firstType LanguageType of first operand
-   * @param secondType LanguageType of second operand
-   * @return 64-bit composite key
-   */
-  private static long computeTypesCacheKey(LanguageType firstType, LanguageType secondType) {
-    return CompositeKeyUtil.packIds(firstType.getId(), secondType.getId());
-  }
-
-  /**
-   * Compute a long-based composite key from unit identities.
-   *
-   * @param firstUnits Units of first operand
-   * @param secondUnits Units of second operand
-   * @return 64-bit composite key
-   */
-  private static long computeUnitsCacheKey(Units firstUnits, Units secondUnits) {
-    return CompositeKeyUtil.packIds(firstUnits.getId(), secondUnits.getId());
+  private static UnitsTuple getOrPutUnitsTuple(Units first, Units second) {
+    return UNITS_TUPLE_CACHE.get().getOrPut(
+        first.getId(),
+        second.getId(),
+        first,
+        second,
+        UnitsTuple::new
+    );
   }
 
   /**
