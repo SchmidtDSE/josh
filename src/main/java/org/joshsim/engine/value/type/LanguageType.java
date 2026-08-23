@@ -99,6 +99,20 @@ public class LanguageType {
     id = takeNextId();
   }
 
+  /**
+   * Take the next unused identity, advancing the counter.
+   *
+   * <p>Synchronized because types are constructed from the worker threads of a parallel run and
+   * two instances sharing an identity would collide in the caches keyed on it.</p>
+   *
+   * <p>Interning in {@link #of(String)} and {@link #of(String, boolean)} keeps most construction
+   * off this path. Identities are still spent on instances which are then discarded, since both
+   * of those build a candidate before offering it to the cache and lose that offer to whichever
+   * thread arrived first. The counter therefore runs ahead of the number of live instances, which
+   * is why it is only required to be unique rather than dense.</p>
+   *
+   * @return identity given to no other instance of this class.
+   */
   private static synchronized int takeNextId() {
     int id = nextId;
     nextId += 1;
@@ -203,8 +217,10 @@ public class LanguageType {
   public LanguageType asVirtualDistribution() {
     LanguageType cached = virtualDistributionType;
     if (cached == null) {
-      LanguageType computed =
-          new LanguageType(buildDistributionChain("VirtualDistribution"), rootType);
+      LanguageType computed = new LanguageType(
+          buildDistributionChain("VirtualDistribution"),
+          rootType
+      );
       virtualDistributionType = computed;
       return computed;
     } else {

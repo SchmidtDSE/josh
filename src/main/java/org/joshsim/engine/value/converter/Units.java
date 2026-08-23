@@ -165,6 +165,20 @@ public class Units {
     this.id = takeNextId();
   }
 
+  /**
+   * Take the next unused identity, advancing the counter.
+   *
+   * <p>Synchronized because units are constructed from the worker threads of a parallel run and
+   * two instances sharing an identity would collide in the caches keyed on it.</p>
+   *
+   * <p>Interning in {@link #of(String)} keeps most construction off this path. Identities are
+   * still spent on instances which are then discarded, since {@link #of(Map, Map)} builds its
+   * simplified units before offering them to the cache and loses that offer to whichever thread
+   * arrived first. The counter therefore runs ahead of the number of live instances, which is
+   * why it is only required to be unique rather than dense.</p>
+   *
+   * @return identity given to no other instance of this class.
+   */
   private static synchronized int takeNextId() {
     int id = nextId;
     nextId += 1;
