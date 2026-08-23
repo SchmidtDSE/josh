@@ -213,10 +213,6 @@ public abstract class DirectLockMutableEntity implements MutableEntity {
       // else: leave null in array (uninitialized attribute)
     }
 
-    // The snapshot describes the same geometry and name as this entity, so it is given this
-    // entity's cached key instead of building an equal one. Incremental export asks every frozen
-    // patch for its key on every step, so rebuilding it there was a per-patch-per-step
-    // allocation.
     return new FrozenEntity(
         getEntityType(),
         name,
@@ -236,16 +232,24 @@ public abstract class DirectLockMutableEntity implements MutableEntity {
     return attributeNames;
   }
 
+  /**
+   * Get the key describing this entity's position, building it at most once.
+   *
+   * <p>Geometry is assigned at construction and never replaced, so the key is computed once and
+   * reused. Each external data read asks for the containing patch's key, making this a hot
+   * allocation path otherwise.</p>
+   *
+   * <p>Racing threads may each build a key and one write may be lost, which is harmless: GeoKey
+   * holds only final fields, so it is safely published even through this plain field, and keys
+   * for the same geometry compare equal.</p>
+   *
+   * @return The key for this entity, or empty if this entity has no geometry.
+   */
   @Override
   public Optional<GeoKey> getKey() {
     if (getGeometry().isEmpty()) {
       return Optional.empty();
     } else if (cachedKey == null) {
-      // Geometry is assigned at construction and never replaced, so the key is computed once
-      // and reused. Each external data read asks for the containing patch's key, making this
-      // a hot allocation path otherwise. Racing threads may each build a key and one write may
-      // be lost, which is harmless: GeoKey holds only final fields, so it is safely published
-      // even through this plain field, and keys for the same geometry compare equal.
       cachedKey = Optional.of(new GeoKey(this));
     }
     return cachedKey;

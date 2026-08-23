@@ -9,6 +9,7 @@ package org.joshsim.engine.value.engine;
 import org.joshsim.engine.value.converter.Units;
 import org.joshsim.engine.value.type.EngineValue;
 import org.joshsim.engine.value.type.LanguageType;
+import org.joshsim.util.CompositeKeyUtil;
 
 /**
  * Pair of engine values interacting in an operation.
@@ -20,9 +21,13 @@ public class EngineValueTuple {
   private final TypesTuple types;
   private final UnitsTuple units;
   private static final ThreadLocal<PairTable<LanguageType, LanguageType, TypesTuple>>
-      TYPES_TUPLE_CACHE = ThreadLocal.withInitial(PairTable::new);
-  private static final ThreadLocal<PairTable<Units, Units, UnitsTuple>> UNITS_TUPLE_CACHE =
-      ThreadLocal.withInitial(PairTable::new);
+      TYPES_TUPLE_CACHE;
+  private static final ThreadLocal<PairTable<Units, Units, UnitsTuple>> UNITS_TUPLE_CACHE;
+
+  static {
+    TYPES_TUPLE_CACHE = ThreadLocal.withInitial(PairTable::new);
+    UNITS_TUPLE_CACHE = ThreadLocal.withInitial(PairTable::new);
+  }
 
   /**
    * Create a new tuple of engine values.
@@ -168,27 +173,23 @@ public class EngineValueTuple {
   /**
    * Compute a long-based composite key from type identities.
    *
-   * <p>Packs 2 dense identities into a 64-bit long key. Each component uses 32 bits.</p>
-   *
    * @param firstType LanguageType of first operand
    * @param secondType LanguageType of second operand
    * @return 64-bit composite key
    */
   private static long computeTypesCacheKey(LanguageType firstType, LanguageType secondType) {
-    return ((long) firstType.getId() << 32) | (secondType.getId() & 0xFFFFFFFFL);
+    return CompositeKeyUtil.packIds(firstType.getId(), secondType.getId());
   }
 
   /**
    * Compute a long-based composite key from unit identities.
-   *
-   * <p>Packs 2 dense identities into a 64-bit long key. Each component uses 32 bits.</p>
    *
    * @param firstUnits Units of first operand
    * @param secondUnits Units of second operand
    * @return 64-bit composite key
    */
   private static long computeUnitsCacheKey(Units firstUnits, Units secondUnits) {
-    return ((long) firstUnits.getId() << 32) | (secondUnits.getId() & 0xFFFFFFFFL);
+    return CompositeKeyUtil.packIds(firstUnits.getId(), secondUnits.getId());
   }
 
   /**

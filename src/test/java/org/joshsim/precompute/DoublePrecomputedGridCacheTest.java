@@ -120,6 +120,74 @@ class DoublePrecomputedGridCacheTest {
   }
 
   @Test
+  void testNonSquareGridAddressesEveryCellDistinctly() {
+    // A square grid cannot tell width from height in the flat cache index, so this case uses a
+    // grid four wide and two tall. Substituting height for width in the index would make
+    // (3, 0) and (1, 1) collide on the same slot.
+    PatchBuilderExtents wideExtents = new PatchBuilderExtentsBuilder()
+        .setTopLeftX(BigDecimal.ZERO)
+        .setTopLeftY(BigDecimal.ZERO)
+        .setBottomRightX(BigDecimal.valueOf(3))
+        .setBottomRightY(BigDecimal.ONE)
+        .build();
+
+    DoublePrecomputedGrid wideGrid = new DoublePrecomputedGridBuilder()
+        .setValueSupportFactory(new ValueSupportFactory())
+        .setExtents(wideExtents)
+        .setTimestepRange(MIN_TIMESTEP, MAX_TIMESTEP)
+        .setUnits(TEST_UNITS)
+        .build();
+
+    for (long y = 0; y <= 1; y++) {
+      for (long x = 0; x <= 3; x++) {
+        wideGrid.setAt(x, y, 0, valueFor(x, y, 0));
+      }
+    }
+
+    // Read every cell twice so the second pass is served entirely from the cache.
+    for (int pass = 0; pass < 2; pass++) {
+      for (long y = 0; y <= 1; y++) {
+        for (long x = 0; x <= 3; x++) {
+          assertEquals(
+              valueFor(x, y, 0),
+              wideGrid.getAt(x, y, 0).getAsDecimal().doubleValue(),
+              0.0001
+          );
+        }
+      }
+    }
+  }
+
+  @Test
+  void testNonSquareGridInvalidatesOnlyTheCellWritten() {
+    PatchBuilderExtents wideExtents = new PatchBuilderExtentsBuilder()
+        .setTopLeftX(BigDecimal.ZERO)
+        .setTopLeftY(BigDecimal.ZERO)
+        .setBottomRightX(BigDecimal.valueOf(3))
+        .setBottomRightY(BigDecimal.ONE)
+        .build();
+
+    DoublePrecomputedGrid wideGrid = new DoublePrecomputedGridBuilder()
+        .setValueSupportFactory(new ValueSupportFactory())
+        .setExtents(wideExtents)
+        .setTimestepRange(MIN_TIMESTEP, MAX_TIMESTEP)
+        .setUnits(TEST_UNITS)
+        .build();
+
+    for (long y = 0; y <= 1; y++) {
+      for (long x = 0; x <= 3; x++) {
+        wideGrid.setAt(x, y, 0, valueFor(x, y, 0));
+        wideGrid.getAt(x, y, 0);
+      }
+    }
+
+    wideGrid.setAt(3, 0, 0, -12.0);
+
+    assertEquals(-12.0, wideGrid.getAt(3, 0, 0).getAsDecimal().doubleValue(), 0.0001);
+    assertEquals(valueFor(1, 1, 0), wideGrid.getAt(1, 1, 0).getAsDecimal().doubleValue(), 0.0001);
+  }
+
+  @Test
   void testFillInvalidatesCachedValues() {
     assertEquals(111.0, grid.getAt(1, 1, 1).getAsDecimal().doubleValue(), 0.0001);
 

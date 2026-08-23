@@ -205,7 +205,16 @@ public class Units {
    * Flip the units such that the numerator and denominator are inverted.
    *
    * <p>Units are immutable so the inverted form is deterministic; it is computed once and
-   * reused. Benign race on first access.</p>
+   * reused.</p>
+   *
+   * <p>The memo field is written without synchronization, so two threads inverting the same units
+   * for the first time may both compute a result and one of the two writes may be lost. That is
+   * harmless here for three reasons. The computation is a pure function of two immutable maps, so
+   * both threads compute the same units. Units.of interns by canonical form, so both threads
+   * receive the same instance anyway and the identities used as cache keys elsewhere stay stable.
+   * And Units carries its content in final fields, so a thread that reads the memo written by
+   * another sees a fully constructed instance rather than a partially initialized one. A reader
+   * that sees the field still null simply recomputes.</p>
    *
    * @returns inverted copy of these units.
    */

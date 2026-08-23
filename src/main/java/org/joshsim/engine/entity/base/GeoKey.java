@@ -10,6 +10,7 @@ import java.math.BigDecimal;
 import java.util.NoSuchElementException;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.function.Function;
 import org.joshsim.engine.geometry.EngineGeometry;
 
 /**
@@ -20,11 +21,6 @@ public class GeoKey {
   private final Optional<EngineGeometry> geometry;
   private final String entityName;
 
-  // Integral form of the center coordinates. The BigDecimal to long conversion is comparatively
-  // expensive and grid lookups run once per external read, so it is performed once here. These
-  // are computed in the constructor rather than lazily because a key is now cached per entity
-  // and therefore shared across the threads processing patches in parallel: a lazily assigned
-  // flag and value pair could be observed half-written, yielding a silent zero coordinate.
   private final long horizontalLong;
   private final long verticalLong;
 
@@ -47,15 +43,34 @@ public class GeoKey {
   public GeoKey(Optional<EngineGeometry> geometry, String entityName) {
     this.geometry = geometry;
     this.entityName = entityName;
+    this.horizontalLong = cacheGeometryAsLongIfPresent(geometry, EngineGeometry::getCenterX);
+    this.verticalLong = cacheGeometryAsLongIfPresent(geometry, EngineGeometry::getCenterY);
+  }
 
-    if (geometry.isPresent()) {
-      EngineGeometry innerGeometry = geometry.get();
-      this.horizontalLong = innerGeometry.getCenterX().longValue();
-      this.verticalLong = innerGeometry.getCenterY().longValue();
-    } else {
-      this.horizontalLong = 0;
-      this.verticalLong = 0;
+  /**
+   * Convert one center coordinate of a geometry to a long, or zero if there is no geometry.
+   *
+   * <p>The BigDecimal to long conversion is comparatively expensive and grid lookups run it once
+   * per external read, so it is performed once per key here and the result kept.</p>
+   *
+   * <p>This runs during construction rather than lazily on first request because a key is cached
+   * per entity and so shared across the threads processing patches in parallel. A lazily assigned
+   * flag and value pair could be observed half written by another thread, which would yield a
+   * silent zero coordinate and a read from the wrong grid cell. Converting here lets the fields
+   * be final, which also makes a key safely published through the plain field that caches it.</p>
+   *
+   * @param geometry The geometry to read the coordinate from, or empty if the key has none.
+   * @param getCenter Accessor for the coordinate of interest, such as the horizontal center.
+   * @return The requested center coordinate as a long, or zero if there is no geometry. Callers
+   *     must consult the geometry before reporting the zero, since it stands for absence rather
+   *     than for a position.
+   */
+  private static long cacheGeometryAsLongIfPresent(
+      Optional<EngineGeometry> geometry, Function<EngineGeometry, BigDecimal> getCenter) {
+    if (geometry.isEmpty()) {
+      return 0;
     }
+    return getCenter.apply(geometry.get()).longValue();
   }
 
   /**

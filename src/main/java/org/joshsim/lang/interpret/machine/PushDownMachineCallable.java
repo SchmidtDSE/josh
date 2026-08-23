@@ -21,9 +21,14 @@ public class PushDownMachineCallable implements CompiledCallable {
 
   // Machines are not thread-safe but evaluation happens on one thread at a time, so each thread
   // keeps its own free list. The list grows to the maximum nesting depth of callable evaluation
-  // on that thread and machines are reused across evaluations after a reset.
-  private static final ThreadLocal<ArrayDeque<SingleThreadEventHandlerMachine>> FREE_MACHINES =
-      ThreadLocal.withInitial(ArrayDeque::new);
+  // on that thread and machines are reused across evaluations after a reset. Shared across all
+  // callables rather than held per instance so that a machine freed by one callable can be taken
+  // by the next, which is what bounds the list to the nesting depth.
+  private static final ThreadLocal<ArrayDeque<SingleThreadEventHandlerMachine>> FREE_MACHINES;
+
+  static {
+    FREE_MACHINES = ThreadLocal.withInitial(ArrayDeque::new);
+  }
 
   private final EventHandlerAction handlerAction;
   private final BridgeGetter bridgeGetter;
