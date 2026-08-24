@@ -7,8 +7,10 @@
 package org.joshsim.engine.entity.base;
 
 import java.math.BigDecimal;
+import java.util.NoSuchElementException;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.function.Function;
 import org.joshsim.engine.geometry.EngineGeometry;
 
 /**
@@ -19,14 +21,16 @@ public class GeoKey {
   private final Optional<EngineGeometry> geometry;
   private final String entityName;
 
+  private final long horizontalLong;
+  private final long verticalLong;
+
   /**
    * Craete a new key with the specified entity.
    *
    * @param entity The patch to be keyed.
    */
   public GeoKey(Entity entity) {
-    geometry = entity.getGeometry();
-    entityName = entity.getName();
+    this(entity.getGeometry(), entity.getName());
   }
 
   /**
@@ -39,6 +43,36 @@ public class GeoKey {
   public GeoKey(Optional<EngineGeometry> geometry, String entityName) {
     this.geometry = geometry;
     this.entityName = entityName;
+    this.horizontalLong = getGeometryAsLongIfPresent(geometry, EngineGeometry::getCenterX);
+    this.verticalLong = getGeometryAsLongIfPresent(geometry, EngineGeometry::getCenterY);
+  }
+
+  /**
+   * Get one center coordinate of a geometry as a long, or zero if there is no geometry.
+   *
+   * <p>The BigDecimal to long conversion is comparatively expensive and grid lookups run it once
+   * per external read, so the constructor calls this once per axis and keeps the result.</p>
+   *
+   * <p>The conversion happens during construction rather than lazily on first request because a
+   * key is cached per entity and so shared across the threads processing patches in parallel. A
+   * lazily assigned flag and value pair could be observed half written by another thread, which
+   * would yield a silent zero coordinate and a read from the wrong grid cell. Converting here
+   * lets the fields be final, which also makes a key safely published through the plain field
+   * that caches it.</p>
+   *
+   * @param geometry The geometry to read the coordinate from, or empty if the key has none.
+   * @param getCenter Accessor for the coordinate of interest, such as the horizontal center.
+   * @return The requested center coordinate as a long, or zero if there is no geometry. Callers
+   *     must consult the geometry before reporting the zero, since it stands for absence rather
+   *     than for a position.
+   */
+  private static long getGeometryAsLongIfPresent(
+      Optional<EngineGeometry> geometry, Function<EngineGeometry, BigDecimal> getCenter) {
+    if (geometry.isEmpty()) {
+      return 0;
+    } else {
+      return getCenter.apply(geometry.get()).longValue();
+    }
   }
 
   /**
@@ -57,6 +91,38 @@ public class GeoKey {
    */
   public BigDecimal getCenterY() {
     return getGeometry().orElseThrow().getCenterY();
+  }
+
+  /**
+   * Get the horizontal center of this position as a long.
+   *
+   * <p>Returns the result of the BigDecimal to long conversion which grid data lookups perform
+   * on every external value read, computed once when this key was created.</p>
+   *
+   * @returns The x or horizontal position as a long.
+   * @throws NoSuchElementException if this key has no geometry.
+   */
+  public long getHorizontalAsLong() {
+    if (geometry.isEmpty()) {
+      throw new NoSuchElementException("Cannot get horizontal position without geometry.");
+    }
+    return horizontalLong;
+  }
+
+  /**
+   * Get the vertical center of this position as a long.
+   *
+   * <p>Returns the result of the BigDecimal to long conversion which grid data lookups perform
+   * on every external value read, computed once when this key was created.</p>
+   *
+   * @returns The y or vertical position as a long.
+   * @throws NoSuchElementException if this key has no geometry.
+   */
+  public long getVerticalAsLong() {
+    if (geometry.isEmpty()) {
+      throw new NoSuchElementException("Cannot get vertical position without geometry.");
+    }
+    return verticalLong;
   }
 
   public Optional<EngineGeometry> getGeometry() {

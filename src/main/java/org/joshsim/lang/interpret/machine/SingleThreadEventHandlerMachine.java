@@ -8,10 +8,10 @@ package org.joshsim.lang.interpret.machine;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
+import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
-import java.util.Stack;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
@@ -54,14 +54,14 @@ public class SingleThreadEventHandlerMachine implements EventHandlerMachine {
   private static final Units COUNT_UNITS = Units.of("count");
   private static final Units METER_UNITS = Units.of("meters");
 
-  private final ValueResolver currentValueResolver;
+  private ValueResolver currentValueResolver;
 
-  private final EngineBridge bridge;
-  private final Stack<EngineValue> memory;
+  private EngineBridge bridge;
+  private final ArrayDeque<EngineValue> memory;
   private LocalScope scope;  // Mutable to allow temporary scope swapping in withLocalBinding
-  private final ValueSupportFactory valueFactory;
-  private final boolean favorBigDecimal;
-  private final Optional<CombinedDebugOutputFacade> debugOutputFacade;
+  private ValueSupportFactory valueFactory;
+  private boolean favorBigDecimal;
+  private Optional<CombinedDebugOutputFacade> debugOutputFacade;
 
   private boolean inConversionGroup;
   private Optional<Units> conversionTarget;
@@ -90,13 +90,68 @@ public class SingleThreadEventHandlerMachine implements EventHandlerMachine {
     this.scope = new LocalScope(scope);
     this.debugOutputFacade = debugOutputFacade;
 
-    memory = new Stack<>();
+    memory = new ArrayDeque<>();
     inConversionGroup = false;
     conversionTarget = Optional.empty();
     valueFactory = bridge.getValueSupportFactory();
     currentValueResolver = valueFactory.buildValueResolver("current");
     favorBigDecimal = valueFactory.isFavoringBigDecimal();
     isEnded = false;
+  }
+
+  /**
+   * Re-bind this machine to a new bridge and scope, reusing its allocated state.
+   *
+   * <p>Allows a machine (and its memory stack and local scope allocations) to be pooled and
+   * reused across many evaluations instead of being rebuilt for every callable invocation.
+   * Restores the machine to the same state a fresh constructor call would produce.</p>
+   *
+   * @param newBridge The EngineBridge through which to interact with the engine.
+   * @param newScope The scope in which to have this automaton perform its operations.
+   * @param newDebugOutputFacade Optional debug output facade for writing debug messages.
+   */
+  public void reset(EngineBridge newBridge, Scope newScope,
+      Optional<CombinedDebugOutputFacade> newDebugOutputFacade) {
+    this.bridge = newBridge;
+    this.debugOutputFacade = newDebugOutputFacade;
+
+    scope.resetTo(newScope);
+    memory.clear();
+
+    inConversionGroup = false;
+    conversionTarget = Optional.empty();
+
+    ValueSupportFactory newFactory = newBridge.getValueSupportFactory();
+    if (newFactory != valueFactory) {
+      valueFactory = newFactory;
+      currentValueResolver = newFactory.buildValueResolver("current");
+      favorBigDecimal = newFactory.isFavoringBigDecimal();
+    }
+    isEnded = false;
+  }
+
+  /**
+   * Release references held by this machine so a pooled instance does not retain values.
+   *
+   * <p>Clears the memory stack and detaches the local scope from its enclosing scope so that a
+   * pooled machine does not keep an entity graph alive between evaluations. The bridge is
+   * dropped for the same reason and is the larger of the two roots: it reaches the simulation,
+   * the replicate and therefore every patch. Pooled machines sit on a thread local free list,
+   * so on the long lived threads used for parallel patch processing and for cloud batch jobs an
+   * idle machine would otherwise pin a finished simulation until that thread ran another
+   * evaluation. The machine must be {@link #reset(EngineBridge, Scope, Optional)} before it can
+   * be used again.</p>
+   *
+   * <p>The value factory and the resolver built from it are deliberately kept: they belong to
+   * the run rather than to a single simulation, reach no entities, and holding them lets reset
+   * skip rebuilding the resolver on every evaluation.</p>
+   */
+  public void release() {
+    memory.clear();
+    scope.resetTo(null);
+    conversionTarget = Optional.empty();
+    bridge = null;
+    debugOutputFacade = Optional.empty();
   }
 
   @Override

@@ -17,6 +17,8 @@ import org.joshsim.engine.value.engine.EngineValueCaster;
  */
 public class BooleanScalar extends Scalar {
 
+  private static final LanguageType BOOLEAN_TYPE = LanguageType.of("boolean");
+
   private final boolean innerValue;
 
   /**
@@ -58,7 +60,7 @@ public class BooleanScalar extends Scalar {
 
   @Override
   public LanguageType getLanguageType() {
-    return LanguageType.of("boolean");
+    return BOOLEAN_TYPE;
   }
 
   @Override
