@@ -152,6 +152,7 @@
       const section = document.querySelector("section.unit-run");
       new RunnerPresenter(section, {
         simulation: {{ unit.simulation | tojson }},
+        seed: {{ unit.seed | tojson }},
         dataManifest: {{ data_manifest | tojson }},
         source: document.querySelector(".unit-model pre code")
       }).attach();

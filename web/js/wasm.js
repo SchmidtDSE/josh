@@ -139,10 +139,13 @@ class WasmLayer {
    *     or not. True if BigDecimal and false if double / float64.
    * @param {string} outputSteps - Comma-separated string of step numbers to export, or empty string
    *     to export all steps.
+   * @param {string} seed - Random seed as a decimal string, matching the CLI's --seed. Empty or
+   *     omitted runs unseeded, so a stochastic model gives a different answer on every run.
    * @returns {Promise<SimulationResult>} Promise which resolves to the complete dataset when the
    *     simulation is concluded with data on this single replicate.
    */
-  async runSimulation(code, simulationName, externalData, stepCallback, preferBigDecimal, outputSteps) {
+  async runSimulation(code, simulationName, externalData, stepCallback, preferBigDecimal,
+      outputSteps, seed) {
     const self = this;
     await self._initPromise;
 
@@ -179,7 +182,8 @@ class WasmLayer {
           simulationName: simulationName,
           data: externalDataStr,
           preferBigDecimal: preferBigDecimal,
-          outputSteps: outputSteps || ""
+          outputSteps: outputSteps || "",
+          seed: seed || ""
         }
       });
     });

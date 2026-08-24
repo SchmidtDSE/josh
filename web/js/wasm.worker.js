@@ -93,7 +93,8 @@ self.onmessage = async function(e) {
           data.simulationName,
           data.data,
           data.preferBigDecimal,
-          data.outputSteps || ""
+          data.outputSteps || "",
+          data.seed || ""
         );
         self.postMessage({ type: "runSimulation", success: true });
         break;
