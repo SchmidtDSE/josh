@@ -1,5 +1,5 @@
 ::: {.buildup-lede}
-With the climate drivers in place, define how a ForeverTree actually grows each year.
+With the climate drivers in place, we define how a ForeverTree actually grows each year.
 :::
 
 Each organism tracks its `age` and `height` over time. A `stochastic` term

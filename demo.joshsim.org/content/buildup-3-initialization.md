@@ -1,5 +1,5 @@
 ::: {.buildup-lede}
-Now populate the landscape — every patch starts with a small stand of trees.
+Now we populate the landscape — every patch starts with a small stand of trees.
 :::
 
 Patches come to life through initialization. `ForeverTree.init` is evaluated

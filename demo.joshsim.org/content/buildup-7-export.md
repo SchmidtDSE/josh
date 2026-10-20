@@ -1,5 +1,5 @@
 ::: {.buildup-lede}
-Finally, choose how long to run, expose the knobs, and say what to record.
+Finally, we choose how long to run, expose the knobs, and pick which output variables to record.
 :::
 
 `steps.low` and `steps.high` set the time range (years 0–10),
