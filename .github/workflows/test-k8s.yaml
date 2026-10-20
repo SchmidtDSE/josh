@@ -179,10 +179,10 @@ jobs:
           MINIO_POD=$(kubectl get pod -l app=minio -o jsonpath='{.items[0].metadata.name}')
 
           echo "Checking results in MinIO..."
-          kubectl exec $MINIO_POD -- /tmp/mc ls local/josh-test-bucket/k8s-e2e-results/
+          kubectl exec $MINIO_POD -- mc --config-dir /tmp/.mc ls local/josh-test-bucket/k8s-e2e-results/
 
           # Verify results CSV exists and is non-empty
-          SIZE=$(kubectl exec $MINIO_POD -- /tmp/mc stat local/josh-test-bucket/k8s-e2e-results/results.csv --json 2>/dev/null | grep -o '"size":[0-9]*' | cut -d':' -f2)
+          SIZE=$(kubectl exec $MINIO_POD -- mc --config-dir /tmp/.mc stat local/josh-test-bucket/k8s-e2e-results/results.csv --json 2>/dev/null | grep -o '"size":[0-9]*' | cut -d':' -f2)
           if [ "$SIZE" -gt 0 ]; then
             echo "Results CSV found in MinIO ($SIZE bytes)"
           else
@@ -264,15 +264,15 @@ jobs:
           MINIO_POD=$(kubectl get pod -l app=minio -o jsonpath='{.items[0].metadata.name}')
 
           echo "Listing custom-tag results in MinIO..."
-          kubectl exec $MINIO_POD -- /tmp/mc ls --recursive \
+          kubectl exec $MINIO_POD -- mc --config-dir /tmp/.mc ls --recursive \
             local/josh-test-bucket/k8s-customtag-results/
 
           # Verify run_hash interpolated into the path
           echo "Checking that {run_hash}=ci-test rendered into the export path..."
-          if ! kubectl exec $MINIO_POD -- /tmp/mc ls \
+          if ! kubectl exec $MINIO_POD -- mc --config-dir /tmp/.mc ls \
               local/josh-test-bucket/k8s-customtag-results/ci-test/ >/dev/null 2>&1; then
             echo "ERROR: expected directory ci-test/ not found under k8s-customtag-results/"
-            kubectl exec $MINIO_POD -- /tmp/mc ls --recursive \
+            kubectl exec $MINIO_POD -- mc --config-dir /tmp/.mc ls --recursive \
               local/josh-test-bucket/k8s-customtag-results/
             exit 1
           fi
@@ -281,7 +281,7 @@ jobs:
           # Verify replicate-start shifted absolute indices to 2 and 3
           echo "Checking replicate indices 2 and 3 exist..."
           for IDX in 2 3; do
-            SIZE=$(kubectl exec $MINIO_POD -- /tmp/mc stat \
+            SIZE=$(kubectl exec $MINIO_POD -- mc --config-dir /tmp/.mc stat \
               local/josh-test-bucket/k8s-customtag-results/ci-test/replicate-$IDX.csv \
               --json 2>/dev/null | grep -o '"size":[0-9]*' | cut -d':' -f2)
             if [ -z "$SIZE" ] || [ "$SIZE" -le 0 ]; then
@@ -293,7 +293,7 @@ jobs:
 
           # Verify replicate-start shifted away from 0 (replicate-0.csv should NOT exist)
           echo "Checking replicate-0.csv is absent (offset shifted away from 0)..."
-          if kubectl exec $MINIO_POD -- /tmp/mc stat \
+          if kubectl exec $MINIO_POD -- mc --config-dir /tmp/.mc stat \
               local/josh-test-bucket/k8s-customtag-results/ci-test/replicate-0.csv \
               --json >/dev/null 2>&1; then
             echo "ERROR: replicate-0.csv exists; --replicate-start=2 did not shift indices"
