@@ -1,11 +1,11 @@
 ::: {.buildup-lede}
-Finally, choose how long to run, expose the knobs, and say what to record.
+Finally, we choose how long to run, expose the knobs, and pick which output variables to record.
 :::
 
 `steps.low` and `steps.high` set the time range (years 0–10),
 `exportFiles.patch` names where results go, and the three `export.*` lines
-record the year, tree count, and mean height at every step — the data we
-visualize next. Stochastic replicates share the same climate forcing and initial
+record the year, tree count, and mean height at every step (the data we
+visualize next). Stochastic replicates share the same climate forcing and initial
 conditions, writing one row per (patch, year, replicate).
 
 The `config` keyword keeps the tunable knobs out of the model and in a companion

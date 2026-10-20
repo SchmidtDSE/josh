@@ -1,15 +1,16 @@
 ::: {.buildup-lede}
-Real forests respond to real weather — so we feed in actual temperature and rainfall maps.
+Real forests respond to real climate, so we feed in actual temperature and rainfall maps.
 :::
 
 Josh reads gridded climate rasters aligned to the model. `clampedTemp` keeps
-temperature within a survivable range, `temperatureImpact` turns that into a
-growth multiplier with a quadratic curve, and `precipImpact` does the same for
-rainfall with a smooth (sigmoid) curve.
+temperature within the tree's bioclimatic limits, `temperatureImpact` turns that
+into a growth multiplier with a quadratic curve, and `precipImpact` does the same
+for rainfall with a smooth (sigmoid) curve.
 
-Under the hood, climate rasters (geotiff/COG, NetCDF) are preprocessed once into
-grid-aligned `.jshd` layers, so at runtime `external` is a plain per-patch read;
-the user never writes alignment or interpolation logic.
+Josh takes climate and environmental data at whatever resolution it comes in and
+lines it up with the model grid for us (there is no manual regridding,
+alignment, or interpolation to write). Each `external` read is then just a value
+per patch.
 
 <div class="ext-figures">
 <figure><img src="img/eco_temp_spatial.png" alt="Map of input temperature in Kelvin across the simulation grid, warmer to the south"></figure>
@@ -18,4 +19,4 @@ the user never writes alignment or interpolation logic.
 <figure><img src="img/eco_precip_domain.png" alt="Precipitation growth response: a sigmoid rising with precipitation between 300 and 500 mm"></figure>
 </div>
 
-<p class="ext-figures-caption">The maps show the gridded climate Josh reads in; the curves show how each value becomes a growth multiplier — so you can see why mid-range temperatures and wetter patches drive more growth.</p>
+<p class="ext-figures-caption">The maps show the gridded climate Josh reads in; the curves show how each value becomes a growth multiplier (so you can see why mid-range temperatures and wetter patches drive more growth).</p>
