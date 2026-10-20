@@ -64,8 +64,10 @@ jobs:
               spec:
                 containers:
                 - name: minio
-                  image: minio/minio:latest
-                  args: ["server", "/data"]
+                  # MinIO no longer publishes community images or mc binaries, so we use the
+                  # frozen bitnamilegacy image (which bundles mc) as a stopgap until we migrate
+                  # to another S3-compatible server (likely RustFS).
+                  image: bitnamilegacy/minio:latest@sha256:451fe6858cb770cc9d0e77ba811ce287420f781c7c1b806a386f6896471a349c
                   env:
                   - name: MINIO_ROOT_USER
                     value: minioadmin
@@ -99,12 +101,10 @@ jobs:
         run: |
           MINIO_POD=$(kubectl get pod -l app=minio -o jsonpath='{.items[0].metadata.name}')
 
-          # Install mc inside the MinIO pod and create bucket
+          # Create bucket with the mc bundled in the Bitnami MinIO image
           kubectl exec $MINIO_POD -- sh -c '
-            curl -sL https://dl.min.io/client/mc/release/linux-amd64/mc -o /tmp/mc &&
-            chmod +x /tmp/mc &&
-            /tmp/mc alias set local http://localhost:9000 minioadmin minioadmin &&
-            /tmp/mc mb local/josh-test-bucket
+            mc --config-dir /tmp/.mc alias set local http://localhost:9000 minioadmin minioadmin &&
+            mc --config-dir /tmp/.mc mb --ignore-existing local/josh-test-bucket
           '
 
       - name: Port-forward MinIO to host
