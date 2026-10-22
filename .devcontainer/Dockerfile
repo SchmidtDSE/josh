@@ -26,6 +26,9 @@ RUN .devcontainer/scripts/on_build/install_visualvm.sh
 RUN .devcontainer/scripts/on_build/install_kubectl.sh
 RUN .devcontainer/scripts/on_build/install_gcloud.sh
 
+# Install uv for the docs builder (docs/build)
+RUN .devcontainer/scripts/on_build/install_uv.sh
+
 # Install third-party dependencies for the local UI server
 RUN cd editor/third_party && bash install_deps.sh
 

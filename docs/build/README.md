@@ -4,18 +4,27 @@ Authored Josh models are the only source of truth for the code that ships on jos
 builder pairs each model with its prose, checks both, and writes a manifest that the conformance
 runner and the page renderer consume.
 
-The engine build does not depend on this. Neither uv nor Python is baked into the container image;
-both are installed on demand, and CI installs them per job.
+The engine build does not depend on this. The devcontainer image ships uv but no Python: uv
+installs Python on first use, and CI installs both per job.
 
 ## Setup
 
 [uv](https://docs.astral.sh/uv/) manages the environment. It is a single static binary and brings
-its own Python, so this is the whole setup on a machine with neither:
+its own Python. The devcontainer already has it, pinned in
+`.devcontainer/scripts/on_build/install_uv.sh`, so there the whole setup is:
+
+```bash
+uv sync --project docs/build
+```
+
+On a machine with neither uv nor Python, install uv first:
 
 ```bash
 curl -LsSf https://astral.sh/uv/install.sh | sh
-uv sync --project docs/build
 ```
+
+In the devcontainer, `joshdocs serve`'s port (8123) is forwarded, so the preview opens in your
+browser.
 
 `uv.lock` pins every dependency to an exact version, with hashes. Add `--frozen` to fail rather than
 re-resolve when the lock and `pyproject.toml` disagree, which is what CI does.

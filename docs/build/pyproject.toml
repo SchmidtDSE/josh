@@ -3,8 +3,8 @@
 # Dependencies are declared here with lower bounds and pinned exactly, with hashes, in uv.lock.
 # Install with `uv sync --project docs/build`; run with `uv run --project docs/build joshdocs`.
 #
-# The engine build does not depend on this and neither uv nor Python is baked into the container
-# image: both are installed on demand, and CI installs them per job.
+# The engine build does not depend on this. The devcontainer image ships uv but no Python: uv
+# installs Python on first use, and CI installs both per job.
 
 [project]
 name = "joshdocs"

@@ -27,10 +27,14 @@
             }
         }
     },
-    "forwardPorts": [8085],
+    "forwardPorts": [8085, 8123],
     "portsAttributes": {
         "8085": {
             "label": "JoshSim Server",
+            "onAutoForward": "notify"
+        },
+        "8123": {
+            "label": "Docs Preview (joshdocs serve)",
             "onAutoForward": "notify"
         }
     }
