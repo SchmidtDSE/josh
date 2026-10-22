@@ -406,6 +406,48 @@ task renderDocs {
     }
 }
 
+// Tasks to assemble the landing site locally from the same scripts buildWeb runs in CI: the shared
+// browser client, the third-party scripts, and the WebAssembly engine that the library's runnable
+// pages execute. Everything is staged into landing/, which is gitignored.
+task stageBrowserClient(type: Exec) {
+    description = 'Stages the shared browser client from web/js into each site that serves it'
+    group = 'documentation'
+    commandLine 'bash', 'web/stage_js.sh'
+}
+
+task installLandingDeps(type: Exec) {
+    description = 'Fetches the landing site\'s third-party scripts, fonts, and styles'
+    group = 'documentation'
+    workingDir 'landing'
+    commandLine 'bash', 'install_deps.sh'
+}
+
+task stageLandingEngine(type: Exec) {
+    description = 'Stages the WebAssembly engine from the war into landing/war'
+    group = 'documentation'
+    dependsOn war
+    commandLine 'bash', 'landing/war/get_from_jar.sh'
+}
+
+task assembleSite {
+    description = 'Assembles the landing site, with its rendered library, under landing/'
+    group = 'documentation'
+    dependsOn renderDocs, stageBrowserClient, installLandingDeps, stageLandingEngine
+}
+
+// Task to preview the assembled site. Serves until interrupted with ctrl-c.
+task serveDocs {
+    description = 'Assembles the landing site and serves it at http://127.0.0.1:8123/library/'
+    group = 'documentation'
+    dependsOn assembleSite
+
+    doLast {
+        exec {
+            commandLine findUv(), 'run', '--frozen', '--project', 'docs/build', 'joshdocs', 'serve'
+        }
+    }
+}
+
 // Task to extract and debug a joshpy bottle with JDWP on port 5005.
 // Usage: ./gradlew debugBottle -Pbottle=<path-or-name.tar.gz>
 task debugBottle {

@@ -53,6 +53,15 @@ uv run --project docs/build joshdocs render   # -> landing/library/
 uv run --project docs/build joshdocs serve    # -> http://127.0.0.1:8123/library/
 ```
 
+Those two are enough for reading prose. A page's **Run it here** button also needs the browser
+client, its third-party scripts, and the WebAssembly engine staged into `landing/`, which CI's
+`buildWeb` does with a handful of scripts. Gradle runs the same scripts in order:
+
+```bash
+./gradlew assembleSite   # harvest, render, and stage everything a page loads into landing/
+./gradlew serveDocs      # assembleSite, then serve it -> http://127.0.0.1:8123/library/
+```
+
 `serve` is rooted at the **site** (`landing/`), not at the tree `render` writes. A page reaches its
 stylesheet, the nav's targets, and the engine by site-absolute path, because it sits at an arbitrary
 depth under `/library/` while those are staged once at the root. Rooting the server at
@@ -110,6 +119,8 @@ Gradle wires the two together:
 ```bash
 ./gradlew harvestDocs      # writes the manifest, building the jar first
 ./gradlew renderDocs       # depends on harvestDocs; writes landing/library
+./gradlew assembleSite     # depends on renderDocs and war; stages the rest of landing/
+./gradlew serveDocs        # depends on assembleSite; serves the site until ctrl-c
 ./gradlew conformanceTest  # depends on harvestDocs
 ```
 

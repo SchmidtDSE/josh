@@ -7,7 +7,10 @@
 # The layout here is not free to change. landing/js/wasm.worker.js is a byte-identical copy of the
 # demo's, and it loads the engine with importScripts("../war/js/JoshSim.js") relative to its own
 # location -- so the engine has to sit at war/js and war/wasm-gc beside the js directory.
+set -e
 
+# Cleared first so that a run which failed partway does not block the next one.
+rm -rf /tmp/josh-stage-landing
 mkdir /tmp/josh-stage-landing
 cp ./build/libs/JoshSim.war /tmp/josh-stage-landing
 cd /tmp/josh-stage-landing
