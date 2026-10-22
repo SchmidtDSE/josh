@@ -345,7 +345,7 @@ class PlaygroundPresenter {
     const vizMarkup = `
 <div id="playground-viz" class="fade-in">${selectorMarkup}
   <div class="viz-holder" id="scrub-viz-holder" title="Timeline of the selected variable per year">
-    <p class="playground-hint">Each bar is one year — click a bar to update the map below for that year.</p>
+    <p class="playground-hint">Each bar is one year (click a bar to update the map below for that year).</p>
     <svg id="scrub-viz"></svg>
   </div>
   <div class="viz-holder" id="grid-viz-holder" title="Spatial heatmap of the selected variable for the selected year">

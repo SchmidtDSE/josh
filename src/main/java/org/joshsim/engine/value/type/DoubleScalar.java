@@ -17,6 +17,8 @@ import org.joshsim.util.PrecisionUtil;
  */
 public class DoubleScalar extends Scalar {
 
+  private static final LanguageType DECIMAL_TYPE = LanguageType.of("decimal");
+
   private final Double innerValue;
 
   /**
@@ -58,7 +60,7 @@ public class DoubleScalar extends Scalar {
 
   @Override
   public LanguageType getLanguageType() {
-    return LanguageType.of("decimal");
+    return DECIMAL_TYPE;
   }
 
   @Override

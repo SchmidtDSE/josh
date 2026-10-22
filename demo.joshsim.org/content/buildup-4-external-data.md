@@ -1,5 +1,5 @@
 ::: {.buildup-lede}
-Real forests respond to real climate — so we feed in actual temperature and rainfall maps.
+Real forests respond to real climate, so we feed in actual temperature and rainfall maps.
 :::
 
 Josh reads gridded climate rasters aligned to the model. `clampedTemp` keeps
@@ -8,8 +8,8 @@ into a growth multiplier with a quadratic curve, and `precipImpact` does the sam
 for rainfall with a smooth (sigmoid) curve.
 
 Josh takes climate and environmental data at whatever resolution it comes in and
-lines it up with the model grid for us — there is no manual regridding,
-alignment, or interpolation to write. Each `external` read is then just a value
+lines it up with the model grid for us (there is no manual regridding,
+alignment, or interpolation to write). Each `external` read is then just a value
 per patch.
 
 <div class="ext-figures">
@@ -19,4 +19,4 @@ per patch.
 <figure><img src="img/eco_precip_domain.png" alt="Precipitation growth response: a sigmoid rising with precipitation between 300 and 500 mm"></figure>
 </div>
 
-<p class="ext-figures-caption">The maps show the gridded climate Josh reads in; the curves show how each value becomes a growth multiplier — so you can see why mid-range temperatures and wetter patches drive more growth.</p>
+<p class="ext-figures-caption">The maps show the gridded climate Josh reads in; the curves show how each value becomes a growth multiplier (so you can see why mid-range temperatures and wetter patches drive more growth).</p>

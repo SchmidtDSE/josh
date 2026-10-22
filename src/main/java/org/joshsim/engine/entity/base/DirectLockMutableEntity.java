@@ -38,6 +38,7 @@ public abstract class DirectLockMutableEntity implements MutableEntity {
   private Map<String, List<EventHandlerGroup>> commonHandlerCache;
   private final boolean usesState;
   private final int stateIndex;
+  private Optional<GeoKey> cachedKey;
 
   /**
    * Constructor for Entity.
@@ -221,7 +222,8 @@ public abstract class DirectLockMutableEntity implements MutableEntity {
         indexToAttributeName,
         attributeNames,
         usesState,
-        stateIndex
+        stateIndex,
+        getKey()
     );
   }
 
@@ -230,13 +232,27 @@ public abstract class DirectLockMutableEntity implements MutableEntity {
     return attributeNames;
   }
 
+  /**
+   * Get the key describing this entity's position, building it at most once.
+   *
+   * <p>Geometry is assigned at construction and never replaced, so the key is computed once and
+   * reused. Each external data read asks for the containing patch's key, making this a hot
+   * allocation path otherwise.</p>
+   *
+   * <p>Racing threads may each build a key and one write may be lost, which is harmless: GeoKey
+   * holds only final fields, so it is safely published even through this plain field, and keys
+   * for the same geometry compare equal.</p>
+   *
+   * @return The key for this entity, or empty if this entity has no geometry.
+   */
   @Override
   public Optional<GeoKey> getKey() {
     if (getGeometry().isEmpty()) {
       return Optional.empty();
-    } else {
-      return Optional.of(new GeoKey(this));
+    } else if (cachedKey == null) {
+      cachedKey = Optional.of(new GeoKey(this));
     }
+    return cachedKey;
   }
 
   @Override
