@@ -25,6 +25,8 @@ public class Units {
   // ConcurrentHashMap provides thread-safe access without synchronization overhead.
   private static final Map<String, Units> UNITS_CACHE = new ConcurrentHashMap<>();
 
+  private static int nextId = 1;
+
   public static final Units EMPTY;
   public static final Units COUNT;
   public static final Units METERS;
@@ -59,6 +61,8 @@ public class Units {
   private final Map<String, Long> numeratorUnits;
   private final Map<String, Long> denominatorUnits;
   private final Map<Units, Units> multiplyCache = new ConcurrentHashMap<>(4);
+  private final int id;
+  private Units inverted;
 
   /**
    * Constructs Units from a description string.
@@ -143,6 +147,7 @@ public class Units {
     numeratorUnits = parseMultiplyString(numerator);
     denominatorUnits = parseMultiplyString(denominator);
     this.description = serializeString();
+    this.id = takeNextId();
   }
 
   /**
@@ -157,6 +162,39 @@ public class Units {
     this.numeratorUnits = numeratorUnits;
     this.denominatorUnits = denominatorUnits;
     this.description = serializeString();
+    this.id = takeNextId();
+  }
+
+  /**
+   * Take the next unused identity, advancing the counter.
+   *
+   * <p>Synchronized because units are constructed from the worker threads of a parallel run and
+   * two instances sharing an identity would collide in the caches keyed on it.</p>
+   *
+   * <p>Interning in {@link #of(String)} keeps most construction off this path. Identities are
+   * still spent on instances which are then discarded, since {@link #of(Map, Map)} builds its
+   * simplified units before offering them to the cache and loses that offer to whichever thread
+   * arrived first. The counter therefore runs ahead of the number of live instances, which is
+   * why it is only required to be unique rather than dense.</p>
+   *
+   * @return identity given to no other instance of this class.
+   */
+  private static synchronized int takeNextId() {
+    int id = nextId;
+    nextId += 1;
+    return id;
+  }
+
+  /**
+   * Get the unique numeric identity of this instance.
+   *
+   * <p>Identity is unique per instance regardless of content, unlike equals / hashCode which
+   * compare content. Used to build collision-free composite cache keys without boxing.</p>
+   *
+   * @return unique positive identifier for this exact Units instance.
+   */
+  public int getId() {
+    return id;
   }
 
   /**
@@ -180,10 +218,29 @@ public class Units {
   /**
    * Flip the units such that the numerator and denominator are inverted.
    *
+   * <p>Units are immutable so the inverted form is deterministic; it is computed once and
+   * reused.</p>
+   *
+   * <p>The memo field is written without synchronization, so two threads inverting the same units
+   * for the first time may both compute a result and one of the two writes may be lost. That is
+   * harmless here for three reasons. The computation is a pure function of two immutable maps, so
+   * both threads compute the same units. Units.of interns by canonical form, so both threads
+   * receive the same instance anyway and the identities used as cache keys elsewhere stay stable.
+   * And Units carries its content in final fields, so a thread that reads the memo written by
+   * another sees a fully constructed instance rather than a partially initialized one. A reader
+   * that sees the field still null simply recomputes.</p>
+   *
    * @returns inverted copy of these units.
    */
   public Units invert() {
-    return Units.of(denominatorUnits, numeratorUnits);
+    Units cached = inverted;
+    if (cached == null) {
+      Units computed = Units.of(denominatorUnits, numeratorUnits);
+      inverted = computed;
+      return computed;
+    } else {
+      return cached;
+    }
   }
 
   /**

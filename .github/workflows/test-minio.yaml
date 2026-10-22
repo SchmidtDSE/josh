@@ -14,7 +14,10 @@ jobs:
 
     services:
       minio:
-        image: bitnamilegacy/minio:latest
+        # MinIO no longer publishes community images or mc binaries, so we use the
+        # frozen bitnamilegacy image (which bundles mc) as a stopgap until we migrate
+        # to another S3-compatible server (likely RustFS).
+        image: bitnamilegacy/minio:latest@sha256:451fe6858cb770cc9d0e77ba811ce287420f781c7c1b806a386f6896471a349c
         ports:
           - 9000:9000
           - 9001:9001
@@ -126,7 +129,7 @@ jobs:
       - name: Verify MinIO uploads succeeded
         run: |
           echo "Installing MinIO client for verification..."
-          wget -q https://dl.min.io/client/mc/release/linux-amd64/mc
+          docker cp ${{ job.services.minio.id }}:/opt/bitnami/minio-client/bin/mc ./mc
           chmod +x mc
 
           echo "Configuring MinIO client..."

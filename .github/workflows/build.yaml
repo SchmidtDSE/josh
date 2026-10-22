@@ -530,10 +530,12 @@ jobs:
           if [[ $GITHUB_REF == refs/heads/main ]]; then
             echo "EDITOR_DIRECTORY=editor.joshsim.org" >> $GITHUB_ENV
             echo "LANDING_DIRECTORY=joshsim.org" >> $GITHUB_ENV
+            echo "DEMO_DIRECTORY=demo.joshsim.org" >> $GITHUB_ENV
             echo "Deploying to production environment"
           else
             echo "EDITOR_DIRECTORY=editor.joshsim.org/dev" >> $GITHUB_ENV
             echo "LANDING_DIRECTORY=joshsim.org/dev" >> $GITHUB_ENV
+            echo "DEMO_DIRECTORY=demo.joshsim.org/dev" >> $GITHUB_ENV
             echo "Deploying to directory environment"
           fi
       - name: Set branch name
@@ -622,30 +624,6 @@ jobs:
           sshpass -e scp -r -P 22 -o StrictHostKeyChecking=no \
             ./landing-build/* \
             ${{ secrets.SFTPUSER }}@${{ secrets.SFTPHOST }}:${{ env.LANDING_DIRECTORY }}/
-  deployDemo:
-    environment: Deploy
-    runs-on: ubuntu-latest
-    name: Deploy Demo to SFTP
-    needs: [deployStatic]
-    if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/dev'
-    steps:
-      - name: Set demo directory based on branch
-        run: |
-          if [[ $GITHUB_REF == refs/heads/main ]]; then
-            echo "DEMO_DIRECTORY=demo.joshsim.org" >> $GITHUB_ENV
-            echo "Deploying demo to production environment"
-          else
-            echo "DEMO_DIRECTORY=demo.joshsim.org/dev" >> $GITHUB_ENV
-            echo "Deploying demo to dev environment"
-          fi
-      - name: Install SSH client and sshpass
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y openssh-client sshpass
-      - name: Setup SSH known hosts
-        run: |
-          mkdir -p ~/.ssh
-          ssh-keyscan -H -p 22 ${{ secrets.SFTPHOST }} >> ~/.ssh/known_hosts
       - name: Download demo artifact
         uses: actions/download-artifact@70fc10c6e5e1ce46ad2ea6f2b72d43f7d47b13c3 # v8.0.0
         with:

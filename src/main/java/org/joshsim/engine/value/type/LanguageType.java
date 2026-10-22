@@ -9,6 +9,7 @@ package org.joshsim.engine.value.type;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import org.joshsim.compat.CompatibilityLayerKeeper;
@@ -20,13 +21,28 @@ import org.joshsim.compat.CompatibleStringJoiner;
  */
 public class LanguageType {
 
+  private static int nextId = 1;
+
   private final Collection<String> distributionTypes;
   private final String rootType;
   private final boolean containsAttributes;
+  private final int id;
+
+  // Memoized types describing a distribution of this type. Both are a pure function of this
+  // type, so they are derived once and shared. Keeping them here rather than rebuilding them per
+  // call is what allows callers to hand out a stable instance, which the identity keyed tuple
+  // caches require in order to ever hit. Benign race on first access: a losing thread rebuilds
+  // an equivalent type, and LanguageType's own fields are final so either is safely published.
+  private LanguageType realizedDistributionType;
+  private LanguageType virtualDistributionType;
 
   // Interning cache for simple single-argument LanguageType instances
   // Only caches types created with LanguageType(String) constructor for primitive types
   private static final Map<String, LanguageType> SIMPLE_TYPE_CACHE = new ConcurrentHashMap<>();
+
+  // Interning cache for types which carry attributes, kept separate from SIMPLE_TYPE_CACHE
+  // because both are keyed on root type alone and the two differ only by that flag.
+  private static final Map<String, LanguageType> ATTRIBUTED_TYPE_CACHE = new ConcurrentHashMap<>();
 
   /**
    * Creates a new LanguageType for a value not in a distribution without inner attributes.
@@ -37,6 +53,7 @@ public class LanguageType {
     this.rootType = rootType;
     this.distributionTypes = new ArrayList<>();
     containsAttributes = false;
+    id = takeNextId();
   }
 
   /**
@@ -50,6 +67,7 @@ public class LanguageType {
     this.rootType = rootType;
     this.distributionTypes = new ArrayList<>();
     this.containsAttributes = containsAttributes;
+    id = takeNextId();
   }
 
   /**
@@ -62,6 +80,7 @@ public class LanguageType {
     this.distributionTypes = distributionTypes;
     this.rootType = rootType;
     this.containsAttributes = false;
+    id = takeNextId();
   }
 
   /**
@@ -77,6 +96,39 @@ public class LanguageType {
     this.distributionTypes = distributionTypes;
     this.rootType = rootType;
     this.containsAttributes = containsAttributes;
+    id = takeNextId();
+  }
+
+  /**
+   * Take the next unused identity, advancing the counter.
+   *
+   * <p>Synchronized because types are constructed from the worker threads of a parallel run and
+   * two instances sharing an identity would collide in the caches keyed on it.</p>
+   *
+   * <p>Interning in {@link #of(String)} and {@link #of(String, boolean)} keeps most construction
+   * off this path. Identities are still spent on instances which are then discarded, since both
+   * of those build a candidate before offering it to the cache and lose that offer to whichever
+   * thread arrived first. The counter therefore runs ahead of the number of live instances, which
+   * is why it is only required to be unique rather than dense.</p>
+   *
+   * @return identity given to no other instance of this class.
+   */
+  private static synchronized int takeNextId() {
+    int id = nextId;
+    nextId += 1;
+    return id;
+  }
+
+  /**
+   * Get the unique numeric identity of this instance.
+   *
+   * <p>Identity is unique per instance regardless of content, unlike equals / hashCode which
+   * compare content. Used to build collision-free composite cache keys without boxing.</p>
+   *
+   * @return unique positive identifier for this exact LanguageType instance.
+   */
+  public int getId() {
+    return id;
   }
 
   /**
@@ -100,6 +152,95 @@ public class LanguageType {
     LanguageType newType = new LanguageType(rootType);
     LanguageType existing = SIMPLE_TYPE_CACHE.putIfAbsent(rootType, newType);
     return existing != null ? existing : newType;
+  }
+
+  /**
+   * Factory method to get or create a simple LanguageType, interning by root type and attributes.
+   *
+   * <p>Extends the interning of {@link #of(String)} to types which carry attributes, such as the
+   * type of an entity value. Entity values report their type on each request, so without
+   * interning each request would yield a distinct instance and the identity keyed tuple caches
+   * would never hit for them.</p>
+   *
+   * @param rootType The base type, such as a primitive name or an entity name.
+   * @param containsAttributes True if this type contains other attributes and false if it is a
+   *     simple primitive.
+   * @return cached or new LanguageType instance.
+   */
+  public static LanguageType of(String rootType, boolean containsAttributes) {
+    if (!containsAttributes) {
+      return of(rootType);
+    }
+
+    LanguageType cached = ATTRIBUTED_TYPE_CACHE.get(rootType);
+    if (cached != null) {
+      return cached;
+    }
+    LanguageType newType = new LanguageType(rootType, true);
+    LanguageType existing = ATTRIBUTED_TYPE_CACHE.putIfAbsent(rootType, newType);
+    return existing != null ? existing : newType;
+  }
+
+  /**
+   * Get the type describing a realized distribution whose members are of this type.
+   *
+   * <p>Prepends RealizedDistribution to this type's distribution chain, carrying this type's root
+   * type and attribute flag through. Derived once and reused so that every realized distribution
+   * over the same member type reports the same type instance.</p>
+   *
+   * @return type describing a realized distribution of this type.
+   */
+  public LanguageType asRealizedDistribution() {
+    LanguageType cached = realizedDistributionType;
+    if (cached == null) {
+      LanguageType computed = new LanguageType(
+          buildDistributionChain("RealizedDistribution"),
+          rootType,
+          containsAttributes
+      );
+      realizedDistributionType = computed;
+      return computed;
+    } else {
+      return cached;
+    }
+  }
+
+  /**
+   * Get the type describing a virtual distribution whose members are of this type.
+   *
+   * <p>Prepends VirtualDistribution to this type's distribution chain. Unlike
+   * {@link #asRealizedDistribution()} the attribute flag is not carried through, preserving the
+   * long standing behavior of virtual distributions reporting no attributes.</p>
+   *
+   * @return type describing a virtual distribution of this type.
+   */
+  public LanguageType asVirtualDistribution() {
+    LanguageType cached = virtualDistributionType;
+    if (cached == null) {
+      LanguageType computed = new LanguageType(
+          buildDistributionChain("VirtualDistribution"),
+          rootType
+      );
+      virtualDistributionType = computed;
+      return computed;
+    } else {
+      return cached;
+    }
+  }
+
+  /**
+   * Build the distribution chain for a distribution of this type.
+   *
+   * @param outerType Name of the distribution type to place at the head of the chain.
+   * @return This type's distribution chain with the given type prepended.
+   */
+  private Collection<String> buildDistributionChain(String outerType) {
+    List<String> chain = new ArrayList<>();
+    chain.add(outerType);
+    for (String distributionType : distributionTypes) {
+      chain.add(distributionType);
+    }
+    return chain;
   }
 
   /**

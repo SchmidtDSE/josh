@@ -39,6 +39,7 @@ public class FrozenEntity implements Entity {
   private final Set<String> attributeNames;
   private final boolean usesState;
   private final int stateIndex;
+  private final Optional<GeoKey> key;
 
 
   /**
@@ -53,11 +54,13 @@ public class FrozenEntity implements Entity {
    * @param sharedAttributeNames The shared set of all defined attribute names for this entity type.
    * @param usesState Whether this entity type has a state attribute.
    * @param stateIndex The index of the state attribute, or -1 if not used.
+   * @param key The key of the entity being snapshot, which describes the same geometry and name
+   *     as this snapshot and so is shared rather than rebuilt, or empty if it has no geometry.
    */
   public FrozenEntity(EntityType type, String name, EngineValue[] attributeValues,
       Optional<EngineGeometry> geometry, Map<String, Integer> attributeNameToIndex,
       String[] indexToAttributeName, Set<String> sharedAttributeNames,
-      boolean usesState, int stateIndex) {
+      boolean usesState, int stateIndex, Optional<GeoKey> key) {
     this.type = type;
     this.name = name;
     this.attributeValues = attributeValues;
@@ -67,6 +70,7 @@ public class FrozenEntity implements Entity {
     this.attributeNames = sharedAttributeNames;
     this.usesState = usesState;
     this.stateIndex = stateIndex;
+    this.key = key;
   }
 
   @Override
@@ -144,11 +148,7 @@ public class FrozenEntity implements Entity {
 
   @Override
   public Optional<GeoKey> getKey() {
-    if (getGeometry().isEmpty()) {
-      return Optional.empty();
-    } else {
-      return Optional.of(new GeoKey(this));
-    }
+    return key;
   }
 
   @Override

@@ -6,11 +6,10 @@
 
 package org.joshsim.engine.value.engine;
 
-import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
 import org.joshsim.engine.value.converter.Units;
 import org.joshsim.engine.value.type.EngineValue;
 import org.joshsim.engine.value.type.LanguageType;
+import org.joshsim.util.PairTable;
 
 /**
  * Pair of engine values interacting in an operation.
@@ -21,8 +20,14 @@ public class EngineValueTuple {
   private final EngineValue second;
   private final TypesTuple types;
   private final UnitsTuple units;
-  private static final Map<Long, TypesTuple> TYPES_TUPLE_CACHE = new ConcurrentHashMap<>();
-  private static final Map<Long, UnitsTuple> UNITS_TUPLE_CACHE = new ConcurrentHashMap<>();
+  private static final ThreadLocal<PairTable<LanguageType, LanguageType, TypesTuple>>
+      TYPES_TUPLE_CACHE;
+  private static final ThreadLocal<PairTable<Units, Units, UnitsTuple>> UNITS_TUPLE_CACHE;
+
+  static {
+    TYPES_TUPLE_CACHE = ThreadLocal.withInitial(PairTable::new);
+    UNITS_TUPLE_CACHE = ThreadLocal.withInitial(PairTable::new);
+  }
 
   /**
    * Create a new tuple of engine values.
@@ -63,16 +68,17 @@ public class EngineValueTuple {
    * Factory method to get or create an EngineValueTuple with caching of nested tuples.
    *
    * <p>This method caches TypesTuple and UnitsTuple instances using long-based composite keys
-   * computed from identity hashes of LanguageType and Units objects. Since both
-   * LanguageType.of() and Units.of() return cached singleton instances, identity hashes are
+   * computed from the dense identities of LanguageType and Units objects. Since both
+   * LanguageType.of() and Units.of() return cached singleton instances, identities are
    * stable and suitable for cache keys.</p>
    *
    * <p>Note: The EngineValueTuple itself is NOT cached as it must hold references to the
    * specific EngineValue instances passed in. Only the nested TypesTuple and UnitsTuple
    * objects are cached to reduce allocations.</p>
    *
-   * <p>Thread-safe for concurrent access including parallel streams. ConcurrentHashMap
-   * handles synchronization without blocking reads.</p>
+   * <p>Tuple caches are thread-local: each thread builds its own tuple instances without
+   * synchronization or boxing on the lookup path. Tuples compare by content so duplicated
+   * instances across threads are equivalent.</p>
    *
    * @param first the first engine value for this tuple, for example the left side operand.
    * @param second the second engine value for this tuple, for example the right side operand.
@@ -91,14 +97,12 @@ public class EngineValueTuple {
    */
   private static TypesTuple getOrCreateTypesTuple(
       LanguageType firstType, LanguageType secondType) {
-    long key = computeTypesCacheKey(firstType, secondType);
-    TypesTuple tuple = getOrPutTypesTuple(key, firstType, secondType);
+    TypesTuple tuple = getOrPutTypesTuple(firstType, secondType);
 
     // Establish bidirectional linking for reverse() optimization
     // Check if reversed tuple needs to be created and linked
     if (tuple.getReversed() == null) {
-      long reversedKey = computeTypesCacheKey(secondType, firstType);
-      TypesTuple reversedTuple = getOrPutTypesTuple(reversedKey, secondType, firstType);
+      TypesTuple reversedTuple = getOrPutTypesTuple(secondType, firstType);
 
       // Link bidirectionally (benign race: both threads compute same result)
       tuple.setReversed(reversedTuple);
@@ -111,22 +115,21 @@ public class EngineValueTuple {
   /**
    * Look up a cached TypesTuple, inserting a freshly built one only on a miss.
    *
-   * <p>Uses get-then-putIfAbsent rather than computeIfAbsent so the common cache-hit path
-   * allocates no capturing lambda; the TypesTuple is constructed only when actually absent.</p>
+   * <p>Uses a thread-local open-addressed table so the cache-hit path allocates nothing and
+   * boxes nothing; the TypesTuple is constructed only when actually absent.</p>
    *
-   * @param key composite identity-hash key for the type pair
    * @param first LanguageType of first operand
    * @param second LanguageType of second operand
    * @return the cached (or newly cached) TypesTuple for this pair
    */
-  private static TypesTuple getOrPutTypesTuple(long key, LanguageType first, LanguageType second) {
-    TypesTuple tuple = TYPES_TUPLE_CACHE.get(key);
-    if (tuple == null) {
-      TypesTuple created = new TypesTuple(first, second);
-      TypesTuple existing = TYPES_TUPLE_CACHE.putIfAbsent(key, created);
-      tuple = existing != null ? existing : created;
-    }
-    return tuple;
+  private static TypesTuple getOrPutTypesTuple(LanguageType first, LanguageType second) {
+    return TYPES_TUPLE_CACHE.get().getOrPut(
+        first.getId(),
+        second.getId(),
+        first,
+        second,
+        TypesTuple::new
+    );
   }
 
   /**
@@ -138,14 +141,12 @@ public class EngineValueTuple {
    */
   private static UnitsTuple getOrCreateUnitsTuple(
       Units firstUnits, Units secondUnits) {
-    long key = computUnitsCacheKey(firstUnits, secondUnits);
-    UnitsTuple tuple = getOrPutUnitsTuple(key, firstUnits, secondUnits);
+    UnitsTuple tuple = getOrPutUnitsTuple(firstUnits, secondUnits);
 
     // Establish bidirectional linking for reverse() optimization
     // Check if reversed tuple needs to be created and linked
     if (tuple.getReversed() == null) {
-      long reversedKey = computUnitsCacheKey(secondUnits, firstUnits);
-      UnitsTuple reversedTuple = getOrPutUnitsTuple(reversedKey, secondUnits, firstUnits);
+      UnitsTuple reversedTuple = getOrPutUnitsTuple(secondUnits, firstUnits);
 
       // Link bidirectionally (benign race: both threads compute same result)
       tuple.setReversed(reversedTuple);
@@ -158,52 +159,21 @@ public class EngineValueTuple {
   /**
    * Look up a cached UnitsTuple, inserting a freshly built one only on a miss.
    *
-   * <p>Uses get-then-putIfAbsent rather than computeIfAbsent so the common cache-hit path
-   * allocates no capturing lambda; the UnitsTuple is constructed only when actually absent.</p>
+   * <p>Uses a thread-local open-addressed table so the cache-hit path allocates nothing and
+   * boxes nothing; the UnitsTuple is constructed only when actually absent.</p>
    *
-   * @param key composite identity-hash key for the units pair
    * @param first Units of first operand
    * @param second Units of second operand
    * @return the cached (or newly cached) UnitsTuple for this pair
    */
-  private static UnitsTuple getOrPutUnitsTuple(long key, Units first, Units second) {
-    UnitsTuple tuple = UNITS_TUPLE_CACHE.get(key);
-    if (tuple == null) {
-      UnitsTuple created = new UnitsTuple(first, second);
-      UnitsTuple existing = UNITS_TUPLE_CACHE.putIfAbsent(key, created);
-      tuple = existing != null ? existing : created;
-    }
-    return tuple;
-  }
-
-  /**
-   * Compute a long-based composite key from type identity hashes.
-   *
-   * <p>Packs 2 identity hashes into a 64-bit long key. Each component uses 32 bits.</p>
-   *
-   * @param firstType LanguageType of first operand
-   * @param secondType LanguageType of second operand
-   * @return 64-bit composite key
-   */
-  private static long computeTypesCacheKey(LanguageType firstType, LanguageType secondType) {
-    int firstTypeHash = System.identityHashCode(firstType);
-    int secondTypeHash = System.identityHashCode(secondType);
-    return ((long) firstTypeHash << 32) | (secondTypeHash & 0xFFFFFFFFL);
-  }
-
-  /**
-   * Compute a long-based composite key from unit identity hashes.
-   *
-   * <p>Packs 2 identity hashes into a 64-bit long key. Each component uses 32 bits.</p>
-   *
-   * @param firstUnits Units of first operand
-   * @param secondUnits Units of second operand
-   * @return 64-bit composite key
-   */
-  private static long computUnitsCacheKey(Units firstUnits, Units secondUnits) {
-    int firstUnitsHash = System.identityHashCode(firstUnits);
-    int secondUnitsHash = System.identityHashCode(secondUnits);
-    return ((long) firstUnitsHash << 32) | (secondUnitsHash & 0xFFFFFFFFL);
+  private static UnitsTuple getOrPutUnitsTuple(Units first, Units second) {
+    return UNITS_TUPLE_CACHE.get().getOrPut(
+        first.getId(),
+        second.getId(),
+        first,
+        second,
+        UnitsTuple::new
+    );
   }
 
   /**

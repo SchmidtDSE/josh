@@ -9,5 +9,5 @@ whenever a value is used where a different unit is expected.
 
 This is built-in support for automatic unit conversions between compatible types
 (like Fahrenheit to Celsius). The `as mm` cast invokes the registered conversion
-— kg m⁻²s⁻¹ × 31536000 → mm yr⁻¹ — applied automatically wherever a target unit
+(kg m⁻²s⁻¹ × 31536000 → mm yr⁻¹), applied automatically wherever a target unit
 is named.

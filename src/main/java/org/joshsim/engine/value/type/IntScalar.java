@@ -17,6 +17,8 @@ import org.joshsim.engine.value.engine.EngineValueCaster;
  */
 public class IntScalar extends Scalar {
 
+  private static final LanguageType INT_TYPE = LanguageType.of("int");
+
   private final Long innerValue;
 
   /**
@@ -63,7 +65,7 @@ public class IntScalar extends Scalar {
 
   @Override
   public LanguageType getLanguageType() {
-    return LanguageType.of("int");
+    return INT_TYPE;
   }
 
   @Override

@@ -3,8 +3,8 @@ Every Josh model is built from a few labeled blocks. Before adding behavior, we 
 :::
 
 A Josh model has three kinds of entities: a **simulation** (global settings and
-the grid), a **patch** (the smallest ecologically meaningful spatial entity — a
-cell of that grid), and an **organism** (something that lives there — here, a
+the grid), a **patch** (the smallest ecologically meaningful spatial entity, a
+cell of that grid), and an **organism** (something that lives there, here a
 ForeverTree). We start with three empty blocks and fill them in over the next
 steps.
 

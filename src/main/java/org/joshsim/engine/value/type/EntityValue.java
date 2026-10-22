@@ -91,7 +91,7 @@ public class EntityValue extends EngineValue {
 
   @Override
   public LanguageType getLanguageType() {
-    return new LanguageType(innerValue.getName(), true);
+    return LanguageType.of(innerValue.getName(), true);
   }
 
   @Override

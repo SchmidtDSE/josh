@@ -455,6 +455,17 @@ header .header-intro {
   height: auto;
 }
 
+.results-callout {
+  margin: 14px 0;
+  padding: 10px 14px;
+  background-color: #F0F0F8;
+  border-left: 3px solid #7070C0;
+  border-radius: 6px;
+  font-size: 0.92em;
+  color: #333;
+  line-height: 1.45;
+}
+
 .ext-figures-caption {
   font-size: 0.85em;
   color: #666;

@@ -31,6 +31,7 @@ public class RecursiveValueResolver implements ValueResolver {
 
   private final ValueSupportFactory valueFactory;
   private final String path;
+  private final String[] pathPieces;
   private final boolean hasDot;
   private final boolean isEvalDuration;
   private final EngineValue zeroMilliseconds;
@@ -47,11 +48,51 @@ public class RecursiveValueResolver implements ValueResolver {
   public RecursiveValueResolver(ValueSupportFactory valueFactory, String path) {
     this.valueFactory = valueFactory;
     this.path = path;
+    this.pathPieces = splitPath(path);
     this.hasDot = getHasDot(path);
     this.isEvalDuration = EVAL_DURATION_ATTR.equals(path);
     this.zeroMilliseconds = valueFactory.build(0L, Units.MILLISECONDS);
     memoizedContinuationResolver = null;
     foundPath = null;
+  }
+
+  /**
+   * Split a dot-separated path into its segments.
+   *
+   * <p>Alternative to {@code path.split("\\.")} which avoids compiling a regular expression,
+   * comparatively expensive work that would otherwise run once per resolver construction. The two
+   * agree on every path the grammar can produce. They differ only on trailing empty segments,
+   * which {@code String.split} discards and this keeps, so "a." splits here into two segments
+   * rather than one; a path cannot end in a dot because the grammar requires an attribute
+   * after it.</p>
+   *
+   * @param path The dot-separated attribute path to split, may be null.
+   * @return Segments of the path or an empty array if the path is null.
+   */
+  private static String[] splitPath(String path) {
+    if (path == null) {
+      return new String[0];
+    }
+
+    int numPieces = 1;
+    for (int i = 0; i < path.length(); i++) {
+      if (path.charAt(i) == '.') {
+        numPieces += 1;
+      }
+    }
+
+    String[] pieces = new String[numPieces];
+    int start = 0;
+    int pieceIndex = 0;
+    for (int i = 0; i <= path.length(); i++) {
+      if (i == path.length() || path.charAt(i) == '.') {
+        pieces[pieceIndex] = path.substring(start, i);
+        pieceIndex += 1;
+        start = i + 1;
+      }
+    }
+
+    return pieces;
   }
 
   /**
@@ -208,7 +249,7 @@ public class RecursiveValueResolver implements ValueResolver {
       return memoizedContinuationResolver;
     }
 
-    String[] pieces = path.split("\\.");
+    String[] pieces = pathPieces;
     int numPieces = pieces.length;
 
     for (int numPiecesAttempt = numPieces; numPiecesAttempt > 0; numPiecesAttempt--) {
