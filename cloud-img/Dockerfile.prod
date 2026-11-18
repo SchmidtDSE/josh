@@ -1,5 +1,10 @@
 FROM quay.io/lib/eclipse-temurin:21
 
+# Mitigation for Java4Shell (AVX-512 Base64 intrinsic out-of-bounds write).
+# Set via JAVA_TOOL_OPTIONS so it applies to every JVM launched in the image,
+# including the shell entrypoints. Remove once the base image has a patched JDK.
+ENV JAVA_TOOL_OPTIONS="-XX:-UseBASE64Intrinsics"
+
 WORKDIR /app
 
 COPY joshsim-fat.jar /app/
