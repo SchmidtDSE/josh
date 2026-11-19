@@ -297,3 +297,5 @@ We use the following open source technologies:
 - [cdibase](https://github.com/sampottinger/cdibase) for automaton parsing patterns under [Apache v2](https://github.com/sampottinger/cdibase/blob/main/LICENSE).
 
 We recommend [Temurin](https://projects.eclipse.org/projects/adoptium.temurin).
+
+Public version at https://joshsim.org.
