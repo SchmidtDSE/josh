@@ -298,4 +298,6 @@ We use the following open source technologies:
 
 We recommend [Temurin](https://projects.eclipse.org/projects/adoptium.temurin).
 
+—--
+
 Public version at https://joshsim.org.
